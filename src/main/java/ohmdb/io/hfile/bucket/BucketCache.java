@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
 /**
  * Copyright The Apache Software Foundation
  *
@@ -12,13 +31,34 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- 
+
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.io.hfile.bucket;
+package ohmdb.io.hfile.bucket;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.io.HeapSize;
+import org.apache.hadoop.hbase.io.hfile.BlockCache;
+import org.apache.hadoop.hbase.io.hfile.BlockCacheColumnFamilySummary;
+import org.apache.hadoop.hbase.io.hfile.BlockCacheKey;
+import org.apache.hadoop.hbase.io.hfile.CacheStats;
+import org.apache.hadoop.hbase.io.hfile.Cacheable;
+import org.apache.hadoop.hbase.io.hfile.CacheableDeserializer;
+import org.apache.hadoop.hbase.io.hfile.CacheableDeserializerIdManager;
+import org.apache.hadoop.hbase.io.hfile.CombinedBlockCache;
+import org.apache.hadoop.hbase.io.hfile.HFileBlock;
+import org.apache.hadoop.hbase.regionserver.StoreFile;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
+import org.apache.hadoop.hbase.util.HasThread;
+import org.apache.hadoop.hbase.util.IdLock;
+import org.apache.hadoop.util.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -43,42 +83,20 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.io.HeapSize;
-import org.apache.hadoop.hbase.io.hfile.BlockCache;
-import org.apache.hadoop.hbase.io.hfile.BlockCacheColumnFamilySummary;
-import org.apache.hadoop.hbase.io.hfile.BlockCacheKey;
-import org.apache.hadoop.hbase.io.hfile.CacheStats;
-import org.apache.hadoop.hbase.io.hfile.Cacheable;
-import org.apache.hadoop.hbase.io.hfile.CacheableDeserializer;
-import org.apache.hadoop.hbase.io.hfile.CacheableDeserializerIdManager;
-import org.apache.hadoop.hbase.io.hfile.CombinedBlockCache;
-import org.apache.hadoop.hbase.io.hfile.HFileBlock;
-import org.apache.hadoop.hbase.regionserver.StoreFile;
-import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
-import org.apache.hadoop.hbase.util.HasThread;
-import org.apache.hadoop.hbase.util.IdLock;
-import org.apache.hadoop.util.StringUtils;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 /**
  * BucketCache uses {@link BucketAllocator} to allocate/free block, and use
  * {@link BucketCache#ramCache} and {@link BucketCache#backingMap} in order to
  * determine whether a given element hit. It could uses memory
  * {@link ByteBufferIOEngine} or file {@link FileIOEngine}to store/read the
  * block data.
- * 
+ *
  * Eviction is using similar algorithm as
  * {@link org.apache.hadoop.hbase.io.hfile.LruBlockCache}
- * 
+ *
  * BucketCache could be used as mainly a block cache(see
  * {@link CombinedBlockCache}), combined with LruBlockCache to decrease CMS and
  * fragment by GC.
- * 
+ *
  * Also could be used as a secondary cache(e.g. using Fusionio to store block)
  * to enlarge cache space by
  * {@link org.apache.hadoop.hbase.io.hfile.LruBlockCache#setVictimCache}
@@ -117,7 +135,7 @@ public class BucketCache implements BlockCache, HeapSize {
    */
   private volatile boolean cacheEnabled;
 
-  private ArrayList<BlockingQueue<RAMQueueEntry>> writerQueues = 
+  private ArrayList<BlockingQueue<RAMQueueEntry>> writerQueues =
       new ArrayList<BlockingQueue<RAMQueueEntry>>();
   WriterThread writerThreads[];
 
@@ -164,13 +182,13 @@ public class BucketCache implements BlockCache, HeapSize {
    * A "sparse lock" implementation allowing to lock on a particular block
    * identified by offset. The purpose of this is to avoid freeing the block
    * which is being read.
-   * 
+   *
    * TODO:We could extend the IdLock to IdReadWriteLock for better.
    */
   private IdLock offsetLock = new IdLock();
 
 
-  
+
   /** Statistics thread schedule pool (for heavy debugging, could remove) */
   private final ScheduledExecutorService scheduleThreadPool =
     Executors.newScheduledThreadPool(1,
@@ -181,14 +199,14 @@ public class BucketCache implements BlockCache, HeapSize {
 
   // Allocate or free space for the block
   private BucketAllocator bucketAllocator;
-  
+
   public BucketCache(String ioEngineName, long capacity, int writerThreadNum,
       int writerQLen, String persistencePath) throws FileNotFoundException,
       IOException {
     this(ioEngineName, capacity, writerThreadNum, writerQLen, persistencePath,
         DEFAULT_ERROR_TOLERATION_DURATION);
   }
-  
+
   public BucketCache(String ioEngineName, long capacity, int writerThreadNum,
       int writerQLen, String persistencePath, int ioErrorsTolerationDuration)
       throws FileNotFoundException, IOException {
@@ -410,7 +428,7 @@ public class BucketCache implements BlockCache, HeapSize {
     cacheStats.evicted();
     return true;
   }
-  
+
   /*
    * Statistics thread.  Periodically prints the cache statistics to the log.
    */
@@ -427,7 +445,7 @@ public class BucketCache implements BlockCache, HeapSize {
       bucketCache.logStats();
     }
   }
-  
+
   public void logStats() {
     if (!LOG.isDebugEnabled()) return;
     // Log size
@@ -445,11 +463,11 @@ public class BucketCache implements BlockCache, HeapSize {
         "hits=" + cacheStats.getHitCount() + ", " +
         "IOhitsPerSecond=" + cacheStats.getIOHitsPerSecond() + ", " +
         "IOTimePerHit=" + String.format("%.2f", cacheStats.getIOTimePerHit())+ ", " +
-        "hitRatio=" + (cacheStats.getHitCount() == 0 ? "0," : 
+        "hitRatio=" + (cacheStats.getHitCount() == 0 ? "0," :
           (StringUtils.formatPercent(cacheStats.getHitRatio(), 2)+ ", ")) +
         "cachingAccesses=" + cacheStats.getRequestCachingCount() + ", " +
         "cachingHits=" + cacheStats.getHitCachingCount() + ", " +
-        "cachingHitsRatio=" +(cacheStats.getHitCachingCount() == 0 ? "0," : 
+        "cachingHitsRatio=" +(cacheStats.getHitCachingCount() == 0 ? "0," :
           (StringUtils.formatPercent(cacheStats.getHitCachingRatio(), 2)+ ", ")) +
         "evictions=" + cacheStats.getEvictionCount() + ", " +
         "evicted=" + cacheStats.getEvictedCount() + ", " +
@@ -522,7 +540,7 @@ public class BucketCache implements BlockCache, HeapSize {
           + " of current used=" + StringUtils.byteDesc(currentSize)
           + ",actual cacheSize=" + StringUtils.byteDesc(realCacheSize.get())
           + ",total=" + StringUtils.byteDesc(totalSize));
-      
+
       long bytesToFreeWithExtra = (long) Math.floor(bytesToFreeWithoutExtra
           * (1 + DEFAULT_EXTRA_FREE_FACTOR));
 
@@ -635,7 +653,7 @@ public class BucketCache implements BlockCache, HeapSize {
       this.threadNO = threadNO;
       setDaemon(true);
     }
-    
+
     // Used for test
     void disableWriter() {
       this.writerEnabled = false;
@@ -737,7 +755,7 @@ public class BucketCache implements BlockCache, HeapSize {
     }
   }
 
-  
+
 
   private void persistToFile() throws IOException {
     assert !cacheEnabled;
@@ -917,10 +935,10 @@ public class BucketCache implements BlockCache, HeapSize {
    * Evicts all blocks for a specific HFile. This is an expensive operation
    * implemented as a linear-time search through all blocks in the cache.
    * Ideally this should be a search in a log-access-time map.
-   * 
+   *
    * <p>
    * This is used for evict-on-close to remove all blocks of a specific HFile.
-   * 
+   *
    * @return the number of blocks evicted
    */
   @Override
@@ -1024,7 +1042,7 @@ public class BucketCache implements BlockCache, HeapSize {
         this.priority = BlockPriority.MULTI;
       }
     }
-    
+
     public BlockPriority getPriority() {
       return this.priority;
     }
@@ -1159,7 +1177,7 @@ public class BucketCache implements BlockCache, HeapSize {
         bucketAllocator.freeBlock(offset);
         throw ioe;
       }
-      
+
       realCacheSize.addAndGet(len);
       return bucketEntry;
     }

@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
 /**
  * Copyright The Apache Software Foundation
  *
@@ -16,24 +36,23 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hadoop.hbase.io.hfile.bucket;
+package ohmdb.io.hfile.bucket;
 
+
+import com.google.common.collect.MinMaxPriorityQueue;
+import ohmdb.io.hfile.bucket.BucketCache.BucketEntry;
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.io.hfile.BlockCacheKey;
 
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.io.hfile.BlockCacheKey;
-import org.apache.hadoop.hbase.io.hfile.bucket.BucketCache.BucketEntry;
-
-import com.google.common.collect.MinMaxPriorityQueue;
-
 /**
  * A memory-bound queue that will grow until an element brings total size larger
  * than maxSize. From then on, only entries that are sorted larger than the
  * smallest current entry will be inserted/replaced.
- * 
+ *
  * <p>
  * Use this when you want to find the largest elements (according to their
  * ordering, not their heap size) that consume as close to the specified maxSize
@@ -70,7 +89,7 @@ public class CachedEntryQueue {
 
   /**
    * Attempt to add the specified entry to this queue.
-   * 
+   *
    * <p>
    * If the queue is smaller than the max size, or if the specified element is
    * ordered after the smallest element in the queue, the element will be added

@@ -1,4 +1,23 @@
 /**
+ * Copyright (C) 2013  Ohm Data
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * This file incorporates work covered by the following copyright and
+ * permission notice:
+ */
+/**
  * Copyright The Apache Software Foundation
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -18,25 +37,25 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hbase.io.hfile.bucket;
+package ohmdb.io.hfile.bucket;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.hbase.io.hfile.BlockCacheKey;
+import ohmdb.io.hfile.bucket.BucketCache.BucketEntry;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.io.hfile.BlockCacheKey;
-import org.apache.hadoop.hbase.io.hfile.bucket.BucketCache.BucketEntry;
-
 /**
  * This class is used to allocate a block with specified size and free the block
  * when evicting. It manages an array of buckets, each bucket is associated with
  * a size and caches elements up to this size. For completely empty bucket, this
  * size could be re-specified dynamically.
- * 
+ *
  * This class is not thread safe.
  */
 @InterfaceAudience.Private
