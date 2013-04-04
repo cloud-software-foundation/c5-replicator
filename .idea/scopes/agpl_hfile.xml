@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="agpl-hfile" pattern="src:ohmdb.io.hfile..*" />
+</component>

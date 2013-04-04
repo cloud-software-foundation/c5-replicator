@@ -1,0 +1,14 @@
+<component name="CopyrightManager">
+  <settings default="agpl3">
+    <module2copyright>
+      <element module="agpl-hfile" copyright="agpl3-asf2" />
+      <element module="All" copyright="agpl3" />
+    </module2copyright>
+    <LanguageOptions name="JAVA">
+      <option name="addBlankAfter" value="false" />
+    </LanguageOptions>
+    <LanguageOptions name="__TEMPLATE__">
+      <option name="addBlankAfter" value="false" />
+    </LanguageOptions>
+  </settings>
+</component>
