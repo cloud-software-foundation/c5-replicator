@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
 /**
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -17,18 +37,10 @@
  * limitations under the License.
  */
 
-package org.apache.hadoop.hbase.io.hfile.slab;
+package ohmdb.io.hfile.slab;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -43,8 +55,15 @@ import org.apache.hadoop.hbase.util.ClassSize;
 import org.apache.hadoop.hbase.util.HasThread;
 import org.apache.hadoop.util.StringUtils;
 
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * SlabCache is composed of multiple SingleSizeCaches. It uses a TreeMap in
@@ -213,7 +232,7 @@ public class SlabCache implements SlabItemActionWatcher, BlockCache, HeapSize {
      * twice
      */
     scache.cacheBlock(cacheKey, cachedItem);
-  } 
+  }
 
   /**
    * We don't care about whether its in memory or not, so we just pass the call
@@ -270,7 +289,7 @@ public class SlabCache implements SlabItemActionWatcher, BlockCache, HeapSize {
     stats.evicted();
     backingStore.remove(key);
   }
-  
+
   @Override
   public void onInsertion(BlockCacheKey key, SingleSizeCache notifier) {
     backingStore.put(key, notifier);
