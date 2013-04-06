@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -15,23 +35,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.io.hfile;
+package ohmdb.io.hfile;
 
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryUsage;
-
+import ohmdb.io.hfile.BlockType.BlockCategory;
+import ohmdb.io.hfile.bucket.BucketCache;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.io.hfile.BlockType.BlockCategory;
-import org.apache.hadoop.hbase.io.hfile.bucket.BucketCache;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.DirectMemoryUtils;
 import org.apache.hadoop.util.StringUtils;
+
+import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
 
 /**
  * Stores all of the cache objects and configuration for a single HFile.
@@ -79,14 +99,14 @@ public class CacheConfig {
    */
   public static final String BUCKET_CACHE_IOENGINE_KEY = "hbase.bucketcache.ioengine";
   public static final String BUCKET_CACHE_SIZE_KEY = "hbase.bucketcache.size";
-  public static final String BUCKET_CACHE_PERSISTENT_PATH_KEY = 
+  public static final String BUCKET_CACHE_PERSISTENT_PATH_KEY =
       "hbase.bucketcache.persistent.path";
-  public static final String BUCKET_CACHE_COMBINED_KEY = 
+  public static final String BUCKET_CACHE_COMBINED_KEY =
       "hbase.bucketcache.combinedcache.enabled";
-  public static final String BUCKET_CACHE_COMBINED_PERCENTAGE_KEY = 
+  public static final String BUCKET_CACHE_COMBINED_PERCENTAGE_KEY =
       "hbase.bucketcache.percentage.in.combinedcache";
   public static final String BUCKET_CACHE_WRITER_THREADS_KEY = "hbase.bucketcache.writer.threads";
-  public static final String BUCKET_CACHE_WRITER_QUEUE_KEY = 
+  public static final String BUCKET_CACHE_WRITER_QUEUE_KEY =
       "hbase.bucketcache.writer.queuelength";
   /**
    * Defaults for Bucket cache

@@ -1,5 +1,25 @@
 
 /*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
+/*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -17,14 +37,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.io.hfile;
+package ohmdb.io.hfile;
 
-import java.io.DataInput;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
+import ohmdb.io.hfile.HFile.FileInfo;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
@@ -41,14 +56,18 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.io.hfile.HFile.FileInfo;
 import org.apache.hadoop.hbase.regionserver.TimeRangeTracker;
 import org.apache.hadoop.hbase.util.BloomFilter;
-import org.apache.hadoop.hbase.util.BloomFilterFactory;
 import org.apache.hadoop.hbase.util.ByteBloomFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.Writables;
+
+import java.io.DataInput;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implements pretty-printing functionality for {@link HFile}s.
@@ -221,7 +240,7 @@ public class HFilePrettyPrinter {
       boolean shouldScanKeysValues = false;
       if (this.isSeekToRow) {
         // seek to the first kv on this row
-        shouldScanKeysValues = 
+        shouldScanKeysValues =
           (scanner.seekTo(KeyValue.createFirstOnRow(this.row).getKey()) != -1);
       } else {
         shouldScanKeysValues = scanner.seekTo();
@@ -344,7 +363,7 @@ public class HFilePrettyPrinter {
     DataInput bloomMeta = reader.getGeneralBloomFilterMetadata();
     BloomFilter bloomFilter = null;
     if (bloomMeta != null)
-      bloomFilter = BloomFilterFactory.createFromMeta(bloomMeta, reader);
+      //bloomFilter = BloomFilterFactory.createFromMeta(bloomMeta, reader);
 
     System.out.println("Bloom filter:");
     if (bloomFilter != null) {
@@ -358,7 +377,7 @@ public class HFilePrettyPrinter {
     bloomMeta = reader.getDeleteBloomFilterMetadata();
     bloomFilter = null;
     if (bloomMeta != null)
-      bloomFilter = BloomFilterFactory.createFromMeta(bloomMeta, reader);
+//      bloomFilter = BloomFilterFactory.createFromMeta(bloomMeta, reader);
 
     System.out.println("Delete Family Bloom filter:");
     if (bloomFilter != null) {

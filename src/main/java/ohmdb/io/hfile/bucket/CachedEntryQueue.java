@@ -40,9 +40,9 @@ package ohmdb.io.hfile.bucket;
 
 
 import com.google.common.collect.MinMaxPriorityQueue;
+import ohmdb.io.hfile.BlockCacheKey;
 import ohmdb.io.hfile.bucket.BucketCache.BucketEntry;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.io.hfile.BlockCacheKey;
 
 import java.util.Comparator;
 import java.util.Map;

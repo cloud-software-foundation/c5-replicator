@@ -37,8 +37,8 @@
  */
 package ohmdb.io.hfile.bucket;
 
+import ohmdb.io.hfile.CacheStats;
 import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.hbase.io.hfile.CacheStats;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 
 import java.util.concurrent.atomic.AtomicLong;

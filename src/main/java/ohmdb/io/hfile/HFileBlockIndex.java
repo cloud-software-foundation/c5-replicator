@@ -1,4 +1,24 @@
 /*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
+/*
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -16,7 +36,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.io.hfile;
+package ohmdb.io.hfile;
+
+import ohmdb.io.HeapSize;
+import ohmdb.io.encoding.DataBlockEncoding;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.ClassSize;
+import org.apache.hadoop.hbase.util.CompoundBloomFilterWriter;
+import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.io.WritableUtils;
+import org.apache.hadoop.util.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
@@ -30,23 +66,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.io.HeapSize;
-import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
-import org.apache.hadoop.hbase.io.hfile.HFile.CachingBlockReader;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.ClassSize;
-import org.apache.hadoop.hbase.util.CompoundBloomFilterWriter;
-import org.apache.hadoop.io.RawComparator;
-import org.apache.hadoop.io.WritableUtils;
-import org.apache.hadoop.util.StringUtils;
 
 /**
  * Provides functionality to write ({@link BlockIndexWriter}) and read
@@ -130,10 +149,10 @@ public class HFileBlockIndex {
     private int searchTreeLevel;
 
     /** A way to read {@link HFile} blocks at a given offset */
-    private CachingBlockReader cachingBlockReader;
+    private HFile.CachingBlockReader cachingBlockReader;
 
     public BlockIndexReader(final RawComparator<byte[]> c, final int treeLevel,
-        final CachingBlockReader cachingBlockReader) {
+        final HFile.CachingBlockReader cachingBlockReader) {
       this(c, treeLevel);
       this.cachingBlockReader = cachingBlockReader;
     }
@@ -614,7 +633,7 @@ public class HFileBlockIndex {
         }
       }
     }
-    
+
     /**
      * Read in the root-level index from the given input stream. Must match
      * what was written into the root level by
@@ -953,7 +972,7 @@ public class HFileBlockIndex {
       if (blockCache != null) {
         HFileBlock blockForCaching = blockWriter.getBlockForCaching();
         blockCache.cacheBlock(new BlockCacheKey(nameForCaching,
-            beginOffset, DataBlockEncoding.NONE, 
+            beginOffset, DataBlockEncoding.NONE,
             blockForCaching.getBlockType()), blockForCaching);
       }
 

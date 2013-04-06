@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
 /**
  * Copyright The Apache Software Foundation
  *
@@ -16,16 +36,16 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hadoop.hbase.io.hfile;
+package ohmdb.io.hfile;
+
+import ohmdb.io.HeapSize;
+import ohmdb.io.hfile.BlockType.BlockCategory;
+import ohmdb.io.hfile.bucket.BucketCache;
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
 import java.util.List;
-
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.io.HeapSize;
-import org.apache.hadoop.hbase.io.hfile.BlockType.BlockCategory;
-import org.apache.hadoop.hbase.io.hfile.bucket.BucketCache;
 
 /**
  * CombinedBlockCache is an abstraction layer that combines
@@ -34,7 +54,7 @@ import org.apache.hadoop.hbase.io.hfile.bucket.BucketCache;
  * cache data blocks. getBlock reads first from the smaller lruCache before
  * looking for the block in the bucketCache. Metrics are the combined size and
  * hits and misses of both caches.
- * 
+ *
  **/
 @InterfaceAudience.Private
 public class CombinedBlockCache implements BlockCache, HeapSize {
@@ -102,7 +122,7 @@ public class CombinedBlockCache implements BlockCache, HeapSize {
   public void shutdown() {
     lruCache.shutdown();
     bucketCache.shutdown();
-    
+
   }
 
   @Override

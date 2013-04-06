@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
 /**
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -16,10 +36,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.io;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
+package ohmdb.io;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,11 +44,16 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.io.HFileLink;
+import org.apache.hadoop.hbase.io.Reference;
 import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
 import org.apache.hadoop.hbase.io.hfile.CacheConfig;
 import org.apache.hadoop.hbase.io.hfile.HFileScanner;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * A facade for a {@link org.apache.hadoop.hbase.io.hfile.HFile.Reader} that serves up
@@ -53,9 +75,9 @@ public class HalfStoreFileReader extends StoreFile.Reader {
   // This is the key we split around.  Its the first possible entry on a row:
   // i.e. empty column and a timestamp of LATEST_TIMESTAMP.
   protected final byte [] splitkey;
-  
+
   private byte[] firstKey = null;
-  
+
   private boolean firstKeySeeked = false;
 
   /**
@@ -305,7 +327,7 @@ public class HalfStoreFileReader extends StoreFile.Reader {
     // Returns null to indicate file is not splitable.
     return null;
   }
-  
+
   @Override
   public byte[] getFirstKey() {
     if (!firstKeySeeked) {

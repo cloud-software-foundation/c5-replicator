@@ -36,10 +36,10 @@
  */
 package ohmdb.io.encoding;
 
+import org.apache.hadoop.hbase.io.compress.Compression;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
-
-import org.apache.hadoop.hbase.io.compress.Compression;
 
 /**
  * A decoding context that is created by a reader's encoder, and is shared

@@ -1,4 +1,24 @@
 /*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -15,19 +35,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.io.hfile;
+package ohmdb.io.hfile;
+
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.ChecksumType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.zip.Checksum;
-
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.DataOutputBuffer;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.ChecksumFactory;
-import org.apache.hadoop.hbase.util.ChecksumType;
 
 /**
  * Utility methods to compute and validate checksums.
@@ -37,11 +54,11 @@ public class ChecksumUtil {
   /** This is used to reserve space in a byte buffer */
   private static byte[] DUMMY_VALUE = new byte[128 * HFileBlock.CHECKSUM_SIZE];
 
-  /** 
-   * This is used by unit tests to make checksum failures throw an 
-   * exception instead of returning null. Returning a null value from 
-   * checksum validation will cause the higher layer to retry that 
-   * read with hdfs-level checksums. Instead, we would like checksum 
+  /**
+   * This is used by unit tests to make checksum failures throw an
+   * exception instead of returning null. Returning a null value from
+   * checksum validation will cause the higher layer to retry that
+   * read with hdfs-level checksums. Instead, we would like checksum
    * failures to cause the entire unit test to fail.
    */
   private static boolean generateExceptions = false;
@@ -61,7 +78,7 @@ public class ChecksumUtil {
    * @param bytesPerChecksum number of bytes per checksum value
    */
   static void generateChecksums(byte[] indata,
-    int startOffset, int endOffset, 
+    int startOffset, int endOffset,
     byte[] outdata, int outOffset,
     ChecksumType checksumType,
     int bytesPerChecksum) throws IOException {
@@ -98,7 +115,7 @@ public class ChecksumUtil {
    * The header is extracted from the specified HFileBlock while the
    * data-to-be-verified is extracted from 'data'.
    */
-  static boolean validateBlockChecksum(Path path, HFileBlock block, 
+  static boolean validateBlockChecksum(Path path, HFileBlock block,
     byte[] data, int hdrSize) throws IOException {
 
     // If this is an older version of the block that does not have
@@ -112,7 +129,7 @@ public class ChecksumUtil {
     }
 
     // Get a checksum object based on the type of checksum that is
-    // set in the HFileBlock header. A ChecksumType.NULL indicates that 
+    // set in the HFileBlock header. A ChecksumType.NULL indicates that
     // the caller is not interested in validating checksums, so we
     // always return true.
     ChecksumType cktype = ChecksumType.codeToType(block.getChecksumType());
@@ -128,7 +145,7 @@ public class ChecksumUtil {
     // bytesPerChecksum is always larger than the size of the header
     if (bytesPerChecksum < hdrSize) {
       String msg = "Unsupported value of bytesPerChecksum. " +
-                   " Minimum is " + hdrSize + 
+                   " Minimum is " + hdrSize +
                    " but the configured value is " + bytesPerChecksum;
       HFile.LOG.warn(msg);
       return false;   // cannot happen case, unable to verify checksum
@@ -141,7 +158,7 @@ public class ChecksumUtil {
     int consumed = hdrSize;
     int bytesLeft = block.getOnDiskDataSizeWithHeader() - off;
     int cksumOffset = block.getOnDiskDataSizeWithHeader();
-    
+
     // validate each chunk
     while (bytesLeft > 0) {
       int thisChunkSize = bytesPerChecksum - consumed;
@@ -166,7 +183,7 @@ public class ChecksumUtil {
         }
       }
       cksumOffset += HFileBlock.CHECKSUM_SIZE;
-      bytesLeft -= count; 
+      bytesLeft -= count;
       off += count;
       consumed = 0;
       checksumObject.reset();
@@ -182,7 +199,7 @@ public class ChecksumUtil {
    * @return The number of bytes needed to store the checksum values
    */
   static long numBytes(long datasize, int bytesPerChecksum) {
-    return numChunks(datasize, bytesPerChecksum) * 
+    return numChunks(datasize, bytesPerChecksum) *
                      HFileBlock.CHECKSUM_SIZE;
   }
 

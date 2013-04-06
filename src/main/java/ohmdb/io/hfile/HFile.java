@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
 /**
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -16,7 +36,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hbase.io.hfile;
+package ohmdb.io.hfile;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
+import ohmdb.io.encoding.DataBlockEncoding;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.KeyValue.KeyComparator;
+import org.apache.hadoop.hbase.exceptions.CorruptHFileException;
+import org.apache.hadoop.hbase.fs.HFileSystem;
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
+import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.BytesBytesPair;
+import org.apache.hadoop.hbase.protobuf.generated.HFileProtos;
+import org.apache.hadoop.hbase.util.BloomFilterWriter;
+import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.util.ChecksumType;
+import org.apache.hadoop.hbase.util.FSUtils;
+import org.apache.hadoop.io.RawComparator;
+import org.apache.hadoop.io.Writable;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -38,39 +90,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.FileStatus;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.KeyValue.KeyComparator;
-import org.apache.hadoop.hbase.exceptions.CorruptHFileException;
-import org.apache.hadoop.hbase.fs.HFileSystem;
-import org.apache.hadoop.hbase.io.compress.Compression;
-import org.apache.hadoop.hbase.io.encoding.DataBlockEncoding;
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
-import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos.BytesBytesPair;
-import org.apache.hadoop.hbase.protobuf.generated.HFileProtos;
-import org.apache.hadoop.hbase.util.BloomFilterWriter;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.hbase.util.ChecksumType;
-import org.apache.hadoop.hbase.util.FSUtils;
-import org.apache.hadoop.io.RawComparator;
-import org.apache.hadoop.io.Writable;
-
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
 
 /**
  * File format for hbase.
@@ -192,18 +211,18 @@ public class HFile {
   static final AtomicLong checksumFailures = new AtomicLong();
 
   // For getting more detailed stats on FS latencies
-  // If, for some reason, the metrics subsystem stops polling for latencies, 
+  // If, for some reason, the metrics subsystem stops polling for latencies,
   // I don't want data to pile up in a memory leak
   // so, after LATENCY_BUFFER_SIZE items have been enqueued for processing,
   // fs latency stats will be dropped (and this behavior will be logged)
   private static final int LATENCY_BUFFER_SIZE = 5000;
-  private static final BlockingQueue<Long> fsReadLatenciesNanos = 
+  private static final BlockingQueue<Long> fsReadLatenciesNanos =
       new ArrayBlockingQueue<Long>(LATENCY_BUFFER_SIZE);
-  private static final BlockingQueue<Long> fsWriteLatenciesNanos = 
+  private static final BlockingQueue<Long> fsWriteLatenciesNanos =
       new ArrayBlockingQueue<Long>(LATENCY_BUFFER_SIZE);
-  private static final BlockingQueue<Long> fsPreadLatenciesNanos = 
+  private static final BlockingQueue<Long> fsPreadLatenciesNanos =
       new ArrayBlockingQueue<Long>(LATENCY_BUFFER_SIZE);
-  
+
   public static final void offerReadLatency(long latencyNanos, boolean pread) {
     if (pread) {
       fsPreadLatenciesNanos.offer(latencyNanos); // might be silently dropped, if the queue is full
@@ -215,30 +234,30 @@ public class HFile {
       readOps.incrementAndGet();
     }
   }
-  
+
   public static final void offerWriteLatency(long latencyNanos) {
     fsWriteLatenciesNanos.offer(latencyNanos); // might be silently dropped, if the queue is full
-    
+
     writeTimeNano.addAndGet(latencyNanos);
     writeOps.incrementAndGet();
   }
-  
+
   public static final Collection<Long> getReadLatenciesNanos() {
-    final List<Long> latencies = 
+    final List<Long> latencies =
         Lists.newArrayListWithCapacity(fsReadLatenciesNanos.size());
     fsReadLatenciesNanos.drainTo(latencies);
     return latencies;
   }
 
   public static final Collection<Long> getPreadLatenciesNanos() {
-    final List<Long> latencies = 
+    final List<Long> latencies =
         Lists.newArrayListWithCapacity(fsPreadLatenciesNanos.size());
     fsPreadLatenciesNanos.drainTo(latencies);
     return latencies;
   }
-  
+
   public static final Collection<Long> getWriteLatenciesNanos() {
-    final List<Long> latencies = 
+    final List<Long> latencies =
         Lists.newArrayListWithCapacity(fsWriteLatenciesNanos.size());
     fsWriteLatenciesNanos.drainTo(latencies);
     return latencies;
@@ -578,7 +597,7 @@ public class HFile {
     HFileSystem hfs = null;
     FSDataInputStream fsdis = fs.open(path);
     FSDataInputStream fsdisNoFsChecksum = fsdis;
-    // If the fs is not an instance of HFileSystem, then create an 
+    // If the fs is not an instance of HFileSystem, then create an
     // instance of HFileSystem that wraps over the specified fs.
     // In this case, we will not be able to avoid checksumming inside
     // the filesystem.
@@ -828,7 +847,7 @@ public class HFile {
     /** Now parse the old Writable format.  It was a list of Map entries.  Each map entry was a key and a value of
      * a byte [].  The old map format had a byte before each entry that held a code which was short for the key or
      * value type.  We know it was a byte [] so in below we just read and dump it.
-     * @throws IOException 
+     * @throws IOException
      */
     void parseWritable(final DataInputStream in) throws IOException {
       // First clear the map.  Otherwise we will just accumulate entries every time this method is called.
