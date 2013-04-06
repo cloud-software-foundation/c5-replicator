@@ -1,4 +1,24 @@
 /*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with this
  * work for additional information regarding copyright ownership. The ASF
@@ -14,21 +34,20 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hadoop.hbase.io.encoding;
+package ohmdb.io.encoding;
 
-import static org.apache.hadoop.hbase.io.compress.Compression.Algorithm.NONE;
+import com.google.common.base.Preconditions;
+import ohmdb.io.hfile.BlockType;
+import org.apache.hadoop.hbase.io.compress.Compression;
+import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
+import org.apache.hadoop.io.compress.CompressionOutputStream;
+import org.apache.hadoop.io.compress.Compressor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.io.compress.Compression;
-import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
-import org.apache.hadoop.hbase.io.hfile.BlockType;
-import org.apache.hadoop.io.compress.CompressionOutputStream;
-import org.apache.hadoop.io.compress.Compressor;
-
-import com.google.common.base.Preconditions;
+import static org.apache.hadoop.hbase.io.compress.Compression.Algorithm.NONE;
 
 /**
  * A default implementation of {@link HFileBlockEncodingContext}. It will
@@ -86,7 +105,7 @@ public class HFileBlockDefaultEncodingContext implements
                 + compressionAlgorithm, e);
       }
     }
-    dummyHeader = Preconditions.checkNotNull(headerBytes, 
+    dummyHeader = Preconditions.checkNotNull(headerBytes,
       "Please pass HFileBlock.HFILEBLOCK_DUMMY_HEADER instead of null for param headerBytes");
   }
 

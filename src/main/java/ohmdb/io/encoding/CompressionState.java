@@ -1,4 +1,24 @@
 /*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
+
+/*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with this
  * work for additional information regarding copyright ownership. The ASF
@@ -14,13 +34,13 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hadoop.hbase.io.encoding;
-
-import java.nio.ByteBuffer;
+package ohmdb.io.encoding;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
+
+import java.nio.ByteBuffer;
 
 /**
  * Stores the state of data block encoder at the beginning of new key.
@@ -53,7 +73,7 @@ class CompressionState {
     readKey(in, keyLength, valueLength, 0, null);
   }
 
-  /** 
+  /**
    * Analyze the key and fill the state assuming we know previous state.
    * Uses mark() and reset() in ByteBuffer to avoid moving the position.
    * <p>
