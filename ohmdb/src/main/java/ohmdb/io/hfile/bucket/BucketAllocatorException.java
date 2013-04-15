@@ -37,14 +37,12 @@
  */
 package ohmdb.io.hfile.bucket;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.io.IOException;
 
 /**
  * Thrown by {@link BucketAllocator}
  */
-@InterfaceAudience.Private
 public class BucketAllocatorException extends IOException {
   private static final long serialVersionUID = 2479119906660788096L;
 

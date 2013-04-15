@@ -44,7 +44,6 @@ import ohmdb.io.encoding.HFileBlockDefaultDecodingContext;
 import ohmdb.io.encoding.HFileBlockDefaultEncodingContext;
 import ohmdb.io.encoding.HFileBlockEncodingContext;
 import ohmdb.io.hfile.HFile.FileInfo;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -56,7 +55,6 @@ import java.nio.ByteBuffer;
  * Do different kinds of data block encoding according to column family
  * options.
  */
-@InterfaceAudience.Private
 public class HFileDataBlockEncoderImpl implements HFileDataBlockEncoder {
   private final DataBlockEncoding onDisk;
   private final DataBlockEncoding inCache;

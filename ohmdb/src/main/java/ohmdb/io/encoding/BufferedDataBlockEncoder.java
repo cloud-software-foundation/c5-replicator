@@ -37,7 +37,6 @@
 package ohmdb.io.encoding;
 
 import ohmdb.io.hfile.BlockType;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.KeyValue.SamePrefixComparator;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
@@ -54,7 +53,6 @@ import java.nio.ByteBuffer;
 /**
  * Base class for all data block encoders that use a buffer.
  */
-@InterfaceAudience.Private
 abstract class BufferedDataBlockEncoder implements DataBlockEncoder {
 
   private static int INITIAL_KEY_BUFFER_SIZE = 512;

@@ -41,7 +41,6 @@ package ohmdb.io.hfile;
 import com.google.common.io.NullOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -70,7 +69,6 @@ import java.nio.ByteBuffer;
  * version determines smaller changes in hfile format that do not need a new
  * reader/writer type.
  */
-@InterfaceAudience.Private
 public class FixedFileTrailer {
 
   private static final Log LOG = LogFactory.getLog(FixedFileTrailer.class);

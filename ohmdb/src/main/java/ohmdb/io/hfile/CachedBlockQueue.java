@@ -40,7 +40,6 @@ package ohmdb.io.hfile;
 
 import com.google.common.collect.MinMaxPriorityQueue;
 import ohmdb.io.HeapSize;
-import org.apache.hadoop.classification.InterfaceAudience;
 
 /**
  * A memory-bound queue that will grow until an element brings
@@ -55,7 +54,6 @@ import org.apache.hadoop.classification.InterfaceAudience;
  * <p>Object used in this queue must implement {@link HeapSize} as well as
  * {@link Comparable}.
  */
-@InterfaceAudience.Private
 public class CachedBlockQueue implements HeapSize {
 
   private MinMaxPriorityQueue<CachedBlock> queue;

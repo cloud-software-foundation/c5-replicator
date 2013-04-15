@@ -36,7 +36,6 @@
  */
 package ohmdb.io.encoding;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
 
@@ -45,7 +44,6 @@ import java.nio.ByteBuffer;
 /**
  * Stores the state of data block encoder at the beginning of new key.
  */
-@InterfaceAudience.Private
 class CompressionState {
   int keyLength;
   int valueLength;

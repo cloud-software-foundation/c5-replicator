@@ -39,7 +39,6 @@
  */
 package ohmdb.io.hfile;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.DataInputStream;
@@ -52,7 +51,6 @@ import java.nio.ByteBuffer;
  * Various types of HFile blocks. Ordinal values of these enum constants must not be relied upon.
  * The values in the enum appear in the order they appear in a version 2 HFile.
  */
-@InterfaceAudience.Private
 public enum BlockType {
 
   // Scanned block section

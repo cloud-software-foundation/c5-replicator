@@ -36,12 +36,10 @@
  */
 package ohmdb.io.encoding;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 /**
  * Internal error which indicates a bug in a data block encoding algorithm.
  */
-@InterfaceAudience.Private
 public class EncoderBufferTooSmallException extends RuntimeException {
   private static final long serialVersionUID = 4767495176134878737L;
 

@@ -38,7 +38,6 @@
  */
 package ohmdb.io.hfile.bucket;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -47,7 +46,6 @@ import java.nio.ByteBuffer;
  * A class implementing IOEngine interface could support data services for
  * {@link BucketCache}.
  */
-@InterfaceAudience.Private
 public interface IOEngine {
 
   /**

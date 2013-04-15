@@ -41,7 +41,6 @@ package ohmdb.io.hfile;
 import ohmdb.io.HeapSize;
 import ohmdb.io.hfile.BlockType.BlockCategory;
 import ohmdb.io.hfile.bucket.BucketCache;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 
 import java.io.IOException;
@@ -56,7 +55,6 @@ import java.util.List;
  * hits and misses of both caches.
  *
  **/
-@InterfaceAudience.Private
 public class CombinedBlockCache implements BlockCache, HeapSize {
 
   private final LruBlockCache lruCache;

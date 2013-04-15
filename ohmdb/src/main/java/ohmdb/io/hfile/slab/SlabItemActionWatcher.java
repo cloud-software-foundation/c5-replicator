@@ -40,12 +40,10 @@
 package ohmdb.io.hfile.slab;
 
 import ohmdb.io.hfile.BlockCacheKey;
-import org.apache.hadoop.classification.InterfaceAudience;
 
 /**
  * Interface for objects that want to know when actions occur in a SingleSizeCache.
  * */
-@InterfaceAudience.Private
 interface SlabItemActionWatcher {
 
   /**

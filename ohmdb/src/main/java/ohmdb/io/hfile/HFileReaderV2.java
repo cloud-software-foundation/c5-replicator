@@ -43,7 +43,6 @@ import ohmdb.io.encoding.DataBlockEncoding;
 import ohmdb.io.hfile.HFile.FileInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
@@ -62,7 +61,6 @@ import java.util.List;
 /**
  * {@link HFile} reader for version 2.
  */
-@InterfaceAudience.Private
 public class HFileReaderV2 extends AbstractHFileReader {
 
   private static final Log LOG = LogFactory.getLog(HFileReaderV2.class);

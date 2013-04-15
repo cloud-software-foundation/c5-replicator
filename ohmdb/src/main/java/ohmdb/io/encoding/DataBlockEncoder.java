@@ -36,7 +36,6 @@
  */
 package ohmdb.io.encoding;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.io.RawComparator;
@@ -59,7 +58,6 @@ import java.nio.ByteBuffer;
  * compression algorithm is specified in HFileBlockEncodingContext argument of
  * {@link #encodeKeyValues(ByteBuffer, boolean, HFileBlockEncodingContext)}.
  */
-@InterfaceAudience.Private
 public interface DataBlockEncoder {
 
   /**

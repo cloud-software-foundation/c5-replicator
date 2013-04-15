@@ -36,7 +36,6 @@
  */
 package ohmdb.io.encoding;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -50,7 +49,6 @@ import java.util.Map;
  * want to add a new algorithm/version, assign it a new id. Announce the new id
  * in the HBase mailing list to prevent collisions.
  */
-@InterfaceAudience.Private
 public enum DataBlockEncoding {
 
   /** Disable data block encoding. */

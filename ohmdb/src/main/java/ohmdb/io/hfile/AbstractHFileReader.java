@@ -38,7 +38,6 @@ package ohmdb.io.hfile;
 
 import ohmdb.io.encoding.DataBlockEncoding;
 import ohmdb.io.hfile.HFile.FileInfo;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.KeyValue;
@@ -52,7 +51,6 @@ import java.nio.ByteBuffer;
 /**
  * Common functionality needed by all versions of {@link HFile} readers.
  */
-@InterfaceAudience.Private
 public abstract class AbstractHFileReader implements HFile.Reader {
 
   /** Filesystem-level block reader for this HFile format version. */

@@ -38,7 +38,6 @@
 
 package ohmdb.io;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HConstants;
@@ -55,7 +54,6 @@ import java.io.IOException;
  * The link checks first in the original path,
  * if it is not present it fallbacks to the archived path.
  */
-@InterfaceAudience.Private
 public class HLogLink extends FileLink {
   /**
    * @param conf {@link Configuration} from which to extract specific archive locations

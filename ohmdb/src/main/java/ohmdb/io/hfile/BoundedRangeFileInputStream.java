@@ -37,7 +37,6 @@
 
 package ohmdb.io.hfile;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSDataInputStream;
 
 import java.io.IOException;
@@ -50,7 +49,6 @@ import java.io.InputStream;
  * would not interfere with each other.
  * Copied from hadoop-335 tfile.
  */
-@InterfaceAudience.Private
 class BoundedRangeFileInputStream  extends InputStream {
 
   private FSDataInputStream in;

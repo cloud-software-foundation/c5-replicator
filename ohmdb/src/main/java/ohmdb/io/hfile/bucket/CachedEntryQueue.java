@@ -42,7 +42,6 @@ package ohmdb.io.hfile.bucket;
 import com.google.common.collect.MinMaxPriorityQueue;
 import ohmdb.io.hfile.BlockCacheKey;
 import ohmdb.io.hfile.bucket.BucketCache.BucketEntry;
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.util.Comparator;
 import java.util.Map;
@@ -59,7 +58,6 @@ import java.util.Map.Entry;
  * as possible. Default behavior is to grow just above rather than just below
  * specified max.
  */
-@InterfaceAudience.Private
 public class CachedEntryQueue {
 
   private MinMaxPriorityQueue<Map.Entry<BlockCacheKey, BucketEntry>> queue;

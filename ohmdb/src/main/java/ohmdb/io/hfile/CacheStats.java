@@ -38,14 +38,12 @@
  */
 package ohmdb.io.hfile;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Class that implements cache metrics.
  */
-@InterfaceAudience.Private
 public class CacheStats {
 
   /** Sliding window statistics. The number of metric periods to include in

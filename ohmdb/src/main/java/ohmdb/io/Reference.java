@@ -39,7 +39,6 @@
 package ohmdb.io;
 
 import com.google.protobuf.ByteString;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -72,7 +71,6 @@ import java.io.InputStream;
  * Note, a region is itself not splittable if it has instances of store file
  * references.  References are cleaned up by compactions.
  */
-@InterfaceAudience.Private
 public class Reference {
   private byte [] splitkey;
   private Range region;

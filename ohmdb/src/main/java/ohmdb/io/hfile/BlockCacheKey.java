@@ -39,14 +39,12 @@ package ohmdb.io.hfile;
 
 import ohmdb.io.HeapSize;
 import ohmdb.io.encoding.DataBlockEncoding;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ClassSize;
 
 /**
  * Cache Key for use with implementations of {@link BlockCache}
  */
-@InterfaceAudience.Private
 public class BlockCacheKey implements HeapSize, java.io.Serializable {
   private final String hfileName;
   private final long offset;

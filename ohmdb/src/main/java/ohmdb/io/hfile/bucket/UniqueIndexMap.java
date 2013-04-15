@@ -38,7 +38,6 @@
  */
 package ohmdb.io.hfile.bucket;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +47,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Map from type T to int and vice-versa. Used for reducing bit field item
  * counts.
  */
-@InterfaceAudience.Public
 public final class UniqueIndexMap<T> implements Serializable {
   private static final long serialVersionUID = -1145635738654002342L;
 

@@ -40,7 +40,6 @@ package ohmdb.io.hfile.bucket;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;
@@ -51,7 +50,6 @@ import java.nio.channels.FileChannel;
 /**
  * IO engine that stores data to a file on the local file system.
  */
-@InterfaceAudience.Private
 public class FileIOEngine implements IOEngine {
   static final Log LOG = LogFactory.getLog(FileIOEngine.class);
 

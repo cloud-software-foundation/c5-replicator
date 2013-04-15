@@ -41,7 +41,6 @@ import ohmdb.io.encoding.HFileBlockDecodingContext;
 import ohmdb.io.encoding.HFileBlockDefaultDecodingContext;
 import ohmdb.io.encoding.HFileBlockDefaultEncodingContext;
 import ohmdb.io.encoding.HFileBlockEncodingContext;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 
 import java.io.IOException;
@@ -50,7 +49,6 @@ import java.nio.ByteBuffer;
 /**
  * Does not perform any kind of encoding/decoding.
  */
-@InterfaceAudience.Private
 public class NoOpDataBlockEncoder implements HFileDataBlockEncoder {
 
   public static final NoOpDataBlockEncoder INSTANCE =

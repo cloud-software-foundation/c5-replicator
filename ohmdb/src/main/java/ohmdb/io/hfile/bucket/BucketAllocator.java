@@ -43,7 +43,6 @@ import ohmdb.io.hfile.BlockCacheKey;
 import ohmdb.io.hfile.bucket.BucketCache.BucketEntry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +57,6 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * This class is not thread safe.
  */
-@InterfaceAudience.Private
 public final class BucketAllocator {
   static final Log LOG = LogFactory.getLog(BucketAllocator.class);
 

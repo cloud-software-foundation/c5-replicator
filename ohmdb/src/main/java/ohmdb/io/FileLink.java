@@ -40,7 +40,6 @@ package ohmdb.io;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -103,7 +102,6 @@ import java.util.Collection;
  *  </li>
  * </ul>
  */
-@InterfaceAudience.Private
 public class FileLink {
   private static final Log LOG = LogFactory.getLog(FileLink.class);
 

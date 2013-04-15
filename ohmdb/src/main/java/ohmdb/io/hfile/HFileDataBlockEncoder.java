@@ -39,7 +39,6 @@ package ohmdb.io.hfile;
 import ohmdb.io.encoding.DataBlockEncoding;
 import ohmdb.io.encoding.HFileBlockDecodingContext;
 import ohmdb.io.encoding.HFileBlockEncodingContext;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -51,7 +50,6 @@ import java.nio.ByteBuffer;
  * not set or the given block is not a data block (encoded or not), methods
  * should just return the unmodified block.
  */
-@InterfaceAudience.Private
 public interface HFileDataBlockEncoder {
   /** Type of encoding used for data blocks in HFile. Stored in file info. */
   byte[] DATA_BLOCK_ENCODING = Bytes.toBytes("DATA_BLOCK_ENCODING");

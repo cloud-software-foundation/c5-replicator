@@ -38,7 +38,6 @@
 
 package ohmdb.io;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.io.DataInput;
 import java.io.IOException;
@@ -48,7 +47,6 @@ import java.io.InputStream;
  * An InputStream that wraps a DataInput.
  * @see DataOutputOutputStream
  */
-@InterfaceAudience.Private
 public class DataInputInputStream extends InputStream {
 
   private DataInput in;

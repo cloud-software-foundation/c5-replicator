@@ -38,7 +38,6 @@
  */
 package ohmdb.io.hfile.bucket;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.io.IOException;
 
@@ -46,7 +45,6 @@ import java.io.IOException;
  * Thrown by {@link BucketAllocator#allocateBlock(int)} when cache is full for
  * the requested size
  */
-@InterfaceAudience.Private
 public class CacheFullException extends IOException {
   private static final long serialVersionUID = 3265127301824638920L;
   private int requestedSize, bucketIndex;

@@ -52,7 +52,6 @@ import ohmdb.io.hfile.CombinedBlockCache;
 import ohmdb.io.hfile.HFileBlock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.regionserver.StoreFile;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
@@ -101,7 +100,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * to enlarge cache space by
  * {@link org.apache.hadoop.hbase.io.hfile.LruBlockCache#setVictimCache}
  */
-@InterfaceAudience.Private
 public class BucketCache implements BlockCache, HeapSize {
   static final Log LOG = LogFactory.getLog(BucketCache.class);
 

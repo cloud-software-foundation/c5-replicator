@@ -38,7 +38,6 @@
  */
 package ohmdb.io.hfile.bucket;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.util.ByteBufferArray;
 
 import java.io.IOException;
@@ -48,7 +47,6 @@ import java.nio.ByteBuffer;
  * IO engine that stores data on the memory using an array of ByteBuffers
  * {@link ByteBufferArray}
  */
-@InterfaceAudience.Private
 public class ByteBufferIOEngine implements IOEngine {
 
   private ByteBufferArray bufferArray;

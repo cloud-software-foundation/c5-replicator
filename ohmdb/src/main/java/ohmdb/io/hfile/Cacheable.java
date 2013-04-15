@@ -40,7 +40,6 @@
 package ohmdb.io.hfile;
 
 import ohmdb.io.HeapSize;
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.nio.ByteBuffer;
 
@@ -53,7 +52,6 @@ import java.nio.ByteBuffer;
  * getSerializedLength() of 0.
  *
  */
-@InterfaceAudience.Private
 public interface Cacheable extends HeapSize {
   /**
    * Returns the length of the ByteBuffer required to serialized the object. If the

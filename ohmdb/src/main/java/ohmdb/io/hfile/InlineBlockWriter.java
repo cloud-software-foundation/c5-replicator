@@ -38,7 +38,6 @@
  */
 package ohmdb.io.hfile;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -48,7 +47,6 @@ import java.io.IOException;
  * interspersed with data blocks. For example, Bloom filter chunks and
  * leaf-level blocks of a multi-level block index are stored as inline blocks.
  */
-@InterfaceAudience.Private
 public interface InlineBlockWriter {
 
   /**

@@ -36,7 +36,6 @@
  */
 package ohmdb.io.encoding;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -73,7 +72,6 @@ import java.nio.ByteBuffer;
  * - ... bytes: value (only if FLAG_SAME_VALUE is not set in the flag)
  *
  */
-@InterfaceAudience.Private
 public class FastDiffDeltaEncoder extends BufferedDataBlockEncoder {
   final int MASK_TIMESTAMP_LENGTH = (1 << 0) | (1 << 1) | (1 << 2);
   final int SHIFT_TIMESTAMP_LENGTH = 0;

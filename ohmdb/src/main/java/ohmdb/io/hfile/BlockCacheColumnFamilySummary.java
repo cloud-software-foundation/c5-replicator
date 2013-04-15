@@ -38,7 +38,6 @@
  */
 package ohmdb.io.hfile;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 
@@ -54,7 +53,6 @@ import java.io.IOException;
  * the owning Table is included in the summarization.
  *
  */
-@InterfaceAudience.Private
 public class BlockCacheColumnFamilySummary implements Writable, Comparable<BlockCacheColumnFamilySummary> {
 
   private String table = "";

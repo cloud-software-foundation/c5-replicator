@@ -38,7 +38,6 @@
  */
 package ohmdb.io;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -49,7 +48,6 @@ import java.io.OutputStream;
  * {@link #close()} fails on the first stream, it is not called on the second
  * stream.
  */
-@InterfaceAudience.Private
 public class DoubleOutputStream extends OutputStream {
   private OutputStream out1;
   private OutputStream out2;

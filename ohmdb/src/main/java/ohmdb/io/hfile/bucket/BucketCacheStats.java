@@ -38,7 +38,6 @@
 package ohmdb.io.hfile.bucket;
 
 import ohmdb.io.hfile.CacheStats;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -46,7 +45,6 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Class that implements cache metrics for bucket cache.
  */
-@InterfaceAudience.Private
 public class BucketCacheStats extends CacheStats {
   private final AtomicLong ioHitCount = new AtomicLong(0);
   private final AtomicLong ioHitTime = new AtomicLong(0);

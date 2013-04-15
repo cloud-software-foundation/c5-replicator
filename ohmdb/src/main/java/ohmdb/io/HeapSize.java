@@ -39,7 +39,6 @@
  */
 package ohmdb.io;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 /**
  * Implementations can be asked for an estimate of their size in bytes.
@@ -59,7 +58,6 @@ import org.apache.hadoop.classification.InterfaceAudience;
  * }
  * </pre>
  */
-@InterfaceAudience.Private
 public interface HeapSize {
   /**
    * @return Approximate 'exclusive deep size' of implementing object.  Includes

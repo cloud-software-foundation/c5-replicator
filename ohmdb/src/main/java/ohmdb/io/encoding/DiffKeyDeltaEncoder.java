@@ -36,7 +36,6 @@
  */
 package ohmdb.io.encoding;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.io.encoding.EncoderBufferTooSmallException;
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
@@ -69,7 +68,6 @@ import java.nio.ByteBuffer;
  * - 1 byte:    type (only if FLAG_SAME_TYPE is not set in the flag)
  * - ... bytes: value
  */
-@InterfaceAudience.Private
 public class DiffKeyDeltaEncoder extends BufferedDataBlockEncoder {
   static final int FLAG_SAME_KEY_LENGTH = 1;
   static final int FLAG_SAME_VALUE_LENGTH = 1 << 1;

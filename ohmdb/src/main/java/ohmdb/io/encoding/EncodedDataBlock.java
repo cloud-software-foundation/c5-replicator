@@ -39,7 +39,6 @@ package ohmdb.io.encoding;
 import com.google.common.base.Preconditions;
 import com.google.common.io.NullOutputStream;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.io.compress.Compression;
@@ -59,7 +58,6 @@ import java.util.Iterator;
  * Encapsulates a data block compressed using a particular encoding algorithm.
  * Useful for testing and benchmarking.
  */
-@InterfaceAudience.Private
 public class EncodedDataBlock {
   private byte[] rawKVs;
   private ByteBuffer rawBuffer;

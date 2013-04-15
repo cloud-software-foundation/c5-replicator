@@ -45,7 +45,6 @@ import ohmdb.io.hfile.CachedBlock.BlockPriority;
 import ohmdb.io.hfile.bucket.BucketCache;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -112,7 +111,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * to free).  It then uses the priority chunk sizes to evict fairly according
  * to the relative sizes and usage.
  */
-@InterfaceAudience.Private
 public class LruBlockCache implements BlockCache, HeapSize {
 
   static final Log LOG = LogFactory.getLog(LruBlockCache.class);

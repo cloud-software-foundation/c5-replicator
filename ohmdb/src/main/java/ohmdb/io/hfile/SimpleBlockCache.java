@@ -38,7 +38,6 @@
  */
 package ohmdb.io.hfile;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 
 import java.lang.ref.ReferenceQueue;
@@ -51,7 +50,6 @@ import java.util.Map;
 /**
  * Simple one RFile soft reference cache.
  */
-@InterfaceAudience.Private
 public class SimpleBlockCache implements BlockCache {
   private static class Ref extends SoftReference<Cacheable> {
     public BlockCacheKey blockId;

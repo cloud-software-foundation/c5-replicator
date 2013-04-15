@@ -42,7 +42,6 @@ import ohmdb.io.HeapSize;
 import ohmdb.io.hfile.slab.SlabCache;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.util.StringUtils;
 
@@ -57,7 +56,6 @@ import java.util.List;
  * combined size and hits and misses of both caches.
  *
  **/
-@InterfaceAudience.Private
 public class DoubleBlockCache implements BlockCache, HeapSize {
 
   static final Log LOG = LogFactory.getLog(DoubleBlockCache.class.getName());

@@ -39,7 +39,6 @@
 package ohmdb.io.hfile;
 
 import ohmdb.io.hfile.HFile.FileInfo;
-import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -62,7 +61,6 @@ import java.util.List;
 /**
  * Common functionality needed by all versions of {@link HFile} writers.
  */
-@InterfaceAudience.Private
 public abstract class AbstractHFileWriter implements HFile.Writer {
 
   /** Key previously appended. Becomes the last key in the file. */

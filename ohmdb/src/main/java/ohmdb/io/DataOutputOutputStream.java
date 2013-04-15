@@ -37,7 +37,6 @@
  */
 package ohmdb.io;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.io.DataOutput;
 import java.io.IOException;
@@ -46,7 +45,6 @@ import java.io.OutputStream;
 /**
  * OutputStream implementation that wraps a DataOutput.
  */
-@InterfaceAudience.Private
 public class DataOutputOutputStream extends OutputStream {
 
   private final DataOutput out;

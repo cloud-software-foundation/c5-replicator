@@ -38,7 +38,6 @@
  */
 package ohmdb.io.hfile;
 
-import org.apache.hadoop.classification.InterfaceAudience;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +47,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This class is used to manage the identifiers for
  * {@link CacheableDeserializer}
  */
-@InterfaceAudience.Private
 public class CacheableDeserializerIdManager {
   private static final Map<Integer, CacheableDeserializer<Cacheable>> registeredDeserializers =
     new HashMap<Integer, CacheableDeserializer<Cacheable>>();
