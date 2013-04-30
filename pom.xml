@@ -9,6 +9,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>flease</module>
         <module>ohmdb</module>
     </modules>
 

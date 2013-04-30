@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="agpl-bsd-flease" pattern="src[flease]:org.xtreemfs.foundation..*||test[flease]:org.xtreemfs.foundation.flease..*" />
+</component>
