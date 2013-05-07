@@ -16,17 +16,21 @@
  */
 package ohmdb.election;
 
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ElectionServer extends ChannelInboundMessageHandlerAdapter<Gossip.Availability> {
-  private static final Logger LOG = LoggerFactory.getLogger(ElectionServer.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ElectionServer.class);
 
-  @Override
-  public void messageReceived(ChannelHandlerContext ctx, Gossip.Availability msg) throws Exception {
-    LOG.info("Got incoming message {}", msg);
-  }
+    @Override
+    public void messageReceived(ChannelHandlerContext ctx, Gossip.Availability msg) throws Exception {
+        LOG.info("Got incoming message {}", msg);
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        LOG.info("Caught exeception", cause);
+    }
 }
