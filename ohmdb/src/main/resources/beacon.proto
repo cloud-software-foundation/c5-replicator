@@ -1,6 +1,6 @@
 package ohmdb.election;
 
-option java_package = "ohmdb.election";
+option java_package = "ohmdb.discovery";
 option optimize_for = SPEED;
 
 // An availability broadcast

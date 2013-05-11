@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package ohmdb.election;
+package ohmdb.codec;
 
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.MessageLiteOrBuilder;
@@ -31,6 +31,7 @@ public class UdpProtobufEncoder extends MessageToMessageEncoder<UdpProtobufEncod
     public static class UdpProtobufMessage {
         public final InetSocketAddress remoteAddress;
         public final MessageLiteOrBuilder message;
+
         public UdpProtobufMessage(InetSocketAddress remoteAddress, MessageLiteOrBuilder message) {
             this.remoteAddress = remoteAddress;
             this.message = message;
@@ -47,9 +48,6 @@ public class UdpProtobufEncoder extends MessageToMessageEncoder<UdpProtobufEncod
             data = wrappedBuffer(((MessageLite.Builder) msg.message).build().toByteArray());
         }
 
-        if (data != null) {
-            System.out.println("Encoded a packet of length " + data.capacity() + " to: " + msg.remoteAddress);
-        }
         return new DatagramPacket(data, msg.remoteAddress);
     }
 }
