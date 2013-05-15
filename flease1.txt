@@ -1,0 +1,661 @@
+/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/bin/java -Dorg.slf4j.simpleLogger.defaultLogLevel=debug -Didea.launcher.port=7532 "-Didea.launcher.bin.path=/Applications/IntelliJ IDEA 12.app/bin" -Dfile.encoding=UTF-8 -classpath "/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/lib/ant-javafx.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/lib/dt.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/lib/javafx-doclet.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/lib/javafx-mx.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/lib/jconsole.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/lib/sa-jdi.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/lib/tools.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/charsets.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/deploy.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/htmlconverter.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/javaws.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/jce.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/jfr.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/jfxrt.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/JObjC.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/jsse.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/management-agent.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/plugin.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/resources.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/rt.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/ext/dnsns.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/ext/localedata.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/ext/sunec.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/ext/sunjce_provider.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/ext/sunpkcs11.jar:/Library/Java/JavaVirtualMachines/jdk1.7.0_09.jdk/Contents/Home/jre/lib/ext/zipfs.jar:/Users/ryan/dev/ohmdata/ohmdb/ohmdb/target/classes:/Users/ryan/.m2/repository/org/apache/hbase/hbase-server/0.97.0-SNAPSHOT/hbase-server-0.97.0-SNAPSHOT.jar:/Users/ryan/.m2/repository/org/apache/hbase/hbase-common/0.97.0-SNAPSHOT/hbase-common-0.97.0-SNAPSHOT.jar:/Users/ryan/.m2/repository/commons-logging/commons-logging/1.1.1/commons-logging-1.1.1.jar:/Users/ryan/.m2/repository/org/apache/hadoop/hadoop-core/1.1.2/hadoop-core-1.1.2.jar:/Users/ryan/.m2/repository/commons-cli/commons-cli/1.2/commons-cli-1.2.jar:/Users/ryan/.m2/repository/xmlenc/xmlenc/0.52/xmlenc-0.52.jar:/Users/ryan/.m2/repository/com/sun/jersey/jersey-core/1.8/jersey-core-1.8.jar:/Users/ryan/.m2/repository/com/sun/jersey/jersey-json/1.8/jersey-json-1.8.jar:/Users/ryan/.m2/repository/org/codehaus/jettison/jettison/1.1/jettison-1.1.jar:/Users/ryan/.m2/repository/stax/stax-api/1.0.1/stax-api-1.0.1.jar:/Users/ryan/.m2/repository/com/sun/xml/bind/jaxb-impl/2.2.3-1/jaxb-impl-2.2.3-1.jar:/Users/ryan/.m2/repository/javax/xml/bind/jaxb-api/2.1/jaxb-api-2.1.jar:/Users/ryan/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar:/Users/ryan/.m2/repository/org/codehaus/jackson/jackson-core-asl/1.8.8/jackson-core-asl-1.8.8.jar:/Users/ryan/.m2/repository/org/codehaus/jackson/jackson-mapper-asl/1.8.8/jackson-mapper-asl-1.8.8.jar:/Users/ryan/.m2/repository/org/codehaus/jackson/jackson-jaxrs/1.8.8/jackson-jaxrs-1.8.8.jar:/Users/ryan/.m2/repository/org/codehaus/jackson/jackson-xc/1.8.8/jackson-xc-1.8.8.jar:/Users/ryan/.m2/repository/com/sun/jersey/jersey-server/1.8/jersey-server-1.8.jar:/Users/ryan/.m2/repository/asm/asm/3.1/asm-3.1.jar:/Users/ryan/.m2/repository/commons-io/commons-io/2.4/commons-io-2.4.jar:/Users/ryan/.m2/repository/commons-httpclient/commons-httpclient/3.0.1/commons-httpclient-3.0.1.jar:/Users/ryan/.m2/repository/commons-codec/commons-codec/1.7/commons-codec-1.7.jar:/Users/ryan/.m2/repository/org/apache/commons/commons-math/2.1/commons-math-2.1.jar:/Users/ryan/.m2/repository/commons-configuration/commons-configuration/1.6/commons-configuration-1.6.jar:/Users/ryan/.m2/repository/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar:/Users/ryan/.m2/repository/commons-lang/commons-lang/2.6/commons-lang-2.6.jar:/Users/ryan/.m2/repository/commons-digester/commons-digester/1.8/commons-digester-1.8.jar:/Users/ryan/.m2/repository/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.jar:/Users/ryan/.m2/repository/commons-beanutils/commons-beanutils-core/1.8.0/commons-beanutils-core-1.8.0.jar:/Users/ryan/.m2/repository/commons-net/commons-net/1.4.1/commons-net-1.4.1.jar:/Users/ryan/.m2/repository/org/mortbay/jetty/jetty/6.1.26/jetty-6.1.26.jar:/Users/ryan/.m2/repository/org/mortbay/jetty/jetty-util/6.1.26/jetty-util-6.1.26.jar:/Users/ryan/.m2/repository/tomcat/jasper-runtime/5.5.12/jasper-runtime-5.5.12.jar:/Users/ryan/.m2/repository/tomcat/jasper-compiler/5.5.12/jasper-compiler-5.5.12.jar:/Users/ryan/.m2/repository/org/mortbay/jetty/jsp-api-2.1/6.1.14/jsp-api-2.1-6.1.14.jar:/Users/ryan/.m2/repository/org/mortbay/jetty/servlet-api-2.5/6.1.14/servlet-api-2.5-6.1.14.jar:/Users/ryan/.m2/repository/org/mortbay/jetty/jsp-2.1/6.1.14/jsp-2.1-6.1.14.jar:/Users/ryan/.m2/repository/commons-el/commons-el/1.0/commons-el-1.0.jar:/Users/ryan/.m2/repository/com/github/stephenc/findbugs/findbugs-annotations/1.3.9-1/findbugs-annotations-1.3.9-1.jar:/Users/ryan/.m2/repository/org/apache/hbase/hbase-protocol/0.97.0-SNAPSHOT/hbase-protocol-0.97.0-SNAPSHOT.jar:/Users/ryan/.m2/repository/org/apache/hbase/hbase-client/0.97.0-SNAPSHOT/hbase-client-0.97.0-SNAPSHOT.jar:/Users/ryan/.m2/repository/org/apache/zookeeper/zookeeper/3.4.5/zookeeper-3.4.5.jar:/Users/ryan/.m2/repository/log4j/log4j/1.2.17/log4j-1.2.17.jar:/Users/ryan/.m2/repository/org/cloudera/htrace/htrace/1.50/htrace-1.50.jar:/Users/ryan/.m2/repository/io/netty/netty/3.5.9.Final/netty-3.5.9.Final.jar:/Users/ryan/.m2/repository/org/apache/hbase/hbase-prefix-tree/0.97.0-SNAPSHOT/hbase-prefix-tree-0.97.0-SNAPSHOT.jar:/Users/ryan/.m2/repository/org/apache/hbase/hbase-hadoop-compat/0.97.0-SNAPSHOT/hbase-hadoop-compat-0.97.0-SNAPSHOT.jar:/Users/ryan/.m2/repository/org/apache/hbase/hbase-hadoop1-compat/0.97.0-SNAPSHOT/hbase-hadoop1-compat-0.97.0-SNAPSHOT.jar:/Users/ryan/.m2/repository/com/yammer/metrics/metrics-core/2.1.2/metrics-core-2.1.2.jar:/Users/ryan/.m2/repository/com/github/stephenc/high-scale-lib/high-scale-lib/1.1.1/high-scale-lib-1.1.1.jar:/Users/ryan/.m2/repository/org/apache/thrift/libthrift/0.9.0/libthrift-0.9.0.jar:/Users/ryan/.m2/repository/org/apache/httpcomponents/httpclient/4.1.3/httpclient-4.1.3.jar:/Users/ryan/.m2/repository/org/apache/httpcomponents/httpcore/4.1.3/httpcore-4.1.3.jar:/Users/ryan/.m2/repository/org/jruby/jruby-complete/1.6.8/jruby-complete-1.6.8.jar:/Users/ryan/.m2/repository/org/eclipse/jdt/core/3.1.1/core-3.1.1.jar:/Users/ryan/.m2/repository/org/jamon/jamon-runtime/2.3.1/jamon-runtime-2.3.1.jar:/Users/ryan/.m2/repository/com/google/guava/guava/14.0.1/guava-14.0.1.jar:/Users/ryan/dev/ohmdata/ohmdb/flease/target/classes:/Users/ryan/.m2/repository/io/netty/netty-all/4.0.0.CR1/netty-all-4.0.0.CR1.jar:/Users/ryan/.m2/repository/com/barchart/udt/barchart-udt-bundle/2.2.6/barchart-udt-bundle-2.2.6.jar:/Users/ryan/.m2/repository/com/google/protobuf/protobuf-java/2.5.0/protobuf-java-2.5.0.jar:/Users/ryan/.m2/repository/org/slf4j/slf4j-api/1.7.4/slf4j-api-1.7.4.jar:/Users/ryan/.m2/repository/org/slf4j/slf4j-simple/1.7.4/slf4j-simple-1.7.4.jar:/Users/ryan/.m2/repository/org/jetlang/jetlang/0.2.10/jetlang-0.2.10.jar:/Applications/IntelliJ IDEA 12.app/lib/idea_rt.jar" com.intellij.rt.execution.application.AppMain ohmdb.election.FleaseTestMain tstclstr
+Cluster port = 15245
+[TSync Thr] INFO org.xtreemfs.foundation.TimeSync - TimeSync is running using the local clock (precision is 50 ms)
+[main] DEBUG io.netty.util.internal.logging.InternalLoggerFactory - Using SLF4J as the default logging framework
+[main] DEBUG io.netty.channel.nio.NioEventLoop - Selector auto-rebuild threshold: 512
+[TCPcomm@18140] INFO org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - TCP Server @18140 ready
+[FleaseStage] INFO org.xtreemfs.foundation.flease.FleaseStage - Flease (version 0.2.4 (trunk)) ready
+[main] INFO ohmdb.election.FleaseTestMain - Waiting for peers...
+[Thread-3] INFO ohmdb.discovery.BeaconService - Sending beacon broadcast message to /255.255.255.255:15245
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "6d6c1e9e-c31d-4100-b499-a61b1fb7e005"
+network_port: 18140
+addresses: "192.168.1.28"
+
+[Thread-3] INFO ohmdb.discovery.BeaconService - Sending beacon broadcast message to /255.255.255.255:15245
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "6d6c1e9e-c31d-4100-b499-a61b1fb7e005"
+network_port: 18140
+addresses: "192.168.1.28"
+
+[Thread-3] INFO ohmdb.discovery.BeaconService - Sending beacon broadcast message to /255.255.255.255:15245
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "6d6c1e9e-c31d-4100-b499-a61b1fb7e005"
+network_port: 18140
+addresses: "192.168.1.28"
+
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "8b7e2b4b-561a-4da7-848a-1f1f12ff220f"
+network_port: 17229
+addresses: "192.168.1.28"
+
+[Thread-3] INFO ohmdb.discovery.BeaconService - Sending beacon broadcast message to /255.255.255.255:15245
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "6d6c1e9e-c31d-4100-b499-a61b1fb7e005"
+network_port: 18140
+addresses: "192.168.1.28"
+
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "8b7e2b4b-561a-4da7-848a-1f1f12ff220f"
+network_port: 17229
+addresses: "192.168.1.28"
+
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "9925fab6-c816-4ded-8370-80aa8b6d35c8"
+network_port: 19795
+addresses: "192.168.1.28"
+
+[Thread-2] INFO ohmdb.election.FleaseTestMain - Got more than 3 peers, continuing
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposerCell - opened new cell id tstclstr with majority = 2
+[FleaseStage] WARN org.xtreemfs.foundation.flease.proposer.FleaseProposer - P created new cellId tstclstr
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P reset cell id tstclstr due to timeout
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039368;1593029695) lease=localhost:18140/1368653044368(Wed May 15 14:24:04 PDT 2013) prevb=(0;0) ts=1368653039368(Wed May 15 14:23:59 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connect to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connection established
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - enqueued write to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[TCPcomm@18140] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connected from /192.168.1.28:55809 to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connect to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connection established
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - enqueued write to /192.168.1.28:19795
+[TCPcomm@18140] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(0;0) -> (1368653039368;1593029695) a:(0;0)
+[TCPcomm@18140] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connected from /192.168.1.28:55810 to /192.168.1.28:19795
+[TCPcomm@18140] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039368;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P processing with no prior proposal
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039368;1593029695) lease=localhost:18140/1368653044368(Wed May 15 14:24:04 PDT 2013) prevb=(0;0) ts=1368653039419(Wed May 15 14:23:59 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039368;1593029695) a: (0;0) -> (1368653039368;1593029695)=localhost:18140/1368653044368
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039368;1593029695) lease=localhost:18140/1368653044368(Wed May 15 14:24:04 PDT 2013) prevb=(0;0) ts=1368653039420(Wed May 15 14:23:59 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039368;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039368;1593029695) lease=localhost:18140/1368653044368(Wed May 15 14:24:04 PDT 2013) prevb=(0;0) ts=1368653039419(Wed May 15 14:23:59 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039368;1593029695) lease=localhost:18140/1368653044368(Wed May 15 14:24:04 PDT 2013) prevb=(0;0) ts=1368653039419(Wed May 15 14:23:59 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039368;1593029695) a: (1368653039368;1593029695)=localhost:18140/1368653044368 -> (1368653039368;1593029695)=localhost:18140/1368653044368
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653044368
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653044368
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653044368
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653040368
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039368;1593029695) lease=localhost:18140/1368653044368(Wed May 15 14:24:04 PDT 2013) prevb=(0;0) ts=1368653039420(Wed May 15 14:23:59 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[Thread-3] INFO ohmdb.discovery.BeaconService - Sending beacon broadcast message to /255.255.255.255:15245
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "6d6c1e9e-c31d-4100-b499-a61b1fb7e005"
+network_port: 18140
+addresses: "192.168.1.28"
+
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039368;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653040332(Wed May 15 14:24:00 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039369;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653040332(Wed May 15 14:24:00 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039369;1593029695) lease=localhost:18140/1368653045332(Wed May 15 14:24:05 PDT 2013) prevb=(0;0) ts=1368653040332(Wed May 15 14:24:00 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039368;1593029695) -> (1368653039369;1593029695) a:(1368653039368;1593029695)=localhost:18140/1368653044368
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039369;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653044368 (1368653039368;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039369;1593029695) lease=localhost:18140/1368653045332(Wed May 15 14:24:05 PDT 2013) prevb=(0;0) ts=1368653040332(Wed May 15 14:24:00 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039369;1593029695) a: (1368653039368;1593029695)=localhost:18140/1368653044368 -> (1368653039369;1593029695)=localhost:18140/1368653045332
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039369;1593029695) lease=localhost:18140/1368653044368(Wed May 15 14:24:04 PDT 2013) prevb=(1368653039368;1593029695) ts=1368653040315(Wed May 15 14:24:00 PDT 2013) addr=/192.168.1.28:19795 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039369;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039369;1593029695) lease=localhost:18140/1368653045332(Wed May 15 14:24:05 PDT 2013) prevb=(0;0) ts=1368653040332(Wed May 15 14:24:00 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039369;1593029695) lease=localhost:18140/1368653045332(Wed May 15 14:24:05 PDT 2013) prevb=(0;0) ts=1368653040332(Wed May 15 14:24:00 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039369;1593029695) a: (1368653039369;1593029695)=localhost:18140/1368653045332 -> (1368653039369;1593029695)=localhost:18140/1368653045332
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653045332
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653045332
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653045332
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653041332
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039369;1593029695) lease=localhost:18140/1368653045332(Wed May 15 14:24:05 PDT 2013) prevb=(0;0) ts=1368653040333(Wed May 15 14:24:00 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039368;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653040383(Wed May 15 14:24:00 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039370;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039370;1593029695) lease=localhost:18140/1368653046297(Wed May 15 14:24:06 PDT 2013) prevb=(0;0) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039369;1593029695) -> (1368653039370;1593029695) a:(1368653039369;1593029695)=localhost:18140/1368653045332
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039369;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (before my request): FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039369;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039370;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653045332 (1368653039369;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039370;1593029695) lease=localhost:18140/1368653046297(Wed May 15 14:24:06 PDT 2013) prevb=(0;0) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039370;1593029695) a: (1368653039369;1593029695)=localhost:18140/1368653045332 -> (1368653039370;1593029695)=localhost:18140/1368653046297
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039370;1593029695) lease=localhost:18140/1368653045332(Wed May 15 14:24:05 PDT 2013) prevb=(1368653039369;1593029695) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039370;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039370;1593029695) lease=localhost:18140/1368653046297(Wed May 15 14:24:06 PDT 2013) prevb=(0;0) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039370;1593029695) lease=localhost:18140/1368653046297(Wed May 15 14:24:06 PDT 2013) prevb=(0;0) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039370;1593029695) a: (1368653039370;1593029695)=localhost:18140/1368653046297 -> (1368653039370;1593029695)=localhost:18140/1368653046297
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653046297
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653046297
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653046297
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653042297
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039370;1593029695) lease=localhost:18140/1368653046297(Wed May 15 14:24:06 PDT 2013) prevb=(0;0) ts=1368653041297(Wed May 15 14:24:01 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "8b7e2b4b-561a-4da7-848a-1f1f12ff220f"
+network_port: 17229
+addresses: "192.168.1.28"
+
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039370;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653042263(Wed May 15 14:24:02 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039371;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653042263(Wed May 15 14:24:02 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039371;1593029695) lease=localhost:18140/1368653047263(Wed May 15 14:24:07 PDT 2013) prevb=(0;0) ts=1368653042263(Wed May 15 14:24:02 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039370;1593029695) -> (1368653039371;1593029695) a:(1368653039370;1593029695)=localhost:18140/1368653046297
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039370;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653042263(Wed May 15 14:24:02 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039371;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653046297 (1368653039370;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039371;1593029695) lease=localhost:18140/1368653047263(Wed May 15 14:24:07 PDT 2013) prevb=(0;0) ts=1368653042263(Wed May 15 14:24:02 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039371;1593029695) a: (1368653039370;1593029695)=localhost:18140/1368653046297 -> (1368653039371;1593029695)=localhost:18140/1368653047263
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039371;1593029695) lease=localhost:18140/1368653046297(Wed May 15 14:24:06 PDT 2013) prevb=(1368653039370;1593029695) ts=1368653042293(Wed May 15 14:24:02 PDT 2013) addr=/192.168.1.28:19795 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039371;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039371;1593029695) lease=localhost:18140/1368653047263(Wed May 15 14:24:07 PDT 2013) prevb=(0;0) ts=1368653042263(Wed May 15 14:24:02 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039371;1593029695) lease=localhost:18140/1368653047263(Wed May 15 14:24:07 PDT 2013) prevb=(0;0) ts=1368653042263(Wed May 15 14:24:02 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039371;1593029695) a: (1368653039371;1593029695)=localhost:18140/1368653047263 -> (1368653039371;1593029695)=localhost:18140/1368653047263
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653047263
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653047263
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653047263
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653043263
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039371;1593029695) lease=localhost:18140/1368653047263(Wed May 15 14:24:07 PDT 2013) prevb=(0;0) ts=1368653042263(Wed May 15 14:24:02 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039371;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653043227(Wed May 15 14:24:03 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039372;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653043227(Wed May 15 14:24:03 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039372;1593029695) lease=localhost:18140/1368653048227(Wed May 15 14:24:08 PDT 2013) prevb=(0;0) ts=1368653043227(Wed May 15 14:24:03 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039371;1593029695) -> (1368653039372;1593029695) a:(1368653039371;1593029695)=localhost:18140/1368653047263
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039371;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653043227(Wed May 15 14:24:03 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039372;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653047263 (1368653039371;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039372;1593029695) lease=localhost:18140/1368653048227(Wed May 15 14:24:08 PDT 2013) prevb=(0;0) ts=1368653043227(Wed May 15 14:24:03 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039372;1593029695) a: (1368653039371;1593029695)=localhost:18140/1368653047263 -> (1368653039372;1593029695)=localhost:18140/1368653048227
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039372;1593029695) lease=localhost:18140/1368653047263(Wed May 15 14:24:07 PDT 2013) prevb=(1368653039371;1593029695) ts=1368653043227(Wed May 15 14:24:03 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039372;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039372;1593029695) lease=localhost:18140/1368653048227(Wed May 15 14:24:08 PDT 2013) prevb=(0;0) ts=1368653043227(Wed May 15 14:24:03 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039372;1593029695) lease=localhost:18140/1368653048227(Wed May 15 14:24:08 PDT 2013) prevb=(0;0) ts=1368653043227(Wed May 15 14:24:03 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039372;1593029695) a: (1368653039372;1593029695)=localhost:18140/1368653048227 -> (1368653039372;1593029695)=localhost:18140/1368653048227
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653048227
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653048227
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653048227
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653044227
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039372;1593029695) lease=localhost:18140/1368653048227(Wed May 15 14:24:08 PDT 2013) prevb=(0;0) ts=1368653043256(Wed May 15 14:24:03 PDT 2013) addr=/192.168.1.28:19795 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039372;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653044189(Wed May 15 14:24:04 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039373;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653044240(Wed May 15 14:24:04 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039373;1593029695) lease=localhost:18140/1368653049240(Wed May 15 14:24:09 PDT 2013) prevb=(0;0) ts=1368653044240(Wed May 15 14:24:04 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039372;1593029695) -> (1368653039373;1593029695) a:(1368653039372;1593029695)=localhost:18140/1368653048227
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039372;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653044240(Wed May 15 14:24:04 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039373;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653048227 (1368653039372;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039373;1593029695) lease=localhost:18140/1368653049240(Wed May 15 14:24:09 PDT 2013) prevb=(0;0) ts=1368653044240(Wed May 15 14:24:04 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039373;1593029695) a: (1368653039372;1593029695)=localhost:18140/1368653048227 -> (1368653039373;1593029695)=localhost:18140/1368653049240
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039373;1593029695) lease=localhost:18140/1368653048227(Wed May 15 14:24:08 PDT 2013) prevb=(1368653039372;1593029695) ts=1368653044240(Wed May 15 14:24:04 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039373;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039373;1593029695) lease=localhost:18140/1368653049240(Wed May 15 14:24:09 PDT 2013) prevb=(0;0) ts=1368653044240(Wed May 15 14:24:04 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039373;1593029695) lease=localhost:18140/1368653049240(Wed May 15 14:24:09 PDT 2013) prevb=(0;0) ts=1368653044240(Wed May 15 14:24:04 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039373;1593029695) a: (1368653039373;1593029695)=localhost:18140/1368653049240 -> (1368653039373;1593029695)=localhost:18140/1368653049240
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653049240
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653049240
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653049240
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653045240
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039373;1593029695) lease=localhost:18140/1368653049240(Wed May 15 14:24:09 PDT 2013) prevb=(0;0) ts=1368653044240(Wed May 15 14:24:04 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039373;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653045205(Wed May 15 14:24:05 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039374;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653045205(Wed May 15 14:24:05 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039374;1593029695) lease=localhost:18140/1368653050205(Wed May 15 14:24:10 PDT 2013) prevb=(0;0) ts=1368653045205(Wed May 15 14:24:05 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039373;1593029695) -> (1368653039374;1593029695) a:(1368653039373;1593029695)=localhost:18140/1368653049240
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039373;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653045205(Wed May 15 14:24:05 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039374;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653049240 (1368653039373;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039374;1593029695) lease=localhost:18140/1368653050205(Wed May 15 14:24:10 PDT 2013) prevb=(0;0) ts=1368653045205(Wed May 15 14:24:05 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039374;1593029695) a: (1368653039373;1593029695)=localhost:18140/1368653049240 -> (1368653039374;1593029695)=localhost:18140/1368653050205
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039374;1593029695) lease=localhost:18140/1368653049240(Wed May 15 14:24:09 PDT 2013) prevb=(1368653039373;1593029695) ts=1368653045203(Wed May 15 14:24:05 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039374;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039374;1593029695) lease=localhost:18140/1368653050205(Wed May 15 14:24:10 PDT 2013) prevb=(0;0) ts=1368653045205(Wed May 15 14:24:05 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039374;1593029695) lease=localhost:18140/1368653050205(Wed May 15 14:24:10 PDT 2013) prevb=(0;0) ts=1368653045205(Wed May 15 14:24:05 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039374;1593029695) a: (1368653039374;1593029695)=localhost:18140/1368653050205 -> (1368653039374;1593029695)=localhost:18140/1368653050205
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653050205
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653050205
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653050205
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653046205
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039374;1593029695) lease=localhost:18140/1368653050205(Wed May 15 14:24:10 PDT 2013) prevb=(0;0) ts=1368653045203(Wed May 15 14:24:05 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039374;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653046172(Wed May 15 14:24:06 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039375;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653046172(Wed May 15 14:24:06 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039375;1593029695) lease=localhost:18140/1368653051172(Wed May 15 14:24:11 PDT 2013) prevb=(0;0) ts=1368653046172(Wed May 15 14:24:06 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039374;1593029695) -> (1368653039375;1593029695) a:(1368653039374;1593029695)=localhost:18140/1368653050205
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039374;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653046172(Wed May 15 14:24:06 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039375;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653050205 (1368653039374;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039375;1593029695) lease=localhost:18140/1368653051172(Wed May 15 14:24:11 PDT 2013) prevb=(0;0) ts=1368653046172(Wed May 15 14:24:06 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039375;1593029695) a: (1368653039374;1593029695)=localhost:18140/1368653050205 -> (1368653039375;1593029695)=localhost:18140/1368653051172
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039375;1593029695) lease=localhost:18140/1368653050205(Wed May 15 14:24:10 PDT 2013) prevb=(1368653039374;1593029695) ts=1368653046151(Wed May 15 14:24:06 PDT 2013) addr=/192.168.1.28:19795 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039375;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039375;1593029695) lease=localhost:18140/1368653051172(Wed May 15 14:24:11 PDT 2013) prevb=(0;0) ts=1368653046172(Wed May 15 14:24:06 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039375;1593029695) lease=localhost:18140/1368653051172(Wed May 15 14:24:11 PDT 2013) prevb=(0;0) ts=1368653046172(Wed May 15 14:24:06 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039375;1593029695) a: (1368653039375;1593029695)=localhost:18140/1368653051172 -> (1368653039375;1593029695)=localhost:18140/1368653051172
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653051172
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653051172
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653051172
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653047172
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039375;1593029695) lease=localhost:18140/1368653051172(Wed May 15 14:24:11 PDT 2013) prevb=(0;0) ts=1368653046168(Wed May 15 14:24:06 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039375;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653047136(Wed May 15 14:24:07 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039376;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653047136(Wed May 15 14:24:07 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039376;1593029695) lease=localhost:18140/1368653052136(Wed May 15 14:24:12 PDT 2013) prevb=(0;0) ts=1368653047136(Wed May 15 14:24:07 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039375;1593029695) -> (1368653039376;1593029695) a:(1368653039375;1593029695)=localhost:18140/1368653051172
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039375;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653047136(Wed May 15 14:24:07 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039376;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653051172 (1368653039375;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039376;1593029695) lease=localhost:18140/1368653052136(Wed May 15 14:24:12 PDT 2013) prevb=(0;0) ts=1368653047136(Wed May 15 14:24:07 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039376;1593029695) a: (1368653039375;1593029695)=localhost:18140/1368653051172 -> (1368653039376;1593029695)=localhost:18140/1368653052136
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039376;1593029695) lease=localhost:18140/1368653051172(Wed May 15 14:24:11 PDT 2013) prevb=(1368653039375;1593029695) ts=1368653047134(Wed May 15 14:24:07 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039376;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039376;1593029695) lease=localhost:18140/1368653052136(Wed May 15 14:24:12 PDT 2013) prevb=(0;0) ts=1368653047136(Wed May 15 14:24:07 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039376;1593029695) lease=localhost:18140/1368653052136(Wed May 15 14:24:12 PDT 2013) prevb=(0;0) ts=1368653047136(Wed May 15 14:24:07 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039376;1593029695) a: (1368653039376;1593029695)=localhost:18140/1368653052136 -> (1368653039376;1593029695)=localhost:18140/1368653052136
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653052136
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653052136
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653052136
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653048136
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039376;1593029695) lease=localhost:18140/1368653052136(Wed May 15 14:24:12 PDT 2013) prevb=(0;0) ts=1368653047134(Wed May 15 14:24:07 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039376;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653048103(Wed May 15 14:24:08 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039377;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653048103(Wed May 15 14:24:08 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039377;1593029695) lease=localhost:18140/1368653053103(Wed May 15 14:24:13 PDT 2013) prevb=(0;0) ts=1368653048103(Wed May 15 14:24:08 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039376;1593029695) -> (1368653039377;1593029695) a:(1368653039376;1593029695)=localhost:18140/1368653052136
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039376;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653048103(Wed May 15 14:24:08 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039377;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653052136 (1368653039376;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039377;1593029695) lease=localhost:18140/1368653053103(Wed May 15 14:24:13 PDT 2013) prevb=(0;0) ts=1368653048103(Wed May 15 14:24:08 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039377;1593029695) a: (1368653039376;1593029695)=localhost:18140/1368653052136 -> (1368653039377;1593029695)=localhost:18140/1368653053103
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039377;1593029695) lease=localhost:18140/1368653052136(Wed May 15 14:24:12 PDT 2013) prevb=(1368653039376;1593029695) ts=1368653048098(Wed May 15 14:24:08 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039377;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039377;1593029695) lease=localhost:18140/1368653053103(Wed May 15 14:24:13 PDT 2013) prevb=(0;0) ts=1368653048103(Wed May 15 14:24:08 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039377;1593029695) lease=localhost:18140/1368653053103(Wed May 15 14:24:13 PDT 2013) prevb=(0;0) ts=1368653048103(Wed May 15 14:24:08 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039377;1593029695) a: (1368653039377;1593029695)=localhost:18140/1368653053103 -> (1368653039377;1593029695)=localhost:18140/1368653053103
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653053103
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653053103
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653053103
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653049103
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039377;1593029695) lease=localhost:18140/1368653053103(Wed May 15 14:24:13 PDT 2013) prevb=(0;0) ts=1368653048098(Wed May 15 14:24:08 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039377;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653049069(Wed May 15 14:24:09 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039378;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653049069(Wed May 15 14:24:09 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039378;1593029695) lease=localhost:18140/1368653054069(Wed May 15 14:24:14 PDT 2013) prevb=(0;0) ts=1368653049069(Wed May 15 14:24:09 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039377;1593029695) -> (1368653039378;1593029695) a:(1368653039377;1593029695)=localhost:18140/1368653053103
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039377;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653049069(Wed May 15 14:24:09 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039378;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653053103 (1368653039377;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039378;1593029695) lease=localhost:18140/1368653054069(Wed May 15 14:24:14 PDT 2013) prevb=(0;0) ts=1368653049069(Wed May 15 14:24:09 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039378;1593029695) a: (1368653039377;1593029695)=localhost:18140/1368653053103 -> (1368653039378;1593029695)=localhost:18140/1368653054069
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039378;1593029695) lease=localhost:18140/1368653053103(Wed May 15 14:24:13 PDT 2013) prevb=(1368653039377;1593029695) ts=1368653049064(Wed May 15 14:24:09 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039378;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039378;1593029695) lease=localhost:18140/1368653054069(Wed May 15 14:24:14 PDT 2013) prevb=(0;0) ts=1368653049069(Wed May 15 14:24:09 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039378;1593029695) lease=localhost:18140/1368653054069(Wed May 15 14:24:14 PDT 2013) prevb=(0;0) ts=1368653049069(Wed May 15 14:24:09 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039378;1593029695) a: (1368653039378;1593029695)=localhost:18140/1368653054069 -> (1368653039378;1593029695)=localhost:18140/1368653054069
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653054069
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653054069
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653054069
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653050069
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039378;1593029695) lease=localhost:18140/1368653054069(Wed May 15 14:24:14 PDT 2013) prevb=(0;0) ts=1368653049064(Wed May 15 14:24:09 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "9925fab6-c816-4ded-8370-80aa8b6d35c8"
+network_port: 19795
+addresses: "192.168.1.28"
+
+[Thread-3] INFO ohmdb.discovery.BeaconService - Sending beacon broadcast message to /255.255.255.255:15245
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "6d6c1e9e-c31d-4100-b499-a61b1fb7e005"
+network_port: 18140
+addresses: "192.168.1.28"
+
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039378;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653050033(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039379;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653050033(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039379;1593029695) lease=localhost:18140/1368653055033(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050033(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039378;1593029695) -> (1368653039379;1593029695) a:(1368653039378;1593029695)=localhost:18140/1368653054069
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039378;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653050033(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039379;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653054069 (1368653039378;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039379;1593029695) lease=localhost:18140/1368653055033(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050033(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039379;1593029695) a: (1368653039378;1593029695)=localhost:18140/1368653054069 -> (1368653039379;1593029695)=localhost:18140/1368653055033
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039379;1593029695) lease=localhost:18140/1368653054069(Wed May 15 14:24:14 PDT 2013) prevb=(1368653039378;1593029695) ts=1368653050063(Wed May 15 14:24:10 PDT 2013) addr=/192.168.1.28:19795 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039379;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039379;1593029695) lease=localhost:18140/1368653055033(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050083(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039379;1593029695) lease=localhost:18140/1368653055033(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050083(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039379;1593029695) a: (1368653039379;1593029695)=localhost:18140/1368653055033 -> (1368653039379;1593029695)=localhost:18140/1368653055033
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653055033
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653055033
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653055033
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653051033
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039379;1593029695) lease=localhost:18140/1368653055033(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050077(Wed May 15 14:24:10 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039379;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653050996(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039380;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653050996(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039380;1593029695) lease=localhost:18140/1368653055996(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050996(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039379;1593029695) -> (1368653039380;1593029695) a:(1368653039379;1593029695)=localhost:18140/1368653055033
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039380;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653055033 (1368653039379;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039380;1593029695) lease=localhost:18140/1368653055996(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050996(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039380;1593029695) a: (1368653039379;1593029695)=localhost:18140/1368653055033 -> (1368653039380;1593029695)=localhost:18140/1368653055996
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039380;1593029695) lease=localhost:18140/1368653055033(Wed May 15 14:24:15 PDT 2013) prevb=(1368653039379;1593029695) ts=1368653050977(Wed May 15 14:24:10 PDT 2013) addr=/192.168.1.28:19795 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039380;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039380;1593029695) lease=localhost:18140/1368653055996(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050996(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039380;1593029695) lease=localhost:18140/1368653055996(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050996(Wed May 15 14:24:10 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039380;1593029695) a: (1368653039380;1593029695)=localhost:18140/1368653055996 -> (1368653039380;1593029695)=localhost:18140/1368653055996
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653055996
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653055996
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653055996
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653051996
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039380;1593029695) lease=localhost:18140/1368653055996(Wed May 15 14:24:15 PDT 2013) prevb=(0;0) ts=1368653050993(Wed May 15 14:24:10 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039379;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653051047(Wed May 15 14:24:11 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039381;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653051960(Wed May 15 14:24:11 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039381;1593029695) lease=localhost:18140/1368653056960(Wed May 15 14:24:16 PDT 2013) prevb=(0;0) ts=1368653051960(Wed May 15 14:24:11 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039380;1593029695) -> (1368653039381;1593029695) a:(1368653039380;1593029695)=localhost:18140/1368653055996
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039380;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653051960(Wed May 15 14:24:11 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (before my request): FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039380;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653051960(Wed May 15 14:24:11 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039381;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653055996 (1368653039380;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039381;1593029695) lease=localhost:18140/1368653056960(Wed May 15 14:24:16 PDT 2013) prevb=(0;0) ts=1368653051960(Wed May 15 14:24:11 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039381;1593029695) a: (1368653039380;1593029695)=localhost:18140/1368653055996 -> (1368653039381;1593029695)=localhost:18140/1368653056960
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039381;1593029695) lease=localhost:18140/1368653055996(Wed May 15 14:24:15 PDT 2013) prevb=(1368653039380;1593029695) ts=1368653051955(Wed May 15 14:24:11 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039381;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039381;1593029695) lease=localhost:18140/1368653056960(Wed May 15 14:24:16 PDT 2013) prevb=(0;0) ts=1368653051960(Wed May 15 14:24:11 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039381;1593029695) lease=localhost:18140/1368653056960(Wed May 15 14:24:16 PDT 2013) prevb=(0;0) ts=1368653051960(Wed May 15 14:24:11 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039381;1593029695) a: (1368653039381;1593029695)=localhost:18140/1368653056960 -> (1368653039381;1593029695)=localhost:18140/1368653056960
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653056960
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653056960
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653056960
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653052960
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039381;1593029695) lease=localhost:18140/1368653056960(Wed May 15 14:24:16 PDT 2013) prevb=(0;0) ts=1368653051955(Wed May 15 14:24:11 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[Thread-3] INFO ohmdb.discovery.BeaconService - Got incoming message node_id: "8b7e2b4b-561a-4da7-848a-1f1f12ff220f"
+network_port: 17229
+addresses: "192.168.1.28"
+
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039381;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653052926(Wed May 15 14:24:12 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039382;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653052926(Wed May 15 14:24:12 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039382;1593029695) lease=localhost:18140/1368653057926(Wed May 15 14:24:17 PDT 2013) prevb=(0;0) ts=1368653052926(Wed May 15 14:24:12 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039381;1593029695) -> (1368653039382;1593029695) a:(1368653039381;1593029695)=localhost:18140/1368653056960
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039381;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653052926(Wed May 15 14:24:12 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039382;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653056960 (1368653039381;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039382;1593029695) lease=localhost:18140/1368653057926(Wed May 15 14:24:17 PDT 2013) prevb=(0;0) ts=1368653052926(Wed May 15 14:24:12 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039382;1593029695) a: (1368653039381;1593029695)=localhost:18140/1368653056960 -> (1368653039382;1593029695)=localhost:18140/1368653057926
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (unexpected message type): FleaseMessage ( type=MSG_PREPARE_ACK cell=tstclstr v=0 b=(1368653039382;1593029695) lease=localhost:18140/1368653056960(Wed May 15 14:24:16 PDT 2013) prevb=(1368653039381;1593029695) ts=1368653052920(Wed May 15 14:24:12 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039382;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039382;1593029695) lease=localhost:18140/1368653057926(Wed May 15 14:24:17 PDT 2013) prevb=(0;0) ts=1368653052926(Wed May 15 14:24:12 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039382;1593029695) lease=localhost:18140/1368653057926(Wed May 15 14:24:17 PDT 2013) prevb=(0;0) ts=1368653052926(Wed May 15 14:24:12 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039382;1593029695) a: (1368653039382;1593029695)=localhost:18140/1368653057926 -> (1368653039382;1593029695)=localhost:18140/1368653057926
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653057926
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653057926
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653057926
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653053926
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=MSG_ACCEPT_ACK cell=tstclstr v=0 b=(1368653039382;1593029695) lease=localhost:18140/1368653057926(Wed May 15 14:24:17 PDT 2013) prevb=(0;0) ts=1368653052920(Wed May 15 14:24:12 PDT 2013) addr=/192.168.1.28:17229 mepoch=-1)
+[TCPcomm@18140] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - client closed connection (EOF): /192.168.1.28:17229
+[TCPcomm@18140] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - closing connection to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039382;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653053890(Wed May 15 14:24:13 PDT 2013) addr=n/a mepoch=-1)
+connect failed for: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039383;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653053890(Wed May 15 14:24:13 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039383;1593029695) lease=localhost:18140/1368653058890(Wed May 15 14:24:18 PDT 2013) prevb=(0;0) ts=1368653053890(Wed May 15 14:24:13 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connect to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connection established
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - enqueued write to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039382;1593029695) -> (1368653039383;1593029695) a:(1368653039382;1593029695)=localhost:18140/1368653057926
+[TCPcomm@18140] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connectConnection
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:692)
+	at org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator.connectConnection(TCPCommunicator.java:277)
+	at org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator.run(TCPCommunicator.java:240)
+	at com.google.common.util.concurrent.AbstractExecutionThreadService$1$1.run(AbstractExecutionThreadService.java:52)
+	at java.lang.Thread.run(Thread.java:722)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039382;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653053890(Wed May 15 14:24:13 PDT 2013) addr=n/a mepoch=-1)
+[TCPcomm@18140] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - could not connect to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039383;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653057926 (1368653039382;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039383;1593029695) lease=localhost:18140/1368653058890(Wed May 15 14:24:18 PDT 2013) prevb=(0;0) ts=1368653053890(Wed May 15 14:24:13 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039383;1593029695) a: (1368653039382;1593029695)=localhost:18140/1368653057926 -> (1368653039383;1593029695)=localhost:18140/1368653058890
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039383;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039383;1593029695) lease=localhost:18140/1368653058890(Wed May 15 14:24:18 PDT 2013) prevb=(0;0) ts=1368653053890(Wed May 15 14:24:13 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039383;1593029695) lease=localhost:18140/1368653058890(Wed May 15 14:24:18 PDT 2013) prevb=(0;0) ts=1368653053890(Wed May 15 14:24:13 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039383;1593029695) a: (1368653039383;1593029695)=localhost:18140/1368653058890 -> (1368653039383;1593029695)=localhost:18140/1368653058890
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653058890
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653058890
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653058890
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653054890
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039383;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653054856(Wed May 15 14:24:14 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039384;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653054856(Wed May 15 14:24:14 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039384;1593029695) lease=localhost:18140/1368653059856(Wed May 15 14:24:19 PDT 2013) prevb=(0;0) ts=1368653054856(Wed May 15 14:24:14 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039383;1593029695) -> (1368653039384;1593029695) a:(1368653039383;1593029695)=localhost:18140/1368653058890
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039383;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653054856(Wed May 15 14:24:14 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039384;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653058890 (1368653039383;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039384;1593029695) lease=localhost:18140/1368653059856(Wed May 15 14:24:19 PDT 2013) prevb=(0;0) ts=1368653054856(Wed May 15 14:24:14 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039384;1593029695) a: (1368653039383;1593029695)=localhost:18140/1368653058890 -> (1368653039384;1593029695)=localhost:18140/1368653059856
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039384;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039384;1593029695) lease=localhost:18140/1368653059856(Wed May 15 14:24:19 PDT 2013) prevb=(0;0) ts=1368653054856(Wed May 15 14:24:14 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039384;1593029695) lease=localhost:18140/1368653059856(Wed May 15 14:24:19 PDT 2013) prevb=(0;0) ts=1368653054856(Wed May 15 14:24:14 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039384;1593029695) a: (1368653039384;1593029695)=localhost:18140/1368653059856 -> (1368653039384;1593029695)=localhost:18140/1368653059856
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653059856
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653059856
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653059856
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653055856
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039384;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653055822(Wed May 15 14:24:15 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039385;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653055822(Wed May 15 14:24:15 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039385;1593029695) lease=localhost:18140/1368653060822(Wed May 15 14:24:20 PDT 2013) prevb=(0;0) ts=1368653055822(Wed May 15 14:24:15 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039384;1593029695) -> (1368653039385;1593029695) a:(1368653039384;1593029695)=localhost:18140/1368653059856
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039384;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653055822(Wed May 15 14:24:15 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039385;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653059856 (1368653039384;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039385;1593029695) lease=localhost:18140/1368653060822(Wed May 15 14:24:20 PDT 2013) prevb=(0;0) ts=1368653055822(Wed May 15 14:24:15 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039385;1593029695) a: (1368653039384;1593029695)=localhost:18140/1368653059856 -> (1368653039385;1593029695)=localhost:18140/1368653060822
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039385;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039385;1593029695) lease=localhost:18140/1368653060822(Wed May 15 14:24:20 PDT 2013) prevb=(0;0) ts=1368653055822(Wed May 15 14:24:15 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039385;1593029695) lease=localhost:18140/1368653060822(Wed May 15 14:24:20 PDT 2013) prevb=(0;0) ts=1368653055822(Wed May 15 14:24:15 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039385;1593029695) a: (1368653039385;1593029695)=localhost:18140/1368653060822 -> (1368653039385;1593029695)=localhost:18140/1368653060822
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653060822
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653060822
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653060822
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653056822
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P droped message in state IDLE: FleaseMessage ( type=EVENT_TIMEOUT_PREPARE cell=tstclstr v=0 b=(1368653039385;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653056789(Wed May 15 14:24:16 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P renew event: FleaseMessage ( type=EVENT_RENEW cell=tstclstr v=0 b=(1368653039386;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653056789(Wed May 15 14:24:16 PDT 2013) addr=n/a mepoch=-1)
+connect failed for: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start PREPARE: FleaseMessage ( type=MSG_PREPARE cell=tstclstr v=0 b=(1368653039386;1593029695) lease=localhost:18140/1368653061789(Wed May 15 14:24:21 PDT 2013) prevb=(0;0) ts=1368653056789(Wed May 15 14:24:16 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connect to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connection established
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - enqueued write to /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send prepare to: /192.168.1.28:19795
+[TCPcomm@18140] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - connectConnection
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+java.net.ConnectException: Connection refused
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:692)
+	at org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator.connectConnection(TCPCommunicator.java:277)
+	at org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator.run(TCPCommunicator.java:240)
+	at com.google.common.util.concurrent.AbstractExecutionThreadService$1$1.run(AbstractExecutionThreadService.java:52)
+	at java.lang.Thread.run(Thread.java:722)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A prepare ACK  p:(1368653039385;1593029695) -> (1368653039386;1593029695) a:(1368653039385;1593029695)=localhost:18140/1368653060822
+[TCPcomm@18140] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - could not connect to: /192.168.1.28:17229
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P ignore message (UNEXPECTED MESSAGE TYPE EVENT_TIMEOUT_ACCEPT): FleaseMessage ( type=EVENT_TIMEOUT_ACCEPT cell=tstclstr v=0 b=(1368653039385;1593029695) lease=null/0(Wed Dec 31 16:00:00 PST 1969) prevb=(0;0) ts=1368653056789(Wed May 15 14:24:16 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039386;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P prepare ACK processing with my proposal (renew): prev=localhost:18140/1368653060822 (1368653039385;1593029695)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start ACCEPT: FleaseMessage ( type=MSG_ACCEPT cell=tstclstr v=0 b=(1368653039386;1593029695) lease=localhost:18140/1368653061789(Wed May 15 14:24:21 PDT 2013) prevb=(0;0) ts=1368653056789(Wed May 15 14:24:16 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:17229
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P send accept to: /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - An accept  ACK  p:(1368653039386;1593029695) a: (1368653039385;1593029695)=localhost:18140/1368653060822 -> (1368653039386;1593029695)=localhost:18140/1368653061789
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P majority responded for proposal (1368653039386;1593029695): 2
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P finished round, lease is valid: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039386;1593029695) lease=localhost:18140/1368653061789(Wed May 15 14:24:21 PDT 2013) prevb=(0;0) ts=1368653056789(Wed May 15 14:24:16 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - P start LEARN: FleaseMessage ( type=MSG_LEARN cell=tstclstr v=0 b=(1368653039386;1593029695) lease=localhost:18140/1368653061789(Wed May 15 14:24:21 PDT 2013) prevb=(0;0) ts=1368653056789(Wed May 15 14:24:16 PDT 2013) addr=n/a mepoch=-1)
+[FleaseStage] ERROR org.xtreemfs.foundation.flease.comm.tcp.TCPFleaseCommunicator - write failed: null
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.comm.tcp.TCPCommunicator - directly wrote 96 bytes to /192.168.1.28:19795
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.acceptor.FleaseAcceptor - A learn        p:(1368653039386;1593029695) a: (1368653039386;1593029695)=localhost:18140/1368653061789 -> (1368653039386;1593029695)=localhost:18140/1368653061789
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - learned event: localhost:18140/1368653061789
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.FleaseStage - lease state change: tstclstr localhost:18140 1368653061789
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - I AM THE LEADER! FOLLOW ME!
+[FleaseStage] INFO ohmdb.election.FleaseTestMain - statusChanged tstclstr/tstclstr: localhost:18140/1368653061789
+[FleaseStage] DEBUG org.xtreemfs.foundation.flease.proposer.FleaseProposer - scheduled renew for tstclstr at 1368653057789
+
+Process finished with exit code 137
