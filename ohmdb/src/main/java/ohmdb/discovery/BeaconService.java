@@ -18,6 +18,8 @@ package ohmdb.discovery;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -117,7 +119,7 @@ public class BeaconService extends AbstractService {
 
         @Override
         public void onMessage(Request<Integer, ImmutableMap<String, NodeInfo>> message) {
-            message.reply(ImmutableMap.copyOf(peers));
+            message.reply(getCopyOfState());
         }
     };
 
@@ -157,6 +159,23 @@ public class BeaconService extends AbstractService {
         this.nodeInfoFragment = nodeInfoFragment;
 
         this.eventLoop = new NioEventLoopGroup(1);
+    }
+
+    public ListenableFuture<ImmutableMap<String, NodeInfo>> getState() {
+        final SettableFuture<ImmutableMap<String,NodeInfo>> future = SettableFuture.create();
+
+        fiber.execute(new Runnable() {
+            @Override
+            public void run() {
+                future.set(getCopyOfState());
+            }
+        });
+
+        return future;
+    }
+
+    private ImmutableMap<String, NodeInfo> getCopyOfState() {
+        return ImmutableMap.copyOf(peers);
     }
 
     @Override
