@@ -103,7 +103,7 @@ public class BeaconService extends AbstractService {
     private Callback<Availability> incomingMsgCB = new Callback<Availability>() {
         @Override
         public void onMessage(Availability message) {
-            LOG.info("Got incoming message {}", message);
+            LOG.debug("Got incoming message {}", message);
             if (!message.hasNodeId()) {
                 LOG.error("Incoming availability message does not have node id, ignoring!");
                 return;
@@ -127,10 +127,10 @@ public class BeaconService extends AbstractService {
         @Override
         public void run() {
             if (broadcastChannel == null) {
-                LOG.info("Channel not available yet, deferring beacon send");
+                LOG.debug("Channel not available yet, deferring beacon send");
                 return;
             }
-            LOG.info("Sending beacon broadcast message to {}", sendAddress);
+            LOG.debug("Sending beacon broadcast message to {}", sendAddress);
             broadcastChannel.write(new UdpProtobufEncoder.UdpProtobufMessage(sendAddress, beaconMessage));
         }
     };
@@ -143,7 +143,7 @@ public class BeaconService extends AbstractService {
 
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            LOG.info("Exception, ignoring datagram", cause);
+            LOG.warn("Exception, ignoring datagram", cause);
         }
     }
 

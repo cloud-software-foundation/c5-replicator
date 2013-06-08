@@ -19,6 +19,7 @@ package ohmdb.codec;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.MessageLiteOrBuilder;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.MessageBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageEncoder;
@@ -39,7 +40,7 @@ public class UdpProtobufEncoder extends MessageToMessageEncoder<UdpProtobufEncod
     }
 
     @Override
-    protected Object encode(ChannelHandlerContext ctx, UdpProtobufEncoder.UdpProtobufMessage msg) throws Exception {
+    protected void encode(ChannelHandlerContext ctx, UdpProtobufEncoder.UdpProtobufMessage msg, MessageBuf<Object> out) throws Exception {
         ByteBuf data = null;
         if (msg.message instanceof MessageLite) {
             data = wrappedBuffer(((MessageLite) msg.message).toByteArray());
@@ -48,6 +49,6 @@ public class UdpProtobufEncoder extends MessageToMessageEncoder<UdpProtobufEncod
             data = wrappedBuffer(((MessageLite.Builder) msg.message).build().toByteArray());
         }
 
-        return new DatagramPacket(data, msg.remoteAddress);
+        out.add(new DatagramPacket(data, msg.remoteAddress));
     }
 }

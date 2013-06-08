@@ -19,6 +19,7 @@ package ohmdb.codec;
 import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.MessageLite;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.MessageBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -54,9 +55,10 @@ public class UdpProtobufDecoder extends MessageToMessageDecoder<DatagramPacket> 
     this.extensionRegistry = extensionRegistry;
 
   }
+
   @Override
-  protected Object decode(ChannelHandlerContext ctx, DatagramPacket dgram) throws Exception {
-    ByteBuf msg = dgram.data();
+  protected void decode(ChannelHandlerContext ctx, DatagramPacket dgram, MessageBuf<Object> out) throws Exception {
+    ByteBuf msg = dgram.content();
 
     final byte[] array;
     final int offset;
@@ -72,15 +74,15 @@ public class UdpProtobufDecoder extends MessageToMessageDecoder<DatagramPacket> 
 
     if (extensionRegistry == null) {
       if (HAS_PARSER) {
-        return prototype.getParserForType().parseFrom(array, offset, length);
+        out.add(prototype.getParserForType().parseFrom(array, offset, length));
       } else {
-        return prototype.newBuilderForType().mergeFrom(array, offset, length).build();
+        out.add(prototype.newBuilderForType().mergeFrom(array, offset, length).build());
       }
     } else {
       if (HAS_PARSER) {
-        return prototype.getParserForType().parseFrom(array, offset, length, extensionRegistry);
+        out.add(prototype.getParserForType().parseFrom(array, offset, length, extensionRegistry));
       } else {
-        return prototype.newBuilderForType().mergeFrom(array, offset, length, extensionRegistry).build();
+        out.add(prototype.newBuilderForType().mergeFrom(array, offset, length, extensionRegistry).build());
       }
     }
   }
