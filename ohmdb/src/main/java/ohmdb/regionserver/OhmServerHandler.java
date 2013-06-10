@@ -78,7 +78,13 @@ public class OhmServerHandler extends
       HRegion region = OhmServer.getOnlineRegion("1");
       region.mutateRow(rm);
     }
-    ctx.write(multiResponse.build());
+    ClientProtos.Response response = ClientProtos
+        .Response
+        .newBuilder()
+        .setCommand(ClientProtos.Response.Command.MULTI)
+        .setCommandId(call.getCommandId())
+        .setMulti(multiResponse.build()).build();
+    ctx.write(response);
   }
 
 
@@ -100,10 +106,16 @@ public class OhmServerHandler extends
       mutateResponse.setProcessed(true);
     } catch (IOException e) {
       mutateResponse.setProcessed(false);
-      throw new IOException(e);
+      e.printStackTrace();
     }
 
-    ctx.write(mutateResponse.build());
+    ClientProtos.Response response = ClientProtos
+        .Response
+        .newBuilder()
+        .setCommand(ClientProtos.Response.Command.MUTATE)
+        .setCommandId(call.getCommandId())
+        .setMutate(mutateResponse.build()).build();
+    ctx.write(response);
   }
 
 
@@ -121,7 +133,14 @@ public class OhmServerHandler extends
       }
     }
 
-    ctx.write(getResponse.build());
+    ClientProtos.Response response = ClientProtos
+        .Response
+        .newBuilder()
+        .setCommand(ClientProtos.Response.Command.MULTI_GET)
+        .setCommandId(call.getCommandId())
+        .setMultiGet(getResponse.build()).build();
+    ctx.write(response);
+
   }
 
   private void scan(ChannelHandlerContext ctx, ClientProtos.Call call)
@@ -145,9 +164,7 @@ public class OhmServerHandler extends
       byte[] previousRowKey = null;
       Iterator<KeyValue> kvIt = kvs.iterator();
 
-      int i = 0;
       while (kvIt.hasNext()) {
-        i++;
         KeyValue kv = kvIt.next();
         byte[] rowKey = kv.getRow();
         resultBuilder.addCell(ReverseProtobufUtil.toCell(kv));
@@ -161,15 +178,28 @@ public class OhmServerHandler extends
         previousRowKey = rowKey;
       }
       scanResponse.setMoreResults(true);
-      ctx.write(scanResponse.build());
-      scanResponse = ClientProtos.ScanResponse.newBuilder();
+      ClientProtos.Response response = ClientProtos
+          .Response
+          .newBuilder()
+          .setCommand(ClientProtos.Response.Command.SCAN)
+          .setCommandId(call.getCommandId())
+          .setScan(scanResponse.build()).build();
+
+      ctx.write(response);
+      scanResponse.clear();
       if (result_climber < 10000) {
         result_climber = result_climber * result_climber;
       }
     } while (moreResults);
 
     scanResponse.setMoreResults(false);
-    ctx.write(scanResponse.build());
+    ClientProtos.Response response = ClientProtos
+        .Response
+        .newBuilder()
+        .setCommand(ClientProtos.Response.Command.SCAN)
+        .setCommandId(call.getCommandId())
+        .setScan(scanResponse.build()).build();
+    ctx.write(response);
     scanner.close();
   }
 
@@ -184,7 +214,13 @@ public class OhmServerHandler extends
     if (!call.getGet().getExistenceOnly()) {
       getResponse.setResult(ReverseProtobufUtil.toResult(result));
     }
-    ctx.write(getResponse.build());
+    ClientProtos.Response response = ClientProtos
+        .Response
+        .newBuilder()
+        .setCommand(ClientProtos.Response.Command.GET)
+        .setCommandId(call.getCommandId())
+        .setGet(getResponse.build()).build();
+    ctx.write(response);
   }
 }
 

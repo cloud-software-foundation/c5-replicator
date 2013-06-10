@@ -11,10 +11,12 @@
     <modules>
         <module>flease</module>
         <module>ohmdb</module>
+        <module>ohmdb-client</module>
     </modules>
 
 
     <properties>
+        <guava.version>14.0.1</guava.version>
         <log4j.version>1.2.16</log4j.version>
         <junit.version>4.8.1</junit.version>
         <slf4j-api.version>1.7.4</slf4j-api.version>
