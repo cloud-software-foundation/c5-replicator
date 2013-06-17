@@ -6,13 +6,13 @@ import ohmdb.client.generated.ClientProtos;
 import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
 import org.apache.hadoop.hbase.regionserver.HRegion;
-import org.apache.hadoop.hbase.regionserver.InternalScanner;
+import org.apache.hadoop.hbase.regionserver.RegionScanner;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class OhmServerHandler extends
@@ -147,37 +147,34 @@ public class OhmServerHandler extends
       throws IOException {
     ClientProtos.Scan scanIn = call.getScan().getScan();
     HRegion region = OhmServer.getOnlineRegion("1");
-    InternalScanner scanner =
-        region.getScanner(ReverseProtobufUtil.toScan(scanIn));
+    Scan scan = ReverseProtobufUtil.toScan(scanIn);
     boolean moreResults;
-    ClientProtos.ScanResponse.Builder scanResponse
-        = ClientProtos.ScanResponse.newBuilder();
-    ClientProtos.Result.Builder resultBuilder =
-        ClientProtos.Result.newBuilder();
 
-
-    // This should go up by ^7
+    region.prepareScanner(scan);
+    RegionScanner scanner = region.getScanner(scan);
+    long scannerId = System.currentTimeMillis();
     int result_climber = 100;
     do {
-      List<KeyValue> kvs = new ArrayList<>();
-      moreResults = scanner.next(kvs, result_climber);
-      byte[] previousRowKey = null;
-      Iterator<KeyValue> kvIt = kvs.iterator();
+      ClientProtos.ScanResponse.Builder scanResponse
+          = ClientProtos.ScanResponse.newBuilder();
+      scanResponse.setScannerId(scannerId);
 
-      while (kvIt.hasNext()) {
-        KeyValue kv = kvIt.next();
-        byte[] rowKey = kv.getRow();
-        resultBuilder.addCell(ReverseProtobufUtil.toCell(kv));
-
-        // If we have a whole row set it up as a result
-        if ((previousRowKey != rowKey && previousRowKey != null)
-            || !kvIt.hasNext()) {
-          scanResponse.addResult(resultBuilder.build());
-          resultBuilder = ClientProtos.Result.newBuilder();
+      int kvCounter = 0;
+      do {
+        List<KeyValue> kvs = new ArrayList<>();
+        //TODO Doesn't support super wide rows XXX use limit and page it in
+        moreResults = scanner.nextRaw(kvs);
+        ClientProtos.Result.Builder resultBuilder =
+            ClientProtos.Result.newBuilder();
+        for (KeyValue kv : kvs) {
+          resultBuilder.addCell(ReverseProtobufUtil.toCell(kv));
+          kvCounter++;
         }
-        previousRowKey = rowKey;
-      }
-      scanResponse.setMoreResults(true);
+        scanResponse.addResult(resultBuilder.build());
+      } while (moreResults && kvCounter < result_climber);
+
+      scanResponse.setMoreResults(moreResults);
+
       ClientProtos.Response response = ClientProtos
           .Response
           .newBuilder()
@@ -186,20 +183,12 @@ public class OhmServerHandler extends
           .setScan(scanResponse.build()).build();
 
       ctx.write(response);
-      scanResponse.clear();
-      if (result_climber < 10000) {
-        result_climber = result_climber * result_climber;
+
+      if (result_climber < 100000) {
+        result_climber = result_climber * 10;
       }
     } while (moreResults);
-
-    scanResponse.setMoreResults(false);
-    ClientProtos.Response response = ClientProtos
-        .Response
-        .newBuilder()
-        .setCommand(ClientProtos.Response.Command.SCAN)
-        .setCommandId(call.getCommandId())
-        .setScan(scanResponse.build()).build();
-    ctx.write(response);
+    ctx.flush();
     scanner.close();
   }
 
