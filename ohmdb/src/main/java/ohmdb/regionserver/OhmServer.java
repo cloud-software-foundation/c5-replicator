@@ -51,10 +51,11 @@ public class OhmServer implements Runnable {
     }
   }
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, InterruptedException {
     String tableName = "tableName";
     byte[] startKey = {0};
     byte[] endKey = {};
+
     HRegionInfo hRegionInfo = new HRegionInfo(Bytes.toBytes(tableName),
         startKey,
         endKey);
@@ -97,10 +98,14 @@ public class OhmServer implements Runnable {
     } else {
       port = 8080;
     }
-    new OhmServer(port).run();
-    if (region != null) {
+
+    OhmServer ohmServer = new OhmServer(port);
+    Thread t = new Thread(ohmServer);
+    t.start();
+    while (t.isAlive()){
+      Thread.sleep(3000);
+      region.flushcache();
       region.compactStores();
-      HRegion.closeHRegion(region);
     }
   }
 
@@ -112,7 +117,6 @@ public class OhmServer implements Runnable {
     }
     return region;
   }
-
 
   private static class RegionNotFoundException extends RuntimeException {
     public RegionNotFoundException(String s) {
