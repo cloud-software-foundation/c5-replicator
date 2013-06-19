@@ -102,10 +102,12 @@ public class OhmServer implements Runnable {
     OhmServer ohmServer = new OhmServer(port);
     Thread t = new Thread(ohmServer);
     t.start();
-    while (t.isAlive()){
+    for (int i =0 ; t.isAlive(); i++) {
       Thread.sleep(3000);
       region.flushcache();
-      region.compactStores();
+      if (i % 10 == 0) {
+        region.compactStores();
+      }
     }
   }
 
