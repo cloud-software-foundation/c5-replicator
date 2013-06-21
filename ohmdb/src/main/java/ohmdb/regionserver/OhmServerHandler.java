@@ -3,13 +3,16 @@ package ohmdb.regionserver;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import ohmdb.client.generated.ClientProtos;
-import org.apache.hadoop.hbase.KeyValue;
+import ohmdb.regionserver.scanner.ScanRunnable;
+import ohmdb.regionserver.scanner.ScannerManager;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.exceptions.DoNotRetryIOException;
 import org.apache.hadoop.hbase.regionserver.HRegion;
-import org.apache.hadoop.hbase.regionserver.RegionScanner;
+import org.jetlang.channels.Channel;
+import org.jetlang.channels.MemoryChannel;
+import org.jetlang.fibers.Fiber;
+import org.jetlang.fibers.ThreadFiber;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +20,7 @@ import java.util.List;
 
 public class OhmServerHandler extends
     ChannelInboundMessageHandlerAdapter<ClientProtos.Call> {
+  ScannerManager scanManager = ScannerManager.INSTANCE;
 
   @Override
   public void messageReceived(final ChannelHandlerContext ctx,
@@ -145,51 +149,37 @@ public class OhmServerHandler extends
 
   private void scan(ChannelHandlerContext ctx, ClientProtos.Call call)
       throws IOException {
-    ClientProtos.Scan scanIn = call.getScan().getScan();
-    HRegion region = OhmServer.getOnlineRegion("1");
-    Scan scan = ReverseProtobufUtil.toScan(scanIn);
-    boolean moreResults;
 
-    region.prepareScanner(scan);
-    RegionScanner scanner = region.getScanner(scan);
-    long scannerId = System.currentTimeMillis();
-    int result_climber = 100;
-    do {
-      ClientProtos.ScanResponse.Builder scanResponse
-          = ClientProtos.ScanResponse.newBuilder();
-      scanResponse.setScannerId(scannerId);
+    ClientProtos.ScanRequest scanIn = call.getScan();
 
-      int kvCounter = 0;
-      do {
-        List<KeyValue> kvs = new ArrayList<>();
-        //TODO Doesn't support super wide rows XXX use limit and page it in
-        moreResults = scanner.nextRaw(kvs);
-        ClientProtos.Result.Builder resultBuilder =
-            ClientProtos.Result.newBuilder();
-        for (KeyValue kv : kvs) {
-          resultBuilder.addCell(ReverseProtobufUtil.toCell(kv));
-          kvCounter++;
-        }
-        scanResponse.addResult(resultBuilder.build());
-      } while (moreResults && kvCounter < result_climber);
+    long scannerId = 0;
+    scannerId = getScannerId(scanIn, scannerId);
+    Integer numberOfRowsToSend = scanIn.getNumberOfRows();
 
-      scanResponse.setMoreResults(moreResults);
+    Channel<Integer> channel = scanManager.getChannel(scannerId);
+    // New Scanner
+    if (null == channel) {
+      Fiber fiber = new ThreadFiber();
+      fiber.start();
+      channel = new MemoryChannel<>();
 
-      ClientProtos.Response response = ClientProtos
-          .Response
-          .newBuilder()
-          .setCommand(ClientProtos.Response.Command.SCAN)
-          .setCommandId(call.getCommandId())
-          .setScan(scanResponse.build()).build();
+      ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId);
+      channel.subscribe(fiber, scanRunnable);
+      scanManager.addChannel(scannerId, channel);
+    }
+    channel.publish(numberOfRowsToSend);
+  }
 
-      ctx.write(response);
-
-      if (result_climber < 100000) {
-        result_climber = result_climber * 10;
+  private long getScannerId(ClientProtos.ScanRequest scanIn, long scannerId) {
+    if (scanIn.hasScannerId() && scanIn.getScannerId() > 0) {
+      scannerId = scanIn.getScannerId();
+    } else {
+      // Make a scanner with an Id not 0
+      while (scannerId == 0) {
+        scannerId = System.currentTimeMillis();
       }
-    } while (moreResults);
-    ctx.flush();
-    scanner.close();
+    }
+    return scannerId;
   }
 
   private void get(ChannelHandlerContext ctx, ClientProtos.Call call)

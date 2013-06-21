@@ -5,6 +5,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import ohmdb.client.OhmConstants;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -102,10 +103,10 @@ public class OhmServer implements Runnable {
     OhmServer ohmServer = new OhmServer(port);
     Thread t = new Thread(ohmServer);
     t.start();
-    for (int i =0 ; t.isAlive(); i++) {
-      Thread.sleep(3000);
+    for (int i = 0; t.isAlive(); i++) {
+      Thread.sleep(OhmConstants.FLUSH_PERIOD);
       region.flushcache();
-      if (i % 10 == 0) {
+      if (i % OhmConstants.AMOUNT_OF_FLUSH_PER_COMPACT == 0) {
         region.compactStores();
       }
     }
