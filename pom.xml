@@ -20,6 +20,7 @@
         <slf4j-api.version>1.7.4</slf4j-api.version>
         <protobuf.version>2.5.0</protobuf.version>
         <netty.version>4.0.0.CR3</netty.version>
+      <metrics.version>3.0.0</metrics.version>
     </properties>
 
 
