@@ -84,14 +84,14 @@ public class BeaconService extends AbstractService {
      * Public Fiber API -> RequestChannel replies with the map of nodeId -> NodeInfo for the entire
      * peer set.  The map is immutable, and represents a snapshot.
      */
-    public final RequestChannel<Integer, ImmutableMap<String, NodeInfo>> stateRequests = new MemoryRequestChannel<>();
+    public final RequestChannel<Integer, ImmutableMap<Long, NodeInfo>> stateRequests = new MemoryRequestChannel<>();
 
     private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
 
     private final int discoveryPort;
     private final Availability nodeInfoFragment;
     private final NioEventLoopGroup eventLoop;
-    private final Map<String, NodeInfo> peers = new HashMap<>();
+    private final Map<Long, NodeInfo> peers = new HashMap<>();
     private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
 
     // These should be final, but they are initialized in doStart().
@@ -114,11 +114,11 @@ public class BeaconService extends AbstractService {
         }
     };
 
-    private Callback<Request<Integer, ImmutableMap<String, NodeInfo>>> stateRequestCB =
-            new Callback<Request<Integer, ImmutableMap<String, NodeInfo>>>() {
+    private Callback<Request<Integer, ImmutableMap<Long, NodeInfo>>> stateRequestCB =
+            new Callback<Request<Integer, ImmutableMap<Long, NodeInfo>>>() {
 
         @Override
-        public void onMessage(Request<Integer, ImmutableMap<String, NodeInfo>> message) {
+        public void onMessage(Request<Integer, ImmutableMap<Long, NodeInfo>> message) {
             message.reply(getCopyOfState());
         }
     };
@@ -161,8 +161,8 @@ public class BeaconService extends AbstractService {
         this.eventLoop = new NioEventLoopGroup(1);
     }
 
-    public ListenableFuture<ImmutableMap<String, NodeInfo>> getState() {
-        final SettableFuture<ImmutableMap<String,NodeInfo>> future = SettableFuture.create();
+    public ListenableFuture<ImmutableMap<Long, NodeInfo>> getState() {
+        final SettableFuture<ImmutableMap<Long,NodeInfo>> future = SettableFuture.create();
 
         fiber.execute(new Runnable() {
             @Override
@@ -174,7 +174,7 @@ public class BeaconService extends AbstractService {
         return future;
     }
 
-    private ImmutableMap<String, NodeInfo> getCopyOfState() {
+    private ImmutableMap<Long, NodeInfo> getCopyOfState() {
         return ImmutableMap.copyOf(peers);
     }
 

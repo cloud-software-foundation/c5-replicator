@@ -5,8 +5,8 @@ option optimize_for = SPEED;
 
 // An availability broadcast
 message Availability {
-  // UUID identification for this node.
-  optional string node_id = 1;
+  // ID identification for this node.
+  optional int64 node_id = 1;
   // Network port it is reachable on
   optional int32 network_port = 2;
   // The network addresses we can be reached at
