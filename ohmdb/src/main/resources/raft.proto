@@ -1,0 +1,66 @@
+package ohmdb.replication;
+
+option java_package = "ohmdb.replication";
+option optimize_for = SPEED;
+
+message RaftWireMessage {
+  // envelope.
+  optional int64       message_id = 1;
+  optional int64       sender_id = 2;
+  // implied and may not be needed to filled in.
+  optional int64       receiver_id = 3;
+
+  enum MessageType {
+    REQUEST_VOTE = 0;
+    VOTE_REPLY = 1;
+    APPEND_ENTRIES = 2;
+    APPEND_REPLY = 3;
+  }
+
+  optional MessageType   message_type = 4;
+
+  optional RequestVote         request_vote = 5;
+  optional RequestVoteReply    vote_reply = 6;
+  optional AppendEntries       append_entries = 7;
+  optional AppendEntriesReply  append_reply = 8;
+}
+
+
+message RequestVote {
+  optional string quorum_id = 1;
+
+  optional int64 term = 2;
+  optional int64 candidate_id = 3;
+
+  optional int64 last_log_index = 4;
+  optional int64 last_log_term = 5;
+}
+
+message RequestVoteReply {
+  optional string quorum_id = 1;
+
+  // currentTerm, for candidate to update itself
+  optional int64 term = 2;
+  // true means candidate received vote
+  optional bool  vote_granted = 3;
+}
+
+message AppendEntries {
+  optional string quorum_id = 1;
+
+  optional int64   term = 2;
+  optional int64   leader_id = 3;
+  optional int64   prev_log_index = 4;
+  optional int64   prev_log_term = 5;
+  // Log entries, they are just bytes (for now?)
+  repeated bytes entries = 6;
+  optional int64   commit_index = 7;
+}
+
+message AppendEntriesReply {
+  optional string  quorum_id = 1;
+
+  optional int64 term = 2;
+  optional bool  success = 3;
+  // TODO better failure reporting
+}
