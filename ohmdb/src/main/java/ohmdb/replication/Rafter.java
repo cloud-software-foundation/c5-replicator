@@ -1,7 +1,10 @@
 package ohmdb.replication;
 
 import com.google.common.collect.ImmutableList;
-import ohmdb.replication.rpc.*;
+import ohmdb.replication.rpc.RpcReply;
+import ohmdb.replication.rpc.RpcRequest;
+import ohmdb.replication.rpc.RpcWireReply;
+import ohmdb.replication.rpc.RpcWireRequest;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
@@ -51,7 +54,15 @@ public class Rafter {
     }
 
     private void onIncomingMessage(Request<RpcWireRequest, RpcReply> message) {
-        // TODO this method
+        RpcWireRequest req = message.getRequest();
+        if (req.isRequestVoteMessage()) {
+            // do...
+        } else if (req.isAppendMessage()) {
+            // do...
+        } else {
+            LOG.warn("{} Got a message of protobuf type I dont know: {}", myId, req);
+        }
+
     }
 
 }

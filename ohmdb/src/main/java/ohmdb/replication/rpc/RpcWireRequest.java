@@ -10,5 +10,6 @@ public class RpcWireRequest extends RpcMessage {
     public RpcWireRequest(long to, long from, long messageId, MessageLite message) {
         super(to, from, messageId, message);
     }
+
 }
 
