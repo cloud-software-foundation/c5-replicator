@@ -282,6 +282,6 @@ public abstract class AbstractHFileWriter implements HFile.Writer {
       FileSystem fs, Path path) throws IOException {
     FsPermission perms = FSUtils.getFilePermissions(fs, conf,
         HConstants.DATA_FILE_UMASK_KEY);
-    return FSUtils.create(fs, path, perms);
+    return FSUtils.create(fs, path, perms, false);
   }
 }
