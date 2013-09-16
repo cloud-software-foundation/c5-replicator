@@ -1588,6 +1588,567 @@ public final class Raft {
     // @@protoc_insertion_point(class_scope:ohmdb.replication.RaftWireMessage)
   }
 
+  public interface LogEntryOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // optional int64 term = 1;
+    /**
+     * <code>optional int64 term = 1;</code>
+     */
+    boolean hasTerm();
+    /**
+     * <code>optional int64 term = 1;</code>
+     */
+    long getTerm();
+
+    // optional int64 index = 2;
+    /**
+     * <code>optional int64 index = 2;</code>
+     */
+    boolean hasIndex();
+    /**
+     * <code>optional int64 index = 2;</code>
+     */
+    long getIndex();
+
+    // optional bytes data = 3;
+    /**
+     * <code>optional bytes data = 3;</code>
+     */
+    boolean hasData();
+    /**
+     * <code>optional bytes data = 3;</code>
+     */
+    com.google.protobuf.ByteString getData();
+  }
+  /**
+   * Protobuf type {@code ohmdb.replication.LogEntry}
+   */
+  public static final class LogEntry extends
+      com.google.protobuf.GeneratedMessage
+      implements LogEntryOrBuilder {
+    // Use LogEntry.newBuilder() to construct.
+    private LogEntry(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private LogEntry(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final LogEntry defaultInstance;
+    public static LogEntry getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public LogEntry getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private LogEntry(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 8: {
+              bitField0_ |= 0x00000001;
+              term_ = input.readInt64();
+              break;
+            }
+            case 16: {
+              bitField0_ |= 0x00000002;
+              index_ = input.readInt64();
+              break;
+            }
+            case 26: {
+              bitField0_ |= 0x00000004;
+              data_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return ohmdb.replication.Raft.internal_static_ohmdb_replication_LogEntry_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return ohmdb.replication.Raft.internal_static_ohmdb_replication_LogEntry_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              ohmdb.replication.Raft.LogEntry.class, ohmdb.replication.Raft.LogEntry.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<LogEntry> PARSER =
+        new com.google.protobuf.AbstractParser<LogEntry>() {
+      public LogEntry parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new LogEntry(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<LogEntry> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    // optional int64 term = 1;
+    public static final int TERM_FIELD_NUMBER = 1;
+    private long term_;
+    /**
+     * <code>optional int64 term = 1;</code>
+     */
+    public boolean hasTerm() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional int64 term = 1;</code>
+     */
+    public long getTerm() {
+      return term_;
+    }
+
+    // optional int64 index = 2;
+    public static final int INDEX_FIELD_NUMBER = 2;
+    private long index_;
+    /**
+     * <code>optional int64 index = 2;</code>
+     */
+    public boolean hasIndex() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional int64 index = 2;</code>
+     */
+    public long getIndex() {
+      return index_;
+    }
+
+    // optional bytes data = 3;
+    public static final int DATA_FIELD_NUMBER = 3;
+    private com.google.protobuf.ByteString data_;
+    /**
+     * <code>optional bytes data = 3;</code>
+     */
+    public boolean hasData() {
+      return ((bitField0_ & 0x00000004) == 0x00000004);
+    }
+    /**
+     * <code>optional bytes data = 3;</code>
+     */
+    public com.google.protobuf.ByteString getData() {
+      return data_;
+    }
+
+    private void initFields() {
+      term_ = 0L;
+      index_ = 0L;
+      data_ = com.google.protobuf.ByteString.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeInt64(1, term_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeInt64(2, index_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        output.writeBytes(3, data_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(1, term_);
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(2, index_);
+      }
+      if (((bitField0_ & 0x00000004) == 0x00000004)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(3, data_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static ohmdb.replication.Raft.LogEntry parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static ohmdb.replication.Raft.LogEntry parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(ohmdb.replication.Raft.LogEntry prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code ohmdb.replication.LogEntry}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements ohmdb.replication.Raft.LogEntryOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return ohmdb.replication.Raft.internal_static_ohmdb_replication_LogEntry_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return ohmdb.replication.Raft.internal_static_ohmdb_replication_LogEntry_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                ohmdb.replication.Raft.LogEntry.class, ohmdb.replication.Raft.LogEntry.Builder.class);
+      }
+
+      // Construct using ohmdb.replication.Raft.LogEntry.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        term_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        index_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        data_ = com.google.protobuf.ByteString.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return ohmdb.replication.Raft.internal_static_ohmdb_replication_LogEntry_descriptor;
+      }
+
+      public ohmdb.replication.Raft.LogEntry getDefaultInstanceForType() {
+        return ohmdb.replication.Raft.LogEntry.getDefaultInstance();
+      }
+
+      public ohmdb.replication.Raft.LogEntry build() {
+        ohmdb.replication.Raft.LogEntry result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public ohmdb.replication.Raft.LogEntry buildPartial() {
+        ohmdb.replication.Raft.LogEntry result = new ohmdb.replication.Raft.LogEntry(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.term_ = term_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.index_ = index_;
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000004;
+        }
+        result.data_ = data_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof ohmdb.replication.Raft.LogEntry) {
+          return mergeFrom((ohmdb.replication.Raft.LogEntry)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(ohmdb.replication.Raft.LogEntry other) {
+        if (other == ohmdb.replication.Raft.LogEntry.getDefaultInstance()) return this;
+        if (other.hasTerm()) {
+          setTerm(other.getTerm());
+        }
+        if (other.hasIndex()) {
+          setIndex(other.getIndex());
+        }
+        if (other.hasData()) {
+          setData(other.getData());
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        ohmdb.replication.Raft.LogEntry parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (ohmdb.replication.Raft.LogEntry) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // optional int64 term = 1;
+      private long term_ ;
+      /**
+       * <code>optional int64 term = 1;</code>
+       */
+      public boolean hasTerm() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional int64 term = 1;</code>
+       */
+      public long getTerm() {
+        return term_;
+      }
+      /**
+       * <code>optional int64 term = 1;</code>
+       */
+      public Builder setTerm(long value) {
+        bitField0_ |= 0x00000001;
+        term_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int64 term = 1;</code>
+       */
+      public Builder clearTerm() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        term_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // optional int64 index = 2;
+      private long index_ ;
+      /**
+       * <code>optional int64 index = 2;</code>
+       */
+      public boolean hasIndex() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional int64 index = 2;</code>
+       */
+      public long getIndex() {
+        return index_;
+      }
+      /**
+       * <code>optional int64 index = 2;</code>
+       */
+      public Builder setIndex(long value) {
+        bitField0_ |= 0x00000002;
+        index_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int64 index = 2;</code>
+       */
+      public Builder clearIndex() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        index_ = 0L;
+        onChanged();
+        return this;
+      }
+
+      // optional bytes data = 3;
+      private com.google.protobuf.ByteString data_ = com.google.protobuf.ByteString.EMPTY;
+      /**
+       * <code>optional bytes data = 3;</code>
+       */
+      public boolean hasData() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional bytes data = 3;</code>
+       */
+      public com.google.protobuf.ByteString getData() {
+        return data_;
+      }
+      /**
+       * <code>optional bytes data = 3;</code>
+       */
+      public Builder setData(com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        data_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bytes data = 3;</code>
+       */
+      public Builder clearData() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        data_ = getDefaultInstance().getData();
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:ohmdb.replication.LogEntry)
+    }
+
+    static {
+      defaultInstance = new LogEntry(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:ohmdb.replication.LogEntry)
+  }
+
   public interface RequestVoteOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
@@ -3138,31 +3699,30 @@ public final class Raft {
      */
     long getPrevLogTerm();
 
-    // repeated bytes entries = 6;
+    // repeated .ohmdb.replication.LogEntry entries = 6;
     /**
-     * <code>repeated bytes entries = 6;</code>
-     *
-     * <pre>
-     * Log entries, they are just bytes (for now?)
-     * </pre>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
      */
-    java.util.List<com.google.protobuf.ByteString> getEntriesList();
+    java.util.List<ohmdb.replication.Raft.LogEntry> 
+        getEntriesList();
     /**
-     * <code>repeated bytes entries = 6;</code>
-     *
-     * <pre>
-     * Log entries, they are just bytes (for now?)
-     * </pre>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     */
+    ohmdb.replication.Raft.LogEntry getEntries(int index);
+    /**
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
      */
     int getEntriesCount();
     /**
-     * <code>repeated bytes entries = 6;</code>
-     *
-     * <pre>
-     * Log entries, they are just bytes (for now?)
-     * </pre>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
      */
-    com.google.protobuf.ByteString getEntries(int index);
+    java.util.List<? extends ohmdb.replication.Raft.LogEntryOrBuilder> 
+        getEntriesOrBuilderList();
+    /**
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     */
+    ohmdb.replication.Raft.LogEntryOrBuilder getEntriesOrBuilder(
+        int index);
 
     // optional int64 commit_index = 7;
     /**
@@ -3252,10 +3812,10 @@ public final class Raft {
             }
             case 50: {
               if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
-                entries_ = new java.util.ArrayList<com.google.protobuf.ByteString>();
+                entries_ = new java.util.ArrayList<ohmdb.replication.Raft.LogEntry>();
                 mutable_bitField0_ |= 0x00000020;
               }
-              entries_.add(input.readBytes());
+              entries_.add(input.readMessage(ohmdb.replication.Raft.LogEntry.PARSER, extensionRegistry));
               break;
             }
             case 56: {
@@ -3413,38 +3973,39 @@ public final class Raft {
       return prevLogTerm_;
     }
 
-    // repeated bytes entries = 6;
+    // repeated .ohmdb.replication.LogEntry entries = 6;
     public static final int ENTRIES_FIELD_NUMBER = 6;
-    private java.util.List<com.google.protobuf.ByteString> entries_;
+    private java.util.List<ohmdb.replication.Raft.LogEntry> entries_;
     /**
-     * <code>repeated bytes entries = 6;</code>
-     *
-     * <pre>
-     * Log entries, they are just bytes (for now?)
-     * </pre>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
      */
-    public java.util.List<com.google.protobuf.ByteString>
-        getEntriesList() {
+    public java.util.List<ohmdb.replication.Raft.LogEntry> getEntriesList() {
       return entries_;
     }
     /**
-     * <code>repeated bytes entries = 6;</code>
-     *
-     * <pre>
-     * Log entries, they are just bytes (for now?)
-     * </pre>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     */
+    public java.util.List<? extends ohmdb.replication.Raft.LogEntryOrBuilder> 
+        getEntriesOrBuilderList() {
+      return entries_;
+    }
+    /**
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
      */
     public int getEntriesCount() {
       return entries_.size();
     }
     /**
-     * <code>repeated bytes entries = 6;</code>
-     *
-     * <pre>
-     * Log entries, they are just bytes (for now?)
-     * </pre>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
      */
-    public com.google.protobuf.ByteString getEntries(int index) {
+    public ohmdb.replication.Raft.LogEntry getEntries(int index) {
+      return entries_.get(index);
+    }
+    /**
+     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     */
+    public ohmdb.replication.Raft.LogEntryOrBuilder getEntriesOrBuilder(
+        int index) {
       return entries_.get(index);
     }
 
@@ -3501,7 +4062,7 @@ public final class Raft {
         output.writeInt64(5, prevLogTerm_);
       }
       for (int i = 0; i < entries_.size(); i++) {
-        output.writeBytes(6, entries_.get(i));
+        output.writeMessage(6, entries_.get(i));
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeInt64(7, commitIndex_);
@@ -3535,14 +4096,9 @@ public final class Raft {
         size += com.google.protobuf.CodedOutputStream
           .computeInt64Size(5, prevLogTerm_);
       }
-      {
-        int dataSize = 0;
-        for (int i = 0; i < entries_.size(); i++) {
-          dataSize += com.google.protobuf.CodedOutputStream
-            .computeBytesSizeNoTag(entries_.get(i));
-        }
-        size += dataSize;
-        size += 1 * getEntriesList().size();
+      for (int i = 0; i < entries_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, entries_.get(i));
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
@@ -3656,6 +4212,7 @@ public final class Raft {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getEntriesFieldBuilder();
         }
       }
       private static Builder create() {
@@ -3674,8 +4231,12 @@ public final class Raft {
         bitField0_ = (bitField0_ & ~0x00000008);
         prevLogTerm_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000010);
-        entries_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000020);
+        if (entriesBuilder_ == null) {
+          entries_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000020);
+        } else {
+          entriesBuilder_.clear();
+        }
         commitIndex_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000040);
         return this;
@@ -3726,11 +4287,15 @@ public final class Raft {
           to_bitField0_ |= 0x00000010;
         }
         result.prevLogTerm_ = prevLogTerm_;
-        if (((bitField0_ & 0x00000020) == 0x00000020)) {
-          entries_ = java.util.Collections.unmodifiableList(entries_);
-          bitField0_ = (bitField0_ & ~0x00000020);
+        if (entriesBuilder_ == null) {
+          if (((bitField0_ & 0x00000020) == 0x00000020)) {
+            entries_ = java.util.Collections.unmodifiableList(entries_);
+            bitField0_ = (bitField0_ & ~0x00000020);
+          }
+          result.entries_ = entries_;
+        } else {
+          result.entries_ = entriesBuilder_.build();
         }
-        result.entries_ = entries_;
         if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
           to_bitField0_ |= 0x00000020;
         }
@@ -3768,15 +4333,31 @@ public final class Raft {
         if (other.hasPrevLogTerm()) {
           setPrevLogTerm(other.getPrevLogTerm());
         }
-        if (!other.entries_.isEmpty()) {
-          if (entries_.isEmpty()) {
-            entries_ = other.entries_;
-            bitField0_ = (bitField0_ & ~0x00000020);
-          } else {
-            ensureEntriesIsMutable();
-            entries_.addAll(other.entries_);
+        if (entriesBuilder_ == null) {
+          if (!other.entries_.isEmpty()) {
+            if (entries_.isEmpty()) {
+              entries_ = other.entries_;
+              bitField0_ = (bitField0_ & ~0x00000020);
+            } else {
+              ensureEntriesIsMutable();
+              entries_.addAll(other.entries_);
+            }
+            onChanged();
           }
-          onChanged();
+        } else {
+          if (!other.entries_.isEmpty()) {
+            if (entriesBuilder_.isEmpty()) {
+              entriesBuilder_.dispose();
+              entriesBuilder_ = null;
+              entries_ = other.entries_;
+              bitField0_ = (bitField0_ & ~0x00000020);
+              entriesBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getEntriesFieldBuilder() : null;
+            } else {
+              entriesBuilder_.addAllMessages(other.entries_);
+            }
+          }
         }
         if (other.hasCommitIndex()) {
           setCommitIndex(other.getCommitIndex());
@@ -4014,104 +4595,244 @@ public final class Raft {
         return this;
       }
 
-      // repeated bytes entries = 6;
-      private java.util.List<com.google.protobuf.ByteString> entries_ = java.util.Collections.emptyList();
+      // repeated .ohmdb.replication.LogEntry entries = 6;
+      private java.util.List<ohmdb.replication.Raft.LogEntry> entries_ =
+        java.util.Collections.emptyList();
       private void ensureEntriesIsMutable() {
         if (!((bitField0_ & 0x00000020) == 0x00000020)) {
-          entries_ = new java.util.ArrayList<com.google.protobuf.ByteString>(entries_);
+          entries_ = new java.util.ArrayList<ohmdb.replication.Raft.LogEntry>(entries_);
           bitField0_ |= 0x00000020;
          }
       }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          ohmdb.replication.Raft.LogEntry, ohmdb.replication.Raft.LogEntry.Builder, ohmdb.replication.Raft.LogEntryOrBuilder> entriesBuilder_;
+
       /**
-       * <code>repeated bytes entries = 6;</code>
-       *
-       * <pre>
-       * Log entries, they are just bytes (for now?)
-       * </pre>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
        */
-      public java.util.List<com.google.protobuf.ByteString>
-          getEntriesList() {
-        return java.util.Collections.unmodifiableList(entries_);
+      public java.util.List<ohmdb.replication.Raft.LogEntry> getEntriesList() {
+        if (entriesBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(entries_);
+        } else {
+          return entriesBuilder_.getMessageList();
+        }
       }
       /**
-       * <code>repeated bytes entries = 6;</code>
-       *
-       * <pre>
-       * Log entries, they are just bytes (for now?)
-       * </pre>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
        */
       public int getEntriesCount() {
-        return entries_.size();
+        if (entriesBuilder_ == null) {
+          return entries_.size();
+        } else {
+          return entriesBuilder_.getCount();
+        }
       }
       /**
-       * <code>repeated bytes entries = 6;</code>
-       *
-       * <pre>
-       * Log entries, they are just bytes (for now?)
-       * </pre>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
        */
-      public com.google.protobuf.ByteString getEntries(int index) {
-        return entries_.get(index);
+      public ohmdb.replication.Raft.LogEntry getEntries(int index) {
+        if (entriesBuilder_ == null) {
+          return entries_.get(index);
+        } else {
+          return entriesBuilder_.getMessage(index);
+        }
       }
       /**
-       * <code>repeated bytes entries = 6;</code>
-       *
-       * <pre>
-       * Log entries, they are just bytes (for now?)
-       * </pre>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
        */
       public Builder setEntries(
-          int index, com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureEntriesIsMutable();
-        entries_.set(index, value);
-        onChanged();
+          int index, ohmdb.replication.Raft.LogEntry value) {
+        if (entriesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEntriesIsMutable();
+          entries_.set(index, value);
+          onChanged();
+        } else {
+          entriesBuilder_.setMessage(index, value);
+        }
         return this;
       }
       /**
-       * <code>repeated bytes entries = 6;</code>
-       *
-       * <pre>
-       * Log entries, they are just bytes (for now?)
-       * </pre>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
        */
-      public Builder addEntries(com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureEntriesIsMutable();
-        entries_.add(value);
-        onChanged();
+      public Builder setEntries(
+          int index, ohmdb.replication.Raft.LogEntry.Builder builderForValue) {
+        if (entriesBuilder_ == null) {
+          ensureEntriesIsMutable();
+          entries_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          entriesBuilder_.setMessage(index, builderForValue.build());
+        }
         return this;
       }
       /**
-       * <code>repeated bytes entries = 6;</code>
-       *
-       * <pre>
-       * Log entries, they are just bytes (for now?)
-       * </pre>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public Builder addEntries(ohmdb.replication.Raft.LogEntry value) {
+        if (entriesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEntriesIsMutable();
+          entries_.add(value);
+          onChanged();
+        } else {
+          entriesBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public Builder addEntries(
+          int index, ohmdb.replication.Raft.LogEntry value) {
+        if (entriesBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureEntriesIsMutable();
+          entries_.add(index, value);
+          onChanged();
+        } else {
+          entriesBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public Builder addEntries(
+          ohmdb.replication.Raft.LogEntry.Builder builderForValue) {
+        if (entriesBuilder_ == null) {
+          ensureEntriesIsMutable();
+          entries_.add(builderForValue.build());
+          onChanged();
+        } else {
+          entriesBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public Builder addEntries(
+          int index, ohmdb.replication.Raft.LogEntry.Builder builderForValue) {
+        if (entriesBuilder_ == null) {
+          ensureEntriesIsMutable();
+          entries_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          entriesBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
        */
       public Builder addAllEntries(
-          java.lang.Iterable<? extends com.google.protobuf.ByteString> values) {
-        ensureEntriesIsMutable();
-        super.addAll(values, entries_);
-        onChanged();
+          java.lang.Iterable<? extends ohmdb.replication.Raft.LogEntry> values) {
+        if (entriesBuilder_ == null) {
+          ensureEntriesIsMutable();
+          super.addAll(values, entries_);
+          onChanged();
+        } else {
+          entriesBuilder_.addAllMessages(values);
+        }
         return this;
       }
       /**
-       * <code>repeated bytes entries = 6;</code>
-       *
-       * <pre>
-       * Log entries, they are just bytes (for now?)
-       * </pre>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
        */
       public Builder clearEntries() {
-        entries_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000020);
-        onChanged();
+        if (entriesBuilder_ == null) {
+          entries_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000020);
+          onChanged();
+        } else {
+          entriesBuilder_.clear();
+        }
         return this;
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public Builder removeEntries(int index) {
+        if (entriesBuilder_ == null) {
+          ensureEntriesIsMutable();
+          entries_.remove(index);
+          onChanged();
+        } else {
+          entriesBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public ohmdb.replication.Raft.LogEntry.Builder getEntriesBuilder(
+          int index) {
+        return getEntriesFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public ohmdb.replication.Raft.LogEntryOrBuilder getEntriesOrBuilder(
+          int index) {
+        if (entriesBuilder_ == null) {
+          return entries_.get(index);  } else {
+          return entriesBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public java.util.List<? extends ohmdb.replication.Raft.LogEntryOrBuilder> 
+           getEntriesOrBuilderList() {
+        if (entriesBuilder_ != null) {
+          return entriesBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(entries_);
+        }
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public ohmdb.replication.Raft.LogEntry.Builder addEntriesBuilder() {
+        return getEntriesFieldBuilder().addBuilder(
+            ohmdb.replication.Raft.LogEntry.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public ohmdb.replication.Raft.LogEntry.Builder addEntriesBuilder(
+          int index) {
+        return getEntriesFieldBuilder().addBuilder(
+            index, ohmdb.replication.Raft.LogEntry.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       */
+      public java.util.List<ohmdb.replication.Raft.LogEntry.Builder> 
+           getEntriesBuilderList() {
+        return getEntriesFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          ohmdb.replication.Raft.LogEntry, ohmdb.replication.Raft.LogEntry.Builder, ohmdb.replication.Raft.LogEntryOrBuilder> 
+          getEntriesFieldBuilder() {
+        if (entriesBuilder_ == null) {
+          entriesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              ohmdb.replication.Raft.LogEntry, ohmdb.replication.Raft.LogEntry.Builder, ohmdb.replication.Raft.LogEntryOrBuilder>(
+                  entries_,
+                  ((bitField0_ & 0x00000020) == 0x00000020),
+                  getParentForChildren(),
+                  isClean());
+          entries_ = null;
+        }
+        return entriesBuilder_;
       }
 
       // optional int64 commit_index = 7;
@@ -4829,6 +5550,11 @@ public final class Raft {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_ohmdb_replication_RaftWireMessage_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_ohmdb_replication_LogEntry_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_ohmdb_replication_LogEntry_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_ohmdb_replication_RequestVote_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -4869,18 +5595,20 @@ public final class Raft {
       "_reply\030\010 \001(\0132%.ohmdb.replication.AppendE",
       "ntriesReply\"U\n\013MessageType\022\020\n\014REQUEST_VO" +
       "TE\020\000\022\016\n\nVOTE_REPLY\020\001\022\022\n\016APPEND_ENTRIES\020\002" +
-      "\022\020\n\014APPEND_REPLY\020\003\"s\n\013RequestVote\022\021\n\tquo" +
-      "rum_id\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\024\n\014candidate_" +
-      "id\030\003 \001(\003\022\026\n\016last_log_index\030\004 \001(\003\022\025\n\rlast" +
-      "_log_term\030\005 \001(\003\"I\n\020RequestVoteReply\022\021\n\tq" +
-      "uorum_id\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\024\n\014vote_gra" +
-      "nted\030\003 \001(\010\"\231\001\n\rAppendEntries\022\021\n\tquorum_i" +
-      "d\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\021\n\tleader_id\030\003 \001(\003" +
-      "\022\026\n\016prev_log_index\030\004 \001(\003\022\025\n\rprev_log_ter",
-      "m\030\005 \001(\003\022\017\n\007entries\030\006 \003(\014\022\024\n\014commit_index" +
-      "\030\007 \001(\003\"F\n\022AppendEntriesReply\022\021\n\tquorum_i" +
-      "d\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\017\n\007success\030\003 \001(\010B\025" +
-      "\n\021ohmdb.replicationH\001"
+      "\022\020\n\014APPEND_REPLY\020\003\"5\n\010LogEntry\022\014\n\004term\030\001" +
+      " \001(\003\022\r\n\005index\030\002 \001(\003\022\014\n\004data\030\003 \001(\014\"s\n\013Req" +
+      "uestVote\022\021\n\tquorum_id\030\001 \001(\t\022\014\n\004term\030\002 \001(" +
+      "\003\022\024\n\014candidate_id\030\003 \001(\003\022\026\n\016last_log_inde" +
+      "x\030\004 \001(\003\022\025\n\rlast_log_term\030\005 \001(\003\"I\n\020Reques" +
+      "tVoteReply\022\021\n\tquorum_id\030\001 \001(\t\022\014\n\004term\030\002 " +
+      "\001(\003\022\024\n\014vote_granted\030\003 \001(\010\"\266\001\n\rAppendEntr" +
+      "ies\022\021\n\tquorum_id\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\021\n\t",
+      "leader_id\030\003 \001(\003\022\026\n\016prev_log_index\030\004 \001(\003\022" +
+      "\025\n\rprev_log_term\030\005 \001(\003\022,\n\007entries\030\006 \003(\0132" +
+      "\033.ohmdb.replication.LogEntry\022\024\n\014commit_i" +
+      "ndex\030\007 \001(\003\"F\n\022AppendEntriesReply\022\021\n\tquor" +
+      "um_id\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\017\n\007success\030\003 \001" +
+      "(\010B\025\n\021ohmdb.replicationH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -4893,26 +5621,32 @@ public final class Raft {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_RaftWireMessage_descriptor,
               new java.lang.String[] { "MessageId", "SenderId", "ReceiverId", "MessageType", "RequestVote", "VoteReply", "AppendEntries", "AppendReply", });
-          internal_static_ohmdb_replication_RequestVote_descriptor =
+          internal_static_ohmdb_replication_LogEntry_descriptor =
             getDescriptor().getMessageTypes().get(1);
+          internal_static_ohmdb_replication_LogEntry_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_ohmdb_replication_LogEntry_descriptor,
+              new java.lang.String[] { "Term", "Index", "Data", });
+          internal_static_ohmdb_replication_RequestVote_descriptor =
+            getDescriptor().getMessageTypes().get(2);
           internal_static_ohmdb_replication_RequestVote_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_RequestVote_descriptor,
               new java.lang.String[] { "QuorumId", "Term", "CandidateId", "LastLogIndex", "LastLogTerm", });
           internal_static_ohmdb_replication_RequestVoteReply_descriptor =
-            getDescriptor().getMessageTypes().get(2);
+            getDescriptor().getMessageTypes().get(3);
           internal_static_ohmdb_replication_RequestVoteReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_RequestVoteReply_descriptor,
               new java.lang.String[] { "QuorumId", "Term", "VoteGranted", });
           internal_static_ohmdb_replication_AppendEntries_descriptor =
-            getDescriptor().getMessageTypes().get(3);
+            getDescriptor().getMessageTypes().get(4);
           internal_static_ohmdb_replication_AppendEntries_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_AppendEntries_descriptor,
               new java.lang.String[] { "QuorumId", "Term", "LeaderId", "PrevLogIndex", "PrevLogTerm", "Entries", "CommitIndex", });
           internal_static_ohmdb_replication_AppendEntriesReply_descriptor =
-            getDescriptor().getMessageTypes().get(4);
+            getDescriptor().getMessageTypes().get(5);
           internal_static_ohmdb_replication_AppendEntriesReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_AppendEntriesReply_descriptor,

@@ -39,4 +39,10 @@ public interface RaftLogAbstraction {
     public long getLastTerm();
     public long getLastIndex();
 
+    /**
+     * Delete all log entries after and including the specified index.
+     *
+     * @param entryIndex the index entry to truncate log from.
+     */
+    public void truncateLog(long entryIndex);
 }

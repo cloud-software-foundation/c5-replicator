@@ -75,34 +75,6 @@ public class InRamSim {
         }
     }
 
-    public static class Log implements RaftLogAbstraction {
-
-        @Override
-        public long logEntry(byte[] logData, long term) {
-            return 0;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public byte[] getLogData(long index) {
-            return new byte[0];  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public long getLogTerm(long index) {
-            return 0;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public long getLastTerm() {
-            return 0;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-
-        @Override
-        public long getLastIndex() {
-            return 0;  //To change body of implemented methods use File | Settings | File Templates.
-        }
-    }
-
     public static class Persister implements RaftInfoPersistence {
         @Override
         public long readCurrentTerm() {
@@ -140,7 +112,7 @@ public class InRamSim {
                     peerId,
                     "foobar",
                     peerIds,
-                    new Log(),
+                    new InRamLog(),
                     new Info(plusMillis),
                     new Persister(),
                     rpcChannel);

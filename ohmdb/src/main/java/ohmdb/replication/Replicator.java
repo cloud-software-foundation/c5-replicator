@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static ohmdb.replication.Raft.LogEntry;
+
 /**
  * Single instantation of a raft / log / lease
  */
@@ -34,6 +36,7 @@ public class Replicator {
     private final String quorumId;
 
     private final ImmutableList<Long> peers;
+    private  ArrayList<Long> peerNextIndex;
 
     // What state is this instance in?
     public enum State {
@@ -174,16 +177,21 @@ public class Replicator {
         // is at least as complete as local log (sec 5.2, 5.4), grant vote
         // and reset election timeout.
 
-        // TODO check if candidate's log is at least as complete as my log. (sec 5.2, 5.4)
-
         boolean vote = false;
-        if (votedFor == 0 || votedFor == message.getRequest().from) {
-            setVotedFor(message.getRequest().from);
-            lastRPC = info.currentTimeMillis();
-            vote = true;
+        if ( (log.getLastTerm() <= msg.getLastLogTerm())
+                &&
+                log.getLastIndex() <= msg.getLastLogIndex()) {
+            // we can vote for this because the candidate's log is at least as
+            // complete as the local log.
+
+            if (votedFor == 0 || votedFor == message.getRequest().from) {
+                setVotedFor(message.getRequest().from);
+                lastRPC = info.currentTimeMillis();
+                vote = true;
+            }
         }
 
-        LOG.debug("{} sending vote reply to to {}, voted = {}", myId, votedFor, vote);
+        LOG.debug("{} sending vote reply to {} vote = {}, voted = {}", myId, message.getRequest().from, votedFor, vote);
         Raft.RequestVoteReply m = Raft.RequestVoteReply.newBuilder()
                 .setQuorumId(quorumId)
                 .setTerm(currentTerm)
@@ -199,16 +207,23 @@ public class Replicator {
 
         // 1. return if term < currentTerm (sec 5.1)
         if (msg.getTerm() < currentTerm) {
-            // TODO send error reply.
+            // TODO is this the correct message reply?
+            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
+                    .setQuorumId(quorumId)
+                    .setTerm(currentTerm)
+                    .setSuccess(false)
+                    .build();
+
+            RpcReply reply = new RpcReply(message.getRequest(), m);
+            message.reply(reply);
             return;
         }
 
         // 2. if term > currentTerm, set it (sec 5.1)
         if (msg.getTerm() > currentTerm) {
             setCurrentTerm(msg.getTerm());
-
-
         }
+
         // 3. Step down if we are a leader or a candidate (sec 5.2, 5.5)
         if (myState != State.FOLLOWER) {
             myState = State.FOLLOWER;
@@ -218,24 +233,97 @@ public class Replicator {
         lastRPC = info.currentTimeMillis();
 
         if (msg.getEntriesCount() == 0) {
-            // TODO determine if we are replying to this message.
-            return; // do nothing?
+            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
+                    .setQuorumId(quorumId)
+                    .setTerm(currentTerm)
+                    .setSuccess(true)
+                    .build();
+
+            RpcReply reply = new RpcReply(message.getRequest(), m);
+            message.reply(reply);
+            return;
         }
 
         // 5. return failure if log doesn't contain an entry at
         // prevLogIndex who's term matches prevLogTerm (sec 5.3)
+        long msgPrevLogIndex = msg.getPrevLogIndex();
+        long msgPrevLogTerm = msg.getPrevLogTerm();
+        if (log.getLogTerm(msgPrevLogIndex) != msgPrevLogTerm) {
+            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
+                    .setQuorumId(quorumId)
+                    .setTerm(currentTerm)
+                    .setSuccess(false)
+                    .build();
+
+            RpcReply reply = new RpcReply(message.getRequest(), m);
+            message.reply(reply);
+            return;
+        }
 
         // 6. if existing entries conflict with new entries, delete all
         // existing entries starting with first conflicting entry (sec 5.3)
+        // 7. Append any new entries not already in the log.
 
-        // 7. append any new entries not already in the log
+        List<LogEntry> entries =  msg.getEntriesList();
+        for (LogEntry entry : entries) {
+            long entryIndex = entry.getIndex();
 
+            if (entryIndex == (log.getLastIndex()+1)) {
+                // the very next index.
+                LOG.debug("{} new log entry for idx {} term {}", myId, entryIndex, entry.getTerm());
+                long newEntry = log.logEntry(entry.getData().toByteArray(), entry.getTerm());
 
+                assert newEntry == entryIndex;
+
+                continue;
+            }
+
+            if (entryIndex > (log.getLastIndex()+1)) {
+                // ok this entry is still beyond the LAST entry, so we have a problem:
+                LOG.error("{} log entry missing, my last was {} and the next in the message is {}",
+                        myId, log.getLastIndex(), entryIndex);
+
+                // TODO handle this situation a little better if possible
+                // reply with an error message leaving the log borked.
+                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
+                        .setQuorumId(quorumId)
+                        .setTerm(currentTerm)
+                        .setSuccess(false)
+                        .build();
+
+                RpcReply reply = new RpcReply(message.getRequest(), m);
+                message.reply(reply);
+                return;
+            }
+
+            // at this point entryIndex should be <= log.getLastIndex
+            if (log.getLogTerm(entryIndex) != entry.getTerm()) {
+                // conflict:
+                LOG.debug("{} log conflict at idx {} my term: {} term from leader: {}", myId,
+                        entryIndex, log.getLogTerm(entryIndex), entry.getTerm());
+                // delete this and all subsequent entries:
+                log.truncateLog(entryIndex);
+            }
+        }
+
+        // 8. apply newly committed entries to state machine
+        long lastCommittedIdx = msg.getCommitIndex();
+        // TODO make 'lastCommittedIdx' known throughout the local system.
+
+        Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
+                .setQuorumId(quorumId)
+                .setTerm(currentTerm)
+                .setSuccess(true)
+                .build();
+
+        RpcReply reply = new RpcReply(message.getRequest(), m);
+        message.reply(reply);
     }
 
     @FiberOnly
     private void checkOnElection() {
         if (lastRPC + info.electionTimeout() < info.currentTimeMillis()) {
+            LOG.debug("{} Timed out checkin on election, try new election", myId);
             doElection();
         }
     }
@@ -310,10 +398,46 @@ public class Replicator {
                         LOG.warn("{} I AM THE LEADER NOW!", myId);
                         // TODO do more stuff now.
                         myState = State.LEADER;
+
+                        // Page 7, para 5
+                        long myNextLog = log.getLastIndex() + 1;
+
+                        peerNextIndex = new ArrayList<>(peers.size());
+                        for (int i = 0; i < peerNextIndex.size() ; i++) {
+                            peerNextIndex.set(i, myNextLog);
+                        }
+
+                        startAppendTimer();
                     }
                 }
             });
         }
+    }
+
+
+    private Disposable appender = null;
+
+    @FiberOnly
+    private void startAppendTimer() {
+        appender = fiber.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                sendAppendRPC();
+            }
+        }, 0, 50, TimeUnit.MILLISECONDS);
+    }
+
+    @FiberOnly
+    private void stopAppendTimer() {
+        if (appender != null) {
+            appender.dispose();
+            appender = null;
+        }
+    }
+
+    @FiberOnly
+    private void sendAppendRPC() {
+
     }
 
     // Small helper methods goeth here
