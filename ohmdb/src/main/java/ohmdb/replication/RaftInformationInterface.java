@@ -35,4 +35,6 @@ public interface RaftInformationInterface {
      * @return
      */
     public long electionTimeout();
+
+    long groupCommitDelay();
 }

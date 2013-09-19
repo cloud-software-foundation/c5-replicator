@@ -73,6 +73,11 @@ public class InRamSim {
         public long electionTimeout() {
             return 1000;
         }
+
+        @Override
+        public long groupCommitDelay() {
+            return 50;
+        }
     }
 
     public static class Persister implements RaftInfoPersistence {

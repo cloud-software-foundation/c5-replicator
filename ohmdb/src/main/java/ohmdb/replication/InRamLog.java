@@ -16,6 +16,9 @@
  */
 package ohmdb.replication;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+
 import java.util.ArrayList;
 
 /**
@@ -41,10 +44,11 @@ public class InRamLog implements RaftLogAbstraction {
     }
 
     @Override
-    public synchronized long logEntry(byte[] logData, long term) {
+    public synchronized long logEntry(byte[] logData, long term, SettableFuture<Object> completionNotification) {
         int nextIdx = log.size();
         Entry e = new Entry(nextIdx, term, logData);
         log.add(e);
+        completionNotification.set(new Object());
         return nextIdx;
     }
 
@@ -61,6 +65,7 @@ public class InRamLog implements RaftLogAbstraction {
 
     @Override
     public synchronized long getLastTerm() {
+        if (log.isEmpty()) return 0;
         return log.get(log.size()-1).term;
     }
 
@@ -70,7 +75,10 @@ public class InRamLog implements RaftLogAbstraction {
     }
 
     @Override
-    public synchronized void truncateLog(long entryIndex) {
+    public synchronized ListenableFuture<Boolean> truncateLog(long entryIndex) {
         log.subList((int) entryIndex, log.size()).clear();
+        SettableFuture<Boolean> r = SettableFuture.create();
+        r.set(true);
+        return r;
     }
 }
