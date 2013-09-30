@@ -20,6 +20,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import static ohmdb.replication.Raft.LogEntry;
 
 /**
 
@@ -38,35 +41,40 @@ public class InRamLog implements RaftLogAbstraction {
         }
     }
 
-    private final ArrayList<Entry> log = new ArrayList<>();
+    private final ArrayList<LogEntry> log = new ArrayList<>();
 
     public InRamLog() {
     }
 
     @Override
-    public synchronized long logEntry(byte[] logData, long term, SettableFuture<Object> completionNotification) {
-        int nextIdx = log.size();
-        Entry e = new Entry(nextIdx, term, logData);
-        log.add(e);
-        completionNotification.set(new Object());
-        return nextIdx;
+    public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
+        // add them, for great justice.
+        assert log.size() == entries.get(0).getIndex();
+        // TODO more assertions
+
+        log.addAll(entries);
+
+
+        SettableFuture<Boolean> r = SettableFuture.create();
+        r.set(true);
+        return r;
     }
 
     @Override
-    public synchronized byte[] getLogData(long index) {
-        return new byte[0];  //To change body of implemented methods use File | Settings | File Templates.
+    public LogEntry getLogEntry(long index) {
+        return log.get((int) index);
     }
 
     @Override
     public synchronized long getLogTerm(long index) {
         assert index < log.size();
-        return log.get((int) index).term;
+        return log.get((int) index).getTerm();
     }
 
     @Override
     public synchronized long getLastTerm() {
         if (log.isEmpty()) return 0;
-        return log.get(log.size()-1).term;
+        return log.get(log.size()-1).getTerm();
     }
 
     @Override
