@@ -17,7 +17,6 @@
 package ohmdb.replication;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.List;
 
@@ -45,7 +44,7 @@ public interface RaftLogAbstraction {
      * @param entries new log entries
      * @return an future that indicates success.
      */
-    public SettableFuture<Object> logEntries(List<Raft.LogEntry> entries);
+    public ListenableFuture<Boolean> logEntries(List<Raft.LogEntry> entries);
 
 
     public Raft.LogEntry getLogEntry(long index);
