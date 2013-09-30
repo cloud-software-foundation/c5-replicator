@@ -81,14 +81,23 @@ public class InRamSim {
     }
 
     public static class Persister implements RaftInfoPersistence {
+        private long votedFor = 0;
+        private long currentTerm = 0;
+
         @Override
         public long readCurrentTerm() {
-            return 0;
+            return currentTerm;
         }
 
         @Override
         public long readVotedFor() {
-            return 0;
+            return votedFor;
+        }
+
+        @Override
+        public void writeCurrentTermAndVotedFor(long currentTerm, long votedFor) {
+            this.currentTerm = currentTerm;
+            this.votedFor = votedFor;
         }
     }
 

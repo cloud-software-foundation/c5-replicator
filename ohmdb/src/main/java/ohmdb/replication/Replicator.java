@@ -727,13 +727,20 @@ public class Replicator {
     }
 
     private void setVotedFor(long votedFor) {
+        persister.writeCurrentTermAndVotedFor(currentTerm, votedFor);
+        //persister.writeVotedFor(votedFor);
+
         this.votedFor = votedFor;
     }
 
     private void setCurrentTerm(long newTerm) {
+        //persister.writeCurrentTerm(newTerm);
+        persister.writeCurrentTermAndVotedFor(newTerm, 0);
+
         this.currentTerm = newTerm;
+        this.votedFor = 0;
         // new term, means new attempt to elect.
-        setVotedFor(0);
+        //setVotedFor(0);
     }
 
     public long getId() {
