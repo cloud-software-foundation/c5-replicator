@@ -19,26 +19,36 @@ package ohmdb.replication;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
+import java.util.List;
+
 /**
- * A log abstraction for RAFT.
+ * A log abstraction for the raft replicator.
+ *
+ * As a raft replicator I promise not to call from more than 1 thread.
  */
 public interface RaftLogAbstraction {
-
     /**
-     * Log an entry to the log.
+     * Log entries to the log.  The entries are in order, and should start from getLastIndex() + 1.
      *
-     * This might take a few so let's use a future.
+     * The implementation should feel free to verify this.
      *
-     * @param logData the raw data
-     * @param term the term of when the entry was received by the leader
-     * @param completionNotification the notification of logging success, or a Throwable if failed.
-     * @return the log index of this entry.
+     * After this call returns, the log implementation should mark these entries as "to be committed"
+     * and calls to 'getLastIndex()' should return the last entry in "entries".  The implementation will
+     * then return a future that will be set with either a 'new Object()' during success, or a Throwable
+     * indicating the error after the log has been synced to disk.
+     *
+     * Note that over time, multiple calls to logEntries() may be issued before the prior call has signaled
+     * full sync to the client.  This also implies that once this call returns, calls to the other methods
+     * of this interface must now return data from these entries.  For example calling getLogTerm(long) should
+     * return data from these entries even if they haven't been quite sync'ed to disk yet.
+     *
+     * @param entries new log entries
+     * @return an future that indicates success.
      */
-    public long logEntry(byte[] logData, long term, SettableFuture<Object> completionNotification);
+    public SettableFuture<Object> logEntries(List<Raft.LogEntry> entries);
 
 
-    // These get info about the log.
-    public byte[] getLogData(long index);
+    public Raft.LogEntry getLogEntry(long index);
 
     /**
      * Get the term for a given log index.  This is expected to be fast, so its an
