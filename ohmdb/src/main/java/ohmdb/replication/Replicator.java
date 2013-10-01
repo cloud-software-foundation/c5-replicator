@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -45,20 +46,21 @@ public class Replicator {
     private final String quorumId;
 
     private final ImmutableList<Long> peers;
+
+    /****** These next few fields are used when we are a leader *******/
     // this is the next index from our log we need to send to each peer, kept track of on a per-peer basis.
     private HashMap<Long, Long> peersNextIndex;
-
-
+    // The last succesfully acked message from our peers.  I also keep track of my own acked log messages in here.
+    private HashMap<Long, Long> peersLastAckedIndex;
+    private long myFirstIndexAsLeader;
 
     private static class IntLogRequest {
         public final byte[] datum;
         public final SettableFuture<Long> logNumberNotifation;
-        public final SettableFuture<Boolean> durableNofication;
 
         private IntLogRequest(byte[] datum) {
             this.datum = datum;
             this.logNumberNotifation = SettableFuture.create();
-            this.durableNofication = SettableFuture.create();
         }
     }
     private final BlockingQueue<IntLogRequest> logRequests = new ArrayBlockingQueue<>(100);
@@ -150,6 +152,7 @@ public class Replicator {
      */
     public ListenableFuture<Long> logData(final byte[] datum) throws InterruptedException {
         if (!isLeader()) {
+            LOG.debug("{} attempted to logData on a non-leader", myId);
             return null;
         }
 
@@ -284,9 +287,10 @@ public class Replicator {
 
         // 5. return failure if log doesn't contain an entry at
         // prevLogIndex who's term matches prevLogTerm (sec 5.3)
+        // if msgPrevLogIndex == 0 -> special case of starting the log!
         long msgPrevLogIndex = msg.getPrevLogIndex();
         long msgPrevLogTerm = msg.getPrevLogTerm();
-        if (log.getLogTerm(msgPrevLogIndex) != msgPrevLogTerm) {
+        if (msgPrevLogIndex != 0 && log.getLogTerm(msgPrevLogIndex) != msgPrevLogTerm) {
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
                     .setQuorumId(quorumId)
                     .setTerm(currentTerm)
@@ -407,7 +411,7 @@ public class Replicator {
     @FiberOnly
     private void checkOnElection() {
         if (myState == State.LEADER) {
-            LOG.debug("{} leader during election check.", myId);
+            LOG.trace("{} leader during election check.", myId);
             return;
         }
 
@@ -453,7 +457,7 @@ public class Replicator {
 
                     if (currentTerm > termBeingVotedFor) {
                         LOG.warn("{} election reply from {}, but currentTerm {} > vote term {}", myId, message.from,
-                                termBeingVotedFor, currentTerm);
+                                currentTerm, termBeingVotedFor);
                         return;
                     }
 
@@ -521,12 +525,16 @@ public class Replicator {
         // Page 7, para 5
         long myNextLog = log.getLastIndex()+1;
 
-        peersNextIndex = new HashMap<>(peers.size());
+        peersLastAckedIndex = new HashMap<>(peers.size());
+        peersNextIndex = new HashMap<>(peers.size()-1);
         for (long peer : peers) {
             if (peer == myId) continue;
 
             peersNextIndex.put(peer, myNextLog);
         }
+
+        // none so far!
+        myFirstIndexAsLeader = 0;
 
         //startAppendTimer();
         startQueueConsumer();
@@ -547,15 +555,19 @@ public class Replicator {
         // retrieve as many items as possible. send rpc.
         final ArrayList<IntLogRequest> reqs = new ArrayList<>();
 
-        LOG.debug("{} queue consuming", myId);
+        LOG.trace("{} queue consuming", myId);
         while (logRequests.peek() != null) {
             reqs.add(logRequests.poll());
         }
 
-        LOG.debug("{} {} queue items to commit", myId, reqs.size());
+        LOG.trace("{} {} queue items to commit", myId, reqs.size());
 
         final long firstInList = log.getLastIndex()+1;
         long idAssigner = firstInList;
+
+        // Get these now BEFORE the log append call.
+        long logLastIndex = log.getLastIndex();
+        long logLastTerm = log.getLastTerm();
 
         // Build the log entries:
         ArrayList <LogEntry> newLogEntries = new ArrayList<>(reqs.size());
@@ -566,6 +578,11 @@ public class Replicator {
                     .setData(ByteString.copyFrom(logReq.datum))
                     .build();
             newLogEntries.add(entry);
+
+            if (myFirstIndexAsLeader == 0) {
+                myFirstIndexAsLeader = idAssigner;
+                LOG.debug("{} my first index as leader is: {}", myId, myFirstIndexAsLeader);
+            }
 
             // let the client know what our id is
             logReq.logNumberNotifation.set(idAssigner);
@@ -584,23 +601,17 @@ public class Replicator {
         Raft.AppendEntries.Builder msgProto = Raft.AppendEntries.newBuilder()
                 .setTerm(currentTerm)
                 .setLeaderId(myId)
-                .setPrevLogIndex(log.getLastIndex())
-                .setPrevLogTerm(log.getLastTerm())
-                .setCommitIndex(0);
+                .setPrevLogIndex(logLastIndex)
+                .setPrevLogTerm(logLastTerm)
+                .setCommitIndex(this.lastCommittedIndex);
 
         // TODO remove one of these i think.
         final long largestIndexInBatch = idAssigner - 1;
         final long lastIndexSent = log.getLastIndex();
         assert lastIndexSent == largestIndexInBatch;
 
-        // What a majority means at this moment.
+        // What a majority means at this moment (in case of reconfigures)
         final long majority = calculateMajority(peers.size());
-        // Am I attempting to commit new entries from my term? This is only yes if I have 'newLogEntries' not empty.
-        // TODO This could also be YES IF I already had 'committed' log entries from my own term. Maybe I should check
-        // TODO in on that.
-        final boolean entriesFromMyTerm = !newLogEntries.isEmpty();
-        final int[] count = {0};
-        final boolean[] ackedToClient = {false};
 
         if (localLogFuture != null)
             Futures.addCallback(localLogFuture, new FutureCallback<Boolean>() {
@@ -608,7 +619,8 @@ public class Replicator {
                 public void onSuccess(Boolean result) {
                     assert result != null && result;
 
-                    processAckAndAct(count, entriesFromMyTerm, ackedToClient, majority, reqs, lastIndexSent);
+                    peersLastAckedIndex.put(myId, lastIndexSent);
+                    calculateLastVisible(majority, lastIndexSent);
                 }
 
                 @Override
@@ -632,14 +644,16 @@ public class Replicator {
                 // TODO check moreCount is reasonable, and available in log. Otherwise do alternative peer catch up
                 // TODO alternative peer catchup is by a different process, send message to that then skip sending AppendRpc
 
+                // TODO allow for smaller 'catch up' messages so we dont try to create a 400GB sized message.
+
                 // TODO cache these extra LogEntry objects so we dont recreate too many of them.
                 peerEntries = new ArrayList<>((int) (newLogEntries.size() + moreCount));
                 for (long i = peerNextIdx; i < firstInList; i++) {
                     LogEntry entry = log.getLogEntry(i);
                     peerEntries.add(entry);
                 }
-                // make sure the lists splice neatly together.
-                assert (peerEntries.get(peerEntries.size()-1).getIndex()+1) == newLogEntries.get(0).getIndex();
+                // TODO make sure the lists splice neatly together. The check below fails when newLogEntries is empty
+                //assert (peerEntries.get(peerEntries.size()-1).getIndex()+1) == newLogEntries.get(0).getIndex();
                 peerEntries.addAll(newLogEntries);
             }
 
@@ -655,42 +669,68 @@ public class Replicator {
             AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
                 @Override
                 public void onMessage(RpcWireReply message) {
-                    LOG.debug("{} got a reply {}", myId, message);
+                    LOG.trace("{} got a reply {}", myId, message);
 
                     boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
                     if (!wasSuccessful) {
                         // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
-
-                        peersNextIndex.put(peer, peerNextIdx - 1);
-
-                        // TODO when we fail here, we may not be able to ack to the 'reqs' so do something different?
+                        if (message.getAppendReplyMessage().hasMyLastLogEntry()) {
+                            peersNextIndex.put(peer, message.getAppendReplyMessage().getMyLastLogEntry());
+                        } else {
+                            peersNextIndex.put(peer, peerNextIdx - 1);
+                        }
                     } else {
-                        // TODO improve lastCommittedIndex detection when we are in a "no new entries" case requiring back data to be committed.
-                        processAckAndAct(count, entriesFromMyTerm, ackedToClient, majority, reqs, lastIndexSent);
+                        // we have been successfully acked up to this point.
+                        LOG.trace("{} peer {} acked for {}", myId, peer, lastIndexSent);
+                        peersLastAckedIndex.put(peer, lastIndexSent);
+
+                        calculateLastVisible(majority, lastIndexSent);
                     }
                 }
             });
         }
     }
 
-    private void processAckAndAct(int[] count, boolean entriesFromMyTerm, boolean[] ackedToClient, long majority, ArrayList<IntLogRequest> reqs, long lastIndexSent) {
-        // if # of acks > majority, THEN -> this is OK
-        // IFF one entry from the current term is also stored on a majority of the servers.
-        count[0]++;
+    private void calculateLastVisible(long majority, long lastIndexSent) {
+        if (lastIndexSent == lastCommittedIndex) return; //skip null check basically
 
-        if (entriesFromMyTerm && !ackedToClient[0] && count[0] > majority ) {
-            // ok we can deliver notification to the client.
-            for (IntLogRequest req : reqs) {
-                req.durableNofication.set(true);
-            }
-
-            ackedToClient[0] = true;
-
-            // therefore the most recently visible commit is the last one in the batch we sent out.
-            lastCommittedIndex = lastIndexSent;
-
-            // TODO broadcast this information somehow.
+        HashMap <Long,Integer> bucket = new HashMap<>();
+        for (long lastAcked : peersLastAckedIndex.values()) {
+            Integer p = bucket.get(lastAcked);
+            if (p == null)
+                bucket.put(lastAcked, 1);
+            else
+                bucket.put(lastAcked, p+1);
         }
+
+        long mostAcked = 0;
+        for (Map.Entry<Long,Integer> e : bucket.entrySet()) {
+            if (e.getValue() > majority) {
+                if (mostAcked != 0) {
+                    LOG.warn("{} strange, found more than 1 'most acked' entry: {} and {}", myId, mostAcked, e.getKey());
+                }
+                mostAcked = e.getKey();
+            }
+        }
+        if (mostAcked == 0) return;
+        if (myFirstIndexAsLeader == 0) return; // cant declare new visible yet until we have a first index as the leader.
+
+        if (mostAcked < myFirstIndexAsLeader) {
+            LOG.warn("{} Found most-acked entry {} but my first index as leader was {}, cant declare visible yet", myId, mostAcked, myFirstIndexAsLeader);
+            return;
+        }
+
+        if (mostAcked < lastCommittedIndex) {
+            LOG.warn("{} weird mostAcked {} is smaller than lastCommittedIndex {}", myId, mostAcked, lastCommittedIndex);
+            return;
+        }
+        if (mostAcked == lastCommittedIndex) {
+            return ;
+        }
+        this.lastCommittedIndex = mostAcked;
+        LOG.info("{} discovered new visible entry {}", myId, lastCommittedIndex);
+
+        // TODO take action and notify clients (pending new system frameworks)
     }
 
     @FiberOnly

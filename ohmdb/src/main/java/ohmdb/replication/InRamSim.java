@@ -205,8 +205,10 @@ public class InRamSim {
 //                    else if (i > 5)
 //                        System.out.print("DEAD: ");
 //                }
-                if (repl.isLeader()) System.out.print("LEADER: ");
-                repl.logData(new byte[]{1,2,3,4,5,6});
+                if (repl.isLeader()) {
+                    System.out.print("LEADER: ");
+                    repl.logData(new byte[]{1,2,3,4,5,6});
+                }
                 System.out.print(repl.getId() + " currentTerm: " + repl.currentTerm);
                 System.out.println(" votedFor: " + repl.votedFor);
             }

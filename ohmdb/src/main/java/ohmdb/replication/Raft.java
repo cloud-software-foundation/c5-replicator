@@ -4910,20 +4910,22 @@ public final class Raft {
     // optional bool success = 3;
     /**
      * <code>optional bool success = 3;</code>
-     *
-     * <pre>
-     * TODO better failure reporting
-     * </pre>
      */
     boolean hasSuccess();
     /**
      * <code>optional bool success = 3;</code>
-     *
-     * <pre>
-     * TODO better failure reporting
-     * </pre>
      */
     boolean getSuccess();
+
+    // optional int64 my_last_log_entry = 4;
+    /**
+     * <code>optional int64 my_last_log_entry = 4;</code>
+     */
+    boolean hasMyLastLogEntry();
+    /**
+     * <code>optional int64 my_last_log_entry = 4;</code>
+     */
+    long getMyLastLogEntry();
   }
   /**
    * Protobuf type {@code ohmdb.replication.AppendEntriesReply}
@@ -4989,6 +4991,11 @@ public final class Raft {
             case 24: {
               bitField0_ |= 0x00000004;
               success_ = input.readBool();
+              break;
+            }
+            case 32: {
+              bitField0_ |= 0x00000008;
+              myLastLogEntry_ = input.readInt64();
               break;
             }
           }
@@ -5095,29 +5102,38 @@ public final class Raft {
     private boolean success_;
     /**
      * <code>optional bool success = 3;</code>
-     *
-     * <pre>
-     * TODO better failure reporting
-     * </pre>
      */
     public boolean hasSuccess() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
      * <code>optional bool success = 3;</code>
-     *
-     * <pre>
-     * TODO better failure reporting
-     * </pre>
      */
     public boolean getSuccess() {
       return success_;
+    }
+
+    // optional int64 my_last_log_entry = 4;
+    public static final int MY_LAST_LOG_ENTRY_FIELD_NUMBER = 4;
+    private long myLastLogEntry_;
+    /**
+     * <code>optional int64 my_last_log_entry = 4;</code>
+     */
+    public boolean hasMyLastLogEntry() {
+      return ((bitField0_ & 0x00000008) == 0x00000008);
+    }
+    /**
+     * <code>optional int64 my_last_log_entry = 4;</code>
+     */
+    public long getMyLastLogEntry() {
+      return myLastLogEntry_;
     }
 
     private void initFields() {
       quorumId_ = "";
       term_ = 0L;
       success_ = false;
+      myLastLogEntry_ = 0L;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -5140,6 +5156,9 @@ public final class Raft {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         output.writeBool(3, success_);
       }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        output.writeInt64(4, myLastLogEntry_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -5160,6 +5179,10 @@ public final class Raft {
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(3, success_);
+      }
+      if (((bitField0_ & 0x00000008) == 0x00000008)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt64Size(4, myLastLogEntry_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -5283,6 +5306,8 @@ public final class Raft {
         bitField0_ = (bitField0_ & ~0x00000002);
         success_ = false;
         bitField0_ = (bitField0_ & ~0x00000004);
+        myLastLogEntry_ = 0L;
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -5323,6 +5348,10 @@ public final class Raft {
           to_bitField0_ |= 0x00000004;
         }
         result.success_ = success_;
+        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+          to_bitField0_ |= 0x00000008;
+        }
+        result.myLastLogEntry_ = myLastLogEntry_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -5349,6 +5378,9 @@ public final class Raft {
         }
         if (other.hasSuccess()) {
           setSuccess(other.getSuccess());
+        }
+        if (other.hasMyLastLogEntry()) {
+          setMyLastLogEntry(other.getMyLastLogEntry());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -5488,30 +5520,18 @@ public final class Raft {
       private boolean success_ ;
       /**
        * <code>optional bool success = 3;</code>
-       *
-       * <pre>
-       * TODO better failure reporting
-       * </pre>
        */
       public boolean hasSuccess() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
        * <code>optional bool success = 3;</code>
-       *
-       * <pre>
-       * TODO better failure reporting
-       * </pre>
        */
       public boolean getSuccess() {
         return success_;
       }
       /**
        * <code>optional bool success = 3;</code>
-       *
-       * <pre>
-       * TODO better failure reporting
-       * </pre>
        */
       public Builder setSuccess(boolean value) {
         bitField0_ |= 0x00000004;
@@ -5521,14 +5541,43 @@ public final class Raft {
       }
       /**
        * <code>optional bool success = 3;</code>
-       *
-       * <pre>
-       * TODO better failure reporting
-       * </pre>
        */
       public Builder clearSuccess() {
         bitField0_ = (bitField0_ & ~0x00000004);
         success_ = false;
+        onChanged();
+        return this;
+      }
+
+      // optional int64 my_last_log_entry = 4;
+      private long myLastLogEntry_ ;
+      /**
+       * <code>optional int64 my_last_log_entry = 4;</code>
+       */
+      public boolean hasMyLastLogEntry() {
+        return ((bitField0_ & 0x00000008) == 0x00000008);
+      }
+      /**
+       * <code>optional int64 my_last_log_entry = 4;</code>
+       */
+      public long getMyLastLogEntry() {
+        return myLastLogEntry_;
+      }
+      /**
+       * <code>optional int64 my_last_log_entry = 4;</code>
+       */
+      public Builder setMyLastLogEntry(long value) {
+        bitField0_ |= 0x00000008;
+        myLastLogEntry_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional int64 my_last_log_entry = 4;</code>
+       */
+      public Builder clearMyLastLogEntry() {
+        bitField0_ = (bitField0_ & ~0x00000008);
+        myLastLogEntry_ = 0L;
         onChanged();
         return this;
       }
@@ -5606,9 +5655,10 @@ public final class Raft {
       "leader_id\030\003 \001(\003\022\026\n\016prev_log_index\030\004 \001(\003\022" +
       "\025\n\rprev_log_term\030\005 \001(\003\022,\n\007entries\030\006 \003(\0132" +
       "\033.ohmdb.replication.LogEntry\022\024\n\014commit_i" +
-      "ndex\030\007 \001(\003\"F\n\022AppendEntriesReply\022\021\n\tquor" +
+      "ndex\030\007 \001(\003\"a\n\022AppendEntriesReply\022\021\n\tquor" +
       "um_id\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\017\n\007success\030\003 \001" +
-      "(\010B\025\n\021ohmdb.replicationH\001"
+      "(\010\022\031\n\021my_last_log_entry\030\004 \001(\003B\025\n\021ohmdb.r" +
+      "eplicationH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -5650,7 +5700,7 @@ public final class Raft {
           internal_static_ohmdb_replication_AppendEntriesReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_AppendEntriesReply_descriptor,
-              new java.lang.String[] { "QuorumId", "Term", "Success", });
+              new java.lang.String[] { "QuorumId", "Term", "Success", "MyLastLogEntry", });
           return null;
         }
       };
