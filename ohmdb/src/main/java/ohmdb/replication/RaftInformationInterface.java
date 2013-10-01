@@ -36,5 +36,9 @@ public interface RaftInformationInterface {
      */
     public long electionTimeout();
 
-    long groupCommitDelay();
+    /**
+     * How frequently we should check the append queue, and send RPCs to the clients.
+     * @return
+     */
+    public long groupCommitDelay();
 }

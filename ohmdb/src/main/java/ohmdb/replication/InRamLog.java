@@ -49,6 +49,7 @@ public class InRamLog implements RaftLogAbstraction {
     @Override
     public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
         // add them, for great justice.
+
         assert log.size() == entries.get(0).getIndex();
         // TODO more assertions
 

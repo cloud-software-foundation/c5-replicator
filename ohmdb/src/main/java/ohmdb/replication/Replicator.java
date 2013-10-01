@@ -80,7 +80,7 @@ public class Replicator {
     long votedFor;
 
     // Election timers, etc.
-    private long lastRPC = 0;
+    private long lastRPC;
     private long myElectionTimeout;
     private Disposable electionChecker;
 
@@ -110,6 +110,7 @@ public class Replicator {
         this.persister = persister;
         Random r = new Random();
         this.myElectionTimeout = r.nextInt((int) info.electionTimeout()) + info.electionTimeout();
+        this.lastRPC = info.currentTimeMillis();
 
         assert this.peers.contains(this.myId);
 
@@ -134,6 +135,7 @@ public class Replicator {
             }
         }, info.electionCheckRate(), info.electionCheckRate(), TimeUnit.MILLISECONDS);
 
+        LOG.debug("{} started {} with election timeout {}", myId, this.quorumId, this.myElectionTimeout);
         fiber.start();
     }
 
@@ -198,7 +200,7 @@ public class Replicator {
 
         // 2. if term > currentTerm, currentTerm <- term
         if (msg.getTerm() > currentTerm) {
-            LOG.debug("{} requestVote rpc, pushing forward currentTerm {} to {}", currentTerm, msg.getTerm());
+            LOG.debug("{} requestVote rpc, pushing forward currentTerm {} to {}", myId, currentTerm, msg.getTerm());
             setCurrentTerm(msg.getTerm());
 
             // 2a. Step down if candidate or leader.
@@ -409,7 +411,7 @@ public class Replicator {
             return;
         }
 
-        if (lastRPC + info.electionTimeout() < info.currentTimeMillis()) {
+        if (lastRPC + this.myElectionTimeout < info.currentTimeMillis()) {
             LOG.debug("{} Timed out checkin on election, try new election", myId);
             doElection();
         }
@@ -572,8 +574,12 @@ public class Replicator {
         }
 
         // Should throw immediately if there was a basic validation error.
-        final ListenableFuture<Boolean> localLogFuture = log.logEntries(newLogEntries);
-        final long largestIndexInBatch = idAssigner - 1;
+        final ListenableFuture<Boolean> localLogFuture;
+        if (!newLogEntries.isEmpty()) {
+            localLogFuture = log.logEntries(newLogEntries);
+        } else {
+            localLogFuture = null;
+        }
 
         Raft.AppendEntries.Builder msgProto = Raft.AppendEntries.newBuilder()
                 .setTerm(currentTerm)
@@ -582,7 +588,10 @@ public class Replicator {
                 .setPrevLogTerm(log.getLastTerm())
                 .setCommitIndex(0);
 
+        // TODO remove one of these i think.
+        final long largestIndexInBatch = idAssigner - 1;
         final long lastIndexSent = log.getLastIndex();
+        assert lastIndexSent == largestIndexInBatch;
 
         // What a majority means at this moment.
         final long majority = calculateMajority(peers.size());
@@ -593,20 +602,21 @@ public class Replicator {
         final int[] count = {0};
         final boolean[] ackedToClient = {false};
 
-        Futures.addCallback(localLogFuture, new FutureCallback<Boolean>() {
-            @Override
-            public void onSuccess(Boolean result) {
-                assert result != null && result;
+        if (localLogFuture != null)
+            Futures.addCallback(localLogFuture, new FutureCallback<Boolean>() {
+                @Override
+                public void onSuccess(Boolean result) {
+                    assert result != null && result;
 
-                processAckAndAct(count, entriesFromMyTerm, ackedToClient, majority, reqs, lastIndexSent);
-            }
+                    processAckAndAct(count, entriesFromMyTerm, ackedToClient, majority, reqs, lastIndexSent);
+                }
 
-            @Override
-            public void onFailure(Throwable t) {
-                // pretty bad.
-                LOG.error("{} failed to commit to local log {}", myId, t);
-            }
-        });
+                @Override
+                public void onFailure(Throwable t) {
+                    // pretty bad.
+                    LOG.error("{} failed to commit to local log {}", myId, t);
+                }
+            });
 
         for (final long peer : peers) {
             if (myId == peer) continue; // dont send myself messages.
@@ -641,8 +651,6 @@ public class Replicator {
                     .addAllEntries(peerEntries)
                     .build();
 
-            // TODO handle failures and notification of the clients.
-
             RpcRequest request = new RpcRequest(peer, myId, msg);
             AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
                 @Override
@@ -654,7 +662,10 @@ public class Replicator {
                         // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
 
                         peersNextIndex.put(peer, peerNextIdx - 1);
+
+                        // TODO when we fail here, we may not be able to ack to the 'reqs' so do something different?
                     } else {
+                        // TODO improve lastCommittedIndex detection when we are in a "no new entries" case requiring back data to be committed.
                         processAckAndAct(count, entriesFromMyTerm, ackedToClient, majority, reqs, lastIndexSent);
                     }
                 }
@@ -677,6 +688,8 @@ public class Replicator {
 
             // therefore the most recently visible commit is the last one in the batch we sent out.
             lastCommittedIndex = lastIndexSent;
+
+            // TODO broadcast this information somehow.
         }
     }
 

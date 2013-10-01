@@ -147,6 +147,7 @@ public class InRamSim {
 
         rpcFiber.start();
     }
+
     private final Meter messages = metrics.meter(name(InRamSim.class, "messageRate"));
     private final Counter messageTxn = metrics.counter(name(InRamSim.class, "messageTxn"));
 
@@ -194,6 +195,7 @@ public class InRamSim {
         Replicator theOneIKilled = null;
 
         for(int i = 0 ; i < 15 ; i++) {
+
             Thread.sleep(3 * 1000);
 
             for (Replicator repl : replicators.values()) {
@@ -204,6 +206,7 @@ public class InRamSim {
 //                        System.out.print("DEAD: ");
 //                }
                 if (repl.isLeader()) System.out.print("LEADER: ");
+                repl.logData(new byte[]{1,2,3,4,5,6});
                 System.out.print(repl.getId() + " currentTerm: " + repl.currentTerm);
                 System.out.println(" votedFor: " + repl.votedFor);
             }
