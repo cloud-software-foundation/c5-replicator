@@ -29,25 +29,13 @@ import static ohmdb.replication.Raft.LogEntry;
  */
 public class InRamLog implements RaftLogAbstraction {
 
-    private static class Entry {
-        public final long index;
-        public final long term;
-        public final byte[] data;
-
-        private Entry(long index, long term, byte[] data) {
-            this.index = index;
-            this.term = term;
-            this.data = data;
-        }
-    }
-
     private final ArrayList<LogEntry> log = new ArrayList<>();
 
     public InRamLog() {
     }
 
     @Override
-    public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
+    public ListenableFuture<Boolean> logEntries(String quorumId, List<LogEntry> entries) {
         // add them, for great justice.
 
         assert (log.size()+1) == entries.get(0).getIndex();
@@ -62,30 +50,30 @@ public class InRamLog implements RaftLogAbstraction {
     }
 
     @Override
-    public LogEntry getLogEntry(long index) {
+    public LogEntry getLogEntry(String quorumId, long index) {
         return log.get((int) index-1);
     }
 
     @Override
-    public synchronized long getLogTerm(long index) {
+    public synchronized long getLogTerm(String quorumId, long index) {
         assert (index-1) < log.size();
 
         return log.get((int) index-1).getTerm();
     }
 
     @Override
-    public synchronized long getLastTerm() {
+    public synchronized long getLastTerm(String quorumId) {
         if (log.isEmpty()) return 0;
         return log.get(log.size()-1).getTerm();
     }
 
     @Override
-    public synchronized long getLastIndex() {
+    public synchronized long getLastIndex(String quorumId) {
         return log.size();
     }
 
     @Override
-    public synchronized ListenableFuture<Boolean> truncateLog(long entryIndex) {
+    public synchronized ListenableFuture<Boolean> truncateLog(String quorumId, long entryIndex) {
         log.subList((int) entryIndex-1, log.size()).clear();
         SettableFuture<Boolean> r = SettableFuture.create();
         r.set(true);

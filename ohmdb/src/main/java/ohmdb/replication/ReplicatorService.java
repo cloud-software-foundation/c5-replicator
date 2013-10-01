@@ -35,8 +35,8 @@ import static ohmdb.replication.Raft.LogEntry;
 /**
  * Single instantation of a raft / log / lease
  */
-public class Replicator {
-    private static final Logger LOG = LoggerFactory.getLogger(Replicator.class);
+public class ReplicatorService {
+    private static final Logger LOG = LoggerFactory.getLogger(ReplicatorService.class);
 
     private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
     private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
@@ -53,6 +53,8 @@ public class Replicator {
     // The last succesfully acked message from our peers.  I also keep track of my own acked log messages in here.
     private HashMap<Long, Long> peersLastAckedIndex;
     private long myFirstIndexAsLeader;
+    private long lastCommittedIndex;
+
 
     private static class IntLogRequest {
         public final byte[] datum;
@@ -86,22 +88,18 @@ public class Replicator {
     private long myElectionTimeout;
     private Disposable electionChecker;
 
-
     private final RaftLogAbstraction log;
     final RaftInformationInterface info;
     final RaftInfoPersistence persister;
 
-
-    private long lastCommittedIndex = 0;
-
-    public Replicator(Fiber fiber,
-                      long myId,
-                      String quorumId,
-                      List<Long> peers,
-                      RaftLogAbstraction log,
-                      RaftInformationInterface info,
-                      RaftInfoPersistence persister,
-                      RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel) {
+    public ReplicatorService(Fiber fiber,
+                             long myId,
+                             String quorumId,
+                             List<Long> peers,
+                             RaftLogAbstraction log,
+                             RaftInformationInterface info,
+                             RaftInfoPersistence persister,
+                             RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel) {
         this.fiber = fiber;
         this.myId = myId;
         this.quorumId = quorumId;
@@ -165,8 +163,8 @@ public class Replicator {
 
     @FiberOnly
     private void readPersistentData() {
-        currentTerm = persister.readCurrentTerm();
-        votedFor = persister.readVotedFor();
+        currentTerm = persister.readCurrentTerm(quorumId);
+        votedFor = persister.readVotedFor(quorumId);
     }
 
     @FiberOnly
@@ -219,9 +217,9 @@ public class Replicator {
         // and reset election timeout.
 
         boolean vote = false;
-        if ( (log.getLastTerm() <= msg.getLastLogTerm())
+        if ( (log.getLastTerm(quorumId) <= msg.getLastLogTerm())
                 &&
-                log.getLastIndex() <= msg.getLastLogIndex()) {
+                log.getLastIndex(quorumId) <= msg.getLastLogIndex()) {
             // we can vote for this because the candidate's log is at least as
             // complete as the local log.
 
@@ -290,11 +288,12 @@ public class Replicator {
         // if msgPrevLogIndex == 0 -> special case of starting the log!
         long msgPrevLogIndex = msg.getPrevLogIndex();
         long msgPrevLogTerm = msg.getPrevLogTerm();
-        if (msgPrevLogIndex != 0 && log.getLogTerm(msgPrevLogIndex) != msgPrevLogTerm) {
+        if (msgPrevLogIndex != 0 && log.getLogTerm(quorumId, msgPrevLogIndex) != msgPrevLogTerm) {
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
                     .setQuorumId(quorumId)
                     .setTerm(currentTerm)
                     .setSuccess(false)
+                    .setMyLastLogEntry(log.getLastIndex(quorumId))
                     .build();
 
             RpcReply reply = new RpcReply(message.getRequest(), m);
@@ -304,10 +303,7 @@ public class Replicator {
 
         // 6. if existing entries conflict with new entries, delete all
         // existing entries starting with first conflicting entry (sec 5.3)
-
-
-
-        long nextIndex = log.getLastIndex()+1;
+        long nextIndex = log.getLastIndex(quorumId)+1;
 
         List<LogEntry> entries =  msg.getEntriesList();
         ArrayList<LogEntry> entriesToCommit = new ArrayList<>(entries.size());
@@ -344,13 +340,13 @@ public class Replicator {
             // at this point entryIndex should be <= log.getLastIndex
             assert entryIndex < nextIndex;
 
-            if (log.getLogTerm(entryIndex) != entry.getTerm()) {
+            if (log.getLogTerm(quorumId, entryIndex) != entry.getTerm()) {
                 // conflict:
                 LOG.debug("{} log conflict at idx {} my term: {} term from leader: {}, truncating log after this point", myId,
-                        entryIndex, log.getLogTerm(entryIndex), entry.getTerm());
+                        entryIndex, log.getLogTerm(quorumId, entryIndex), entry.getTerm());
 
                 // delete this and all subsequent entries:
-                ListenableFuture<Boolean> truncateResult = log.truncateLog(entryIndex);
+                ListenableFuture<Boolean> truncateResult = log.truncateLog(quorumId, entryIndex);
                 // TODO don't wait for the truncate inline, wait for a callback (then what?)
                 try {
                     boolean wasTruncated = truncateResult.get();
@@ -371,7 +367,7 @@ public class Replicator {
         }
 
         // 7. Append any new entries not already in the log.
-        ListenableFuture<Boolean> logCommitNotification = log.logEntries(entriesToCommit);
+        ListenableFuture<Boolean> logCommitNotification = log.logEntries(quorumId, entriesToCommit);
 
 
         // 8. apply newly committed entries to state machine
@@ -437,8 +433,8 @@ public class Replicator {
         Raft.RequestVote msg = Raft.RequestVote.newBuilder()
                 .setTerm(currentTerm)
                 .setCandidateId(myId)
-                .setLastLogIndex(log.getLastIndex())
-                .setLastLogTerm(log.getLastTerm())
+                .setLastLogIndex(log.getLastIndex(quorumId))
+                .setLastLogTerm(log.getLastTerm(quorumId))
                 .build();
 
         LOG.debug("{} Starting election for currentTerm: {}", myId, currentTerm);
@@ -505,7 +501,6 @@ public class Replicator {
     private void haltLeader() {
         myState = State.FOLLOWER;
 
-        stopAppendTimer();
         stopQueueConsumer();
     }
 
@@ -523,7 +518,7 @@ public class Replicator {
         myState = State.LEADER;
 
         // Page 7, para 5
-        long myNextLog = log.getLastIndex()+1;
+        long myNextLog = log.getLastIndex(quorumId)+1;
 
         peersLastAckedIndex = new HashMap<>(peers.size());
         peersNextIndex = new HashMap<>(peers.size()-1);
@@ -535,6 +530,7 @@ public class Replicator {
 
         // none so far!
         myFirstIndexAsLeader = 0;
+        lastCommittedIndex = 0; // unknown as of yet
 
         //startAppendTimer();
         startQueueConsumer();
@@ -562,12 +558,12 @@ public class Replicator {
 
         LOG.trace("{} {} queue items to commit", myId, reqs.size());
 
-        final long firstInList = log.getLastIndex()+1;
+        final long firstInList = log.getLastIndex(quorumId)+1;
         long idAssigner = firstInList;
 
         // Get these now BEFORE the log append call.
-        long logLastIndex = log.getLastIndex();
-        long logLastTerm = log.getLastTerm();
+        long logLastIndex = log.getLastIndex(quorumId);
+        long logLastTerm = log.getLastTerm(quorumId);
 
         // Build the log entries:
         ArrayList <LogEntry> newLogEntries = new ArrayList<>(reqs.size());
@@ -593,7 +589,7 @@ public class Replicator {
         // Should throw immediately if there was a basic validation error.
         final ListenableFuture<Boolean> localLogFuture;
         if (!newLogEntries.isEmpty()) {
-            localLogFuture = log.logEntries(newLogEntries);
+            localLogFuture = log.logEntries(quorumId, newLogEntries);
         } else {
             localLogFuture = null;
         }
@@ -607,7 +603,7 @@ public class Replicator {
 
         // TODO remove one of these i think.
         final long largestIndexInBatch = idAssigner - 1;
-        final long lastIndexSent = log.getLastIndex();
+        final long lastIndexSent = log.getLastIndex(quorumId);
         assert lastIndexSent == largestIndexInBatch;
 
         // What a majority means at this moment (in case of reconfigures)
@@ -649,7 +645,7 @@ public class Replicator {
                 // TODO cache these extra LogEntry objects so we dont recreate too many of them.
                 peerEntries = new ArrayList<>((int) (newLogEntries.size() + moreCount));
                 for (long i = peerNextIdx; i < firstInList; i++) {
-                    LogEntry entry = log.getLogEntry(i);
+                    LogEntry entry = log.getLogEntry(quorumId, i);
                     peerEntries.add(entry);
                 }
                 // TODO make sure the lists splice neatly together. The check below fails when newLogEntries is empty
@@ -733,46 +729,6 @@ public class Replicator {
         // TODO take action and notify clients (pending new system frameworks)
     }
 
-    @FiberOnly
-    private void startAppendTimer() {
-        appender = fiber.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                sendAppendRPC();
-            }
-        }, 0, info.electionTimeout()/2, TimeUnit.MILLISECONDS);
-    }
-
-    @FiberOnly
-    private void stopAppendTimer() {
-        if (appender != null) {
-            appender.dispose();
-            appender = null;
-        }
-    }
-
-    @FiberOnly
-    private void sendAppendRPC() {
-        Raft.AppendEntries msg = Raft.AppendEntries.newBuilder()
-                .setTerm(currentTerm)
-                .setLeaderId(myId)
-                .setPrevLogIndex(log.getLastIndex())
-                .setPrevLogTerm(log.getLastTerm())
-                .setCommitIndex(0)
-                .build();
-
-        for(Long peer : peers) {
-            if (myId == peer) continue; // dont send myself messages.
-            RpcRequest request = new RpcRequest(peer, myId, msg);
-            AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
-                @Override
-                public void onMessage(RpcWireReply message) {
-                    LOG.debug("{} got a reply {}", myId, message);
-               }
-            });
-        }
-    }
-
     // Small helper methods goeth here
 
     public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
@@ -780,7 +736,7 @@ public class Replicator {
     }
 
     private void setVotedFor(long votedFor) {
-        persister.writeCurrentTermAndVotedFor(currentTerm, votedFor);
+        persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
         //persister.writeVotedFor(votedFor);
 
         this.votedFor = votedFor;
@@ -788,7 +744,7 @@ public class Replicator {
 
     private void setCurrentTerm(long newTerm) {
         //persister.writeCurrentTerm(newTerm);
-        persister.writeCurrentTermAndVotedFor(newTerm, 0);
+        persister.writeCurrentTermAndVotedFor(quorumId, newTerm, 0);
 
         this.currentTerm = newTerm;
         this.votedFor = 0;

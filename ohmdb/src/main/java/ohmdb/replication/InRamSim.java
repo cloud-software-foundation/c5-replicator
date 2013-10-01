@@ -85,24 +85,24 @@ public class InRamSim {
         private long currentTerm = 0;
 
         @Override
-        public long readCurrentTerm() {
+        public long readCurrentTerm(String quorumId) {
             return currentTerm;
         }
 
         @Override
-        public long readVotedFor() {
+        public long readVotedFor(String quorumId) {
             return votedFor;
         }
 
         @Override
-        public void writeCurrentTermAndVotedFor(long currentTerm, long votedFor) {
+        public void writeCurrentTermAndVotedFor(String quorumId, long currentTerm, long votedFor) {
             this.currentTerm = currentTerm;
             this.votedFor = votedFor;
         }
     }
 
     final int peerSize;
-    final Map<Long, Replicator> replicators = new HashMap<>();
+    final Map<Long, ReplicatorService> replicators = new HashMap<>();
     final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
     final Fiber rpcFiber;
     final List<Long> peerIds = new ArrayList<>();
@@ -122,7 +122,7 @@ public class InRamSim {
         long plusMillis = 0;
         for( long peerId : peerIds) {
             // make me a ....
-            Replicator rep = new Replicator(fiberPool.create(),
+            ReplicatorService rep = new ReplicatorService(fiberPool.create(),
                     peerId,
                     "foobar",
                     peerIds,
@@ -159,7 +159,7 @@ public class InRamSim {
 //        msgSize.update(request.message.getSerializedSize());
         final long dest = request.to;
         // find it:
-        final Replicator repl = replicators.get(dest);
+        final ReplicatorService repl = replicators.get(dest);
 //        final FleaseLease fl = fleaseRunners.get(dest);
         if (repl == null) {
             // boo
@@ -192,13 +192,13 @@ public class InRamSim {
     }
 
     public void run() throws ExecutionException, InterruptedException {
-        Replicator theOneIKilled = null;
+        ReplicatorService theOneIKilled = null;
 
         for(int i = 0 ; i < 15 ; i++) {
 
             Thread.sleep(3 * 1000);
 
-            for (Replicator repl : replicators.values()) {
+            for (ReplicatorService repl : replicators.values()) {
 //                if (theOneIKilled != null && theOneIKilled.getId() == repl.getId()) {
 //                    if (i > 10)
 //                        System.out.print("BACK_TO_LIFE: ");
@@ -256,7 +256,7 @@ public class InRamSim {
 
     private void dispose() {
         rpcFiber.dispose();
-        for(Replicator repl : replicators.values()) {
+        for(ReplicatorService repl : replicators.values()) {
             repl.dispose();
         }
         fiberPool.dispose();

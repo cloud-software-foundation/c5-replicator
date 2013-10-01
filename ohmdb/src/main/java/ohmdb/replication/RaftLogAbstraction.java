@@ -44,10 +44,10 @@ public interface RaftLogAbstraction {
      * @param entries new log entries
      * @return an future that indicates success.
      */
-    public ListenableFuture<Boolean> logEntries(List<Raft.LogEntry> entries);
+    public ListenableFuture<Boolean> logEntries(String quorumId, List<Raft.LogEntry> entries);
 
 
-    public Raft.LogEntry getLogEntry(long index);
+    public Raft.LogEntry getLogEntry(String quorumId, long index);
 
     /**
      * Get the term for a given log index.  This is expected to be fast, so its an
@@ -56,7 +56,7 @@ public interface RaftLogAbstraction {
      * @param index
      * @return
      */
-    public long getLogTerm(long index);
+    public long getLogTerm(String quorumId, long index);
 
     // get the last term from the log
 
@@ -65,7 +65,7 @@ public interface RaftLogAbstraction {
      * 0. A term value of 0 should never be valid.
      * @return the last term or 0 if no such entry
      */
-    public long getLastTerm();
+    public long getLastTerm(String quorumId);
 
     /**
      * Gets the index of the most recent log entry.  An index is like a log sequence number, but there are
@@ -73,7 +73,7 @@ public interface RaftLogAbstraction {
      *
      * @return the index or 0 if the log is empty. This implies log entries start at 1.
      */
-    public long getLastIndex();
+    public long getLastIndex(String quorumId);
 
     /**
      * Delete all log entries after and including the specified index.
@@ -83,5 +83,5 @@ public interface RaftLogAbstraction {
      * @param entryIndex the index entry to truncate log from.
      * @return a true or false depending if successful or not.
      */
-    public ListenableFuture<Boolean> truncateLog(long entryIndex);
+    public ListenableFuture<Boolean> truncateLog(String quorumId, long entryIndex);
 }
