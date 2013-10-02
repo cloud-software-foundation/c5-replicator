@@ -19,10 +19,11 @@ package ohmdb.codec;
 import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.MessageLite;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.MessageBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
+
+import java.util.List;
 
 public class UdpProtobufDecoder extends MessageToMessageDecoder<DatagramPacket> {
   private static final boolean HAS_PARSER;
@@ -56,34 +57,34 @@ public class UdpProtobufDecoder extends MessageToMessageDecoder<DatagramPacket> 
 
   }
 
-  @Override
-  protected void decode(ChannelHandlerContext ctx, DatagramPacket dgram, MessageBuf<Object> out) throws Exception {
-    ByteBuf msg = dgram.content();
+    @Override
+    protected void decode(ChannelHandlerContext ctx, DatagramPacket dgram, List<Object> out) throws Exception {
+        ByteBuf msg = dgram.content();
 
-    final byte[] array;
-    final int offset;
-    final int length = msg.readableBytes();
-    if (msg.hasArray()) {
-      array = msg.array();
-      offset = msg.arrayOffset() + msg.readerIndex();
-    } else {
-      array = new byte[length];
-      msg.getBytes(msg.readerIndex(), array, 0, length);
-      offset = 0;
-    }
+        final byte[] array;
+        final int offset;
+        final int length = msg.readableBytes();
+        if (msg.hasArray()) {
+            array = msg.array();
+            offset = msg.arrayOffset() + msg.readerIndex();
+        } else {
+            array = new byte[length];
+            msg.getBytes(msg.readerIndex(), array, 0, length);
+            offset = 0;
+        }
 
-    if (extensionRegistry == null) {
-      if (HAS_PARSER) {
-        out.add(prototype.getParserForType().parseFrom(array, offset, length));
-      } else {
-        out.add(prototype.newBuilderForType().mergeFrom(array, offset, length).build());
-      }
-    } else {
-      if (HAS_PARSER) {
-        out.add(prototype.getParserForType().parseFrom(array, offset, length, extensionRegistry));
-      } else {
-        out.add(prototype.newBuilderForType().mergeFrom(array, offset, length, extensionRegistry).build());
-      }
+        if (extensionRegistry == null) {
+            if (HAS_PARSER) {
+                out.add(prototype.getParserForType().parseFrom(array, offset, length));
+            } else {
+                out.add(prototype.newBuilderForType().mergeFrom(array, offset, length).build());
+            }
+        } else {
+            if (HAS_PARSER) {
+                out.add(prototype.getParserForType().parseFrom(array, offset, length, extensionRegistry));
+            } else {
+                out.add(prototype.newBuilderForType().mergeFrom(array, offset, length, extensionRegistry).build());
+            }
+        }
     }
-  }
 }

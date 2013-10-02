@@ -25,10 +25,10 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundMessageHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
@@ -131,19 +131,19 @@ public class BeaconService extends AbstractService {
                 return;
             }
             LOG.debug("Sending beacon broadcast message to {}", sendAddress);
-            broadcastChannel.write(new UdpProtobufEncoder.UdpProtobufMessage(sendAddress, beaconMessage));
+            broadcastChannel.writeAndFlush(new UdpProtobufEncoder.UdpProtobufMessage(sendAddress, beaconMessage));
         }
     };
 
-    public class BeaconMessageHandler extends ChannelInboundMessageHandlerAdapter<Availability> {
-        @Override
-        public void messageReceived(ChannelHandlerContext ctx, Availability msg) throws Exception {
-            incomingMessages.publish(msg);
-        }
-
+    public class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
             LOG.warn("Exception, ignoring datagram", cause);
+        }
+
+        @Override
+        protected void channelRead0(ChannelHandlerContext ctx, Availability msg) throws Exception {
+            incomingMessages.publish(msg);
         }
     }
 
@@ -223,7 +223,8 @@ public class BeaconService extends AbstractService {
                     fiber.start();
                 } catch (Throwable t) {
                     // we have failed, clean up:
-                    bootstrap.shutdown();
+                    //bootstrap.;
+                    bootstrap.group().shutdownGracefully();
                     if (fiber != null)
                         fiber.dispose();
 
@@ -240,7 +241,7 @@ public class BeaconService extends AbstractService {
             @Override
             public void run() {
                 fiber.dispose();
-                bootstrap.shutdown();
+                bootstrap.group().shutdownGracefully();
 
                 notifyStopped();
             }

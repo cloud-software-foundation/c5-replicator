@@ -8,7 +8,7 @@ message Availability {
   // ID identification for this node.
   optional int64 node_id = 1;
   // Network port it is reachable on
-  optional int32 network_port = 2;
+  optional int32 base_network_port = 2;
   // The network addresses we can be reached at
   repeated string addresses = 3;
 }

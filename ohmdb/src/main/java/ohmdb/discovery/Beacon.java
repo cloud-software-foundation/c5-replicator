@@ -29,23 +29,23 @@ public final class Beacon {
      */
     long getNodeId();
 
-    // optional int32 network_port = 2;
+    // optional int32 base_network_port = 2;
     /**
-     * <code>optional int32 network_port = 2;</code>
+     * <code>optional int32 base_network_port = 2;</code>
      *
      * <pre>
      * Network port it is reachable on
      * </pre>
      */
-    boolean hasNetworkPort();
+    boolean hasBaseNetworkPort();
     /**
-     * <code>optional int32 network_port = 2;</code>
+     * <code>optional int32 base_network_port = 2;</code>
      *
      * <pre>
      * Network port it is reachable on
      * </pre>
      */
-    int getNetworkPort();
+    int getBaseNetworkPort();
 
     // repeated string addresses = 3;
     /**
@@ -145,7 +145,7 @@ public final class Beacon {
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              networkPort_ = input.readInt32();
+              baseNetworkPort_ = input.readInt32();
               break;
             }
             case 26: {
@@ -223,28 +223,28 @@ public final class Beacon {
       return nodeId_;
     }
 
-    // optional int32 network_port = 2;
-    public static final int NETWORK_PORT_FIELD_NUMBER = 2;
-    private int networkPort_;
+    // optional int32 base_network_port = 2;
+    public static final int BASE_NETWORK_PORT_FIELD_NUMBER = 2;
+    private int baseNetworkPort_;
     /**
-     * <code>optional int32 network_port = 2;</code>
+     * <code>optional int32 base_network_port = 2;</code>
      *
      * <pre>
      * Network port it is reachable on
      * </pre>
      */
-    public boolean hasNetworkPort() {
+    public boolean hasBaseNetworkPort() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional int32 network_port = 2;</code>
+     * <code>optional int32 base_network_port = 2;</code>
      *
      * <pre>
      * Network port it is reachable on
      * </pre>
      */
-    public int getNetworkPort() {
-      return networkPort_;
+    public int getBaseNetworkPort() {
+      return baseNetworkPort_;
     }
 
     // repeated string addresses = 3;
@@ -295,7 +295,7 @@ public final class Beacon {
 
     private void initFields() {
       nodeId_ = 0L;
-      networkPort_ = 0;
+      baseNetworkPort_ = 0;
       addresses_ = com.google.protobuf.LazyStringArrayList.EMPTY;
     }
     private byte memoizedIsInitialized = -1;
@@ -314,7 +314,7 @@ public final class Beacon {
         output.writeInt64(1, nodeId_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt32(2, networkPort_);
+        output.writeInt32(2, baseNetworkPort_);
       }
       for (int i = 0; i < addresses_.size(); i++) {
         output.writeBytes(3, addresses_.getByteString(i));
@@ -334,7 +334,7 @@ public final class Beacon {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, networkPort_);
+          .computeInt32Size(2, baseNetworkPort_);
       }
       {
         int dataSize = 0;
@@ -467,7 +467,7 @@ public final class Beacon {
         super.clear();
         nodeId_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000001);
-        networkPort_ = 0;
+        baseNetworkPort_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
         addresses_ = com.google.protobuf.LazyStringArrayList.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000004);
@@ -506,7 +506,7 @@ public final class Beacon {
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.networkPort_ = networkPort_;
+        result.baseNetworkPort_ = baseNetworkPort_;
         if (((bitField0_ & 0x00000004) == 0x00000004)) {
           addresses_ = new com.google.protobuf.UnmodifiableLazyStringList(
               addresses_);
@@ -532,8 +532,8 @@ public final class Beacon {
         if (other.hasNodeId()) {
           setNodeId(other.getNodeId());
         }
-        if (other.hasNetworkPort()) {
-          setNetworkPort(other.getNetworkPort());
+        if (other.hasBaseNetworkPort()) {
+          setBaseNetworkPort(other.getBaseNetworkPort());
         }
         if (!other.addresses_.isEmpty()) {
           if (addresses_.isEmpty()) {
@@ -621,51 +621,51 @@ public final class Beacon {
         return this;
       }
 
-      // optional int32 network_port = 2;
-      private int networkPort_ ;
+      // optional int32 base_network_port = 2;
+      private int baseNetworkPort_ ;
       /**
-       * <code>optional int32 network_port = 2;</code>
+       * <code>optional int32 base_network_port = 2;</code>
        *
        * <pre>
        * Network port it is reachable on
        * </pre>
        */
-      public boolean hasNetworkPort() {
+      public boolean hasBaseNetworkPort() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional int32 network_port = 2;</code>
+       * <code>optional int32 base_network_port = 2;</code>
        *
        * <pre>
        * Network port it is reachable on
        * </pre>
        */
-      public int getNetworkPort() {
-        return networkPort_;
+      public int getBaseNetworkPort() {
+        return baseNetworkPort_;
       }
       /**
-       * <code>optional int32 network_port = 2;</code>
+       * <code>optional int32 base_network_port = 2;</code>
        *
        * <pre>
        * Network port it is reachable on
        * </pre>
        */
-      public Builder setNetworkPort(int value) {
+      public Builder setBaseNetworkPort(int value) {
         bitField0_ |= 0x00000002;
-        networkPort_ = value;
+        baseNetworkPort_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int32 network_port = 2;</code>
+       * <code>optional int32 base_network_port = 2;</code>
        *
        * <pre>
        * Network port it is reachable on
        * </pre>
        */
-      public Builder clearNetworkPort() {
+      public Builder clearBaseNetworkPort() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        networkPort_ = 0;
+        baseNetworkPort_ = 0;
         onChanged();
         return this;
       }
@@ -824,10 +824,10 @@ public final class Beacon {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\014beacon.proto\022\016ohmdb.election\"H\n\014Availa" +
-      "bility\022\017\n\007node_id\030\001 \001(\003\022\024\n\014network_port\030" +
-      "\002 \001(\005\022\021\n\taddresses\030\003 \003(\tB\023\n\017ohmdb.discov" +
-      "eryH\001"
+      "\n\014beacon.proto\022\016ohmdb.election\"M\n\014Availa" +
+      "bility\022\017\n\007node_id\030\001 \001(\003\022\031\n\021base_network_" +
+      "port\030\002 \001(\005\022\021\n\taddresses\030\003 \003(\tB\023\n\017ohmdb.d" +
+      "iscoveryH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -839,7 +839,7 @@ public final class Beacon {
           internal_static_ohmdb_election_Availability_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_election_Availability_descriptor,
-              new java.lang.String[] { "NodeId", "NetworkPort", "Addresses", });
+              new java.lang.String[] { "NodeId", "BaseNetworkPort", "Addresses", });
           return null;
         }
       };
