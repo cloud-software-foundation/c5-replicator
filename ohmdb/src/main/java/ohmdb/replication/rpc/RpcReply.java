@@ -2,6 +2,9 @@ package ohmdb.replication.rpc;
 
 import com.google.protobuf.MessageLite;
 
+/**
+ * An rpc reply in response to a 'wire request'.
+ */
 public class RpcReply extends RpcMessage {
      /**
       *  Invert the to/from and quote the messageId.

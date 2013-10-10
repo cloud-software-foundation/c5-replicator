@@ -32,12 +32,11 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import ohmdb.Server;
 import ohmdb.codec.UdpProtobufDecoder;
 import ohmdb.codec.UdpProtobufEncoder;
+import ohmdb.util.FiberOnly;
 import org.jetlang.channels.MemoryChannel;
-import org.jetlang.channels.MemoryRequestChannel;
-import org.jetlang.channels.Request;
-import org.jetlang.channels.RequestChannel;
 import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
@@ -48,6 +47,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -58,6 +58,9 @@ import java.util.concurrent.TimeUnit;
 import static ohmdb.discovery.Beacon.Availability;
 
 public class BeaconService extends AbstractService {
+    private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
+
+
     /**
      * Information about a node.
      */
@@ -80,17 +83,12 @@ public class BeaconService extends AbstractService {
         }
     }
 
-    /**
-     * Public Fiber API -> RequestChannel replies with the map of nodeId -> NodeInfo for the entire
-     * peer set.  The map is immutable, and represents a snapshot.
-     */
-    public final RequestChannel<Integer, ImmutableMap<Long, NodeInfo>> stateRequests = new MemoryRequestChannel<>();
-
-    private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
-
+    // For main system services/pubsub stuff.
+    private final Server server;
+    private final long nodeId;
     private final int discoveryPort;
-    private final Availability nodeInfoFragment;
     private final NioEventLoopGroup eventLoop;
+    private final Map<String, Integer> serviceInfo = new HashMap<>();
     private final Map<Long, NodeInfo> peers = new HashMap<>();
     private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
 
@@ -98,42 +96,8 @@ public class BeaconService extends AbstractService {
     private Channel broadcastChannel = null;
     private InetSocketAddress sendAddress = null;
     private Bootstrap bootstrap = null;
-    private Availability beaconMessage = null;
     private Fiber fiber = null;
-    private Callback<Availability> incomingMsgCB = new Callback<Availability>() {
-        @Override
-        public void onMessage(Availability message) {
-            LOG.debug("Got incoming message {}", message);
-            if (!message.hasNodeId()) {
-                LOG.error("Incoming availability message does not have node id, ignoring!");
-                return;
-            }
-            // Always just overwrite what was already there
-            // TODO merge old data with new data?
-            peers.put(message.getNodeId(), new NodeInfo(message));
-        }
-    };
-
-    private Callback<Request<Integer, ImmutableMap<Long, NodeInfo>>> stateRequestCB =
-            new Callback<Request<Integer, ImmutableMap<Long, NodeInfo>>>() {
-
-        @Override
-        public void onMessage(Request<Integer, ImmutableMap<Long, NodeInfo>> message) {
-            message.reply(getCopyOfState());
-        }
-    };
-
-    private Runnable beaconSender = new Runnable() {
-        @Override
-        public void run() {
-            if (broadcastChannel == null) {
-                LOG.debug("Channel not available yet, deferring beacon send");
-                return;
-            }
-            LOG.debug("Sending beacon broadcast message to {}", sendAddress);
-            broadcastChannel.writeAndFlush(new UdpProtobufEncoder.UdpProtobufMessage(sendAddress, beaconMessage));
-        }
-    };
+    private List<String> localIPs;
 
     public class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
         @Override
@@ -149,14 +113,19 @@ public class BeaconService extends AbstractService {
 
     /**
      *
+     * @param nodeId the id of this node.
      * @param discoveryPort the port to send discovery beacons on and to listen to
-     * @param nodeInfoFragment node information to broadcast, the local addresses will be filled in
      * @throws InterruptedException
      * @throws SocketException
      */
-    public BeaconService(int discoveryPort, Availability nodeInfoFragment) throws InterruptedException, SocketException {
+    public BeaconService(long nodeId, int discoveryPort,
+                         Map<String, Integer> services,
+                         Server theServer
+                         ) throws InterruptedException, SocketException {
         this.discoveryPort = discoveryPort;
-        this.nodeInfoFragment = nodeInfoFragment;
+        this.nodeId = nodeId;
+        serviceInfo.putAll(services);
+        this.server = theServer;
 
         this.eventLoop = new NioEventLoopGroup(1);
     }
@@ -177,6 +146,59 @@ public class BeaconService extends AbstractService {
     private ImmutableMap<Long, NodeInfo> getCopyOfState() {
         return ImmutableMap.copyOf(peers);
     }
+
+    @FiberOnly
+    private void sendBeacon() {
+        if (broadcastChannel == null) {
+            LOG.debug("Channel not available yet, deferring beacon send");
+            return;
+        }
+        LOG.debug("Sending beacon broadcast message to {}", sendAddress);
+        // Build beacon message:
+        Availability.Builder beaconMessage = Availability.newBuilder()
+                .addAllAddresses(localIPs)
+                .setNodeId(nodeId);
+
+        List<Beacon.ServiceDescriptor> msgServices = new ArrayList<>(serviceInfo.size());
+        for (String svcName : serviceInfo.keySet()) {
+            msgServices.add(Beacon.ServiceDescriptor.newBuilder()
+            .setServiceName(svcName)
+            .setServicePort(serviceInfo.get(svcName))
+            .build());
+        }
+
+        beaconMessage.addAllServices(msgServices);
+
+        broadcastChannel.writeAndFlush(new UdpProtobufEncoder.UdpProtobufMessage(sendAddress, beaconMessage));
+    }
+
+    @FiberOnly
+    private void processWireMessage(Availability message) {
+        LOG.debug("Got incoming message {}", message);
+        if (!message.hasNodeId()) {
+            LOG.error("Incoming availability message does not have node id, ignoring!");
+            return;
+        }
+        // Always just overwrite what was already there
+        // TODO merge old data with new data?
+        peers.put(message.getNodeId(), new NodeInfo(message));
+    }
+
+    @FiberOnly
+    private void serviceChange(Server.ServiceRegistered message) {
+        if (message.state == State.RUNNING) {
+            LOG.debug("BeaconService adding running service {} on port {}", message.serviceName, message.port);
+            serviceInfo.put(message.serviceName, message.port);
+        } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
+            LOG.debug("BeaconService removed service {} on port {} with state {}", message.serviceName, message.port,
+                    message.state);
+            serviceInfo.remove(message.serviceName);
+        } else {
+            LOG.debug("BeaconService got unknown service change {}", message);
+        }
+    }
+
+
 
     @Override
     protected void doStart() {
@@ -209,16 +231,34 @@ public class BeaconService extends AbstractService {
                         }
                     });
                     sendAddress = new InetSocketAddress("255.255.255.255", discoveryPort);
-                    Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
-                    msgBuilder.addAllAddresses(getLocalIPs());
-                    beaconMessage = msgBuilder.build();
+                    //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
+                    localIPs = getLocalIPs();
+                    //msgBuilder.addAllAddresses(getLocalIPs());
+                    //beaconMessage = msgBuilder.build();
 
                     fiber = new ThreadFiber();
 
                     // Schedule fiber tasks and subscriptions.
-                    incomingMessages.subscribe(fiber, incomingMsgCB);
-                    stateRequests.subscribe(fiber, stateRequestCB);
-                    fiber.scheduleAtFixedRate(beaconSender, 2, 10, TimeUnit.SECONDS);
+                    incomingMessages.subscribe(fiber, new Callback<Availability>() {
+                        @Override
+                        public void onMessage(Availability message) {
+                            processWireMessage(message);
+                        }
+                    });
+
+                    fiber.scheduleAtFixedRate(new Runnable() {
+                        @Override
+                        public void run() {
+                            sendBeacon();
+                        }
+                    }, 2, 10, TimeUnit.SECONDS);
+
+                    server.getServiceRegisteredChannel().subscribe(fiber, new Callback<Server.ServiceRegistered>() {
+                        @Override
+                        public void onMessage(Server.ServiceRegistered message) {
+                            serviceChange(message);
+                        }
+                    });
 
                     fiber.start();
                 } catch (Throwable t) {
@@ -234,6 +274,7 @@ public class BeaconService extends AbstractService {
             }
         });
     }
+
 
     @Override
     protected void doStop() {

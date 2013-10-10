@@ -7,8 +7,19 @@ option optimize_for = SPEED;
 message Availability {
   // ID identification for this node.
   optional int64 node_id = 1;
+
   // Network port it is reachable on
   optional int32 base_network_port = 2;
+
   // The network addresses we can be reached at
   repeated string addresses = 3;
+
+  // The services this node is running and the ports it's running on.
+  repeated ServiceDescriptor services = 4;
+}
+
+// Service name to service port mapping.
+message ServiceDescriptor {
+  optional string service_name = 1;
+  optional uint32 service_port = 2;
 }

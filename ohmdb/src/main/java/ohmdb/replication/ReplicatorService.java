@@ -10,6 +10,7 @@ import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
 import ohmdb.replication.rpc.RpcWireRequest;
+import ohmdb.util.FiberOnly;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
@@ -54,7 +55,6 @@ public class ReplicatorService {
     private HashMap<Long, Long> peersLastAckedIndex;
     private long myFirstIndexAsLeader;
     private long lastCommittedIndex;
-
 
     private static class IntLogRequest {
         public final byte[] datum;
@@ -148,7 +148,7 @@ public class ReplicatorService {
      * @param datum some data to log.
      * @return a listenable for the index number OR null if we aren't the leader.
      */
-    public ListenableFuture<Long> logData(final byte[] datum) throws InterruptedException {
+    public ListenableFuture<Long> logData(byte[] datum) throws InterruptedException {
         if (!isLeader()) {
             LOG.debug("{} attempted to logData on a non-leader", myId);
             return null;
