@@ -98,7 +98,7 @@ public class Server extends AbstractService {
         return commandRequests;
     }
 
-    public static class ServiceRegistered {
+    public static class ServiceStateChange {
         @Override
         public String toString() {
             return "ServiceRegistered{" +
@@ -112,15 +112,15 @@ public class Server extends AbstractService {
         public final int port;
         public final Service.State state;
 
-        public ServiceRegistered(String serviceName, int port, State state) {
+        public ServiceStateChange(String serviceName, int port, State state) {
             this.serviceName = serviceName;
             this.port = port;
             this.state = state;
         }
     }
 
-    private final Channel<ServiceRegistered> serviceRegisteredChannel = new MemoryChannel<>();
-    public Channel<ServiceRegistered> getServiceRegisteredChannel() {
+    private final Channel<ServiceStateChange> serviceRegisteredChannel = new MemoryChannel<>();
+    public Channel<ServiceStateChange> getServiceRegisteredChannel() {
         return serviceRegisteredChannel;
     }
 
@@ -178,6 +178,48 @@ public class Server extends AbstractService {
         }
     }
 
+    private class ServiceListenerPublisher implements Listener {
+        private final String serviceName;
+        private final int servicePort;
+
+        public ServiceListenerPublisher(String serviceName, int servicePort) {
+            this.serviceName = serviceName;
+            this.servicePort = servicePort;
+        }
+
+        @Override
+        public void starting() {
+            publishEvent(State.STARTING);
+        }
+
+        @Override
+        public void running() {
+            publishEvent(State.RUNNING);
+        }
+
+        @Override
+        public void stopping(State from) {
+            publishEvent(State.STOPPING);
+        }
+
+        @Override
+        public void terminated(State from) {
+            // TODO move this into a subscriber of ourselves.
+            serviceRegistry.remove(serviceName);
+            publishEvent(State.TERMINATED);
+        }
+
+        @Override
+        public void failed(State from, Throwable failure) {
+            publishEvent(State.FAILED);
+        }
+
+        private void publishEvent(State state) {
+            ServiceStateChange p = new ServiceStateChange(serviceName, servicePort, state);
+            getServiceRegisteredChannel().publish(p);
+        }
+
+    }
 
     @FiberOnly
     private boolean startService(final String serviceName, final int servicePort, String serviceArgv) throws Exception {
@@ -189,38 +231,7 @@ public class Server extends AbstractService {
             }
 
             s = new BeaconService(servicePort, servicePort, l, this);
-            s.addListener(new Listener() {
-                @Override
-                public void starting() {
-                    publishEvent(State.STARTING);
-                }
-
-                @Override
-                public void running() {
-                    publishEvent(State.RUNNING);
-                }
-
-                @Override
-                public void stopping(State from) {
-                    publishEvent(State.STOPPING);
-                }
-
-                @Override
-                public void terminated(State from) {
-                    serviceRegistry.remove(serviceName);
-                    publishEvent(State.TERMINATED);
-                }
-
-                @Override
-                public void failed(State from, Throwable failure) {
-                    publishEvent(State.FAILED);
-                }
-
-                private void publishEvent(State state) {
-                    ServiceRegistered p = new ServiceRegistered(serviceName, servicePort, state);
-                    getServiceRegisteredChannel().publish(p);
-                }
-            }, serverFiber);
+            s.addListener(new ServiceListenerPublisher(serviceName, servicePort), serverFiber);
 
             s.start();
             serviceRegistry.put(serviceName, s);

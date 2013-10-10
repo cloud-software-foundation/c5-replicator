@@ -185,7 +185,7 @@ public class BeaconService extends AbstractService {
     }
 
     @FiberOnly
-    private void serviceChange(Server.ServiceRegistered message) {
+    private void serviceChange(Server.ServiceStateChange message) {
         if (message.state == State.RUNNING) {
             LOG.debug("BeaconService adding running service {} on port {}", message.serviceName, message.port);
             serviceInfo.put(message.serviceName, message.port);
@@ -253,9 +253,9 @@ public class BeaconService extends AbstractService {
                         }
                     }, 2, 10, TimeUnit.SECONDS);
 
-                    server.getServiceRegisteredChannel().subscribe(fiber, new Callback<Server.ServiceRegistered>() {
+                    server.getServiceRegisteredChannel().subscribe(fiber, new Callback<Server.ServiceStateChange>() {
                         @Override
-                        public void onMessage(Server.ServiceRegistered message) {
+                        public void onMessage(Server.ServiceStateChange message) {
                             serviceChange(message);
                         }
                     });
