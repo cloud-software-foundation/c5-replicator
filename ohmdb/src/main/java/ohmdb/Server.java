@@ -33,7 +33,7 @@ import static ohmdb.messages.ControlMessages.StopService;
  *
  * To shut down the 'server' service is to shut down the server.
  */
-public class Server extends AbstractService {
+public class Server extends AbstractService implements OhmServer {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
     public void main(String[] args) {
@@ -42,7 +42,7 @@ public class Server extends AbstractService {
         instance.start();
     }
 
-    private static Server instance = null;
+    private static OhmServer instance = null;
 
     public Server(long nodeId) {
         this.nodeId = nodeId;
@@ -52,12 +52,11 @@ public class Server extends AbstractService {
      * Returns the server, but it will be null if you aren't running inside one.
      * @return
      */
-    public static Server getServer() {
+    public static OhmServer getServer() {
         return instance;
     }
 
-    /***** Interface type public methods ******/
-
+    @Override
     public long getNodeId() {
         return nodeId;
     }
@@ -68,8 +67,9 @@ public class Server extends AbstractService {
 //
 //    }
 
-    public ListenableFuture<Service> getServiceByName(final String serviceName) {
-        final SettableFuture<Service> future = SettableFuture.create();
+    @Override
+    public ListenableFuture<OhmService> getServiceByName(final String serviceName) {
+        final SettableFuture<OhmService> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
@@ -83,43 +83,25 @@ public class Server extends AbstractService {
     Fiber serverFiber;
 
     // The mapping between service name and the instance.
-    private final Map<String,Service> serviceRegistry = new HashMap<>();
+    private final Map<String,OhmService> serviceRegistry = new HashMap<>();
 
     private final long nodeId;
 
     private final Channel<MessageLite> commandChannel = new MemoryChannel<>();
 
+    @Override
     public Channel<MessageLite> getCommandChannel() {
         return commandChannel;
     }
 
     public RequestChannel<MessageLite, CommandReply> commandRequests = new MemoryRequestChannel<>();
+    @Override
     public RequestChannel<MessageLite, CommandReply> getCommandRequests() {
         return commandRequests;
     }
 
-    public static class ServiceStateChange {
-        @Override
-        public String toString() {
-            return "ServiceRegistered{" +
-                    "serviceName='" + serviceName + '\'' +
-                    ", port=" + port +
-                    ", state=" + state +
-                    '}';
-        }
-
-        public final String serviceName;
-        public final int port;
-        public final Service.State state;
-
-        public ServiceStateChange(String serviceName, int port, State state) {
-            this.serviceName = serviceName;
-            this.port = port;
-            this.state = state;
-        }
-    }
-
     private final Channel<ServiceStateChange> serviceRegisteredChannel = new MemoryChannel<>();
+    @Override
     public Channel<ServiceStateChange> getServiceRegisteredChannel() {
         return serviceRegisteredChannel;
     }
@@ -204,7 +186,7 @@ public class Server extends AbstractService {
 
         @Override
         public void terminated(State from) {
-            // TODO move this into a subscriber of ourselves.
+            // TODO move this into a subscriber of ourselves?
             serviceRegistry.remove(serviceName);
             publishEvent(State.TERMINATED);
         }
@@ -223,18 +205,23 @@ public class Server extends AbstractService {
 
     @FiberOnly
     private boolean startService(final String serviceName, final int servicePort, String serviceArgv) throws Exception {
-        Service s;
+        if (serviceRegistry.containsKey(serviceName)) {
+            // already running, dont start twice?
+            LOG.warn("Service {} already running", serviceName);
+            throw new Exception("Cant start running service: " + serviceName);
+        }
+
         if (serviceName.equals("BeaconService")) {
             Map<String, Integer> l = new HashMap<>();
             for (String name : serviceRegistry.keySet()) {
                 l.put(name, 1);
             }
 
-            s = new BeaconService(servicePort, servicePort, l, this);
-            s.addListener(new ServiceListenerPublisher(serviceName, servicePort), serverFiber);
+            OhmService service = new BeaconService(servicePort, servicePort, l, this);
+            service.addListener(new ServiceListenerPublisher(serviceName, servicePort), serverFiber);
 
-            s.start();
-            serviceRegistry.put(serviceName, s);
+            service.start();
+            serviceRegistry.put(serviceName, service);
         } else {
             throw new Exception("No such service as " + serviceName);
         }

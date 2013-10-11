@@ -32,7 +32,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import ohmdb.Server;
+import ohmdb.OhmServer;
+import ohmdb.OhmService;
 import ohmdb.codec.UdpProtobufDecoder;
 import ohmdb.codec.UdpProtobufEncoder;
 import ohmdb.util.FiberOnly;
@@ -57,8 +58,23 @@ import java.util.concurrent.TimeUnit;
 
 import static ohmdb.discovery.Beacon.Availability;
 
-public class BeaconService extends AbstractService {
+public class BeaconService extends AbstractService implements OhmService {
     private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
+
+    @Override
+    public String getServiceName() {
+        return "BeaconService";
+    }
+
+    @Override
+    public boolean hasPort() {
+        return true;
+    }
+
+    @Override
+    public int port() {
+        return discoveryPort;
+    }
 
 
     /**
@@ -84,7 +100,7 @@ public class BeaconService extends AbstractService {
     }
 
     // For main system services/pubsub stuff.
-    private final Server server;
+    private final OhmServer ohmServer;
     private final long nodeId;
     private final int discoveryPort;
     private final NioEventLoopGroup eventLoop;
@@ -120,12 +136,12 @@ public class BeaconService extends AbstractService {
      */
     public BeaconService(long nodeId, int discoveryPort,
                          Map<String, Integer> services,
-                         Server theServer
+                         OhmServer theOhmServer
                          ) throws InterruptedException, SocketException {
         this.discoveryPort = discoveryPort;
         this.nodeId = nodeId;
         serviceInfo.putAll(services);
-        this.server = theServer;
+        this.ohmServer = theOhmServer;
 
         this.eventLoop = new NioEventLoopGroup(1);
     }
@@ -185,7 +201,7 @@ public class BeaconService extends AbstractService {
     }
 
     @FiberOnly
-    private void serviceChange(Server.ServiceStateChange message) {
+    private void serviceChange(OhmServer.ServiceStateChange message) {
         if (message.state == State.RUNNING) {
             LOG.debug("BeaconService adding running service {} on port {}", message.serviceName, message.port);
             serviceInfo.put(message.serviceName, message.port);
@@ -197,8 +213,6 @@ public class BeaconService extends AbstractService {
             LOG.debug("BeaconService got unknown service change {}", message);
         }
     }
-
-
 
     @Override
     protected void doStart() {
@@ -253,9 +267,9 @@ public class BeaconService extends AbstractService {
                         }
                     }, 2, 10, TimeUnit.SECONDS);
 
-                    server.getServiceRegisteredChannel().subscribe(fiber, new Callback<Server.ServiceStateChange>() {
+                    ohmServer.getServiceRegisteredChannel().subscribe(fiber, new Callback<OhmServer.ServiceStateChange>() {
                         @Override
-                        public void onMessage(Server.ServiceStateChange message) {
+                        public void onMessage(OhmServer.ServiceStateChange message) {
                             serviceChange(message);
                         }
                     });
