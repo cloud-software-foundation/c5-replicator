@@ -442,53 +442,93 @@ public class ReplicatorInstance {
         final long termBeingVotedFor = currentTerm;
         final List<Long> votes = new ArrayList<>();
         for (long peer : peers) {
-            // create message:
-
             RpcRequest req = new RpcRequest(peer, myId, msg);
             AsyncRequest.withOneReply(fiber, sendRpcChannel, req, new Callback<RpcWireReply>() {
                 @FiberOnly
                 @Override
                 public void onMessage(RpcWireReply message) {
-                    // if current term has advanced, these replies are stale and should be ignored:
-
-                    if (currentTerm > termBeingVotedFor) {
-                        LOG.warn("{} election reply from {}, but currentTerm {} > vote term {}", myId, message.from,
-                                currentTerm, termBeingVotedFor);
-                        return;
-                    }
-
-                    // if we are no longer a Candidate, election was over, these replies are stale.
-                   if (myState != State.CANDIDATE) {
-                        // we became not, ignore
-                        LOG.warn("{} election reply from {} ignored -> in state {}", myId, message.from, myState);
-                        return;
-                    }
-
-                    Raft.RequestVoteReply reply = message.getRequestVoteReplyMessage();
-
-                    if (reply.getTerm() > currentTerm) {
-                        LOG.warn("{} election reply from {}, but term {} was not my term {}, updating currentTerm", myId,
-                                message.from, reply.getTerm(), currentTerm);
-
-                        setCurrentTerm(reply.getTerm());
-                        return;
-                    } else if (reply.getTerm() < currentTerm) {
-                        // huh weird.
-                        LOG.warn("{} election reply from {}, their term {} < currentTerm {}", myId, reply.getTerm(), currentTerm);
-                    }
-
-                    // did you vote for me?
-                    if (reply.getVoteGranted()) {
-                        // yes!
-                        votes.add(message.from);
-                    }
-
-                    if (votes.size() > majority ) {
-
-                        becomeLeader();
-                    }
+                    handleElectionReply0(message, termBeingVotedFor, votes, majority);
                 }
-            });
+            }, 1, TimeUnit.SECONDS, new RequestVoteTimeout(req, termBeingVotedFor, votes, majority));
+        }
+    }
+
+    private class RequestVoteTimeout implements Runnable {
+        public final RpcRequest request;
+        public final long termBeingVotedFor;
+        public final List<Long> votes;
+        public final int majority;
+
+        @Override
+        public String toString() {
+            return "RequestVoteTimeout{" +
+                    "request=" + request +
+                    ", termBeingVotedFor=" + termBeingVotedFor +
+                    ", votes=" + votes +
+                    ", majority=" + majority +
+                    '}';
+        }
+
+        private RequestVoteTimeout(RpcRequest request, long termBeingVotedFor, List<Long> votes, int majority) {
+            this.request = request;
+            this.termBeingVotedFor = termBeingVotedFor;
+            this.votes = votes;
+            this.majority = majority;
+        }
+
+        @Override
+        public void run() {
+            // TODO break out of this loop if something has changed, I think that is if the term > termBeingVotedFor
+
+            // Note we are using 'this' as the recursive timeout.
+            AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
+                @Override
+                public void onMessage(RpcWireReply message) {
+                    handleElectionReply0(message, termBeingVotedFor, votes, majority);
+                }
+            }, 1, TimeUnit.SECONDS, this);
+        }
+    }
+
+    // RPC callback for timeouts
+    private void handleElectionReply0(RpcWireReply message, long termBeingVotedFor, List<Long> votes, int majority) {
+        // if current term has advanced, these replies are stale and should be ignored:
+
+        if (currentTerm > termBeingVotedFor) {
+            LOG.warn("{} election reply from {}, but currentTerm {} > vote term {}", myId, message.from,
+                    currentTerm, termBeingVotedFor);
+            return;
+        }
+
+        // if we are no longer a Candidate, election was over, these replies are stale.
+        if (myState != State.CANDIDATE) {
+             // we became not, ignore
+             LOG.warn("{} election reply from {} ignored -> in state {}", myId, message.from, myState);
+             return;
+         }
+
+        Raft.RequestVoteReply reply = message.getRequestVoteReplyMessage();
+
+        if (reply.getTerm() > currentTerm) {
+            LOG.warn("{} election reply from {}, but term {} was not my term {}, updating currentTerm", myId,
+                    message.from, reply.getTerm(), currentTerm);
+
+            setCurrentTerm(reply.getTerm());
+            return;
+        } else if (reply.getTerm() < currentTerm) {
+            // huh weird.
+            LOG.warn("{} election reply from {}, their term {} < currentTerm {}", myId, reply.getTerm(), currentTerm);
+        }
+
+        // did you vote for me?
+        if (reply.getVoteGranted()) {
+            // yes!
+            votes.add(message.from);
+        }
+
+        if (votes.size() > majority ) {
+
+            becomeLeader();
         }
     }
 
@@ -683,7 +723,15 @@ public class ReplicatorInstance {
                         calculateLastVisible(majority, lastIndexSent);
                     }
                 }
-            });
+            }, 5, TimeUnit.SECONDS, new Runnable() {
+                        @Override
+                        public void run() {
+                            LOG.trace("{} peer {} timed out", myId, peer);
+                            // Do nothing -> let next timeout handle things.
+                            // This timeout exists just so that we can cancel and clean up stuff in jetlang.
+                        }
+                    }
+            );
         }
     }
 

@@ -53,6 +53,8 @@ import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
+import org.jetlang.channels.Session;
+import org.jetlang.channels.SessionClosed;
 import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
@@ -96,7 +98,9 @@ public class ReplicatorService extends AbstractService implements OhmService {
     private final Map<String, ReplicatorInstance> replicatorInstances = new HashMap<>();
     private final ChannelGroup allChannels;
     // map of message_id -> Request
+    // TODO we need a way to remove these after a while, because if we fail to get a reply we will be unhappy.
     private final Map<Long, Request<RpcRequest, RpcWireReply>> outstandingRPCs = new HashMap<>();
+    private final Map<Session, Long> outstandingRPCbySession = new HashMap<>();
 
     private final RequestChannel<RpcRequest, RpcWireReply> outgoingRequests = new MemoryRequestChannel<>();
 
@@ -179,6 +183,7 @@ public class ReplicatorService extends AbstractService implements OhmService {
         }
 
         outstandingRPCs.remove(messageId);
+        outstandingRPCbySession.remove(request.getSession());
         request.reply(new RpcWireReply(msg.getReceiverId(), msg.getSenderId(), messageId, subMsg));
     }
 
@@ -284,7 +289,8 @@ public class ReplicatorService extends AbstractService implements OhmService {
                 long messageId = messageIdGen++;
 
                 outstandingRPCs.put(messageId, message);
-                // ok build us a freaking thing i guess? ugh.
+                outstandingRPCbySession.put(message.getSession(), messageId);
+
                 RaftWireMessage.Builder msgBuilder = RaftWireMessage.newBuilder()
                         .setMessageId(messageId)
                         .setSenderId(server.getNodeId())
@@ -363,8 +369,21 @@ public class ReplicatorService extends AbstractService implements OhmService {
                         public void onMessage(Request<RpcRequest, RpcWireReply> message) {
                             handleOutgoingMessage(message);
                         }
-                    });
+                    }, new Callback<SessionClosed<RpcRequest>>() {
+                                @FiberOnly
+                                @Override
+                                public void onMessage(SessionClosed<RpcRequest> message) {
+                                    // Clean up cancelled requests.
 
+                                    Long messageId = outstandingRPCbySession.get(message.getSession());
+                                    outstandingRPCbySession.remove(message.getSession());
+                                    if (messageId == null) {
+                                        return;
+                                    }
+                                    LOG.debug("Removing cancelled RPC, message ID {}", messageId);
+                                    outstandingRPCs.remove(messageId);
+                                }
+                            });
 
                     notifyStarted();
                 } catch (Exception e) {
@@ -378,7 +397,6 @@ public class ReplicatorService extends AbstractService implements OhmService {
                 notifyFailed(t);
             }
         });
-
     }
 
     @Override
