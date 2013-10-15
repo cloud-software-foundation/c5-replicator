@@ -102,7 +102,7 @@ public class InRamSim {
     }
 
     final int peerSize;
-    final Map<Long, ReplicatorService> replicators = new HashMap<>();
+    final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
     final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
     final Fiber rpcFiber;
     final List<Long> peerIds = new ArrayList<>();
@@ -122,7 +122,7 @@ public class InRamSim {
         long plusMillis = 0;
         for( long peerId : peerIds) {
             // make me a ....
-            ReplicatorService rep = new ReplicatorService(fiberPool.create(),
+            ReplicatorInstance rep = new ReplicatorInstance(fiberPool.create(),
                     peerId,
                     "foobar",
                     peerIds,
@@ -159,7 +159,7 @@ public class InRamSim {
 //        msgSize.update(request.message.getSerializedSize());
         final long dest = request.to;
         // find it:
-        final ReplicatorService repl = replicators.get(dest);
+        final ReplicatorInstance repl = replicators.get(dest);
 //        final FleaseLease fl = fleaseRunners.get(dest);
         if (repl == null) {
             // boo
@@ -192,13 +192,13 @@ public class InRamSim {
     }
 
     public void run() throws ExecutionException, InterruptedException {
-        ReplicatorService theOneIKilled = null;
+        ReplicatorInstance theOneIKilled = null;
 
         for(int i = 0 ; i < 15 ; i++) {
 
             Thread.sleep(3 * 1000);
 
-            for (ReplicatorService repl : replicators.values()) {
+            for (ReplicatorInstance repl : replicators.values()) {
 //                if (theOneIKilled != null && theOneIKilled.getId() == repl.getId()) {
 //                    if (i > 10)
 //                        System.out.print("BACK_TO_LIFE: ");
@@ -256,7 +256,7 @@ public class InRamSim {
 
     private void dispose() {
         rpcFiber.dispose();
-        for(ReplicatorService repl : replicators.values()) {
+        for(ReplicatorInstance repl : replicators.values()) {
             repl.dispose();
         }
         fiberPool.dispose();

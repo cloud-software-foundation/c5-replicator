@@ -47,6 +47,18 @@ public class RpcMessage {
         return message instanceof Raft.RequestVoteReply;
     }
 
+    public String getQuorumId() {
+        if (isAppendMessage())
+            return getAppendMessage().getQuorumId();
+        if (isAppendReplyMessage())
+            return getAppendReplyMessage().getQuorumId();
+        if (isRequestVoteMessage())
+            return getRequestVoteMessage().getQuorumId();
+        if (isRequestVoteReplyMessage())
+            return getRequestVoteReplyMessage().getQuorumId();
+        throw new RuntimeException("Unknown message type is impossible");
+    }
+
     public Raft.AppendEntries getAppendMessage() {
         assert isAppendMessage();
 

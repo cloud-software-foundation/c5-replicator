@@ -38,9 +38,11 @@ import ohmdb.codec.UdpProtobufDecoder;
 import ohmdb.codec.UdpProtobufEncoder;
 import ohmdb.util.FiberOnly;
 import org.jetlang.channels.MemoryChannel;
+import org.jetlang.channels.MemoryRequestChannel;
+import org.jetlang.channels.Request;
+import org.jetlang.channels.RequestChannel;
 import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
-import org.jetlang.fibers.ThreadFiber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +78,71 @@ public class BeaconService extends AbstractService implements OhmService {
         return discoveryPort;
     }
 
+    public static class NodeInfoRequest {
+        public final long nodeId;
+        public final String serviceName;
+
+        public NodeInfoRequest(long nodeId, String serviceName) {
+            this.nodeId = nodeId;
+            this.serviceName = serviceName;
+        }
+
+        @Override
+        public String toString() {
+            return "NodeInfoRequest{" +
+                    "nodeId=" + nodeId +
+                    ", serviceName='" + serviceName + '\'' +
+                    '}';
+        }
+    }
+    public static class NodeInfoReply {
+        /**
+         * Was the node/service information found?
+         */
+        public final boolean found;
+        public final List<String> addresses;
+        public final int port;
+
+        public NodeInfoReply(boolean found, List<String> addresses, int port) {
+            this.found = found;
+            this.addresses = addresses;
+            this.port = port;
+        }
+
+        @Override
+        public String toString() {
+            return "NodeInfoReply{" +
+                    "found=" + found +
+                    ", addresses=" + addresses +
+                    ", port=" + port +
+                    '}';
+        }
+        public final static NodeInfoReply NO_REPLY = new NodeInfoReply(false, null, 0);
+    }
+    private final RequestChannel<NodeInfoRequest, NodeInfoReply> nodeInfoRequests = new MemoryRequestChannel<>();
+    public RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo() {
+        return nodeInfoRequests;
+    }
+    @FiberOnly
+    private void handleNodeInfoRequest(Request<NodeInfoRequest, NodeInfoReply> message) {
+        NodeInfoRequest req = message.getRequest();
+        NodeInfo peer = peers.get(req.nodeId);
+        if (peer == null) {
+            message.reply(NodeInfoReply.NO_REPLY);
+            return;
+        }
+
+        Integer servicePort = peer.services.get(req.serviceName);
+        if (servicePort == null) {
+            message.reply(NodeInfoReply.NO_REPLY);
+            return;
+        }
+
+
+        List<String> peerAddrs = peer.availability.getAddressesList();
+        // does this service run on that peer?
+        message.reply(new NodeInfoReply(true, peerAddrs, servicePort));
+    }
 
     /**
      * Information about a node.
@@ -83,10 +150,16 @@ public class BeaconService extends AbstractService implements OhmService {
     public static class NodeInfo {
         public final Availability availability;
         public final long lastContactTime;
+        public final ImmutableMap<String, Integer> services;
 
         public NodeInfo(Availability availability, long lastContactTime) {
             this.availability = availability;
             this.lastContactTime = lastContactTime;
+            ImmutableMap.Builder b = ImmutableMap.builder();
+            for (Beacon.ServiceDescriptor serviceDescriptor : availability.getServicesList()) {
+                b.put(serviceDescriptor.getServiceName(), serviceDescriptor.getServicePort());
+            }
+            services = b.build();
         }
 
         public NodeInfo(Availability availability) {
@@ -99,6 +172,14 @@ public class BeaconService extends AbstractService implements OhmService {
         }
     }
 
+    @Override
+    public String toString() {
+        return "BeaconService{" +
+                "discoveryPort=" + discoveryPort +
+                ", nodeId=" + nodeId +
+                '}';
+    }
+
     // For main system services/pubsub stuff.
     private final OhmServer ohmServer;
     private final long nodeId;
@@ -107,12 +188,12 @@ public class BeaconService extends AbstractService implements OhmService {
     private final Map<String, Integer> serviceInfo = new HashMap<>();
     private final Map<Long, NodeInfo> peers = new HashMap<>();
     private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
+    private final Fiber fiber;
 
     // These should be final, but they are initialized in doStart().
     private Channel broadcastChannel = null;
     private InetSocketAddress sendAddress = null;
     private Bootstrap bootstrap = null;
-    private Fiber fiber = null;
     private List<String> localIPs;
 
     public class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
@@ -135,15 +216,17 @@ public class BeaconService extends AbstractService implements OhmService {
      * @throws SocketException
      */
     public BeaconService(long nodeId, int discoveryPort,
+                         final Fiber fiber,
+                         NioEventLoopGroup eventLoop,
                          Map<String, Integer> services,
                          OhmServer theOhmServer
                          ) throws InterruptedException, SocketException {
         this.discoveryPort = discoveryPort;
         this.nodeId = nodeId;
+        this.fiber = fiber;
         serviceInfo.putAll(services);
         this.ohmServer = theOhmServer;
-
-        this.eventLoop = new NioEventLoopGroup(1);
+        this.eventLoop = eventLoop;
     }
 
     public ListenableFuture<ImmutableMap<Long, NodeInfo>> getState() {
@@ -195,20 +278,20 @@ public class BeaconService extends AbstractService implements OhmService {
             LOG.error("Incoming availability message does not have node id, ignoring!");
             return;
         }
-        // Always just overwrite what was already there
-        // TODO merge old data with new data?
+        // Always just overwrite what was already there for now.
+        // TODO consider a more sophisticated merge strategy?
         peers.put(message.getNodeId(), new NodeInfo(message));
     }
 
     @FiberOnly
     private void serviceChange(OhmServer.ServiceStateChange message) {
         if (message.state == State.RUNNING) {
-            LOG.debug("BeaconService adding running service {} on port {}", message.serviceName, message.port);
-            serviceInfo.put(message.serviceName, message.port);
+            LOG.debug("BeaconService adding running service {} on port {}", message.service.getServiceName(), message.service.port());
+            serviceInfo.put(message.service.getServiceName(), message.service.port());
         } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
-            LOG.debug("BeaconService removed service {} on port {} with state {}", message.serviceName, message.port,
+            LOG.debug("BeaconService removed service {} on port {} with state {}", message.service.getServiceName(), message.service.port(),
                     message.state);
-            serviceInfo.remove(message.serviceName);
+            serviceInfo.remove(message.service.getServiceName());
         } else {
             LOG.debug("BeaconService got unknown service change {}", message);
         }
@@ -250,13 +333,17 @@ public class BeaconService extends AbstractService implements OhmService {
                     //msgBuilder.addAllAddresses(getLocalIPs());
                     //beaconMessage = msgBuilder.build();
 
-                    fiber = new ThreadFiber();
-
                     // Schedule fiber tasks and subscriptions.
                     incomingMessages.subscribe(fiber, new Callback<Availability>() {
                         @Override
                         public void onMessage(Availability message) {
                             processWireMessage(message);
+                        }
+                    });
+                    nodeInfoRequests.subscribe(fiber, new Callback<Request<NodeInfoRequest, NodeInfoReply>>() {
+                        @Override
+                        public void onMessage(Request<NodeInfoRequest, NodeInfoReply> message) {
+                            handleNodeInfoRequest(message);
                         }
                     });
 
@@ -275,20 +362,17 @@ public class BeaconService extends AbstractService implements OhmService {
                     });
 
                     fiber.start();
+
+                    notifyStarted();
                 } catch (Throwable t) {
-                    // we have failed, clean up:
-                    //bootstrap.;
-                    bootstrap.group().shutdownGracefully();
                     if (fiber != null)
                         fiber.dispose();
 
                     notifyFailed(t);
                 }
-                notifyStarted();
             }
         });
     }
-
 
     @Override
     protected void doStop() {
@@ -296,7 +380,6 @@ public class BeaconService extends AbstractService implements OhmService {
             @Override
             public void run() {
                 fiber.dispose();
-                bootstrap.group().shutdownGracefully();
 
                 notifyStopped();
             }

@@ -1,11 +1,49 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ohmdb.replication;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.ByteString;
+import com.google.protobuf.MessageLite;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import ohmdb.OhmServer;
+import ohmdb.OhmService;
+import ohmdb.discovery.BeaconService;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -16,752 +54,345 @@ import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.core.Callback;
-import org.jetlang.core.Disposable;
 import org.jetlang.fibers.Fiber;
+import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
-import static ohmdb.replication.Raft.LogEntry;
+import static ohmdb.replication.Raft.RaftWireMessage;
 
 /**
- * Single instantation of a raft / log / lease
+ * TODO we dont have a way to actually START a freaking ReplicatorInstance - YET.
  */
-public class ReplicatorService {
+public class ReplicatorService extends AbstractService implements OhmService {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorService.class);
 
-    private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
-    private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
+    @Override
+    public String getServiceName() {
+        return "ReplicatorService";
+    }
 
+    @Override
+    public boolean hasPort() {
+        return true;
+    }
+
+    @Override
+    public int port() {
+        return this.port;
+    }
+
+    private final int port;
+    private final OhmServer server;
+    private final PoolFiberFactory fiberFactory;
     private final Fiber fiber;
-    private final long myId;
-    private final String quorumId;
+    private final NioEventLoopGroup bossGroup;
+    private final NioEventLoopGroup workerGroup;
 
-    private final ImmutableList<Long> peers;
+    private final Map<Long, ChannelFuture> connections = new HashMap<>();
+    private final Map<String, ReplicatorInstance> replicatorInstances = new HashMap<>();
+    private final ChannelGroup allChannels;
+    // map of message_id -> Request
+    private final Map<Long, Request<RpcRequest, RpcWireReply>> outstandingRPCs = new HashMap<>();
 
-    /****** These next few fields are used when we are a leader *******/
-    // this is the next index from our log we need to send to each peer, kept track of on a per-peer basis.
-    private HashMap<Long, Long> peersNextIndex;
-    // The last succesfully acked message from our peers.  I also keep track of my own acked log messages in here.
-    private HashMap<Long, Long> peersLastAckedIndex;
-    private long myFirstIndexAsLeader;
-    private long lastCommittedIndex;
-
-    private static class IntLogRequest {
-        public final byte[] datum;
-        public final SettableFuture<Long> logNumberNotifation;
-
-        private IntLogRequest(byte[] datum) {
-            this.datum = datum;
-            this.logNumberNotifation = SettableFuture.create();
-        }
-    }
-    private final BlockingQueue<IntLogRequest> logRequests = new ArrayBlockingQueue<>(100);
+    private final RequestChannel<RpcRequest, RpcWireReply> outgoingRequests = new MemoryRequestChannel<>();
 
 
-    // What state is this instance in?
-    public enum State {
-        INIT,
-        FOLLOWER,
-        CANDIDATE,
-        LEADER,
-    }
+    private ServerBootstrap serverBootstrap;
+    private Bootstrap outgoingBootstrap;
 
-    // Initial state == CANDIDATE
-    State myState = State.FOLLOWER;
+    // Initalized in the service start, by the time any messages or fiber executions trigger, this should be not-null
+    private BeaconService beaconService = null;
+    private Channel listenChannel;
 
-    // In theory these are persistent:
-    long currentTerm;
-    long votedFor;
+    private long messageIdGen = 1;
 
-    // Election timers, etc.
-    private long lastRPC;
-    private long myElectionTimeout;
-    private Disposable electionChecker;
-
-    private final RaftLogAbstraction log;
-    final RaftInformationInterface info;
-    final RaftInfoPersistence persister;
-
-    public ReplicatorService(Fiber fiber,
-                             long myId,
-                             String quorumId,
-                             List<Long> peers,
-                             RaftLogAbstraction log,
-                             RaftInformationInterface info,
-                             RaftInfoPersistence persister,
-                             RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel) {
-        this.fiber = fiber;
-        this.myId = myId;
-        this.quorumId = quorumId;
-        this.peers = ImmutableList.copyOf(peers);
-        this.sendRpcChannel = sendRpcChannel;
-        this.log = log;
-        this.info = info;
-        this.persister = persister;
-        Random r = new Random();
-        this.myElectionTimeout = r.nextInt((int) info.electionTimeout()) + info.electionTimeout();
-        this.lastRPC = info.currentTimeMillis();
-
-        assert this.peers.contains(this.myId);
-
-        fiber.execute(new Runnable() {
-            @Override
-            public void run() {
-                readPersistentData();
-            }
-        });
-
-        incomingChannel.subscribe(fiber, new Callback<Request<RpcWireRequest, RpcReply>>() {
-            @Override
-            public void onMessage(Request<RpcWireRequest, RpcReply> message) {
-                onIncomingMessage(message);
-            }
-        });
-
-        electionChecker = fiber.scheduleWithFixedDelay(new Runnable() {
-            @Override
-            public void run() {
-                checkOnElection();
-            }
-        }, info.electionCheckRate(), info.electionCheckRate(), TimeUnit.MILLISECONDS);
-
-        LOG.debug("{} started {} with election timeout {}", myId, this.quorumId, this.myElectionTimeout);
-        fiber.start();
+    public ReplicatorService(final PoolFiberFactory fiberFactory,
+                             NioEventLoopGroup bossGroup,
+                             NioEventLoopGroup workerGroup,
+                             int port, OhmServer server) {
+        this.fiberFactory = fiberFactory;
+        this.bossGroup = bossGroup;
+        this.workerGroup = workerGroup;
+        this.port = port;
+        this.server = server;
+        this.fiber = fiberFactory.create();
+        this.allChannels = new DefaultChannelGroup(workerGroup.next());
     }
 
-    // public API:
+    private class MessageHandler extends SimpleChannelInboundHandler<RaftWireMessage> {
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            allChannels.add(ctx.channel());
 
-    /**
-     * TODO change the type of datum to a protobuf that is useful.
-     *
-     * Log a datum
-     * @param datum some data to log.
-     * @return a listenable for the index number OR null if we aren't the leader.
-     */
-    public ListenableFuture<Long> logData(byte[] datum) throws InterruptedException {
-        if (!isLeader()) {
-            LOG.debug("{} attempted to logData on a non-leader", myId);
-            return null;
+            super.channelActive(ctx);
         }
 
-        IntLogRequest req = new IntLogRequest(datum);
-        logRequests.put(req);
 
-        // TODO return the durable notification future?
-        return req.logNumberNotifation;
+        @Override
+        protected void channelRead0(final ChannelHandlerContext ctx, final RaftWireMessage msg) throws Exception {
+            fiber.execute(new Runnable() {
+                @Override
+                public void run() {
+                    handleWireInboundMessage(ctx.channel(), msg);
+                }
+            });
+        }
     }
 
     @FiberOnly
-    private void readPersistentData() {
-        currentTerm = persister.readCurrentTerm(quorumId);
-        votedFor = persister.readVotedFor(quorumId);
+    private void handleWireInboundMessage(Channel channel, RaftWireMessage msg) {
+        long messageId = msg.getMessageId();
+        if (msg.getReceiverId() != this.server.getNodeId()) {
+            LOG.error("Got messageId {} for {} but I am {}, ignoring!", messageId, msg.getReceiverId(), server.getNodeId());
+            return;
+        }
+
+        Request<RpcRequest, RpcWireReply> request = outstandingRPCs.get(messageId);
+        if (request == null) {
+            handleWireNonReplyMessage(channel, msg);
+            return;
+        }
+
+        // NB: Handling a REPLY so only REPLY messages are allowed here....
+
+        // TODO this is absolutely killing me, why does protobuf have to suck so badly?
+        MessageLite subMsg = null;
+        switch (msg.getMessageType()) {
+            case REQUEST_VOTE:
+                LOG.error("Got request_vote message as a 'reply' to message id {}", messageId);
+                subMsg = msg.getRequestVote();
+                break;
+            case VOTE_REPLY:
+                subMsg = msg.getVoteReply();
+                break;
+            case APPEND_ENTRIES:
+                LOG.error("Got an append_entries message as a 'reply' to message id {}", messageId);
+                subMsg = msg.getAppendEntries();
+                break;
+            case APPEND_REPLY:
+                subMsg = msg.getAppendReply();
+                break;
+        }
+
+        outstandingRPCs.remove(messageId);
+        request.reply(new RpcWireReply(msg.getReceiverId(), msg.getSenderId(), messageId, subMsg));
     }
 
-    @FiberOnly
-    private void onIncomingMessage(Request<RpcWireRequest, RpcReply> message) {
-        RpcWireRequest req = message.getRequest();
-        if (req.isRequestVoteMessage()) {
-            doRequestVote(message);
-
-        } else if (req.isAppendMessage()) {
-            doAppendMessage(message);
-
-
-        } else {
-            LOG.warn("{} Got a message of protobuf type I dont know: {}", myId, req);
-        }
-
-    }
-
-    @FiberOnly
-    private void doRequestVote(Request<RpcWireRequest, RpcReply> message) {
-        Raft.RequestVote msg = message.getRequest().getRequestVoteMessage();
-
-        // 1. Return if term < currentTerm (sec 5.1)
-        if (msg.getTerm() < currentTerm) {
-            Raft.RequestVoteReply m = Raft.RequestVoteReply.newBuilder()
-                    .setQuorumId(quorumId)
-                    .setTerm(currentTerm)
-                    .setVoteGranted(false)
-                    .build();
-            RpcReply reply = new RpcReply(message.getRequest(), m);
-            message.reply(reply);
-            return;
-        }
-
-        // 2. if term > currentTerm, currentTerm <- term
-        if (msg.getTerm() > currentTerm) {
-            LOG.debug("{} requestVote rpc, pushing forward currentTerm {} to {}", myId, currentTerm, msg.getTerm());
-            setCurrentTerm(msg.getTerm());
-
-            // 2a. Step down if candidate or leader.
-            if (myState != State.FOLLOWER) {
-                LOG.debug("{} stepping down to follower, currentTerm: {}", myId, currentTerm);
-
-                haltLeader();
-            }
-        }
-
-        // 3. if votedFor is null (0), or candidateId, and candidate's log
-        // is at least as complete as local log (sec 5.2, 5.4), grant vote
-        // and reset election timeout.
-
-        boolean vote = false;
-        if ( (log.getLastTerm(quorumId) <= msg.getLastLogTerm())
-                &&
-                log.getLastIndex(quorumId) <= msg.getLastLogIndex()) {
-            // we can vote for this because the candidate's log is at least as
-            // complete as the local log.
-
-            if (votedFor == 0 || votedFor == message.getRequest().from) {
-                setVotedFor(message.getRequest().from);
-                lastRPC = info.currentTimeMillis();
-                vote = true;
-            }
-        }
-
-        LOG.debug("{} sending vote reply to {} vote = {}, voted = {}", myId, message.getRequest().from, votedFor, vote);
-        Raft.RequestVoteReply m = Raft.RequestVoteReply.newBuilder()
-                .setQuorumId(quorumId)
-                .setTerm(currentTerm)
-                .setVoteGranted(vote)
-                .build();
-        RpcReply reply = new RpcReply(message.getRequest(), m);
-        message.reply(reply);
-    }
-
-    @FiberOnly
-    private void doAppendMessage(final Request<RpcWireRequest, RpcReply> message) {
-        Raft.AppendEntries msg = message.getRequest().getAppendMessage();
-
-        // 1. return if term < currentTerm (sec 5.1)
-        if (msg.getTerm() < currentTerm) {
-            // TODO is this the correct message reply?
-            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setQuorumId(quorumId)
-                    .setTerm(currentTerm)
-                    .setSuccess(false)
-                    .build();
-
-            RpcReply reply = new RpcReply(message.getRequest(), m);
-            message.reply(reply);
-            return;
-        }
-
-        // 2. if term > currentTerm, set it (sec 5.1)
-        if (msg.getTerm() > currentTerm) {
-            setCurrentTerm(msg.getTerm());
-        }
-
-        // 3. Step down if we are a leader or a candidate (sec 5.2, 5.5)
-        if (myState != State.FOLLOWER) {
-            haltLeader();
-        }
-
-        // 4. reset election timeout
-        lastRPC = info.currentTimeMillis();
-
-        if (msg.getEntriesCount() == 0) {
-            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setQuorumId(quorumId)
-                    .setTerm(currentTerm)
-                    .setSuccess(true)
-                    .build();
-
-            RpcReply reply = new RpcReply(message.getRequest(), m);
-            message.reply(reply);
-            return;
-        }
-
-        // 5. return failure if log doesn't contain an entry at
-        // prevLogIndex who's term matches prevLogTerm (sec 5.3)
-        // if msgPrevLogIndex == 0 -> special case of starting the log!
-        long msgPrevLogIndex = msg.getPrevLogIndex();
-        long msgPrevLogTerm = msg.getPrevLogTerm();
-        if (msgPrevLogIndex != 0 && log.getLogTerm(quorumId, msgPrevLogIndex) != msgPrevLogTerm) {
-            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setQuorumId(quorumId)
-                    .setTerm(currentTerm)
-                    .setSuccess(false)
-                    .setMyLastLogEntry(log.getLastIndex(quorumId))
-                    .build();
-
-            RpcReply reply = new RpcReply(message.getRequest(), m);
-            message.reply(reply);
-            return;
-        }
-
-        // 6. if existing entries conflict with new entries, delete all
-        // existing entries starting with first conflicting entry (sec 5.3)
-        long nextIndex = log.getLastIndex(quorumId)+1;
-
-        List<LogEntry> entries =  msg.getEntriesList();
-        ArrayList<LogEntry> entriesToCommit = new ArrayList<>(entries.size());
-        for (LogEntry entry : entries) {
-            long entryIndex = entry.getIndex();
-
-            if (entryIndex == nextIndex) {
-                LOG.debug("{} new log entry for idx {} term {}", myId, entryIndex, entry.getTerm());
-
-                entriesToCommit.add(entry);
-
-                nextIndex++;
-                continue;
-            }
-
-            if (entryIndex > nextIndex) {
-                // ok this entry is still beyond the LAST entry, so we have a problem:
-                LOG.error("{} log entry missing, i expected {} and the next in the message is {}",
-                        myId, nextIndex, entryIndex);
-
-                // TODO handle this situation a little better if possible
-                // reply with an error message leaving the log borked.
-                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setQuorumId(quorumId)
-                        .setTerm(currentTerm)
-                        .setSuccess(false)
-                        .build();
-
-                RpcReply reply = new RpcReply(message.getRequest(), m);
-                message.reply(reply);
+    private void handleWireNonReplyMessage(final Channel channel, final RaftWireMessage msg) {
+        MessageLite subMsg = null;
+        switch (msg.getMessageType()) {
+            case REQUEST_VOTE:
+                subMsg = msg.getRequestVote();
+                break;
+            case VOTE_REPLY:
+                LOG.error("Got vote_reply with no outstanding request for message id {}", msg.getMessageId());
                 return;
-            }
+            case APPEND_ENTRIES:
+                subMsg = msg.getAppendEntries();
+                break;
+            case APPEND_REPLY:
+                LOG.error("Got append_reply with no outstanding request for message id {}", msg.getMessageId());
+                return;
+        }
 
-            // at this point entryIndex should be <= log.getLastIndex
-            assert entryIndex < nextIndex;
+        RpcWireRequest wireRequest = new RpcWireRequest(msg.getReceiverId(), msg.getSenderId(), msg.getMessageId(), subMsg);
+        String quorumId = wireRequest.getQuorumId();
 
-            if (log.getLogTerm(quorumId, entryIndex) != entry.getTerm()) {
-                // conflict:
-                LOG.debug("{} log conflict at idx {} my term: {} term from leader: {}, truncating log after this point", myId,
-                        entryIndex, log.getLogTerm(quorumId, entryIndex), entry.getTerm());
+        ReplicatorInstance replInst = replicatorInstances.get(quorumId);
+        if (replInst == null) {
+            LOG.error("Message id {} for instance {} from {} not found", msg.getMessageId(), quorumId, msg.getSenderId());
+            // TODO send RPC failure to the sender?
+            return;
+        }
 
-                // delete this and all subsequent entries:
-                ListenableFuture<Boolean> truncateResult = log.truncateLog(quorumId, entryIndex);
-                // TODO don't wait for the truncate inline, wait for a callback (then what?)
-                try {
-                    boolean wasTruncated = truncateResult.get();
-                    if (!wasTruncated) {
-                        LOG.error("{} unable to truncate log to {}", myId, entryIndex);
-                        // TODO figure out how to deal with this.
-                    }
-                } catch (InterruptedException|ExecutionException e) {
-                    LOG.error("oops", e);
+        AsyncRequest.withOneReply(fiber, replInst.getIncomingChannel(), wireRequest, new Callback<RpcReply>() {
+            @Override
+            public void onMessage(RpcReply reply) {
+                if (!channel.isOpen()) {
+                    // TODO cant signal comms failure, so just drop on the floor. Is there a better thing to do?
+                    return;
                 }
 
-                // add this entry to the list of things to commit to.
-                entriesToCommit.add(entry);
-                nextIndex = entryIndex+1; // continue normal processing after this baby.
-            } //else {
-                // this log entry did NOT conflict we dont need to re-commit this entry.
-            //}
-        }
+                RaftWireMessage.Builder b = RaftWireMessage.newBuilder()
+                        .setSenderId(server.getNodeId())
+                        .setReceiverId(msg.getSenderId())
+                        .setMessageId(msg.getMessageId());
 
-        // 7. Append any new entries not already in the log.
-        ListenableFuture<Boolean> logCommitNotification = log.logEntries(quorumId, entriesToCommit);
+                if (reply.isAppendReplyMessage()) {
+                    b.setMessageType(RaftWireMessage.MessageType.APPEND_REPLY);
+                    b.setAppendReply(reply.getAppendReplyMessage());
+                }
+                if (reply.isRequestVoteReplyMessage()) {
+                    b.setMessageType(RaftWireMessage.MessageType.VOTE_REPLY);
+                    b.setVoteReply(reply.getRequestVoteReplyMessage());
+                }
 
+                channel.write(b);
+            }
+        });
+    }
 
-        // 8. apply newly committed entries to state machine
+    @FiberOnly
+    private void handleOutgoingMessage(final Request<RpcRequest, RpcWireReply> message) {
+        final RpcRequest request = message.getRequest();
+        final long to = request.to;
 
-        // TODO make/broadcast 'lastCommittedIdx' known throughout the local system.
-        long lastCommittedIdx = msg.getCommitIndex();
-
-        // wait for the log to commit before returning message.  But do so async.
-        Futures.addCallback(logCommitNotification, new FutureCallback<Boolean>() {
+        BeaconService.NodeInfoRequest nodeInfoRequest = new BeaconService.NodeInfoRequest(to, "ReplicatorService");
+        AsyncRequest.withOneReply(fiber, beaconService.getNodeInfo(), nodeInfoRequest, new Callback<BeaconService.NodeInfoReply>() {
+            @FiberOnly
             @Override
-            public void onSuccess(Boolean result) {
-                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setQuorumId(quorumId)
-                        .setTerm(currentTerm)
-                        .setSuccess(true)
-                        .build();
+            public void onMessage(BeaconService.NodeInfoReply nodeInfoReply) {
+                if (!nodeInfoReply.found) {
+                    // TODO signal TCP/transport layer failure in a better way
+                    message.reply(null);
+                    return;
+                }
 
-                RpcReply reply = new RpcReply(message.getRequest(), m);
-                message.reply(reply);
+                // what if existing outgoing connection attempt?
+                ChannelFuture channelFuture = connections.get(to);
+                if (channelFuture == null) {
+                    channelFuture = outgoingBootstrap.connect(nodeInfoReply.addresses.get(0), nodeInfoReply.port);
+                    connections.put(to, channelFuture);
+                }
+
+                // funny hack, if the channel future is already open, we execute immediately!
+                channelFuture.addListener(new ChannelFutureListener() {
+                        @Override
+                        public void operationComplete(ChannelFuture future) throws Exception {
+                            if (future.isSuccess()) {
+                                sendMessage0(message, future.channel());
+                            } else {
+                                message.reply(null);
+                            }
+                        }
+                    });
+            }
+        });
+    }
+
+    private void sendMessage0(final Request<RpcRequest, RpcWireReply> message, final Channel channel) {
+        fiber.execute(new Runnable() {
+            @FiberOnly
+            @Override
+            public void run() {
+                RpcRequest request = message.getRequest();
+                long to = request.to;
+                long messageId = messageIdGen++;
+
+                outstandingRPCs.put(messageId, message);
+                // ok build us a freaking thing i guess? ugh.
+                RaftWireMessage.Builder msgBuilder = RaftWireMessage.newBuilder()
+                        .setMessageId(messageId)
+                        .setSenderId(server.getNodeId())
+                        .setReceiverId(to);
+                if (request.isAppendMessage()) {
+                    msgBuilder.setMessageType(RaftWireMessage.MessageType.APPEND_ENTRIES)
+                            .setAppendEntries(request.getAppendMessage());
+                } else if (request.isRequestVoteMessage()) {
+                    msgBuilder.setMessageType(RaftWireMessage.MessageType.REQUEST_VOTE)
+                            .setRequestVote(request.getRequestVoteMessage());
+                } //else {
+                    // v bad, not possible really.
+
+                channel.write(msgBuilder);
+            }
+        });
+    }
+
+
+    @Override
+    protected void doStart() {
+        // must start the fiber up early.
+        fiber.start();
+
+        LOG.warn("ReplicatorService now waiting for service dependency on BeaconService");
+        // we arent technically started until this service dependency is retrieved.
+        ListenableFuture<BeaconService> f = server.getBeaconService();
+        Futures.addCallback(f, new FutureCallback<BeaconService>() {
+            @Override
+            public void onSuccess(BeaconService result) {
+                beaconService = result;
+
+                // finish init:
+                try {
+                    ChannelInitializer<SocketChannel> initer = new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline p = ch.pipeline();
+                            p.addLast("frameDecode", new ProtobufVarint32FrameDecoder());
+                            p.addLast("pbufDecode", new ProtobufDecoder(RaftWireMessage.getDefaultInstance()));
+
+                            p.addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender());
+                            p.addLast("pbufEncoder", new ProtobufEncoder());
+
+                            p.addLast(new MessageHandler());
+                        }
+                    };
+
+                    serverBootstrap = new ServerBootstrap();
+                    serverBootstrap.group(bossGroup, workerGroup)
+                            .channel(NioServerSocketChannel.class)
+                            .option(ChannelOption.SO_REUSEADDR, true)
+                            .option(ChannelOption.SO_BACKLOG, 100)
+                            .childOption(ChannelOption.TCP_NODELAY, true)
+                            .childHandler(initer);
+                    serverBootstrap.bind(port).addListener(new ChannelFutureListener() {
+                        @Override
+                        public void operationComplete(ChannelFuture future) throws Exception {
+                            if (future.isSuccess()) {
+                                listenChannel = future.channel();
+                            } else {
+                                LOG.error("Unable to bind! ", future.cause());
+                            }
+                        }
+                    });
+
+                    outgoingBootstrap = new Bootstrap();
+                    outgoingBootstrap.group(workerGroup)
+                            .channel(NioSocketChannel.class)
+                            .option(ChannelOption.SO_REUSEADDR, true)
+                            .option(ChannelOption.TCP_NODELAY, true)
+                            .handler(initer);
+
+                    outgoingRequests.subscribe(fiber, new Callback<Request<RpcRequest, RpcWireReply>>() {
+                        @Override
+                        public void onMessage(Request<RpcRequest, RpcWireReply> message) {
+                            handleOutgoingMessage(message);
+                        }
+                    });
+
+
+                    notifyStarted();
+                } catch (Exception e) {
+                    notifyFailed(e);
+                }
             }
 
             @Override
             public void onFailure(Throwable t) {
-                // TODO better error reporting. A log commit failure will e a serious issue.
-                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setQuorumId(quorumId)
-                        .setTerm(currentTerm)
-                        .setSuccess(false)
-                        .build();
-
-                RpcReply reply = new RpcReply(message.getRequest(), m);
-                message.reply(reply);
+                LOG.error("ReplicatorService unable to retrieve BeaconService!", t);
+                notifyFailed(t);
             }
         });
+
     }
 
-    @FiberOnly
-    private void checkOnElection() {
-        if (myState == State.LEADER) {
-            LOG.trace("{} leader during election check.", myId);
-            return;
-        }
-
-        if (lastRPC + this.myElectionTimeout < info.currentTimeMillis()) {
-            LOG.debug("{} Timed out checkin on election, try new election", myId);
-            doElection();
-        }
-    }
-
-    private int calculateMajority(int peerCount) {
-        return (int) Math.ceil((peerCount + 1) / 2.0);
-    }
-
-    @FiberOnly
-    private void doElection() {
-        final int majority = calculateMajority(peers.size());
-        // Start new election "timer".
-        lastRPC = info.currentTimeMillis();
-        // increment term.
-        setCurrentTerm(currentTerm + 1);
-        myState = State.CANDIDATE;
-
-        Raft.RequestVote msg = Raft.RequestVote.newBuilder()
-                .setTerm(currentTerm)
-                .setCandidateId(myId)
-                .setLastLogIndex(log.getLastIndex(quorumId))
-                .setLastLogTerm(log.getLastTerm(quorumId))
-                .build();
-
-        LOG.debug("{} Starting election for currentTerm: {}", myId, currentTerm);
-
-        final long termBeingVotedFor = currentTerm;
-        final List<Long> votes = new ArrayList<>();
-        for (long peer : peers) {
-            // create message:
-
-            RpcRequest req = new RpcRequest(peer, myId, msg);
-            AsyncRequest.withOneReply(fiber, sendRpcChannel, req, new Callback<RpcWireReply>() {
-                @FiberOnly
+    @Override
+    protected void doStop() {
+        if (listenChannel != null) {
+            listenChannel.close().addListener(new ChannelFutureListener() {
                 @Override
-                public void onMessage(RpcWireReply message) {
-                    // if current term has advanced, these replies are stale and should be ignored:
-
-                    if (currentTerm > termBeingVotedFor) {
-                        LOG.warn("{} election reply from {}, but currentTerm {} > vote term {}", myId, message.from,
-                                currentTerm, termBeingVotedFor);
-                        return;
-                    }
-
-                    // if we are no longer a Candidate, election was over, these replies are stale.
-                   if (myState != State.CANDIDATE) {
-                        // we became not, ignore
-                        LOG.warn("{} election reply from {} ignored -> in state {}", myId, message.from, myState);
-                        return;
-                    }
-
-                    Raft.RequestVoteReply reply = message.getRequestVoteReplyMessage();
-
-                    if (reply.getTerm() > currentTerm) {
-                        LOG.warn("{} election reply from {}, but term {} was not my term {}, updating currentTerm", myId,
-                                message.from, reply.getTerm(), currentTerm);
-
-                        setCurrentTerm(reply.getTerm());
-                        return;
-                    } else if (reply.getTerm() < currentTerm) {
-                        // huh weird.
-                        LOG.warn("{} election reply from {}, their term {} < currentTerm {}", myId, reply.getTerm(), currentTerm);
-                    }
-
-                    // did you vote for me?
-                    if (reply.getVoteGranted()) {
-                        // yes!
-                        votes.add(message.from);
-                    }
-
-                    if (votes.size() > majority ) {
-
-                        becomeLeader();
-                    }
+                public void operationComplete(ChannelFuture future) throws Exception {
+                    if (future.isSuccess())
+                        notifyStopped();
+                    else
+                        notifyFailed(future.cause());
                 }
             });
         }
     }
-
-
-    //// Leader timer stuff below
-    private Disposable queueConsumer;
-    private Disposable appender = null;
-
-    @FiberOnly
-    private void haltLeader() {
-        myState = State.FOLLOWER;
-
-        stopQueueConsumer();
-    }
-
-    @FiberOnly
-    private void stopQueueConsumer() {
-        if (queueConsumer != null) {
-            queueConsumer.dispose();
-            queueConsumer = null;
-        }
-    }
-
-    private void becomeLeader() {
-        LOG.warn("{} I AM THE LEADER NOW, commece AppendEntries RPCz", myId);
-
-        myState = State.LEADER;
-
-        // Page 7, para 5
-        long myNextLog = log.getLastIndex(quorumId)+1;
-
-        peersLastAckedIndex = new HashMap<>(peers.size());
-        peersNextIndex = new HashMap<>(peers.size()-1);
-        for (long peer : peers) {
-            if (peer == myId) continue;
-
-            peersNextIndex.put(peer, myNextLog);
-        }
-
-        // none so far!
-        myFirstIndexAsLeader = 0;
-        lastCommittedIndex = 0; // unknown as of yet
-
-        //startAppendTimer();
-        startQueueConsumer();
-    }
-
-    @FiberOnly
-    private void startQueueConsumer() {
-        queueConsumer = fiber.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                consumeQueue();
-            }
-        }, 0, info.groupCommitDelay(), TimeUnit.MILLISECONDS);
-    }
-
-    @FiberOnly
-    private void consumeQueue() {
-        // retrieve as many items as possible. send rpc.
-        final ArrayList<IntLogRequest> reqs = new ArrayList<>();
-
-        LOG.trace("{} queue consuming", myId);
-        while (logRequests.peek() != null) {
-            reqs.add(logRequests.poll());
-        }
-
-        LOG.trace("{} {} queue items to commit", myId, reqs.size());
-
-        final long firstInList = log.getLastIndex(quorumId)+1;
-        long idAssigner = firstInList;
-
-        // Get these now BEFORE the log append call.
-        long logLastIndex = log.getLastIndex(quorumId);
-        long logLastTerm = log.getLastTerm(quorumId);
-
-        // Build the log entries:
-        ArrayList <LogEntry> newLogEntries = new ArrayList<>(reqs.size());
-        for (IntLogRequest logReq : reqs) {
-            LogEntry entry = LogEntry.newBuilder()
-                    .setTerm(currentTerm)
-                    .setIndex(idAssigner)
-                    .setData(ByteString.copyFrom(logReq.datum))
-                    .build();
-            newLogEntries.add(entry);
-
-            if (myFirstIndexAsLeader == 0) {
-                myFirstIndexAsLeader = idAssigner;
-                LOG.debug("{} my first index as leader is: {}", myId, myFirstIndexAsLeader);
-            }
-
-            // let the client know what our id is
-            logReq.logNumberNotifation.set(idAssigner);
-
-            idAssigner ++;
-        }
-
-        // Should throw immediately if there was a basic validation error.
-        final ListenableFuture<Boolean> localLogFuture;
-        if (!newLogEntries.isEmpty()) {
-            localLogFuture = log.logEntries(quorumId, newLogEntries);
-        } else {
-            localLogFuture = null;
-        }
-
-        Raft.AppendEntries.Builder msgProto = Raft.AppendEntries.newBuilder()
-                .setTerm(currentTerm)
-                .setLeaderId(myId)
-                .setPrevLogIndex(logLastIndex)
-                .setPrevLogTerm(logLastTerm)
-                .setCommitIndex(this.lastCommittedIndex);
-
-        // TODO remove one of these i think.
-        final long largestIndexInBatch = idAssigner - 1;
-        final long lastIndexSent = log.getLastIndex(quorumId);
-        assert lastIndexSent == largestIndexInBatch;
-
-        // What a majority means at this moment (in case of reconfigures)
-        final long majority = calculateMajority(peers.size());
-
-        if (localLogFuture != null)
-            Futures.addCallback(localLogFuture, new FutureCallback<Boolean>() {
-                @Override
-                public void onSuccess(Boolean result) {
-                    assert result != null && result;
-
-                    peersLastAckedIndex.put(myId, lastIndexSent);
-                    calculateLastVisible(majority, lastIndexSent);
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    // pretty bad.
-                    LOG.error("{} failed to commit to local log {}", myId, t);
-                }
-            });
-
-        for (final long peer : peers) {
-            if (myId == peer) continue; // dont send myself messages.
-
-            // for each peer, figure out how many "back messages" should I send:
-            final long peerNextIdx = this.peersNextIndex.get(peer);
-
-            ArrayList<LogEntry> peerEntries = newLogEntries;
-            if (peerNextIdx < firstInList) {
-                long moreCount = firstInList - peerNextIdx;
-                LOG.debug("{} sending {} more log entires to peer {}", myId, moreCount, peer);
-
-                // TODO check moreCount is reasonable, and available in log. Otherwise do alternative peer catch up
-                // TODO alternative peer catchup is by a different process, send message to that then skip sending AppendRpc
-
-                // TODO allow for smaller 'catch up' messages so we dont try to create a 400GB sized message.
-
-                // TODO cache these extra LogEntry objects so we dont recreate too many of them.
-                peerEntries = new ArrayList<>((int) (newLogEntries.size() + moreCount));
-                for (long i = peerNextIdx; i < firstInList; i++) {
-                    LogEntry entry = log.getLogEntry(quorumId, i);
-                    peerEntries.add(entry);
-                }
-                // TODO make sure the lists splice neatly together. The check below fails when newLogEntries is empty
-                //assert (peerEntries.get(peerEntries.size()-1).getIndex()+1) == newLogEntries.get(0).getIndex();
-                peerEntries.addAll(newLogEntries);
-            }
-
-            // catch them up so the next RPC wont over-send old junk.
-            peersNextIndex.put(peer, lastIndexSent + 1);
-
-            Raft.AppendEntries msg = msgProto
-                    .clone()
-                    .addAllEntries(peerEntries)
-                    .build();
-
-            RpcRequest request = new RpcRequest(peer, myId, msg);
-            AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
-                @Override
-                public void onMessage(RpcWireReply message) {
-                    LOG.trace("{} got a reply {}", myId, message);
-
-                    boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
-                    if (!wasSuccessful) {
-                        // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
-                        if (message.getAppendReplyMessage().hasMyLastLogEntry()) {
-                            peersNextIndex.put(peer, message.getAppendReplyMessage().getMyLastLogEntry());
-                        } else {
-                            peersNextIndex.put(peer, peerNextIdx - 1);
-                        }
-                    } else {
-                        // we have been successfully acked up to this point.
-                        LOG.trace("{} peer {} acked for {}", myId, peer, lastIndexSent);
-                        peersLastAckedIndex.put(peer, lastIndexSent);
-
-                        calculateLastVisible(majority, lastIndexSent);
-                    }
-                }
-            });
-        }
-    }
-
-    private void calculateLastVisible(long majority, long lastIndexSent) {
-        if (lastIndexSent == lastCommittedIndex) return; //skip null check basically
-
-        HashMap <Long,Integer> bucket = new HashMap<>();
-        for (long lastAcked : peersLastAckedIndex.values()) {
-            Integer p = bucket.get(lastAcked);
-            if (p == null)
-                bucket.put(lastAcked, 1);
-            else
-                bucket.put(lastAcked, p+1);
-        }
-
-        long mostAcked = 0;
-        for (Map.Entry<Long,Integer> e : bucket.entrySet()) {
-            if (e.getValue() > majority) {
-                if (mostAcked != 0) {
-                    LOG.warn("{} strange, found more than 1 'most acked' entry: {} and {}", myId, mostAcked, e.getKey());
-                }
-                mostAcked = e.getKey();
-            }
-        }
-        if (mostAcked == 0) return;
-        if (myFirstIndexAsLeader == 0) return; // cant declare new visible yet until we have a first index as the leader.
-
-        if (mostAcked < myFirstIndexAsLeader) {
-            LOG.warn("{} Found most-acked entry {} but my first index as leader was {}, cant declare visible yet", myId, mostAcked, myFirstIndexAsLeader);
-            return;
-        }
-
-        if (mostAcked < lastCommittedIndex) {
-            LOG.warn("{} weird mostAcked {} is smaller than lastCommittedIndex {}", myId, mostAcked, lastCommittedIndex);
-            return;
-        }
-        if (mostAcked == lastCommittedIndex) {
-            return ;
-        }
-        this.lastCommittedIndex = mostAcked;
-        LOG.info("{} discovered new visible entry {}", myId, lastCommittedIndex);
-
-        // TODO take action and notify clients (pending new system frameworks)
-    }
-
-    // Small helper methods goeth here
-
-    public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
-        return incomingChannel;
-    }
-
-    private void setVotedFor(long votedFor) {
-        persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
-        //persister.writeVotedFor(votedFor);
-
-        this.votedFor = votedFor;
-    }
-
-    private void setCurrentTerm(long newTerm) {
-        //persister.writeCurrentTerm(newTerm);
-        persister.writeCurrentTermAndVotedFor(quorumId, newTerm, 0);
-
-        this.currentTerm = newTerm;
-        this.votedFor = 0;
-        // new term, means new attempt to elect.
-        //setVotedFor(0);
-    }
-
-    public long getId() {
-        return myId;
-    }
-
-    public void dispose() {
-        fiber.dispose();
-    }
-
-    public boolean isLeader() {
-        return myState == State.LEADER;
-    }
-
 }

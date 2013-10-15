@@ -1,11 +1,31 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ohmdb;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.protobuf.MessageLite;
+import ohmdb.discovery.BeaconService;
 import ohmdb.messages.ControlMessages;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.RequestChannel;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  * Provides bootstrapping and other service introspection and management utilities.  Ideally we can run multiple
@@ -14,33 +34,35 @@ import org.jetlang.channels.RequestChannel;
 public interface OhmServer extends Service {
     /***** Interface type public methods ******/
 
-    long getNodeId();
+    public long getNodeId();
 
-    ListenableFuture<OhmService> getServiceByName(String serviceName);
+    public ListenableFuture<OhmService> getServiceByName(String serviceName);
 
-    Channel<MessageLite> getCommandChannel();
+    public Channel<MessageLite> getCommandChannel();
 
-    RequestChannel<MessageLite, ControlMessages.CommandReply> getCommandRequests();
+    public RequestChannel<MessageLite, ControlMessages.CommandReply> getCommandRequests();
 
-    Channel<ServiceStateChange> getServiceRegisteredChannel();
+    public Channel<ServiceStateChange> getServiceRegisteredChannel();
+
+    public ImmutableMap<String, OhmService> getServices() throws ExecutionException, InterruptedException;
+    public ListenableFuture<ImmutableMap<String, OhmService>> getServices2();
+
+    public ListenableFuture<BeaconService> getBeaconService();
 
     public static class ServiceStateChange {
+        public final OhmService service;
+        public final State state;
+
         @Override
         public String toString() {
-            return "ServiceRegistered{" +
-                    "serviceName='" + serviceName + '\'' +
-                    ", port=" + port +
+            return "ServiceStateChange{" +
+                    ", service=" + service +
                     ", state=" + state +
                     '}';
         }
 
-        public final String serviceName;
-        public final int port;
-        public final State state;
-
-        public ServiceStateChange(String serviceName, int port, State state) {
-            this.serviceName = serviceName;
-            this.port = port;
+        public ServiceStateChange(OhmService service, State state) {
+            this.service = service;
             this.state = state;
         }
     }
