@@ -63,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static ohmdb.replication.Raft.RaftWireMessage;
 
@@ -401,16 +402,26 @@ public class ReplicatorService extends AbstractService implements OhmService {
 
     @Override
     protected void doStop() {
-        if (listenChannel != null) {
-            listenChannel.close().addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
-                    if (future.isSuccess())
-                        notifyStopped();
-                    else
-                        notifyFailed(future.cause());
+        fiber.execute(new Runnable() {
+            @Override
+            public void run() {
+                final AtomicInteger countDown = new AtomicInteger(1);
+                ChannelFutureListener listener = new ChannelFutureListener() {
+                    @Override
+                    public void operationComplete(ChannelFuture future) throws Exception {
+                        if (countDown.decrementAndGet() == 0) {
+                            notifyStopped();
+                        }
+
+                    }
+                };
+                if (listenChannel != null) {
+                    countDown.incrementAndGet();
+                    listenChannel.close().addListener(listener);
                 }
-            });
-        }
+
+                allChannels.close().addListener(listener);
+            }
+        });
     }
 }
