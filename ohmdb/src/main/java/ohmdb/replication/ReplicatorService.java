@@ -69,9 +69,12 @@ import static ohmdb.replication.Raft.RaftWireMessage;
 
 /**
  * TODO we dont have a way to actually START a freaking ReplicatorInstance - YET.
+ * TODO consider being symmetric in how we handle sent messages.
  */
 public class ReplicatorService extends AbstractService implements OhmService {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorService.class);
+
+    /**************** OhmService informational methods ************************************/
 
     @Override
     public String getServiceName() {
@@ -128,6 +131,7 @@ public class ReplicatorService extends AbstractService implements OhmService {
         this.allChannels = new DefaultChannelGroup(workerGroup.next());
     }
 
+    /****************** Handlers for netty/messages from the wire/TCP ************************/
     private class MessageHandler extends SimpleChannelInboundHandler<RaftWireMessage> {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -238,14 +242,32 @@ public class ReplicatorService extends AbstractService implements OhmService {
                 }
 
                 channel.write(b);
+                channel.flush();
             }
         });
+    }
+
+    /**************** Handlers for Request<> from replicator instances ************************************/
+    @FiberOnly
+    private void handleCancelledSession(Session session) {
+        Long messageId = outstandingRPCbySession.get(session);
+        outstandingRPCbySession.remove(session);
+        if (messageId == null) {
+            return;
+        }
+        LOG.debug("Removing cancelled RPC, message ID {}", messageId);
+        outstandingRPCs.remove(messageId);
     }
 
     @FiberOnly
     private void handleOutgoingMessage(final Request<RpcRequest, RpcWireReply> message) {
         final RpcRequest request = message.getRequest();
         final long to = request.to;
+
+        if (to == server.getNodeId()) {
+            //loop back that
+            handleLoopBackMessage(message);
+        }
 
         BeaconService.NodeInfoRequest nodeInfoRequest = new BeaconService.NodeInfoRequest(to, "ReplicatorService");
         AsyncRequest.withOneReply(fiber, beaconService.getNodeInfo(), nodeInfoRequest, new Callback<BeaconService.NodeInfoReply>() {
@@ -306,11 +328,30 @@ public class ReplicatorService extends AbstractService implements OhmService {
                     // v bad, not possible really.
 
                 channel.write(msgBuilder);
+                channel.flush();
+            }
+        });
+    }
+
+    private void handleLoopBackMessage(final Request<RpcRequest, RpcWireReply> message) {
+        final long toFrom = server.getNodeId();
+        final RpcRequest request = message.getRequest();
+        String quorumId = request.getQuorumId();
+
+        final ReplicatorInstance repl = replicatorInstances.get(quorumId);
+        assert repl != null;
+        final RpcWireRequest newRequest = new RpcWireRequest(toFrom, toFrom, 0, request.message);
+        AsyncRequest.withOneReply(fiber, repl.getIncomingChannel(), newRequest, new Callback<RpcReply>() {
+            @Override
+            public void onMessage(RpcReply msg) {
+                RpcWireReply newReply = new RpcWireReply(toFrom, toFrom, 0, msg.message);
+                message.reply(newReply);
             }
         });
     }
 
 
+    /************* Service startup/registration and shutdown/termination ***************/
     @Override
     protected void doStart() {
         // must start the fiber up early.
@@ -376,13 +417,7 @@ public class ReplicatorService extends AbstractService implements OhmService {
                                 public void onMessage(SessionClosed<RpcRequest> message) {
                                     // Clean up cancelled requests.
 
-                                    Long messageId = outstandingRPCbySession.get(message.getSession());
-                                    outstandingRPCbySession.remove(message.getSession());
-                                    if (messageId == null) {
-                                        return;
-                                    }
-                                    LOG.debug("Removing cancelled RPC, message ID {}", messageId);
-                                    outstandingRPCs.remove(messageId);
+                                    handleCancelledSession(message.getSession());
                                 }
                             });
 
