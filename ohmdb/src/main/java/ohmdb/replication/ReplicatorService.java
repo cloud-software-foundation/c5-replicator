@@ -50,6 +50,7 @@ import ohmdb.replication.rpc.RpcWireReply;
 import ohmdb.replication.rpc.RpcWireRequest;
 import ohmdb.util.FiberOnly;
 import org.jetlang.channels.AsyncRequest;
+import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
@@ -61,7 +62,10 @@ import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -89,6 +93,43 @@ public class ReplicatorService extends AbstractService implements OhmService {
     @Override
     public int port() {
         return this.port;
+    }
+
+    private MemoryChannel<ReplicatorInstanceStateChange> replicatorStateChanges = new MemoryChannel<>();
+    public org.jetlang.channels.Channel<ReplicatorInstanceStateChange> getReplicatorStateChanges() {
+        return replicatorStateChanges;
+    }
+
+    private class Persister implements RaftInfoPersistence {
+        @Override
+        public long readCurrentTerm(String quorumId) throws IOException {
+            return getLongofFile(quorumId, 0);
+        }
+
+        @Override
+        public long readVotedFor(String quorumId) throws IOException {
+            return getLongofFile(quorumId, 1);
+        }
+
+        private long getLongofFile(String quorumId, int whichLine) throws IOException {
+            List<String> datas = server.getConfigDirectory().readFile(quorumId, "raft-data");
+            if (datas.size() != 2)
+                return 0; // corrupt file?
+
+            try {
+                return Long.parseLong(datas.get(whichLine));
+            } catch (NumberFormatException e) {
+                return 0; // corrupt file sucks?
+            }
+        }
+
+        @Override
+        public void writeCurrentTermAndVotedFor(String quorumId, long currentTerm, long votedFor) throws IOException {
+            List<String> datas = new ArrayList<>(2);
+            datas.add(Long.toString(currentTerm));
+            datas.add(Long.toString(votedFor));
+            server.getConfigDirectory().writeFile(quorumId, "raft-data", datas);
+        }
     }
 
     private final int port;
@@ -420,6 +461,18 @@ public class ReplicatorService extends AbstractService implements OhmService {
                                     handleCancelledSession(message.getSession());
                                 }
                             });
+
+                    replicatorStateChanges.subscribe(fiber, new Callback<ReplicatorInstanceStateChange>() {
+                        @Override
+                        public void onMessage(ReplicatorInstanceStateChange message) {
+                            if (message.state == State.FAILED) {
+                                LOG.error("replicator {} indicates failure, removing!", message.instance);
+                                replicatorInstances.remove(message.instance.getQuorumId());
+                            } else {
+                                LOG.debug("replicator indicates state change {}", message);
+                            }
+                        }
+                    });
 
                     notifyStarted();
                 } catch (Exception e) {

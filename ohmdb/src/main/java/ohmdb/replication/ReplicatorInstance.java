@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import ohmdb.replication.rpc.RpcReply;
@@ -12,6 +13,7 @@ import ohmdb.replication.rpc.RpcWireReply;
 import ohmdb.replication.rpc.RpcWireRequest;
 import ohmdb.util.FiberOnly;
 import org.jetlang.channels.AsyncRequest;
+import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
@@ -21,6 +23,7 @@ import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,9 +42,28 @@ import static ohmdb.replication.Raft.LogEntry;
 public class ReplicatorInstance {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorInstance.class);
 
+    @Override
+    public String toString() {
+        return "ReplicatorInstance{" +
+                "myId=" + myId +
+                ", quorumId='" + quorumId + '\'' +
+                ", lastCommittedIndex=" + lastCommittedIndex +
+                ", myState=" + myState +
+                ", currentTerm=" + currentTerm +
+                ", votedFor=" + votedFor +
+                ", lastRPC=" + lastRPC +
+                '}';
+    }
+
+    public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
+        return incomingChannel;
+    }
+
     private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
     private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
+    private final Channel<ReplicatorInstanceStateChange> stateChangeChannel;
 
+    /********** final fields *************/
     private final Fiber fiber;
     private final long myId;
     private final String quorumId;
@@ -56,6 +78,10 @@ public class ReplicatorInstance {
     private long myFirstIndexAsLeader;
     private long lastCommittedIndex;
 
+    public String getQuorumId() {
+        return quorumId;
+    }
+
     private static class IntLogRequest {
         public final byte[] datum;
         public final SettableFuture<Long> logNumberNotifation;
@@ -66,7 +92,6 @@ public class ReplicatorInstance {
         }
     }
     private final BlockingQueue<IntLogRequest> logRequests = new ArrayBlockingQueue<>(100);
-
 
     // What state is this instance in?
     public enum State {
@@ -92,14 +117,15 @@ public class ReplicatorInstance {
     final RaftInformationInterface info;
     final RaftInfoPersistence persister;
 
-    public ReplicatorInstance(Fiber fiber,
-                              long myId,
-                              String quorumId,
+    public ReplicatorInstance(final Fiber fiber,
+                              final long myId,
+                              final String quorumId,
                               List<Long> peers,
                               RaftLogAbstraction log,
                               RaftInformationInterface info,
                               RaftInfoPersistence persister,
-                              RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel) {
+                              RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
+                              final Channel<ReplicatorInstanceStateChange> stateChangeChannel) {
         this.fiber = fiber;
         this.myId = myId;
         this.quorumId = quorumId;
@@ -108,6 +134,7 @@ public class ReplicatorInstance {
         this.log = log;
         this.info = info;
         this.persister = persister;
+        this.stateChangeChannel = stateChangeChannel;
         Random r = new Random();
         this.myElectionTimeout = r.nextInt((int) info.electionTimeout()) + info.electionTimeout();
         this.lastRPC = info.currentTimeMillis();
@@ -117,7 +144,17 @@ public class ReplicatorInstance {
         fiber.execute(new Runnable() {
             @Override
             public void run() {
-                readPersistentData();
+                try {
+                    readPersistentData();
+                    // indicate we are running!
+                    stateChangeChannel.publish(
+                            new ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.RUNNING, null));
+                } catch (IOException e) {
+                    LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
+                    stateChangeChannel.publish(
+                            new ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.FAILED, e));
+                    fiber.dispose(); // kill us forever.
+                }
             }
         });
 
@@ -162,7 +199,7 @@ public class ReplicatorInstance {
     }
 
     @FiberOnly
-    private void readPersistentData() {
+    private void readPersistentData() throws IOException {
         currentTerm = persister.readCurrentTerm(quorumId);
         votedFor = persister.readVotedFor(quorumId);
     }
@@ -572,7 +609,6 @@ public class ReplicatorInstance {
         myFirstIndexAsLeader = 0;
         lastCommittedIndex = 0; // unknown as of yet
 
-        //startAppendTimer();
         startQueueConsumer();
     }
 
@@ -777,14 +813,13 @@ public class ReplicatorInstance {
         // TODO take action and notify clients (pending new system frameworks)
     }
 
-    // Small helper methods goeth here
-
-    public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
-        return incomingChannel;
-    }
-
     private void setVotedFor(long votedFor) {
-        persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
+        try {
+            persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
+        } catch (IOException e) {
+            stateChangeChannel.publish(new ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
+            fiber.dispose();
+        }
         //persister.writeVotedFor(votedFor);
 
         this.votedFor = votedFor;
@@ -792,12 +827,15 @@ public class ReplicatorInstance {
 
     private void setCurrentTerm(long newTerm) {
         //persister.writeCurrentTerm(newTerm);
-        persister.writeCurrentTermAndVotedFor(quorumId, newTerm, 0);
+        try {
+            persister.writeCurrentTermAndVotedFor(quorumId, newTerm, 0);
+        } catch (IOException e) {
+            stateChangeChannel.publish(new ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
+            fiber.dispose();
+        }
 
         this.currentTerm = newTerm;
         this.votedFor = 0;
-        // new term, means new attempt to elect.
-        //setVotedFor(0);
     }
 
     public long getId() {

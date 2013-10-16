@@ -49,6 +49,8 @@ public interface OhmServer extends Service {
 
     public ListenableFuture<BeaconService> getBeaconService();
 
+    public ConfigDirectory getConfigDirectory();
+
     public static class ServiceStateChange {
         public final OhmService service;
         public final State state;

@@ -32,6 +32,7 @@ import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.core.Callback;
+import org.jetlang.core.Disposable;
 import org.jetlang.core.RunnableExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
@@ -184,6 +185,21 @@ public class OhmDB extends AbstractService implements OhmServer {
             public void run() {
 
                 // What happens iff the serviceRegistry has EMPTY?
+                if (!serviceRegistry.containsKey("BeaconService")) {
+                    // listen to the registration stream:
+                    final Disposable[] d = new Disposable[]{null};
+                    d[0] = getServiceRegisteredChannel().subscribe(serverFiber, new Callback<ServiceStateChange>() {
+                        @Override
+                        public void onMessage(ServiceStateChange message) {
+                            if (message.service.getServiceName().equals("BeaconService")) {
+                                future.set((BeaconService) message.service);
+
+                                assert d[0] != null;  // this is pretty much impossible because of how fibers work.
+                                d[0].dispose();
+                            }
+                        }
+                    });
+                }
 
                 future.set((BeaconService) serviceRegistry.get("BeaconService"));
             }
@@ -223,6 +239,11 @@ public class OhmDB extends AbstractService implements OhmServer {
     @Override
     public Channel<ServiceStateChange> getServiceRegisteredChannel() {
         return serviceRegisteredChannel;
+    }
+
+    @Override
+    public ConfigDirectory getConfigDirectory() {
+        return configDirectory;
     }
 
 
@@ -367,14 +388,11 @@ public class OhmDB extends AbstractService implements OhmServer {
 
     @Override
     protected void doStart() {
-        // Read base state/config from disk.
-
         try {
             serverFiber = new ThreadFiber(new RunnableExecutorImpl(), "OhmDb-Server", false);
             fiberPool = new PoolFiberFactory(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
             bossGroup = new NioEventLoopGroup(1);
             workerGroup = new NioEventLoopGroup();
-
 
             commandChannel.subscribe(serverFiber, new Callback<MessageLite>() {
                 @Override
@@ -400,7 +418,6 @@ public class OhmDB extends AbstractService implements OhmServer {
         } catch (Exception e) {
             notifyFailed(e);
         }
-
     }
 
 

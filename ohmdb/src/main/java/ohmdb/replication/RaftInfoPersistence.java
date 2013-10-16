@@ -16,14 +16,16 @@
  */
 package ohmdb.replication;
 
+import java.io.IOException;
+
 /**
  * Persist snippets of information for the raft algorithm.  These bits are critical to recover during crash-recovery,
  * so the interface is sync and expected to durably write the data to disk before returning.
  */
 public interface RaftInfoPersistence {
-    public long readCurrentTerm(String quorumId);
+    public long readCurrentTerm(String quorumId) throws IOException;
 
-    public long readVotedFor(String quorumId);
+    public long readVotedFor(String quorumId) throws IOException;
 
-    public void writeCurrentTermAndVotedFor(String quorumId, long currentTerm, long votedFor);
+    public void writeCurrentTermAndVotedFor(String quorumId, long currentTerm, long votedFor) throws IOException;
 }

@@ -25,6 +25,8 @@ import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
 import ohmdb.replication.rpc.RpcWireRequest;
 import org.jetlang.channels.AsyncRequest;
+import org.jetlang.channels.Channel;
+import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
@@ -104,6 +106,7 @@ public class InRamSim {
     final int peerSize;
     final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
     final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
+    final Channel<ReplicatorInstanceStateChange> stateChanges = new MemoryChannel<>();
     final Fiber rpcFiber;
     final List<Long> peerIds = new ArrayList<>();
     private final PoolFiberFactory fiberPool;
@@ -129,7 +132,8 @@ public class InRamSim {
                     new InRamLog(),
                     new Info(plusMillis),
                     new Persister(),
-                    rpcChannel);
+                    rpcChannel,
+                    stateChanges);
             replicators.put(peerId, rep);
             plusMillis += 500;
         }
@@ -144,6 +148,7 @@ public class InRamSim {
                 messageForwarder(message);
             }
         });
+
 
         rpcFiber.start();
     }
