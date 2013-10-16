@@ -515,7 +515,13 @@ public class ReplicatorInstance {
 
         @Override
         public void run() {
-            // TODO break out of this loop if something has changed, I think that is if the term > termBeingVotedFor
+            // If we are no longer a candidate, retrying RequestVote is pointless.
+            if (myState != State.CANDIDATE)
+                return;
+
+            // Also if the term goes forward somehow, this is also out of date, and drop it.
+            if (currentTerm > termBeingVotedFor)
+                return;
 
             // Note we are using 'this' as the recursive timeout.
             AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
