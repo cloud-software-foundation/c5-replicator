@@ -1,7 +1,9 @@
 package ohmdb.regionserver;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundMessageHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
+import ohmdb.OhmServer;
+import ohmdb.OhmStatic;
 import ohmdb.client.generated.ClientProtos;
 import ohmdb.regionserver.scanner.ScanRunnable;
 import ohmdb.regionserver.scanner.ScannerManager;
@@ -18,13 +20,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ohmdb.OhmStatic.*;
+
 public class OhmServerHandler extends
-    ChannelInboundMessageHandlerAdapter<ClientProtos.Call> {
+    SimpleChannelInboundHandler<ClientProtos.Call> {
   ScannerManager scanManager = ScannerManager.INSTANCE;
 
   @Override
-  public void messageReceived(final ChannelHandlerContext ctx,
-                              final ClientProtos.Call call)
+  public void channelRead0(final ChannelHandlerContext ctx,
+                           final ClientProtos.Call call)
       throws Exception {
     switch (call.getCommand()) {
       case GET:
@@ -79,7 +83,7 @@ public class OhmServerHandler extends
                     + type.name());
         }
       }
-      HRegion region = OhmServer.getOnlineRegion("1");
+      HRegion region = getOnlineRegion("1");
       region.mutateRow(rm);
     }
     ClientProtos.Response response = ClientProtos
@@ -88,7 +92,7 @@ public class OhmServerHandler extends
         .setCommand(ClientProtos.Response.Command.MULTI)
         .setCommandId(call.getCommandId())
         .setMulti(multiResponse.build()).build();
-    ctx.write(response);
+    ctx.writeAndFlush(response);
   }
 
 
@@ -98,7 +102,7 @@ public class OhmServerHandler extends
     ClientProtos.MutateResponse.Builder mutateResponse =
         ClientProtos.MutateResponse.newBuilder();
     try {
-      HRegion region = OhmServer.getOnlineRegion("1");
+      HRegion region = getOnlineRegion("1");
       switch (mutateIn.getMutation().getMutateType()) {
         case PUT:
           region.put(ReverseProtobufUtil.toPut(mutateIn.getMutation(), null));
@@ -119,7 +123,7 @@ public class OhmServerHandler extends
         .setCommand(ClientProtos.Response.Command.MUTATE)
         .setCommandId(call.getCommandId())
         .setMutate(mutateResponse.build()).build();
-    ctx.write(response);
+    ctx.writeAndFlush(response);
   }
 
 
@@ -127,7 +131,7 @@ public class OhmServerHandler extends
       throws IOException {
     ClientProtos.MultiGetResponse.Builder getResponse =
         ClientProtos.MultiGetResponse.newBuilder();
-    HRegion region = OhmServer.getOnlineRegion("1");
+    HRegion region = getOnlineRegion("1");
     for (ClientProtos.Get get : call.getMultiGet().getGetList()) {
       Result result = region.get(ReverseProtobufUtil.toGet(get));
       getResponse.addExists(result != null && !result.isEmpty());
@@ -143,7 +147,7 @@ public class OhmServerHandler extends
         .setCommand(ClientProtos.Response.Command.MULTI_GET)
         .setCommandId(call.getCommandId())
         .setMultiGet(getResponse.build()).build();
-    ctx.write(response);
+    ctx.writeAndFlush(response);
 
   }
 
@@ -187,7 +191,7 @@ public class OhmServerHandler extends
     ClientProtos.Get getIn = call.getGet().getGet();
     ClientProtos.GetResponse.Builder getResponse =
         ClientProtos.GetResponse.newBuilder();
-    HRegion region = OhmServer.getOnlineRegion("1");
+    HRegion region = getOnlineRegion("1");
     Result result = region.get(ReverseProtobufUtil.toGet(getIn));
     getResponse.setExists(result != null && !result.isEmpty());
     if (!call.getGet().getExistenceOnly()) {
@@ -199,8 +203,15 @@ public class OhmServerHandler extends
         .setCommand(ClientProtos.Response.Command.GET)
         .setCommandId(call.getCommandId())
         .setGet(getResponse.build()).build();
-    ctx.write(response);
+
+    ctx.writeAndFlush(response);
   }
+
+  @Override
+  public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+    ctx.flush();
+  }
+
 }
 
 

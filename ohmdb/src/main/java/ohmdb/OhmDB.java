@@ -25,8 +25,11 @@ import com.google.protobuf.MessageLite;
 import io.netty.channel.nio.NioEventLoopGroup;
 import ohmdb.discovery.BeaconService;
 import ohmdb.messages.ControlMessages;
+import ohmdb.regionserver.RegistryFile;
 import ohmdb.replication.ReplicatorService;
 import ohmdb.util.FiberOnly;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
@@ -42,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +53,11 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
+import static ohmdb.OhmStatic.bootStrapRegions;
+import static ohmdb.OhmStatic.existingRegister;
+import static ohmdb.OhmStatic.getRandomPath;
+import static ohmdb.OhmStatic.recoverOhmServer;
+import static ohmdb.log.OLog.moveAwayOldLogs;
 import static ohmdb.messages.ControlMessages.CommandReply;
 import static ohmdb.messages.ControlMessages.StartService;
 import static ohmdb.messages.ControlMessages.StopService;
@@ -62,8 +71,9 @@ import static ohmdb.messages.ControlMessages.StopService;
  */
 public class OhmDB extends AbstractService implements OhmServer {
     private static final Logger LOG = LoggerFactory.getLogger(OhmDB.class);
+  private Fiber tabletServicesFiber;
 
-    public static void main(String[] args) throws Exception {
+  public static void main(String[] args) throws Exception {
         String cfgPath = "/tmp/ohmdb-ryan-" + System.currentTimeMillis();
 
         if (args.length > 0) {
@@ -405,8 +415,29 @@ public class OhmDB extends AbstractService implements OhmServer {
 
     @Override
     protected void doStart() {
-        try {
-            serverFiber = new ThreadFiber(new RunnableExecutorImpl(), "OhmDb-Server", false);
+      Configuration conf = HBaseConfiguration.create();
+      Path path;
+      path = Paths.get(getRandomPath());
+      RegistryFile registryFile;
+      try {
+        registryFile = new RegistryFile(path);
+        moveAwayOldLogs(path.toString());
+
+        if (existingRegister(registryFile)) {
+          recoverOhmServer(conf, path, registryFile);
+        } else {
+          bootStrapRegions(conf, path, registryFile);
+        }
+      } catch (Exception e) {
+        notifyFailed(e);
+      }
+
+
+      try {
+        tabletServicesFiber = new ThreadFiber(new RunnableExecutorImpl(), "Tablet-Services", true);
+        tabletServicesFiber.execute(new RegionServer(8080));
+
+        serverFiber = new ThreadFiber(new RunnableExecutorImpl(), "OhmDb-Server", false);
             fiberPool = new PoolFiberFactory(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
             bossGroup = new NioEventLoopGroup(1);
             workerGroup = new NioEventLoopGroup();
@@ -430,8 +461,9 @@ public class OhmDB extends AbstractService implements OhmServer {
             });
 
             serverFiber.start();
+            tabletServicesFiber.start();
 
-            notifyStarted();
+        notifyStarted();
         } catch (Exception e) {
             notifyFailed(e);
         }

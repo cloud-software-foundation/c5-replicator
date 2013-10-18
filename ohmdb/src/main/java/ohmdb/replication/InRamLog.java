@@ -35,7 +35,7 @@ public class InRamLog implements RaftLogAbstraction {
     }
 
     @Override
-    public ListenableFuture<Boolean> logEntries(String quorumId, List<LogEntry> entries) {
+    public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
         // add them, for great justice.
 
         assert (log.size()+1) == entries.get(0).getIndex();
@@ -50,30 +50,30 @@ public class InRamLog implements RaftLogAbstraction {
     }
 
     @Override
-    public LogEntry getLogEntry(String quorumId, long index) {
+    public LogEntry getLogEntry(long index) {
         return log.get((int) index-1);
     }
 
     @Override
-    public synchronized long getLogTerm(String quorumId, long index) {
+    public synchronized long getLogTerm(long index) {
         assert (index-1) < log.size();
 
         return log.get((int) index-1).getTerm();
     }
 
     @Override
-    public synchronized long getLastTerm(String quorumId) {
+    public synchronized long getLastTerm() {
         if (log.isEmpty()) return 0;
         return log.get(log.size()-1).getTerm();
     }
 
     @Override
-    public synchronized long getLastIndex(String quorumId) {
+    public synchronized long getLastIndex() {
         return log.size();
     }
 
     @Override
-    public synchronized ListenableFuture<Boolean> truncateLog(String quorumId, long entryIndex) {
+    public synchronized ListenableFuture<Boolean> truncateLog(long entryIndex) {
         log.subList((int) entryIndex-1, log.size()).clear();
         SettableFuture<Boolean> r = SettableFuture.create();
         r.set(true);

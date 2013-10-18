@@ -19,5 +19,5 @@
 #   permission notice:
 #
 
-for i in ohmdb-client ohmdb flease
+for i in ohmdb-client ohmdb
 	do (cd $i&&./bin/genproto);done

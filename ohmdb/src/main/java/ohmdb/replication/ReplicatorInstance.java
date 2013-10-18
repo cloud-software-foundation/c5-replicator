@@ -253,9 +253,9 @@ public class ReplicatorInstance {
         // and reset election timeout.
 
         boolean vote = false;
-        if ( (log.getLastTerm(quorumId) <= msg.getLastLogTerm())
+        if ( (log.getLastTerm() <= msg.getLastLogTerm())
                 &&
-                log.getLastIndex(quorumId) <= msg.getLastLogIndex()) {
+                log.getLastIndex() <= msg.getLastLogIndex()) {
             // we can vote for this because the candidate's log is at least as
             // complete as the local log.
 
@@ -321,11 +321,11 @@ public class ReplicatorInstance {
         // if msgPrevLogIndex == 0 -> special case of starting the log!
         long msgPrevLogIndex = msg.getPrevLogIndex();
         long msgPrevLogTerm = msg.getPrevLogTerm();
-        if (msgPrevLogIndex != 0 && log.getLogTerm(quorumId, msgPrevLogIndex) != msgPrevLogTerm) {
+        if (msgPrevLogIndex != 0 && log.getLogTerm(msgPrevLogIndex) != msgPrevLogTerm) {
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
                     .setTerm(currentTerm)
                     .setSuccess(false)
-                    .setMyLastLogEntry(log.getLastIndex(quorumId))
+                    .setMyLastLogEntry(log.getLastIndex())
                     .build();
 
             RpcReply reply = new RpcReply(m);
@@ -335,7 +335,7 @@ public class ReplicatorInstance {
 
         // 6. if existing entries conflict with new entries, delete all
         // existing entries starting with first conflicting entry (sec 5.3)
-        long nextIndex = log.getLastIndex(quorumId)+1;
+        long nextIndex = log.getLastIndex()+1;
 
         List<LogEntry> entries =  msg.getEntriesList();
         ArrayList<LogEntry> entriesToCommit = new ArrayList<>(entries.size());
@@ -371,13 +371,13 @@ public class ReplicatorInstance {
             // at this point entryIndex should be <= log.getLastIndex
             assert entryIndex < nextIndex;
 
-            if (log.getLogTerm(quorumId, entryIndex) != entry.getTerm()) {
+            if (log.getLogTerm(entryIndex) != entry.getTerm()) {
                 // conflict:
                 LOG.debug("{} log conflict at idx {} my term: {} term from leader: {}, truncating log after this point", myId,
-                        entryIndex, log.getLogTerm(quorumId, entryIndex), entry.getTerm());
+                        entryIndex, log.getLogTerm(entryIndex), entry.getTerm());
 
                 // delete this and all subsequent entries:
-                ListenableFuture<Boolean> truncateResult = log.truncateLog(quorumId, entryIndex);
+                ListenableFuture<Boolean> truncateResult = log.truncateLog(entryIndex);
                 // TODO don't wait for the truncate inline, wait for a callback (then what?)
                 try {
                     boolean wasTruncated = truncateResult.get();
@@ -398,7 +398,7 @@ public class ReplicatorInstance {
         }
 
         // 7. Append any new entries not already in the log.
-        ListenableFuture<Boolean> logCommitNotification = log.logEntries(quorumId, entriesToCommit);
+        ListenableFuture<Boolean> logCommitNotification = log.logEntries(entriesToCommit);
 
 
         // 8. apply newly committed entries to state machine
@@ -462,8 +462,8 @@ public class ReplicatorInstance {
         Raft.RequestVote msg = Raft.RequestVote.newBuilder()
                 .setTerm(currentTerm)
                 .setCandidateId(myId)
-                .setLastLogIndex(log.getLastIndex(quorumId))
-                .setLastLogTerm(log.getLastTerm(quorumId))
+                .setLastLogIndex(log.getLastIndex())
+                .setLastLogTerm(log.getLastTerm())
                 .build();
 
         LOG.debug("{} Starting election for currentTerm: {}", myId, currentTerm);
@@ -593,7 +593,7 @@ public class ReplicatorInstance {
         myState = State.LEADER;
 
         // Page 7, para 5
-        long myNextLog = log.getLastIndex(quorumId)+1;
+        long myNextLog = log.getLastIndex()+1;
 
         peersLastAckedIndex = new HashMap<>(peers.size());
         peersNextIndex = new HashMap<>(peers.size()-1);
@@ -632,12 +632,12 @@ public class ReplicatorInstance {
 
         LOG.trace("{} {} queue items to commit", myId, reqs.size());
 
-        final long firstInList = log.getLastIndex(quorumId)+1;
+        final long firstInList = log.getLastIndex()+1;
         long idAssigner = firstInList;
 
         // Get these now BEFORE the log append call.
-        long logLastIndex = log.getLastIndex(quorumId);
-        long logLastTerm = log.getLastTerm(quorumId);
+        long logLastIndex = log.getLastIndex();
+        long logLastTerm = log.getLastTerm();
 
         // Build the log entries:
         ArrayList <LogEntry> newLogEntries = new ArrayList<>(reqs.size());
@@ -663,7 +663,7 @@ public class ReplicatorInstance {
         // Should throw immediately if there was a basic validation error.
         final ListenableFuture<Boolean> localLogFuture;
         if (!newLogEntries.isEmpty()) {
-            localLogFuture = log.logEntries(quorumId, newLogEntries);
+            localLogFuture = log.logEntries(newLogEntries);
         } else {
             localLogFuture = null;
         }
@@ -677,7 +677,7 @@ public class ReplicatorInstance {
 
         // TODO remove one of these i think.
         final long largestIndexInBatch = idAssigner - 1;
-        final long lastIndexSent = log.getLastIndex(quorumId);
+        final long lastIndexSent = log.getLastIndex();
         assert lastIndexSent == largestIndexInBatch;
 
         // What a majority means at this moment (in case of reconfigures)
@@ -719,7 +719,7 @@ public class ReplicatorInstance {
                 // TODO cache these extra LogEntry objects so we dont recreate too many of them.
                 peerEntries = new ArrayList<>((int) (newLogEntries.size() + moreCount));
                 for (long i = peerNextIdx; i < firstInList; i++) {
-                    LogEntry entry = log.getLogEntry(quorumId, i);
+                    LogEntry entry = log.getLogEntry(i);
                     peerEntries.add(entry);
                 }
                 // TODO make sure the lists splice neatly together. The check below fails when newLogEntries is empty

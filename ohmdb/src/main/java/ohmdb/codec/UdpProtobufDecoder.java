@@ -74,17 +74,17 @@ public class UdpProtobufDecoder extends MessageToMessageDecoder<DatagramPacket> 
         }
 
         if (extensionRegistry == null) {
-            if (HAS_PARSER) {
-                out.add(prototype.getParserForType().parseFrom(array, offset, length));
-            } else {
+     //       if (HAS_PARSER) {
+     //TODO REPAIR           out.add(prototype.getParserForType().parseFrom(array, offset, length));
+     //       } else {
                 out.add(prototype.newBuilderForType().mergeFrom(array, offset, length).build());
-            }
+     //       }
         } else {
-            if (HAS_PARSER) {
-                out.add(prototype.getParserForType().parseFrom(array, offset, length, extensionRegistry));
-            } else {
+      //      if (HAS_PARSER) {
+              //TODO REPAIR           out.add(prototype.getParserForType().parseFrom(array, offset, length, extensionRegistry));
+     //       } else {
                 out.add(prototype.newBuilderForType().mergeFrom(array, offset, length, extensionRegistry).build());
-            }
+      //      }
         }
     }
 }

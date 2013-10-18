@@ -9,7 +9,6 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>flease</module>
         <module>ohmdb</module>
         <module>ohmdb-client</module>
     </modules>
@@ -20,9 +19,9 @@
         <log4j.version>1.2.16</log4j.version>
         <junit.version>4.8.1</junit.version>
         <slf4j-api.version>1.7.4</slf4j-api.version>
-        <netty.version>4.0.9.Final</netty.version>
+        <netty.version>4.0.10.Final</netty.version>
         <protobuf.version>2.4.1</protobuf.version>
-      <metrics.version>3.0.0</metrics.version>
+        <metrics.version>3.0.0</metrics.version>
     </properties>
 
 
