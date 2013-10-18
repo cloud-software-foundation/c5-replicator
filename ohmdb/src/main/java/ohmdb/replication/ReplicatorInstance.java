@@ -227,11 +227,10 @@ public class ReplicatorInstance {
         // 1. Return if term < currentTerm (sec 5.1)
         if (msg.getTerm() < currentTerm) {
             Raft.RequestVoteReply m = Raft.RequestVoteReply.newBuilder()
-                    .setQuorumId(quorumId)
                     .setTerm(currentTerm)
                     .setVoteGranted(false)
                     .build();
-            RpcReply reply = new RpcReply(message.getRequest(), m);
+            RpcReply reply = new RpcReply(m);
             message.reply(reply);
             return;
         }
@@ -269,11 +268,10 @@ public class ReplicatorInstance {
 
         LOG.debug("{} sending vote reply to {} vote = {}, voted = {}", myId, message.getRequest().from, votedFor, vote);
         Raft.RequestVoteReply m = Raft.RequestVoteReply.newBuilder()
-                .setQuorumId(quorumId)
                 .setTerm(currentTerm)
                 .setVoteGranted(vote)
                 .build();
-        RpcReply reply = new RpcReply(message.getRequest(), m);
+        RpcReply reply = new RpcReply(m);
         message.reply(reply);
     }
 
@@ -285,12 +283,11 @@ public class ReplicatorInstance {
         if (msg.getTerm() < currentTerm) {
             // TODO is this the correct message reply?
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setQuorumId(quorumId)
                     .setTerm(currentTerm)
                     .setSuccess(false)
                     .build();
 
-            RpcReply reply = new RpcReply(message.getRequest(), m);
+            RpcReply reply = new RpcReply(m);
             message.reply(reply);
             return;
         }
@@ -310,12 +307,11 @@ public class ReplicatorInstance {
 
         if (msg.getEntriesCount() == 0) {
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setQuorumId(quorumId)
                     .setTerm(currentTerm)
                     .setSuccess(true)
                     .build();
 
-            RpcReply reply = new RpcReply(message.getRequest(), m);
+            RpcReply reply = new RpcReply(m);
             message.reply(reply);
             return;
         }
@@ -327,13 +323,12 @@ public class ReplicatorInstance {
         long msgPrevLogTerm = msg.getPrevLogTerm();
         if (msgPrevLogIndex != 0 && log.getLogTerm(quorumId, msgPrevLogIndex) != msgPrevLogTerm) {
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setQuorumId(quorumId)
                     .setTerm(currentTerm)
                     .setSuccess(false)
                     .setMyLastLogEntry(log.getLastIndex(quorumId))
                     .build();
 
-            RpcReply reply = new RpcReply(message.getRequest(), m);
+            RpcReply reply = new RpcReply(m);
             message.reply(reply);
             return;
         }
@@ -364,12 +359,11 @@ public class ReplicatorInstance {
                 // TODO handle this situation a little better if possible
                 // reply with an error message leaving the log borked.
                 Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setQuorumId(quorumId)
                         .setTerm(currentTerm)
                         .setSuccess(false)
                         .build();
 
-                RpcReply reply = new RpcReply(message.getRequest(), m);
+                RpcReply reply = new RpcReply(m);
                 message.reply(reply);
                 return;
             }
@@ -417,12 +411,11 @@ public class ReplicatorInstance {
             @Override
             public void onSuccess(Boolean result) {
                 Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setQuorumId(quorumId)
                         .setTerm(currentTerm)
                         .setSuccess(true)
                         .build();
 
-                RpcReply reply = new RpcReply(message.getRequest(), m);
+                RpcReply reply = new RpcReply(m);
                 message.reply(reply);
             }
 
@@ -430,12 +423,11 @@ public class ReplicatorInstance {
             public void onFailure(Throwable t) {
                 // TODO better error reporting. A log commit failure will e a serious issue.
                 Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setQuorumId(quorumId)
                         .setTerm(currentTerm)
                         .setSuccess(false)
                         .build();
 
-                RpcReply reply = new RpcReply(message.getRequest(), m);
+                RpcReply reply = new RpcReply(m);
                 message.reply(reply);
             }
         });
@@ -479,7 +471,7 @@ public class ReplicatorInstance {
         final long termBeingVotedFor = currentTerm;
         final List<Long> votes = new ArrayList<>();
         for (long peer : peers) {
-            RpcRequest req = new RpcRequest(peer, myId, msg);
+            RpcRequest req = new RpcRequest(peer, myId, quorumId, msg);
             AsyncRequest.withOneReply(fiber, sendRpcChannel, req, new Callback<RpcWireReply>() {
                 @FiberOnly
                 @Override
@@ -743,7 +735,7 @@ public class ReplicatorInstance {
                     .addAllEntries(peerEntries)
                     .build();
 
-            RpcRequest request = new RpcRequest(peer, myId, msg);
+            RpcRequest request = new RpcRequest(peer, myId, quorumId, msg);
             AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
                 @Override
                 public void onMessage(RpcWireReply message) {

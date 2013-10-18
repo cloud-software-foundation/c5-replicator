@@ -8,24 +8,17 @@ public final class Raft {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  public interface RaftWireMessageOrBuilder
-      extends com.google.protobuf.MessageOrBuilder {
+  public interface RaftWireMessageOrBuilder extends
+      com.google.protobuf.GeneratedMessage.
+          ExtendableMessageOrBuilder<RaftWireMessage> {
 
     // optional int64 message_id = 1;
     /**
      * <code>optional int64 message_id = 1;</code>
-     *
-     * <pre>
-     * envelope.
-     * </pre>
      */
     boolean hasMessageId();
     /**
      * <code>optional int64 message_id = 1;</code>
-     *
-     * <pre>
-     * envelope.
-     * </pre>
      */
     long getMessageId();
 
@@ -57,80 +50,107 @@ public final class Raft {
      */
     long getReceiverId();
 
-    // optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;
+    // optional string quorum_id = 4;
     /**
-     * <code>optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;</code>
+     * <code>optional string quorum_id = 4;</code>
      */
-    boolean hasMessageType();
+    boolean hasQuorumId();
     /**
-     * <code>optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;</code>
+     * <code>optional string quorum_id = 4;</code>
      */
-    ohmdb.replication.Raft.RaftWireMessage.MessageType getMessageType();
+    java.lang.String getQuorumId();
+    /**
+     * <code>optional string quorum_id = 4;</code>
+     */
+    com.google.protobuf.ByteString
+        getQuorumIdBytes();
 
-    // optional .ohmdb.replication.RequestVote request_vote = 5;
+    // optional bool in_reply = 5;
     /**
-     * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+     * <code>optional bool in_reply = 5;</code>
+     *
+     * <pre>
+     * Is this a reply message?
+     * </pre>
+     */
+    boolean hasInReply();
+    /**
+     * <code>optional bool in_reply = 5;</code>
+     *
+     * <pre>
+     * Is this a reply message?
+     * </pre>
+     */
+    boolean getInReply();
+
+    // optional .ohmdb.replication.RequestVote request_vote = 100;
+    /**
+     * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
      */
     boolean hasRequestVote();
     /**
-     * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+     * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
      */
     ohmdb.replication.Raft.RequestVote getRequestVote();
     /**
-     * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+     * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
      */
     ohmdb.replication.Raft.RequestVoteOrBuilder getRequestVoteOrBuilder();
 
-    // optional .ohmdb.replication.RequestVoteReply vote_reply = 6;
+    // optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;
     /**
-     * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
      */
-    boolean hasVoteReply();
+    boolean hasRequestVoteReply();
     /**
-     * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
      */
-    ohmdb.replication.Raft.RequestVoteReply getVoteReply();
+    ohmdb.replication.Raft.RequestVoteReply getRequestVoteReply();
     /**
-     * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
      */
-    ohmdb.replication.Raft.RequestVoteReplyOrBuilder getVoteReplyOrBuilder();
+    ohmdb.replication.Raft.RequestVoteReplyOrBuilder getRequestVoteReplyOrBuilder();
 
-    // optional .ohmdb.replication.AppendEntries append_entries = 7;
+    // optional .ohmdb.replication.AppendEntries append_entries = 102;
     /**
-     * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+     * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
      */
     boolean hasAppendEntries();
     /**
-     * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+     * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
      */
     ohmdb.replication.Raft.AppendEntries getAppendEntries();
     /**
-     * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+     * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
      */
     ohmdb.replication.Raft.AppendEntriesOrBuilder getAppendEntriesOrBuilder();
 
-    // optional .ohmdb.replication.AppendEntriesReply append_reply = 8;
+    // optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;
     /**
-     * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
      */
-    boolean hasAppendReply();
+    boolean hasAppendEntriesReply();
     /**
-     * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
      */
-    ohmdb.replication.Raft.AppendEntriesReply getAppendReply();
+    ohmdb.replication.Raft.AppendEntriesReply getAppendEntriesReply();
     /**
-     * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
      */
-    ohmdb.replication.Raft.AppendEntriesReplyOrBuilder getAppendReplyOrBuilder();
+    ohmdb.replication.Raft.AppendEntriesReplyOrBuilder getAppendEntriesReplyOrBuilder();
   }
   /**
    * Protobuf type {@code ohmdb.replication.RaftWireMessage}
+   *
+   * <pre>
+   * envelope.
+   * </pre>
    */
   public static final class RaftWireMessage extends
-      com.google.protobuf.GeneratedMessage
-      implements RaftWireMessageOrBuilder {
+      com.google.protobuf.GeneratedMessage.ExtendableMessage<
+        RaftWireMessage> implements RaftWireMessageOrBuilder {
     // Use RaftWireMessage.newBuilder() to construct.
-    private RaftWireMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private RaftWireMessage(com.google.protobuf.GeneratedMessage.ExtendableBuilder<ohmdb.replication.Raft.RaftWireMessage, ?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
@@ -189,20 +209,19 @@ public final class Raft {
               receiverId_ = input.readInt64();
               break;
             }
-            case 32: {
-              int rawValue = input.readEnum();
-              ohmdb.replication.Raft.RaftWireMessage.MessageType value = ohmdb.replication.Raft.RaftWireMessage.MessageType.valueOf(rawValue);
-              if (value == null) {
-                unknownFields.mergeVarintField(4, rawValue);
-              } else {
-                bitField0_ |= 0x00000008;
-                messageType_ = value;
-              }
+            case 34: {
+              bitField0_ |= 0x00000008;
+              quorumId_ = input.readBytes();
               break;
             }
-            case 42: {
+            case 40: {
+              bitField0_ |= 0x00000010;
+              inReply_ = input.readBool();
+              break;
+            }
+            case 802: {
               ohmdb.replication.Raft.RequestVote.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000010) == 0x00000010)) {
+              if (((bitField0_ & 0x00000020) == 0x00000020)) {
                 subBuilder = requestVote_.toBuilder();
               }
               requestVote_ = input.readMessage(ohmdb.replication.Raft.RequestVote.PARSER, extensionRegistry);
@@ -210,25 +229,25 @@ public final class Raft {
                 subBuilder.mergeFrom(requestVote_);
                 requestVote_ = subBuilder.buildPartial();
               }
-              bitField0_ |= 0x00000010;
-              break;
-            }
-            case 50: {
-              ohmdb.replication.Raft.RequestVoteReply.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000020) == 0x00000020)) {
-                subBuilder = voteReply_.toBuilder();
-              }
-              voteReply_ = input.readMessage(ohmdb.replication.Raft.RequestVoteReply.PARSER, extensionRegistry);
-              if (subBuilder != null) {
-                subBuilder.mergeFrom(voteReply_);
-                voteReply_ = subBuilder.buildPartial();
-              }
               bitField0_ |= 0x00000020;
               break;
             }
-            case 58: {
-              ohmdb.replication.Raft.AppendEntries.Builder subBuilder = null;
+            case 810: {
+              ohmdb.replication.Raft.RequestVoteReply.Builder subBuilder = null;
               if (((bitField0_ & 0x00000040) == 0x00000040)) {
+                subBuilder = requestVoteReply_.toBuilder();
+              }
+              requestVoteReply_ = input.readMessage(ohmdb.replication.Raft.RequestVoteReply.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(requestVoteReply_);
+                requestVoteReply_ = subBuilder.buildPartial();
+              }
+              bitField0_ |= 0x00000040;
+              break;
+            }
+            case 818: {
+              ohmdb.replication.Raft.AppendEntries.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000080) == 0x00000080)) {
                 subBuilder = appendEntries_.toBuilder();
               }
               appendEntries_ = input.readMessage(ohmdb.replication.Raft.AppendEntries.PARSER, extensionRegistry);
@@ -236,20 +255,20 @@ public final class Raft {
                 subBuilder.mergeFrom(appendEntries_);
                 appendEntries_ = subBuilder.buildPartial();
               }
-              bitField0_ |= 0x00000040;
+              bitField0_ |= 0x00000080;
               break;
             }
-            case 66: {
+            case 826: {
               ohmdb.replication.Raft.AppendEntriesReply.Builder subBuilder = null;
-              if (((bitField0_ & 0x00000080) == 0x00000080)) {
-                subBuilder = appendReply_.toBuilder();
+              if (((bitField0_ & 0x00000100) == 0x00000100)) {
+                subBuilder = appendEntriesReply_.toBuilder();
               }
-              appendReply_ = input.readMessage(ohmdb.replication.Raft.AppendEntriesReply.PARSER, extensionRegistry);
+              appendEntriesReply_ = input.readMessage(ohmdb.replication.Raft.AppendEntriesReply.PARSER, extensionRegistry);
               if (subBuilder != null) {
-                subBuilder.mergeFrom(appendReply_);
-                appendReply_ = subBuilder.buildPartial();
+                subBuilder.mergeFrom(appendEntriesReply_);
+                appendEntriesReply_ = subBuilder.buildPartial();
               }
-              bitField0_ |= 0x00000080;
+              bitField0_ |= 0x00000100;
               break;
             }
           }
@@ -291,126 +310,18 @@ public final class Raft {
       return PARSER;
     }
 
-    /**
-     * Protobuf enum {@code ohmdb.replication.RaftWireMessage.MessageType}
-     */
-    public enum MessageType
-        implements com.google.protobuf.ProtocolMessageEnum {
-      /**
-       * <code>REQUEST_VOTE = 0;</code>
-       */
-      REQUEST_VOTE(0, 0),
-      /**
-       * <code>VOTE_REPLY = 1;</code>
-       */
-      VOTE_REPLY(1, 1),
-      /**
-       * <code>APPEND_ENTRIES = 2;</code>
-       */
-      APPEND_ENTRIES(2, 2),
-      /**
-       * <code>APPEND_REPLY = 3;</code>
-       */
-      APPEND_REPLY(3, 3),
-      ;
-
-      /**
-       * <code>REQUEST_VOTE = 0;</code>
-       */
-      public static final int REQUEST_VOTE_VALUE = 0;
-      /**
-       * <code>VOTE_REPLY = 1;</code>
-       */
-      public static final int VOTE_REPLY_VALUE = 1;
-      /**
-       * <code>APPEND_ENTRIES = 2;</code>
-       */
-      public static final int APPEND_ENTRIES_VALUE = 2;
-      /**
-       * <code>APPEND_REPLY = 3;</code>
-       */
-      public static final int APPEND_REPLY_VALUE = 3;
-
-
-      public final int getNumber() { return value; }
-
-      public static MessageType valueOf(int value) {
-        switch (value) {
-          case 0: return REQUEST_VOTE;
-          case 1: return VOTE_REPLY;
-          case 2: return APPEND_ENTRIES;
-          case 3: return APPEND_REPLY;
-          default: return null;
-        }
-      }
-
-      public static com.google.protobuf.Internal.EnumLiteMap<MessageType>
-          internalGetValueMap() {
-        return internalValueMap;
-      }
-      private static com.google.protobuf.Internal.EnumLiteMap<MessageType>
-          internalValueMap =
-            new com.google.protobuf.Internal.EnumLiteMap<MessageType>() {
-              public MessageType findValueByNumber(int number) {
-                return MessageType.valueOf(number);
-              }
-            };
-
-      public final com.google.protobuf.Descriptors.EnumValueDescriptor
-          getValueDescriptor() {
-        return getDescriptor().getValues().get(index);
-      }
-      public final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptorForType() {
-        return getDescriptor();
-      }
-      public static final com.google.protobuf.Descriptors.EnumDescriptor
-          getDescriptor() {
-        return ohmdb.replication.Raft.RaftWireMessage.getDescriptor().getEnumTypes().get(0);
-      }
-
-      private static final MessageType[] VALUES = values();
-
-      public static MessageType valueOf(
-          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-        if (desc.getType() != getDescriptor()) {
-          throw new java.lang.IllegalArgumentException(
-            "EnumValueDescriptor is not for this type.");
-        }
-        return VALUES[desc.getIndex()];
-      }
-
-      private final int index;
-      private final int value;
-
-      private MessageType(int index, int value) {
-        this.index = index;
-        this.value = value;
-      }
-
-      // @@protoc_insertion_point(enum_scope:ohmdb.replication.RaftWireMessage.MessageType)
-    }
-
     private int bitField0_;
     // optional int64 message_id = 1;
     public static final int MESSAGE_ID_FIELD_NUMBER = 1;
     private long messageId_;
     /**
      * <code>optional int64 message_id = 1;</code>
-     *
-     * <pre>
-     * envelope.
-     * </pre>
      */
     public boolean hasMessageId() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
      * <code>optional int64 message_id = 1;</code>
-     *
-     * <pre>
-     * envelope.
-     * </pre>
      */
     public long getMessageId() {
       return messageId_;
@@ -456,125 +367,181 @@ public final class Raft {
       return receiverId_;
     }
 
-    // optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;
-    public static final int MESSAGE_TYPE_FIELD_NUMBER = 4;
-    private ohmdb.replication.Raft.RaftWireMessage.MessageType messageType_;
+    // optional string quorum_id = 4;
+    public static final int QUORUM_ID_FIELD_NUMBER = 4;
+    private java.lang.Object quorumId_;
     /**
-     * <code>optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;</code>
+     * <code>optional string quorum_id = 4;</code>
      */
-    public boolean hasMessageType() {
+    public boolean hasQuorumId() {
       return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;</code>
+     * <code>optional string quorum_id = 4;</code>
      */
-    public ohmdb.replication.Raft.RaftWireMessage.MessageType getMessageType() {
-      return messageType_;
+    public java.lang.String getQuorumId() {
+      java.lang.Object ref = quorumId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          quorumId_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string quorum_id = 4;</code>
+     */
+    public com.google.protobuf.ByteString
+        getQuorumIdBytes() {
+      java.lang.Object ref = quorumId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        quorumId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
     }
 
-    // optional .ohmdb.replication.RequestVote request_vote = 5;
-    public static final int REQUEST_VOTE_FIELD_NUMBER = 5;
-    private ohmdb.replication.Raft.RequestVote requestVote_;
+    // optional bool in_reply = 5;
+    public static final int IN_REPLY_FIELD_NUMBER = 5;
+    private boolean inReply_;
     /**
-     * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+     * <code>optional bool in_reply = 5;</code>
+     *
+     * <pre>
+     * Is this a reply message?
+     * </pre>
      */
-    public boolean hasRequestVote() {
+    public boolean hasInReply() {
       return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+     * <code>optional bool in_reply = 5;</code>
+     *
+     * <pre>
+     * Is this a reply message?
+     * </pre>
+     */
+    public boolean getInReply() {
+      return inReply_;
+    }
+
+    // optional .ohmdb.replication.RequestVote request_vote = 100;
+    public static final int REQUEST_VOTE_FIELD_NUMBER = 100;
+    private ohmdb.replication.Raft.RequestVote requestVote_;
+    /**
+     * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
+     */
+    public boolean hasRequestVote() {
+      return ((bitField0_ & 0x00000020) == 0x00000020);
+    }
+    /**
+     * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
      */
     public ohmdb.replication.Raft.RequestVote getRequestVote() {
       return requestVote_;
     }
     /**
-     * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+     * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
      */
     public ohmdb.replication.Raft.RequestVoteOrBuilder getRequestVoteOrBuilder() {
       return requestVote_;
     }
 
-    // optional .ohmdb.replication.RequestVoteReply vote_reply = 6;
-    public static final int VOTE_REPLY_FIELD_NUMBER = 6;
-    private ohmdb.replication.Raft.RequestVoteReply voteReply_;
+    // optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;
+    public static final int REQUEST_VOTE_REPLY_FIELD_NUMBER = 101;
+    private ohmdb.replication.Raft.RequestVoteReply requestVoteReply_;
     /**
-     * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
      */
-    public boolean hasVoteReply() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
-    }
-    /**
-     * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
-     */
-    public ohmdb.replication.Raft.RequestVoteReply getVoteReply() {
-      return voteReply_;
-    }
-    /**
-     * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
-     */
-    public ohmdb.replication.Raft.RequestVoteReplyOrBuilder getVoteReplyOrBuilder() {
-      return voteReply_;
-    }
-
-    // optional .ohmdb.replication.AppendEntries append_entries = 7;
-    public static final int APPEND_ENTRIES_FIELD_NUMBER = 7;
-    private ohmdb.replication.Raft.AppendEntries appendEntries_;
-    /**
-     * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
-     */
-    public boolean hasAppendEntries() {
+    public boolean hasRequestVoteReply() {
       return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
-     * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
+     */
+    public ohmdb.replication.Raft.RequestVoteReply getRequestVoteReply() {
+      return requestVoteReply_;
+    }
+    /**
+     * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
+     */
+    public ohmdb.replication.Raft.RequestVoteReplyOrBuilder getRequestVoteReplyOrBuilder() {
+      return requestVoteReply_;
+    }
+
+    // optional .ohmdb.replication.AppendEntries append_entries = 102;
+    public static final int APPEND_ENTRIES_FIELD_NUMBER = 102;
+    private ohmdb.replication.Raft.AppendEntries appendEntries_;
+    /**
+     * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
+     */
+    public boolean hasAppendEntries() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
+    }
+    /**
+     * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
      */
     public ohmdb.replication.Raft.AppendEntries getAppendEntries() {
       return appendEntries_;
     }
     /**
-     * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+     * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
      */
     public ohmdb.replication.Raft.AppendEntriesOrBuilder getAppendEntriesOrBuilder() {
       return appendEntries_;
     }
 
-    // optional .ohmdb.replication.AppendEntriesReply append_reply = 8;
-    public static final int APPEND_REPLY_FIELD_NUMBER = 8;
-    private ohmdb.replication.Raft.AppendEntriesReply appendReply_;
+    // optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;
+    public static final int APPEND_ENTRIES_REPLY_FIELD_NUMBER = 103;
+    private ohmdb.replication.Raft.AppendEntriesReply appendEntriesReply_;
     /**
-     * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
      */
-    public boolean hasAppendReply() {
-      return ((bitField0_ & 0x00000080) == 0x00000080);
+    public boolean hasAppendEntriesReply() {
+      return ((bitField0_ & 0x00000100) == 0x00000100);
     }
     /**
-     * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
      */
-    public ohmdb.replication.Raft.AppendEntriesReply getAppendReply() {
-      return appendReply_;
+    public ohmdb.replication.Raft.AppendEntriesReply getAppendEntriesReply() {
+      return appendEntriesReply_;
     }
     /**
-     * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
      */
-    public ohmdb.replication.Raft.AppendEntriesReplyOrBuilder getAppendReplyOrBuilder() {
-      return appendReply_;
+    public ohmdb.replication.Raft.AppendEntriesReplyOrBuilder getAppendEntriesReplyOrBuilder() {
+      return appendEntriesReply_;
     }
 
     private void initFields() {
       messageId_ = 0L;
       senderId_ = 0L;
       receiverId_ = 0L;
-      messageType_ = ohmdb.replication.Raft.RaftWireMessage.MessageType.REQUEST_VOTE;
+      quorumId_ = "";
+      inReply_ = false;
       requestVote_ = ohmdb.replication.Raft.RequestVote.getDefaultInstance();
-      voteReply_ = ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance();
+      requestVoteReply_ = ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance();
       appendEntries_ = ohmdb.replication.Raft.AppendEntries.getDefaultInstance();
-      appendReply_ = ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance();
+      appendEntriesReply_ = ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized != -1) return isInitialized == 1;
 
+      if (!extensionsAreInitialized()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
       memoizedIsInitialized = 1;
       return true;
     }
@@ -582,6 +549,9 @@ public final class Raft {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
+      com.google.protobuf.GeneratedMessage
+        .ExtendableMessage<ohmdb.replication.Raft.RaftWireMessage>.ExtensionWriter extensionWriter =
+          newExtensionWriter();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeInt64(1, messageId_);
       }
@@ -592,20 +562,24 @@ public final class Raft {
         output.writeInt64(3, receiverId_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeEnum(4, messageType_.getNumber());
+        output.writeBytes(4, getQuorumIdBytes());
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeMessage(5, requestVote_);
+        output.writeBool(5, inReply_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeMessage(6, voteReply_);
+        output.writeMessage(100, requestVote_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
-        output.writeMessage(7, appendEntries_);
+        output.writeMessage(101, requestVoteReply_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
-        output.writeMessage(8, appendReply_);
+        output.writeMessage(102, appendEntries_);
       }
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        output.writeMessage(103, appendEntriesReply_);
+      }
+      extensionWriter.writeUntil(536870912, output);
       getUnknownFields().writeTo(output);
     }
 
@@ -629,24 +603,29 @@ public final class Raft {
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(4, messageType_.getNumber());
+          .computeBytesSize(4, getQuorumIdBytes());
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(5, requestVote_);
+          .computeBoolSize(5, inReply_);
       }
       if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, voteReply_);
+          .computeMessageSize(100, requestVote_);
       }
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(7, appendEntries_);
+          .computeMessageSize(101, requestVoteReply_);
       }
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(8, appendReply_);
+          .computeMessageSize(102, appendEntries_);
       }
+      if (((bitField0_ & 0x00000100) == 0x00000100)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(103, appendEntriesReply_);
+      }
+      size += extensionsSerializedSize();
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
       return size;
@@ -727,10 +706,14 @@ public final class Raft {
     }
     /**
      * Protobuf type {@code ohmdb.replication.RaftWireMessage}
+     *
+     * <pre>
+     * envelope.
+     * </pre>
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements ohmdb.replication.Raft.RaftWireMessageOrBuilder {
+        com.google.protobuf.GeneratedMessage.ExtendableBuilder<
+          ohmdb.replication.Raft.RaftWireMessage, Builder> implements ohmdb.replication.Raft.RaftWireMessageOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
         return ohmdb.replication.Raft.internal_static_ohmdb_replication_RaftWireMessage_descriptor;
@@ -756,9 +739,9 @@ public final class Raft {
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
           getRequestVoteFieldBuilder();
-          getVoteReplyFieldBuilder();
+          getRequestVoteReplyFieldBuilder();
           getAppendEntriesFieldBuilder();
-          getAppendReplyFieldBuilder();
+          getAppendEntriesReplyFieldBuilder();
         }
       }
       private static Builder create() {
@@ -773,32 +756,34 @@ public final class Raft {
         bitField0_ = (bitField0_ & ~0x00000002);
         receiverId_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000004);
-        messageType_ = ohmdb.replication.Raft.RaftWireMessage.MessageType.REQUEST_VOTE;
+        quorumId_ = "";
         bitField0_ = (bitField0_ & ~0x00000008);
+        inReply_ = false;
+        bitField0_ = (bitField0_ & ~0x00000010);
         if (requestVoteBuilder_ == null) {
           requestVote_ = ohmdb.replication.Raft.RequestVote.getDefaultInstance();
         } else {
           requestVoteBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000010);
-        if (voteReplyBuilder_ == null) {
-          voteReply_ = ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance();
-        } else {
-          voteReplyBuilder_.clear();
-        }
         bitField0_ = (bitField0_ & ~0x00000020);
+        if (requestVoteReplyBuilder_ == null) {
+          requestVoteReply_ = ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance();
+        } else {
+          requestVoteReplyBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000040);
         if (appendEntriesBuilder_ == null) {
           appendEntries_ = ohmdb.replication.Raft.AppendEntries.getDefaultInstance();
         } else {
           appendEntriesBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000040);
-        if (appendReplyBuilder_ == null) {
-          appendReply_ = ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance();
-        } else {
-          appendReplyBuilder_.clear();
-        }
         bitField0_ = (bitField0_ & ~0x00000080);
+        if (appendEntriesReplyBuilder_ == null) {
+          appendEntriesReply_ = ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance();
+        } else {
+          appendEntriesReplyBuilder_.clear();
+        }
+        bitField0_ = (bitField0_ & ~0x00000100);
         return this;
       }
 
@@ -842,38 +827,42 @@ public final class Raft {
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
         }
-        result.messageType_ = messageType_;
+        result.quorumId_ = quorumId_;
         if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
           to_bitField0_ |= 0x00000010;
+        }
+        result.inReply_ = inReply_;
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+          to_bitField0_ |= 0x00000020;
         }
         if (requestVoteBuilder_ == null) {
           result.requestVote_ = requestVote_;
         } else {
           result.requestVote_ = requestVoteBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
-          to_bitField0_ |= 0x00000020;
-        }
-        if (voteReplyBuilder_ == null) {
-          result.voteReply_ = voteReply_;
-        } else {
-          result.voteReply_ = voteReplyBuilder_.build();
-        }
         if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
           to_bitField0_ |= 0x00000040;
+        }
+        if (requestVoteReplyBuilder_ == null) {
+          result.requestVoteReply_ = requestVoteReply_;
+        } else {
+          result.requestVoteReply_ = requestVoteReplyBuilder_.build();
+        }
+        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
+          to_bitField0_ |= 0x00000080;
         }
         if (appendEntriesBuilder_ == null) {
           result.appendEntries_ = appendEntries_;
         } else {
           result.appendEntries_ = appendEntriesBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000080) == 0x00000080)) {
-          to_bitField0_ |= 0x00000080;
+        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+          to_bitField0_ |= 0x00000100;
         }
-        if (appendReplyBuilder_ == null) {
-          result.appendReply_ = appendReply_;
+        if (appendEntriesReplyBuilder_ == null) {
+          result.appendEntriesReply_ = appendEntriesReply_;
         } else {
-          result.appendReply_ = appendReplyBuilder_.build();
+          result.appendEntriesReply_ = appendEntriesReplyBuilder_.build();
         }
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -900,26 +889,36 @@ public final class Raft {
         if (other.hasReceiverId()) {
           setReceiverId(other.getReceiverId());
         }
-        if (other.hasMessageType()) {
-          setMessageType(other.getMessageType());
+        if (other.hasQuorumId()) {
+          bitField0_ |= 0x00000008;
+          quorumId_ = other.quorumId_;
+          onChanged();
+        }
+        if (other.hasInReply()) {
+          setInReply(other.getInReply());
         }
         if (other.hasRequestVote()) {
           mergeRequestVote(other.getRequestVote());
         }
-        if (other.hasVoteReply()) {
-          mergeVoteReply(other.getVoteReply());
+        if (other.hasRequestVoteReply()) {
+          mergeRequestVoteReply(other.getRequestVoteReply());
         }
         if (other.hasAppendEntries()) {
           mergeAppendEntries(other.getAppendEntries());
         }
-        if (other.hasAppendReply()) {
-          mergeAppendReply(other.getAppendReply());
+        if (other.hasAppendEntriesReply()) {
+          mergeAppendEntriesReply(other.getAppendEntriesReply());
         }
+        this.mergeExtensionFields(other);
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
       }
 
       public final boolean isInitialized() {
+        if (!extensionsAreInitialized()) {
+          
+          return false;
+        }
         return true;
       }
 
@@ -946,30 +945,18 @@ public final class Raft {
       private long messageId_ ;
       /**
        * <code>optional int64 message_id = 1;</code>
-       *
-       * <pre>
-       * envelope.
-       * </pre>
        */
       public boolean hasMessageId() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
        * <code>optional int64 message_id = 1;</code>
-       *
-       * <pre>
-       * envelope.
-       * </pre>
        */
       public long getMessageId() {
         return messageId_;
       }
       /**
        * <code>optional int64 message_id = 1;</code>
-       *
-       * <pre>
-       * envelope.
-       * </pre>
        */
       public Builder setMessageId(long value) {
         bitField0_ |= 0x00000001;
@@ -979,10 +966,6 @@ public final class Raft {
       }
       /**
        * <code>optional int64 message_id = 1;</code>
-       *
-       * <pre>
-       * envelope.
-       * </pre>
        */
       public Builder clearMessageId() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -1073,54 +1056,141 @@ public final class Raft {
         return this;
       }
 
-      // optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;
-      private ohmdb.replication.Raft.RaftWireMessage.MessageType messageType_ = ohmdb.replication.Raft.RaftWireMessage.MessageType.REQUEST_VOTE;
+      // optional string quorum_id = 4;
+      private java.lang.Object quorumId_ = "";
       /**
-       * <code>optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;</code>
+       * <code>optional string quorum_id = 4;</code>
        */
-      public boolean hasMessageType() {
+      public boolean hasQuorumId() {
         return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
-       * <code>optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;</code>
+       * <code>optional string quorum_id = 4;</code>
        */
-      public ohmdb.replication.Raft.RaftWireMessage.MessageType getMessageType() {
-        return messageType_;
+      public java.lang.String getQuorumId() {
+        java.lang.Object ref = quorumId_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          quorumId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
       }
       /**
-       * <code>optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;</code>
+       * <code>optional string quorum_id = 4;</code>
        */
-      public Builder setMessageType(ohmdb.replication.Raft.RaftWireMessage.MessageType value) {
-        if (value == null) {
-          throw new NullPointerException();
+      public com.google.protobuf.ByteString
+          getQuorumIdBytes() {
+        java.lang.Object ref = quorumId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          quorumId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
         }
-        bitField0_ |= 0x00000008;
-        messageType_ = value;
+      }
+      /**
+       * <code>optional string quorum_id = 4;</code>
+       */
+      public Builder setQuorumId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        quorumId_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RaftWireMessage.MessageType message_type = 4;</code>
+       * <code>optional string quorum_id = 4;</code>
        */
-      public Builder clearMessageType() {
+      public Builder clearQuorumId() {
         bitField0_ = (bitField0_ & ~0x00000008);
-        messageType_ = ohmdb.replication.Raft.RaftWireMessage.MessageType.REQUEST_VOTE;
+        quorumId_ = getDefaultInstance().getQuorumId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string quorum_id = 4;</code>
+       */
+      public Builder setQuorumIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000008;
+        quorumId_ = value;
         onChanged();
         return this;
       }
 
-      // optional .ohmdb.replication.RequestVote request_vote = 5;
+      // optional bool in_reply = 5;
+      private boolean inReply_ ;
+      /**
+       * <code>optional bool in_reply = 5;</code>
+       *
+       * <pre>
+       * Is this a reply message?
+       * </pre>
+       */
+      public boolean hasInReply() {
+        return ((bitField0_ & 0x00000010) == 0x00000010);
+      }
+      /**
+       * <code>optional bool in_reply = 5;</code>
+       *
+       * <pre>
+       * Is this a reply message?
+       * </pre>
+       */
+      public boolean getInReply() {
+        return inReply_;
+      }
+      /**
+       * <code>optional bool in_reply = 5;</code>
+       *
+       * <pre>
+       * Is this a reply message?
+       * </pre>
+       */
+      public Builder setInReply(boolean value) {
+        bitField0_ |= 0x00000010;
+        inReply_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional bool in_reply = 5;</code>
+       *
+       * <pre>
+       * Is this a reply message?
+       * </pre>
+       */
+      public Builder clearInReply() {
+        bitField0_ = (bitField0_ & ~0x00000010);
+        inReply_ = false;
+        onChanged();
+        return this;
+      }
+
+      // optional .ohmdb.replication.RequestVote request_vote = 100;
       private ohmdb.replication.Raft.RequestVote requestVote_ = ohmdb.replication.Raft.RequestVote.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.Raft.RequestVote, ohmdb.replication.Raft.RequestVote.Builder, ohmdb.replication.Raft.RequestVoteOrBuilder> requestVoteBuilder_;
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       public boolean hasRequestVote() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       public ohmdb.replication.Raft.RequestVote getRequestVote() {
         if (requestVoteBuilder_ == null) {
@@ -1130,7 +1200,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       public Builder setRequestVote(ohmdb.replication.Raft.RequestVote value) {
         if (requestVoteBuilder_ == null) {
@@ -1142,11 +1212,11 @@ public final class Raft {
         } else {
           requestVoteBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       public Builder setRequestVote(
           ohmdb.replication.Raft.RequestVote.Builder builderForValue) {
@@ -1156,15 +1226,15 @@ public final class Raft {
         } else {
           requestVoteBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       public Builder mergeRequestVote(ohmdb.replication.Raft.RequestVote value) {
         if (requestVoteBuilder_ == null) {
-          if (((bitField0_ & 0x00000010) == 0x00000010) &&
+          if (((bitField0_ & 0x00000020) == 0x00000020) &&
               requestVote_ != ohmdb.replication.Raft.RequestVote.getDefaultInstance()) {
             requestVote_ =
               ohmdb.replication.Raft.RequestVote.newBuilder(requestVote_).mergeFrom(value).buildPartial();
@@ -1175,11 +1245,11 @@ public final class Raft {
         } else {
           requestVoteBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       public Builder clearRequestVote() {
         if (requestVoteBuilder_ == null) {
@@ -1188,19 +1258,19 @@ public final class Raft {
         } else {
           requestVoteBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000020);
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       public ohmdb.replication.Raft.RequestVote.Builder getRequestVoteBuilder() {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000020;
         onChanged();
         return getRequestVoteFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       public ohmdb.replication.Raft.RequestVoteOrBuilder getRequestVoteOrBuilder() {
         if (requestVoteBuilder_ != null) {
@@ -1210,7 +1280,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVote request_vote = 5;</code>
+       * <code>optional .ohmdb.replication.RequestVote request_vote = 100;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.Raft.RequestVote, ohmdb.replication.Raft.RequestVote.Builder, ohmdb.replication.Raft.RequestVoteOrBuilder> 
@@ -1226,135 +1296,135 @@ public final class Raft {
         return requestVoteBuilder_;
       }
 
-      // optional .ohmdb.replication.RequestVoteReply vote_reply = 6;
-      private ohmdb.replication.Raft.RequestVoteReply voteReply_ = ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance();
+      // optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;
+      private ohmdb.replication.Raft.RequestVoteReply requestVoteReply_ = ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          ohmdb.replication.Raft.RequestVoteReply, ohmdb.replication.Raft.RequestVoteReply.Builder, ohmdb.replication.Raft.RequestVoteReplyOrBuilder> voteReplyBuilder_;
+          ohmdb.replication.Raft.RequestVoteReply, ohmdb.replication.Raft.RequestVoteReply.Builder, ohmdb.replication.Raft.RequestVoteReplyOrBuilder> requestVoteReplyBuilder_;
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
-      public boolean hasVoteReply() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+      public boolean hasRequestVoteReply() {
+        return ((bitField0_ & 0x00000040) == 0x00000040);
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
-      public ohmdb.replication.Raft.RequestVoteReply getVoteReply() {
-        if (voteReplyBuilder_ == null) {
-          return voteReply_;
+      public ohmdb.replication.Raft.RequestVoteReply getRequestVoteReply() {
+        if (requestVoteReplyBuilder_ == null) {
+          return requestVoteReply_;
         } else {
-          return voteReplyBuilder_.getMessage();
+          return requestVoteReplyBuilder_.getMessage();
         }
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
-      public Builder setVoteReply(ohmdb.replication.Raft.RequestVoteReply value) {
-        if (voteReplyBuilder_ == null) {
+      public Builder setRequestVoteReply(ohmdb.replication.Raft.RequestVoteReply value) {
+        if (requestVoteReplyBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          voteReply_ = value;
+          requestVoteReply_ = value;
           onChanged();
         } else {
-          voteReplyBuilder_.setMessage(value);
+          requestVoteReplyBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000040;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
-      public Builder setVoteReply(
+      public Builder setRequestVoteReply(
           ohmdb.replication.Raft.RequestVoteReply.Builder builderForValue) {
-        if (voteReplyBuilder_ == null) {
-          voteReply_ = builderForValue.build();
+        if (requestVoteReplyBuilder_ == null) {
+          requestVoteReply_ = builderForValue.build();
           onChanged();
         } else {
-          voteReplyBuilder_.setMessage(builderForValue.build());
+          requestVoteReplyBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000040;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
-      public Builder mergeVoteReply(ohmdb.replication.Raft.RequestVoteReply value) {
-        if (voteReplyBuilder_ == null) {
-          if (((bitField0_ & 0x00000020) == 0x00000020) &&
-              voteReply_ != ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance()) {
-            voteReply_ =
-              ohmdb.replication.Raft.RequestVoteReply.newBuilder(voteReply_).mergeFrom(value).buildPartial();
+      public Builder mergeRequestVoteReply(ohmdb.replication.Raft.RequestVoteReply value) {
+        if (requestVoteReplyBuilder_ == null) {
+          if (((bitField0_ & 0x00000040) == 0x00000040) &&
+              requestVoteReply_ != ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance()) {
+            requestVoteReply_ =
+              ohmdb.replication.Raft.RequestVoteReply.newBuilder(requestVoteReply_).mergeFrom(value).buildPartial();
           } else {
-            voteReply_ = value;
+            requestVoteReply_ = value;
           }
           onChanged();
         } else {
-          voteReplyBuilder_.mergeFrom(value);
+          requestVoteReplyBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000020;
+        bitField0_ |= 0x00000040;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
-      public Builder clearVoteReply() {
-        if (voteReplyBuilder_ == null) {
-          voteReply_ = ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance();
+      public Builder clearRequestVoteReply() {
+        if (requestVoteReplyBuilder_ == null) {
+          requestVoteReply_ = ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance();
           onChanged();
         } else {
-          voteReplyBuilder_.clear();
+          requestVoteReplyBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000040);
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
-      public ohmdb.replication.Raft.RequestVoteReply.Builder getVoteReplyBuilder() {
-        bitField0_ |= 0x00000020;
+      public ohmdb.replication.Raft.RequestVoteReply.Builder getRequestVoteReplyBuilder() {
+        bitField0_ |= 0x00000040;
         onChanged();
-        return getVoteReplyFieldBuilder().getBuilder();
+        return getRequestVoteReplyFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
-      public ohmdb.replication.Raft.RequestVoteReplyOrBuilder getVoteReplyOrBuilder() {
-        if (voteReplyBuilder_ != null) {
-          return voteReplyBuilder_.getMessageOrBuilder();
+      public ohmdb.replication.Raft.RequestVoteReplyOrBuilder getRequestVoteReplyOrBuilder() {
+        if (requestVoteReplyBuilder_ != null) {
+          return requestVoteReplyBuilder_.getMessageOrBuilder();
         } else {
-          return voteReply_;
+          return requestVoteReply_;
         }
       }
       /**
-       * <code>optional .ohmdb.replication.RequestVoteReply vote_reply = 6;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply request_vote_reply = 101;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.Raft.RequestVoteReply, ohmdb.replication.Raft.RequestVoteReply.Builder, ohmdb.replication.Raft.RequestVoteReplyOrBuilder> 
-          getVoteReplyFieldBuilder() {
-        if (voteReplyBuilder_ == null) {
-          voteReplyBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          getRequestVoteReplyFieldBuilder() {
+        if (requestVoteReplyBuilder_ == null) {
+          requestVoteReplyBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               ohmdb.replication.Raft.RequestVoteReply, ohmdb.replication.Raft.RequestVoteReply.Builder, ohmdb.replication.Raft.RequestVoteReplyOrBuilder>(
-                  voteReply_,
+                  requestVoteReply_,
                   getParentForChildren(),
                   isClean());
-          voteReply_ = null;
+          requestVoteReply_ = null;
         }
-        return voteReplyBuilder_;
+        return requestVoteReplyBuilder_;
       }
 
-      // optional .ohmdb.replication.AppendEntries append_entries = 7;
+      // optional .ohmdb.replication.AppendEntries append_entries = 102;
       private ohmdb.replication.Raft.AppendEntries appendEntries_ = ohmdb.replication.Raft.AppendEntries.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.Raft.AppendEntries, ohmdb.replication.Raft.AppendEntries.Builder, ohmdb.replication.Raft.AppendEntriesOrBuilder> appendEntriesBuilder_;
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       public boolean hasAppendEntries() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+        return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       public ohmdb.replication.Raft.AppendEntries getAppendEntries() {
         if (appendEntriesBuilder_ == null) {
@@ -1364,7 +1434,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       public Builder setAppendEntries(ohmdb.replication.Raft.AppendEntries value) {
         if (appendEntriesBuilder_ == null) {
@@ -1376,11 +1446,11 @@ public final class Raft {
         } else {
           appendEntriesBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000080;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       public Builder setAppendEntries(
           ohmdb.replication.Raft.AppendEntries.Builder builderForValue) {
@@ -1390,15 +1460,15 @@ public final class Raft {
         } else {
           appendEntriesBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000080;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       public Builder mergeAppendEntries(ohmdb.replication.Raft.AppendEntries value) {
         if (appendEntriesBuilder_ == null) {
-          if (((bitField0_ & 0x00000040) == 0x00000040) &&
+          if (((bitField0_ & 0x00000080) == 0x00000080) &&
               appendEntries_ != ohmdb.replication.Raft.AppendEntries.getDefaultInstance()) {
             appendEntries_ =
               ohmdb.replication.Raft.AppendEntries.newBuilder(appendEntries_).mergeFrom(value).buildPartial();
@@ -1409,11 +1479,11 @@ public final class Raft {
         } else {
           appendEntriesBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000080;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       public Builder clearAppendEntries() {
         if (appendEntriesBuilder_ == null) {
@@ -1422,19 +1492,19 @@ public final class Raft {
         } else {
           appendEntriesBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000080);
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       public ohmdb.replication.Raft.AppendEntries.Builder getAppendEntriesBuilder() {
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000080;
         onChanged();
         return getAppendEntriesFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       public ohmdb.replication.Raft.AppendEntriesOrBuilder getAppendEntriesOrBuilder() {
         if (appendEntriesBuilder_ != null) {
@@ -1444,7 +1514,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntries append_entries = 7;</code>
+       * <code>optional .ohmdb.replication.AppendEntries append_entries = 102;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.Raft.AppendEntries, ohmdb.replication.Raft.AppendEntries.Builder, ohmdb.replication.Raft.AppendEntriesOrBuilder> 
@@ -1460,121 +1530,121 @@ public final class Raft {
         return appendEntriesBuilder_;
       }
 
-      // optional .ohmdb.replication.AppendEntriesReply append_reply = 8;
-      private ohmdb.replication.Raft.AppendEntriesReply appendReply_ = ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance();
+      // optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;
+      private ohmdb.replication.Raft.AppendEntriesReply appendEntriesReply_ = ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
-          ohmdb.replication.Raft.AppendEntriesReply, ohmdb.replication.Raft.AppendEntriesReply.Builder, ohmdb.replication.Raft.AppendEntriesReplyOrBuilder> appendReplyBuilder_;
+          ohmdb.replication.Raft.AppendEntriesReply, ohmdb.replication.Raft.AppendEntriesReply.Builder, ohmdb.replication.Raft.AppendEntriesReplyOrBuilder> appendEntriesReplyBuilder_;
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
-      public boolean hasAppendReply() {
-        return ((bitField0_ & 0x00000080) == 0x00000080);
+      public boolean hasAppendEntriesReply() {
+        return ((bitField0_ & 0x00000100) == 0x00000100);
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
-      public ohmdb.replication.Raft.AppendEntriesReply getAppendReply() {
-        if (appendReplyBuilder_ == null) {
-          return appendReply_;
+      public ohmdb.replication.Raft.AppendEntriesReply getAppendEntriesReply() {
+        if (appendEntriesReplyBuilder_ == null) {
+          return appendEntriesReply_;
         } else {
-          return appendReplyBuilder_.getMessage();
+          return appendEntriesReplyBuilder_.getMessage();
         }
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
-      public Builder setAppendReply(ohmdb.replication.Raft.AppendEntriesReply value) {
-        if (appendReplyBuilder_ == null) {
+      public Builder setAppendEntriesReply(ohmdb.replication.Raft.AppendEntriesReply value) {
+        if (appendEntriesReplyBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          appendReply_ = value;
+          appendEntriesReply_ = value;
           onChanged();
         } else {
-          appendReplyBuilder_.setMessage(value);
+          appendEntriesReplyBuilder_.setMessage(value);
         }
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000100;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
-      public Builder setAppendReply(
+      public Builder setAppendEntriesReply(
           ohmdb.replication.Raft.AppendEntriesReply.Builder builderForValue) {
-        if (appendReplyBuilder_ == null) {
-          appendReply_ = builderForValue.build();
+        if (appendEntriesReplyBuilder_ == null) {
+          appendEntriesReply_ = builderForValue.build();
           onChanged();
         } else {
-          appendReplyBuilder_.setMessage(builderForValue.build());
+          appendEntriesReplyBuilder_.setMessage(builderForValue.build());
         }
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000100;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
-      public Builder mergeAppendReply(ohmdb.replication.Raft.AppendEntriesReply value) {
-        if (appendReplyBuilder_ == null) {
-          if (((bitField0_ & 0x00000080) == 0x00000080) &&
-              appendReply_ != ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance()) {
-            appendReply_ =
-              ohmdb.replication.Raft.AppendEntriesReply.newBuilder(appendReply_).mergeFrom(value).buildPartial();
+      public Builder mergeAppendEntriesReply(ohmdb.replication.Raft.AppendEntriesReply value) {
+        if (appendEntriesReplyBuilder_ == null) {
+          if (((bitField0_ & 0x00000100) == 0x00000100) &&
+              appendEntriesReply_ != ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance()) {
+            appendEntriesReply_ =
+              ohmdb.replication.Raft.AppendEntriesReply.newBuilder(appendEntriesReply_).mergeFrom(value).buildPartial();
           } else {
-            appendReply_ = value;
+            appendEntriesReply_ = value;
           }
           onChanged();
         } else {
-          appendReplyBuilder_.mergeFrom(value);
+          appendEntriesReplyBuilder_.mergeFrom(value);
         }
-        bitField0_ |= 0x00000080;
+        bitField0_ |= 0x00000100;
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
-      public Builder clearAppendReply() {
-        if (appendReplyBuilder_ == null) {
-          appendReply_ = ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance();
+      public Builder clearAppendEntriesReply() {
+        if (appendEntriesReplyBuilder_ == null) {
+          appendEntriesReply_ = ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance();
           onChanged();
         } else {
-          appendReplyBuilder_.clear();
+          appendEntriesReplyBuilder_.clear();
         }
-        bitField0_ = (bitField0_ & ~0x00000080);
+        bitField0_ = (bitField0_ & ~0x00000100);
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
-      public ohmdb.replication.Raft.AppendEntriesReply.Builder getAppendReplyBuilder() {
-        bitField0_ |= 0x00000080;
+      public ohmdb.replication.Raft.AppendEntriesReply.Builder getAppendEntriesReplyBuilder() {
+        bitField0_ |= 0x00000100;
         onChanged();
-        return getAppendReplyFieldBuilder().getBuilder();
+        return getAppendEntriesReplyFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
-      public ohmdb.replication.Raft.AppendEntriesReplyOrBuilder getAppendReplyOrBuilder() {
-        if (appendReplyBuilder_ != null) {
-          return appendReplyBuilder_.getMessageOrBuilder();
+      public ohmdb.replication.Raft.AppendEntriesReplyOrBuilder getAppendEntriesReplyOrBuilder() {
+        if (appendEntriesReplyBuilder_ != null) {
+          return appendEntriesReplyBuilder_.getMessageOrBuilder();
         } else {
-          return appendReply_;
+          return appendEntriesReply_;
         }
       }
       /**
-       * <code>optional .ohmdb.replication.AppendEntriesReply append_reply = 8;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply append_entries_reply = 103;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.Raft.AppendEntriesReply, ohmdb.replication.Raft.AppendEntriesReply.Builder, ohmdb.replication.Raft.AppendEntriesReplyOrBuilder> 
-          getAppendReplyFieldBuilder() {
-        if (appendReplyBuilder_ == null) {
-          appendReplyBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+          getAppendEntriesReplyFieldBuilder() {
+        if (appendEntriesReplyBuilder_ == null) {
+          appendEntriesReplyBuilder_ = new com.google.protobuf.SingleFieldBuilder<
               ohmdb.replication.Raft.AppendEntriesReply, ohmdb.replication.Raft.AppendEntriesReply.Builder, ohmdb.replication.Raft.AppendEntriesReplyOrBuilder>(
-                  appendReply_,
+                  appendEntriesReply_,
                   getParentForChildren(),
                   isClean());
-          appendReply_ = null;
+          appendEntriesReply_ = null;
         }
-        return appendReplyBuilder_;
+        return appendEntriesReplyBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:ohmdb.replication.RaftWireMessage)
@@ -2152,58 +2222,43 @@ public final class Raft {
   public interface RequestVoteOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional string quorum_id = 1;
+    // optional int64 term = 1;
     /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    boolean hasQuorumId();
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    java.lang.String getQuorumId();
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getQuorumIdBytes();
-
-    // optional int64 term = 2;
-    /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     boolean hasTerm();
     /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     long getTerm();
 
-    // optional int64 candidate_id = 3;
+    // optional int64 candidate_id = 2;
     /**
-     * <code>optional int64 candidate_id = 3;</code>
+     * <code>optional int64 candidate_id = 2;</code>
      */
     boolean hasCandidateId();
     /**
-     * <code>optional int64 candidate_id = 3;</code>
+     * <code>optional int64 candidate_id = 2;</code>
      */
     long getCandidateId();
 
-    // optional int64 last_log_index = 4;
+    // optional int64 last_log_index = 3;
     /**
-     * <code>optional int64 last_log_index = 4;</code>
+     * <code>optional int64 last_log_index = 3;</code>
      */
     boolean hasLastLogIndex();
     /**
-     * <code>optional int64 last_log_index = 4;</code>
+     * <code>optional int64 last_log_index = 3;</code>
      */
     long getLastLogIndex();
 
-    // optional int64 last_log_term = 5;
+    // optional int64 last_log_term = 4;
     /**
-     * <code>optional int64 last_log_term = 5;</code>
+     * <code>optional int64 last_log_term = 4;</code>
      */
     boolean hasLastLogTerm();
     /**
-     * <code>optional int64 last_log_term = 5;</code>
+     * <code>optional int64 last_log_term = 4;</code>
      */
     long getLastLogTerm();
   }
@@ -2258,28 +2313,23 @@ public final class Raft {
               }
               break;
             }
-            case 10: {
+            case 8: {
               bitField0_ |= 0x00000001;
-              quorumId_ = input.readBytes();
+              term_ = input.readInt64();
               break;
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              term_ = input.readInt64();
+              candidateId_ = input.readInt64();
               break;
             }
             case 24: {
               bitField0_ |= 0x00000004;
-              candidateId_ = input.readInt64();
+              lastLogIndex_ = input.readInt64();
               break;
             }
             case 32: {
               bitField0_ |= 0x00000008;
-              lastLogIndex_ = input.readInt64();
-              break;
-            }
-            case 40: {
-              bitField0_ |= 0x00000010;
               lastLogTerm_ = input.readInt64();
               break;
             }
@@ -2323,115 +2373,71 @@ public final class Raft {
     }
 
     private int bitField0_;
-    // optional string quorum_id = 1;
-    public static final int QUORUM_ID_FIELD_NUMBER = 1;
-    private java.lang.Object quorumId_;
+    // optional int64 term = 1;
+    public static final int TERM_FIELD_NUMBER = 1;
+    private long term_;
     /**
-     * <code>optional string quorum_id = 1;</code>
+     * <code>optional int64 term = 1;</code>
      */
-    public boolean hasQuorumId() {
+    public boolean hasTerm() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public java.lang.String getQuorumId() {
-      java.lang.Object ref = quorumId_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          quorumId_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getQuorumIdBytes() {
-      java.lang.Object ref = quorumId_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        quorumId_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    // optional int64 term = 2;
-    public static final int TERM_FIELD_NUMBER = 2;
-    private long term_;
-    /**
-     * <code>optional int64 term = 2;</code>
-     */
-    public boolean hasTerm() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     public long getTerm() {
       return term_;
     }
 
-    // optional int64 candidate_id = 3;
-    public static final int CANDIDATE_ID_FIELD_NUMBER = 3;
+    // optional int64 candidate_id = 2;
+    public static final int CANDIDATE_ID_FIELD_NUMBER = 2;
     private long candidateId_;
     /**
-     * <code>optional int64 candidate_id = 3;</code>
+     * <code>optional int64 candidate_id = 2;</code>
      */
     public boolean hasCandidateId() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional int64 candidate_id = 3;</code>
+     * <code>optional int64 candidate_id = 2;</code>
      */
     public long getCandidateId() {
       return candidateId_;
     }
 
-    // optional int64 last_log_index = 4;
-    public static final int LAST_LOG_INDEX_FIELD_NUMBER = 4;
+    // optional int64 last_log_index = 3;
+    public static final int LAST_LOG_INDEX_FIELD_NUMBER = 3;
     private long lastLogIndex_;
     /**
-     * <code>optional int64 last_log_index = 4;</code>
+     * <code>optional int64 last_log_index = 3;</code>
      */
     public boolean hasLastLogIndex() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional int64 last_log_index = 4;</code>
+     * <code>optional int64 last_log_index = 3;</code>
      */
     public long getLastLogIndex() {
       return lastLogIndex_;
     }
 
-    // optional int64 last_log_term = 5;
-    public static final int LAST_LOG_TERM_FIELD_NUMBER = 5;
+    // optional int64 last_log_term = 4;
+    public static final int LAST_LOG_TERM_FIELD_NUMBER = 4;
     private long lastLogTerm_;
     /**
-     * <code>optional int64 last_log_term = 5;</code>
+     * <code>optional int64 last_log_term = 4;</code>
      */
     public boolean hasLastLogTerm() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>optional int64 last_log_term = 5;</code>
+     * <code>optional int64 last_log_term = 4;</code>
      */
     public long getLastLogTerm() {
       return lastLogTerm_;
     }
 
     private void initFields() {
-      quorumId_ = "";
       term_ = 0L;
       candidateId_ = 0L;
       lastLogIndex_ = 0L;
@@ -2450,19 +2456,16 @@ public final class Raft {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getQuorumIdBytes());
+        output.writeInt64(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt64(2, term_);
+        output.writeInt64(2, candidateId_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeInt64(3, candidateId_);
+        output.writeInt64(3, lastLogIndex_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt64(4, lastLogIndex_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeInt64(5, lastLogTerm_);
+        output.writeInt64(4, lastLogTerm_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -2475,23 +2478,19 @@ public final class Raft {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getQuorumIdBytes());
+          .computeInt64Size(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(2, term_);
+          .computeInt64Size(2, candidateId_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(3, candidateId_);
+          .computeInt64Size(3, lastLogIndex_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(4, lastLogIndex_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(5, lastLogTerm_);
+          .computeInt64Size(4, lastLogTerm_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -2609,16 +2608,14 @@ public final class Raft {
 
       public Builder clear() {
         super.clear();
-        quorumId_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
         term_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         candidateId_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         lastLogIndex_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         lastLogTerm_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000008);
         return this;
       }
 
@@ -2650,21 +2647,17 @@ public final class Raft {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.quorumId_ = quorumId_;
+        result.term_ = term_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.term_ = term_;
+        result.candidateId_ = candidateId_;
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        result.candidateId_ = candidateId_;
+        result.lastLogIndex_ = lastLogIndex_;
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
-        }
-        result.lastLogIndex_ = lastLogIndex_;
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-          to_bitField0_ |= 0x00000010;
         }
         result.lastLogTerm_ = lastLogTerm_;
         result.bitField0_ = to_bitField0_;
@@ -2683,11 +2676,6 @@ public final class Raft {
 
       public Builder mergeFrom(ohmdb.replication.Raft.RequestVote other) {
         if (other == ohmdb.replication.Raft.RequestVote.getDefaultInstance()) return this;
-        if (other.hasQuorumId()) {
-          bitField0_ |= 0x00000001;
-          quorumId_ = other.quorumId_;
-          onChanged();
-        }
         if (other.hasTerm()) {
           setTerm(other.getTerm());
         }
@@ -2727,207 +2715,133 @@ public final class Raft {
       }
       private int bitField0_;
 
-      // optional string quorum_id = 1;
-      private java.lang.Object quorumId_ = "";
+      // optional int64 term = 1;
+      private long term_ ;
       /**
-       * <code>optional string quorum_id = 1;</code>
+       * <code>optional int64 term = 1;</code>
        */
-      public boolean hasQuorumId() {
+      public boolean hasTerm() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public java.lang.String getQuorumId() {
-        java.lang.Object ref = quorumId_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          quorumId_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getQuorumIdBytes() {
-        java.lang.Object ref = quorumId_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          quorumId_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder setQuorumId(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        quorumId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder clearQuorumId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        quorumId_ = getDefaultInstance().getQuorumId();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder setQuorumIdBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        quorumId_ = value;
-        onChanged();
-        return this;
-      }
-
-      // optional int64 term = 2;
-      private long term_ ;
-      /**
-       * <code>optional int64 term = 2;</code>
-       */
-      public boolean hasTerm() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public long getTerm() {
         return term_;
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public Builder setTerm(long value) {
-        bitField0_ |= 0x00000002;
+        bitField0_ |= 0x00000001;
         term_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public Builder clearTerm() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         term_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional int64 candidate_id = 3;
+      // optional int64 candidate_id = 2;
       private long candidateId_ ;
       /**
-       * <code>optional int64 candidate_id = 3;</code>
+       * <code>optional int64 candidate_id = 2;</code>
        */
       public boolean hasCandidateId() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional int64 candidate_id = 3;</code>
+       * <code>optional int64 candidate_id = 2;</code>
        */
       public long getCandidateId() {
         return candidateId_;
       }
       /**
-       * <code>optional int64 candidate_id = 3;</code>
+       * <code>optional int64 candidate_id = 2;</code>
        */
       public Builder setCandidateId(long value) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000002;
         candidateId_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 candidate_id = 3;</code>
+       * <code>optional int64 candidate_id = 2;</code>
        */
       public Builder clearCandidateId() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         candidateId_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional int64 last_log_index = 4;
+      // optional int64 last_log_index = 3;
       private long lastLogIndex_ ;
       /**
-       * <code>optional int64 last_log_index = 4;</code>
+       * <code>optional int64 last_log_index = 3;</code>
        */
       public boolean hasLastLogIndex() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>optional int64 last_log_index = 4;</code>
+       * <code>optional int64 last_log_index = 3;</code>
        */
       public long getLastLogIndex() {
         return lastLogIndex_;
       }
       /**
-       * <code>optional int64 last_log_index = 4;</code>
+       * <code>optional int64 last_log_index = 3;</code>
        */
       public Builder setLastLogIndex(long value) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000004;
         lastLogIndex_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 last_log_index = 4;</code>
+       * <code>optional int64 last_log_index = 3;</code>
        */
       public Builder clearLastLogIndex() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         lastLogIndex_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional int64 last_log_term = 5;
+      // optional int64 last_log_term = 4;
       private long lastLogTerm_ ;
       /**
-       * <code>optional int64 last_log_term = 5;</code>
+       * <code>optional int64 last_log_term = 4;</code>
        */
       public boolean hasLastLogTerm() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
-       * <code>optional int64 last_log_term = 5;</code>
+       * <code>optional int64 last_log_term = 4;</code>
        */
       public long getLastLogTerm() {
         return lastLogTerm_;
       }
       /**
-       * <code>optional int64 last_log_term = 5;</code>
+       * <code>optional int64 last_log_term = 4;</code>
        */
       public Builder setLastLogTerm(long value) {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000008;
         lastLogTerm_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 last_log_term = 5;</code>
+       * <code>optional int64 last_log_term = 4;</code>
        */
       public Builder clearLastLogTerm() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000008);
         lastLogTerm_ = 0L;
         onChanged();
         return this;
@@ -2947,24 +2861,9 @@ public final class Raft {
   public interface RequestVoteReplyOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional string quorum_id = 1;
+    // optional int64 term = 1;
     /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    boolean hasQuorumId();
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    java.lang.String getQuorumId();
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getQuorumIdBytes();
-
-    // optional int64 term = 2;
-    /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      *
      * <pre>
      * currentTerm, for candidate to update itself
@@ -2972,7 +2871,7 @@ public final class Raft {
      */
     boolean hasTerm();
     /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      *
      * <pre>
      * currentTerm, for candidate to update itself
@@ -2980,9 +2879,9 @@ public final class Raft {
      */
     long getTerm();
 
-    // optional bool vote_granted = 3;
+    // optional bool vote_granted = 2;
     /**
-     * <code>optional bool vote_granted = 3;</code>
+     * <code>optional bool vote_granted = 2;</code>
      *
      * <pre>
      * true means candidate received vote
@@ -2990,7 +2889,7 @@ public final class Raft {
      */
     boolean hasVoteGranted();
     /**
-     * <code>optional bool vote_granted = 3;</code>
+     * <code>optional bool vote_granted = 2;</code>
      *
      * <pre>
      * true means candidate received vote
@@ -3049,18 +2948,13 @@ public final class Raft {
               }
               break;
             }
-            case 10: {
+            case 8: {
               bitField0_ |= 0x00000001;
-              quorumId_ = input.readBytes();
+              term_ = input.readInt64();
               break;
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              term_ = input.readInt64();
-              break;
-            }
-            case 24: {
-              bitField0_ |= 0x00000004;
               voteGranted_ = input.readBool();
               break;
             }
@@ -3104,64 +2998,21 @@ public final class Raft {
     }
 
     private int bitField0_;
-    // optional string quorum_id = 1;
-    public static final int QUORUM_ID_FIELD_NUMBER = 1;
-    private java.lang.Object quorumId_;
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public boolean hasQuorumId() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public java.lang.String getQuorumId() {
-      java.lang.Object ref = quorumId_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          quorumId_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getQuorumIdBytes() {
-      java.lang.Object ref = quorumId_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        quorumId_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    // optional int64 term = 2;
-    public static final int TERM_FIELD_NUMBER = 2;
+    // optional int64 term = 1;
+    public static final int TERM_FIELD_NUMBER = 1;
     private long term_;
     /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      *
      * <pre>
      * currentTerm, for candidate to update itself
      * </pre>
      */
     public boolean hasTerm() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
+      return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      *
      * <pre>
      * currentTerm, for candidate to update itself
@@ -3171,21 +3022,21 @@ public final class Raft {
       return term_;
     }
 
-    // optional bool vote_granted = 3;
-    public static final int VOTE_GRANTED_FIELD_NUMBER = 3;
+    // optional bool vote_granted = 2;
+    public static final int VOTE_GRANTED_FIELD_NUMBER = 2;
     private boolean voteGranted_;
     /**
-     * <code>optional bool vote_granted = 3;</code>
+     * <code>optional bool vote_granted = 2;</code>
      *
      * <pre>
      * true means candidate received vote
      * </pre>
      */
     public boolean hasVoteGranted() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional bool vote_granted = 3;</code>
+     * <code>optional bool vote_granted = 2;</code>
      *
      * <pre>
      * true means candidate received vote
@@ -3196,7 +3047,6 @@ public final class Raft {
     }
 
     private void initFields() {
-      quorumId_ = "";
       term_ = 0L;
       voteGranted_ = false;
     }
@@ -3213,13 +3063,10 @@ public final class Raft {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getQuorumIdBytes());
+        output.writeInt64(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt64(2, term_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBool(3, voteGranted_);
+        output.writeBool(2, voteGranted_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -3232,15 +3079,11 @@ public final class Raft {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getQuorumIdBytes());
+          .computeInt64Size(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(2, term_);
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(3, voteGranted_);
+          .computeBoolSize(2, voteGranted_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -3358,12 +3201,10 @@ public final class Raft {
 
       public Builder clear() {
         super.clear();
-        quorumId_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
         term_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         voteGranted_ = false;
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -3395,13 +3236,9 @@ public final class Raft {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.quorumId_ = quorumId_;
+        result.term_ = term_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
-        }
-        result.term_ = term_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
         }
         result.voteGranted_ = voteGranted_;
         result.bitField0_ = to_bitField0_;
@@ -3420,11 +3257,6 @@ public final class Raft {
 
       public Builder mergeFrom(ohmdb.replication.Raft.RequestVoteReply other) {
         if (other == ohmdb.replication.Raft.RequestVoteReply.getDefaultInstance()) return this;
-        if (other.hasQuorumId()) {
-          bitField0_ |= 0x00000001;
-          quorumId_ = other.quorumId_;
-          onChanged();
-        }
         if (other.hasTerm()) {
           setTerm(other.getTerm());
         }
@@ -3458,94 +3290,20 @@ public final class Raft {
       }
       private int bitField0_;
 
-      // optional string quorum_id = 1;
-      private java.lang.Object quorumId_ = "";
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public boolean hasQuorumId() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public java.lang.String getQuorumId() {
-        java.lang.Object ref = quorumId_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          quorumId_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getQuorumIdBytes() {
-        java.lang.Object ref = quorumId_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          quorumId_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder setQuorumId(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        quorumId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder clearQuorumId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        quorumId_ = getDefaultInstance().getQuorumId();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder setQuorumIdBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        quorumId_ = value;
-        onChanged();
-        return this;
-      }
-
-      // optional int64 term = 2;
+      // optional int64 term = 1;
       private long term_ ;
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        *
        * <pre>
        * currentTerm, for candidate to update itself
        * </pre>
        */
       public boolean hasTerm() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
+        return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        *
        * <pre>
        * currentTerm, for candidate to update itself
@@ -3555,46 +3313,46 @@ public final class Raft {
         return term_;
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        *
        * <pre>
        * currentTerm, for candidate to update itself
        * </pre>
        */
       public Builder setTerm(long value) {
-        bitField0_ |= 0x00000002;
+        bitField0_ |= 0x00000001;
         term_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        *
        * <pre>
        * currentTerm, for candidate to update itself
        * </pre>
        */
       public Builder clearTerm() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         term_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional bool vote_granted = 3;
+      // optional bool vote_granted = 2;
       private boolean voteGranted_ ;
       /**
-       * <code>optional bool vote_granted = 3;</code>
+       * <code>optional bool vote_granted = 2;</code>
        *
        * <pre>
        * true means candidate received vote
        * </pre>
        */
       public boolean hasVoteGranted() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional bool vote_granted = 3;</code>
+       * <code>optional bool vote_granted = 2;</code>
        *
        * <pre>
        * true means candidate received vote
@@ -3604,27 +3362,27 @@ public final class Raft {
         return voteGranted_;
       }
       /**
-       * <code>optional bool vote_granted = 3;</code>
+       * <code>optional bool vote_granted = 2;</code>
        *
        * <pre>
        * true means candidate received vote
        * </pre>
        */
       public Builder setVoteGranted(boolean value) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000002;
         voteGranted_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional bool vote_granted = 3;</code>
+       * <code>optional bool vote_granted = 2;</code>
        *
        * <pre>
        * true means candidate received vote
        * </pre>
        */
       public Builder clearVoteGranted() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         voteGranted_ = false;
         onChanged();
         return this;
@@ -3644,93 +3402,78 @@ public final class Raft {
   public interface AppendEntriesOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional string quorum_id = 1;
+    // optional int64 term = 1;
     /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    boolean hasQuorumId();
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    java.lang.String getQuorumId();
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getQuorumIdBytes();
-
-    // optional int64 term = 2;
-    /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     boolean hasTerm();
     /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     long getTerm();
 
-    // optional int64 leader_id = 3;
+    // optional int64 leader_id = 2;
     /**
-     * <code>optional int64 leader_id = 3;</code>
+     * <code>optional int64 leader_id = 2;</code>
      */
     boolean hasLeaderId();
     /**
-     * <code>optional int64 leader_id = 3;</code>
+     * <code>optional int64 leader_id = 2;</code>
      */
     long getLeaderId();
 
-    // optional int64 prev_log_index = 4;
+    // optional int64 prev_log_index = 3;
     /**
-     * <code>optional int64 prev_log_index = 4;</code>
+     * <code>optional int64 prev_log_index = 3;</code>
      */
     boolean hasPrevLogIndex();
     /**
-     * <code>optional int64 prev_log_index = 4;</code>
+     * <code>optional int64 prev_log_index = 3;</code>
      */
     long getPrevLogIndex();
 
-    // optional int64 prev_log_term = 5;
+    // optional int64 prev_log_term = 4;
     /**
-     * <code>optional int64 prev_log_term = 5;</code>
+     * <code>optional int64 prev_log_term = 4;</code>
      */
     boolean hasPrevLogTerm();
     /**
-     * <code>optional int64 prev_log_term = 5;</code>
+     * <code>optional int64 prev_log_term = 4;</code>
      */
     long getPrevLogTerm();
 
-    // repeated .ohmdb.replication.LogEntry entries = 6;
+    // repeated .ohmdb.replication.LogEntry entries = 5;
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     java.util.List<ohmdb.replication.Raft.LogEntry> 
         getEntriesList();
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     ohmdb.replication.Raft.LogEntry getEntries(int index);
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     int getEntriesCount();
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     java.util.List<? extends ohmdb.replication.Raft.LogEntryOrBuilder> 
         getEntriesOrBuilderList();
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     ohmdb.replication.Raft.LogEntryOrBuilder getEntriesOrBuilder(
         int index);
 
-    // optional int64 commit_index = 7;
+    // optional int64 commit_index = 6;
     /**
-     * <code>optional int64 commit_index = 7;</code>
+     * <code>optional int64 commit_index = 6;</code>
      */
     boolean hasCommitIndex();
     /**
-     * <code>optional int64 commit_index = 7;</code>
+     * <code>optional int64 commit_index = 6;</code>
      */
     long getCommitIndex();
   }
@@ -3785,41 +3528,36 @@ public final class Raft {
               }
               break;
             }
-            case 10: {
+            case 8: {
               bitField0_ |= 0x00000001;
-              quorumId_ = input.readBytes();
+              term_ = input.readInt64();
               break;
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              term_ = input.readInt64();
+              leaderId_ = input.readInt64();
               break;
             }
             case 24: {
               bitField0_ |= 0x00000004;
-              leaderId_ = input.readInt64();
+              prevLogIndex_ = input.readInt64();
               break;
             }
             case 32: {
               bitField0_ |= 0x00000008;
-              prevLogIndex_ = input.readInt64();
-              break;
-            }
-            case 40: {
-              bitField0_ |= 0x00000010;
               prevLogTerm_ = input.readInt64();
               break;
             }
-            case 50: {
-              if (!((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+            case 42: {
+              if (!((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
                 entries_ = new java.util.ArrayList<ohmdb.replication.Raft.LogEntry>();
-                mutable_bitField0_ |= 0x00000020;
+                mutable_bitField0_ |= 0x00000010;
               }
               entries_.add(input.readMessage(ohmdb.replication.Raft.LogEntry.PARSER, extensionRegistry));
               break;
             }
-            case 56: {
-              bitField0_ |= 0x00000020;
+            case 48: {
+              bitField0_ |= 0x00000010;
               commitIndex_ = input.readInt64();
               break;
             }
@@ -3831,7 +3569,7 @@ public final class Raft {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000020) == 0x00000020)) {
+        if (((mutable_bitField0_ & 0x00000010) == 0x00000010)) {
           entries_ = java.util.Collections.unmodifiableList(entries_);
         }
         this.unknownFields = unknownFields.build();
@@ -3866,167 +3604,123 @@ public final class Raft {
     }
 
     private int bitField0_;
-    // optional string quorum_id = 1;
-    public static final int QUORUM_ID_FIELD_NUMBER = 1;
-    private java.lang.Object quorumId_;
+    // optional int64 term = 1;
+    public static final int TERM_FIELD_NUMBER = 1;
+    private long term_;
     /**
-     * <code>optional string quorum_id = 1;</code>
+     * <code>optional int64 term = 1;</code>
      */
-    public boolean hasQuorumId() {
+    public boolean hasTerm() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public java.lang.String getQuorumId() {
-      java.lang.Object ref = quorumId_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          quorumId_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getQuorumIdBytes() {
-      java.lang.Object ref = quorumId_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        quorumId_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    // optional int64 term = 2;
-    public static final int TERM_FIELD_NUMBER = 2;
-    private long term_;
-    /**
-     * <code>optional int64 term = 2;</code>
-     */
-    public boolean hasTerm() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     public long getTerm() {
       return term_;
     }
 
-    // optional int64 leader_id = 3;
-    public static final int LEADER_ID_FIELD_NUMBER = 3;
+    // optional int64 leader_id = 2;
+    public static final int LEADER_ID_FIELD_NUMBER = 2;
     private long leaderId_;
     /**
-     * <code>optional int64 leader_id = 3;</code>
+     * <code>optional int64 leader_id = 2;</code>
      */
     public boolean hasLeaderId() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional int64 leader_id = 3;</code>
+     * <code>optional int64 leader_id = 2;</code>
      */
     public long getLeaderId() {
       return leaderId_;
     }
 
-    // optional int64 prev_log_index = 4;
-    public static final int PREV_LOG_INDEX_FIELD_NUMBER = 4;
+    // optional int64 prev_log_index = 3;
+    public static final int PREV_LOG_INDEX_FIELD_NUMBER = 3;
     private long prevLogIndex_;
     /**
-     * <code>optional int64 prev_log_index = 4;</code>
+     * <code>optional int64 prev_log_index = 3;</code>
      */
     public boolean hasPrevLogIndex() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional int64 prev_log_index = 4;</code>
+     * <code>optional int64 prev_log_index = 3;</code>
      */
     public long getPrevLogIndex() {
       return prevLogIndex_;
     }
 
-    // optional int64 prev_log_term = 5;
-    public static final int PREV_LOG_TERM_FIELD_NUMBER = 5;
+    // optional int64 prev_log_term = 4;
+    public static final int PREV_LOG_TERM_FIELD_NUMBER = 4;
     private long prevLogTerm_;
     /**
-     * <code>optional int64 prev_log_term = 5;</code>
+     * <code>optional int64 prev_log_term = 4;</code>
      */
     public boolean hasPrevLogTerm() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000008) == 0x00000008);
     }
     /**
-     * <code>optional int64 prev_log_term = 5;</code>
+     * <code>optional int64 prev_log_term = 4;</code>
      */
     public long getPrevLogTerm() {
       return prevLogTerm_;
     }
 
-    // repeated .ohmdb.replication.LogEntry entries = 6;
-    public static final int ENTRIES_FIELD_NUMBER = 6;
+    // repeated .ohmdb.replication.LogEntry entries = 5;
+    public static final int ENTRIES_FIELD_NUMBER = 5;
     private java.util.List<ohmdb.replication.Raft.LogEntry> entries_;
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public java.util.List<ohmdb.replication.Raft.LogEntry> getEntriesList() {
       return entries_;
     }
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public java.util.List<? extends ohmdb.replication.Raft.LogEntryOrBuilder> 
         getEntriesOrBuilderList() {
       return entries_;
     }
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public int getEntriesCount() {
       return entries_.size();
     }
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public ohmdb.replication.Raft.LogEntry getEntries(int index) {
       return entries_.get(index);
     }
     /**
-     * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public ohmdb.replication.Raft.LogEntryOrBuilder getEntriesOrBuilder(
         int index) {
       return entries_.get(index);
     }
 
-    // optional int64 commit_index = 7;
-    public static final int COMMIT_INDEX_FIELD_NUMBER = 7;
+    // optional int64 commit_index = 6;
+    public static final int COMMIT_INDEX_FIELD_NUMBER = 6;
     private long commitIndex_;
     /**
-     * <code>optional int64 commit_index = 7;</code>
+     * <code>optional int64 commit_index = 6;</code>
      */
     public boolean hasCommitIndex() {
-      return ((bitField0_ & 0x00000020) == 0x00000020);
+      return ((bitField0_ & 0x00000010) == 0x00000010);
     }
     /**
-     * <code>optional int64 commit_index = 7;</code>
+     * <code>optional int64 commit_index = 6;</code>
      */
     public long getCommitIndex() {
       return commitIndex_;
     }
 
     private void initFields() {
-      quorumId_ = "";
       term_ = 0L;
       leaderId_ = 0L;
       prevLogIndex_ = 0L;
@@ -4047,25 +3741,22 @@ public final class Raft {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getQuorumIdBytes());
+        output.writeInt64(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt64(2, term_);
+        output.writeInt64(2, leaderId_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeInt64(3, leaderId_);
+        output.writeInt64(3, prevLogIndex_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt64(4, prevLogIndex_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        output.writeInt64(5, prevLogTerm_);
+        output.writeInt64(4, prevLogTerm_);
       }
       for (int i = 0; i < entries_.size(); i++) {
-        output.writeMessage(6, entries_.get(i));
+        output.writeMessage(5, entries_.get(i));
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
-        output.writeInt64(7, commitIndex_);
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeInt64(6, commitIndex_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -4078,31 +3769,27 @@ public final class Raft {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getQuorumIdBytes());
+          .computeInt64Size(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(2, term_);
+          .computeInt64Size(2, leaderId_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(3, leaderId_);
+          .computeInt64Size(3, prevLogIndex_);
       }
       if (((bitField0_ & 0x00000008) == 0x00000008)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(4, prevLogIndex_);
-      }
-      if (((bitField0_ & 0x00000010) == 0x00000010)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(5, prevLogTerm_);
+          .computeInt64Size(4, prevLogTerm_);
       }
       for (int i = 0; i < entries_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(6, entries_.get(i));
+          .computeMessageSize(5, entries_.get(i));
       }
-      if (((bitField0_ & 0x00000020) == 0x00000020)) {
+      if (((bitField0_ & 0x00000010) == 0x00000010)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(7, commitIndex_);
+          .computeInt64Size(6, commitIndex_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -4221,24 +3908,22 @@ public final class Raft {
 
       public Builder clear() {
         super.clear();
-        quorumId_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
         term_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         leaderId_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         prevLogIndex_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         prevLogTerm_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000008);
         if (entriesBuilder_ == null) {
           entries_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000010);
         } else {
           entriesBuilder_.clear();
         }
         commitIndex_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000020);
         return this;
       }
 
@@ -4270,34 +3955,30 @@ public final class Raft {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.quorumId_ = quorumId_;
+        result.term_ = term_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.term_ = term_;
+        result.leaderId_ = leaderId_;
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        result.leaderId_ = leaderId_;
+        result.prevLogIndex_ = prevLogIndex_;
         if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
           to_bitField0_ |= 0x00000008;
         }
-        result.prevLogIndex_ = prevLogIndex_;
-        if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
-          to_bitField0_ |= 0x00000010;
-        }
         result.prevLogTerm_ = prevLogTerm_;
         if (entriesBuilder_ == null) {
-          if (((bitField0_ & 0x00000020) == 0x00000020)) {
+          if (((bitField0_ & 0x00000010) == 0x00000010)) {
             entries_ = java.util.Collections.unmodifiableList(entries_);
-            bitField0_ = (bitField0_ & ~0x00000020);
+            bitField0_ = (bitField0_ & ~0x00000010);
           }
           result.entries_ = entries_;
         } else {
           result.entries_ = entriesBuilder_.build();
         }
-        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
-          to_bitField0_ |= 0x00000020;
+        if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
+          to_bitField0_ |= 0x00000010;
         }
         result.commitIndex_ = commitIndex_;
         result.bitField0_ = to_bitField0_;
@@ -4316,11 +3997,6 @@ public final class Raft {
 
       public Builder mergeFrom(ohmdb.replication.Raft.AppendEntries other) {
         if (other == ohmdb.replication.Raft.AppendEntries.getDefaultInstance()) return this;
-        if (other.hasQuorumId()) {
-          bitField0_ |= 0x00000001;
-          quorumId_ = other.quorumId_;
-          onChanged();
-        }
         if (other.hasTerm()) {
           setTerm(other.getTerm());
         }
@@ -4337,7 +4013,7 @@ public final class Raft {
           if (!other.entries_.isEmpty()) {
             if (entries_.isEmpty()) {
               entries_ = other.entries_;
-              bitField0_ = (bitField0_ & ~0x00000020);
+              bitField0_ = (bitField0_ & ~0x00000010);
             } else {
               ensureEntriesIsMutable();
               entries_.addAll(other.entries_);
@@ -4350,7 +4026,7 @@ public final class Raft {
               entriesBuilder_.dispose();
               entriesBuilder_ = null;
               entries_ = other.entries_;
-              bitField0_ = (bitField0_ & ~0x00000020);
+              bitField0_ = (bitField0_ & ~0x00000010);
               entriesBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getEntriesFieldBuilder() : null;
@@ -4389,219 +4065,145 @@ public final class Raft {
       }
       private int bitField0_;
 
-      // optional string quorum_id = 1;
-      private java.lang.Object quorumId_ = "";
+      // optional int64 term = 1;
+      private long term_ ;
       /**
-       * <code>optional string quorum_id = 1;</code>
+       * <code>optional int64 term = 1;</code>
        */
-      public boolean hasQuorumId() {
+      public boolean hasTerm() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public java.lang.String getQuorumId() {
-        java.lang.Object ref = quorumId_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          quorumId_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getQuorumIdBytes() {
-        java.lang.Object ref = quorumId_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          quorumId_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder setQuorumId(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        quorumId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder clearQuorumId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        quorumId_ = getDefaultInstance().getQuorumId();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder setQuorumIdBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        quorumId_ = value;
-        onChanged();
-        return this;
-      }
-
-      // optional int64 term = 2;
-      private long term_ ;
-      /**
-       * <code>optional int64 term = 2;</code>
-       */
-      public boolean hasTerm() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public long getTerm() {
         return term_;
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public Builder setTerm(long value) {
-        bitField0_ |= 0x00000002;
+        bitField0_ |= 0x00000001;
         term_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public Builder clearTerm() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         term_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional int64 leader_id = 3;
+      // optional int64 leader_id = 2;
       private long leaderId_ ;
       /**
-       * <code>optional int64 leader_id = 3;</code>
+       * <code>optional int64 leader_id = 2;</code>
        */
       public boolean hasLeaderId() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional int64 leader_id = 3;</code>
+       * <code>optional int64 leader_id = 2;</code>
        */
       public long getLeaderId() {
         return leaderId_;
       }
       /**
-       * <code>optional int64 leader_id = 3;</code>
+       * <code>optional int64 leader_id = 2;</code>
        */
       public Builder setLeaderId(long value) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000002;
         leaderId_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 leader_id = 3;</code>
+       * <code>optional int64 leader_id = 2;</code>
        */
       public Builder clearLeaderId() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         leaderId_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional int64 prev_log_index = 4;
+      // optional int64 prev_log_index = 3;
       private long prevLogIndex_ ;
       /**
-       * <code>optional int64 prev_log_index = 4;</code>
+       * <code>optional int64 prev_log_index = 3;</code>
        */
       public boolean hasPrevLogIndex() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>optional int64 prev_log_index = 4;</code>
+       * <code>optional int64 prev_log_index = 3;</code>
        */
       public long getPrevLogIndex() {
         return prevLogIndex_;
       }
       /**
-       * <code>optional int64 prev_log_index = 4;</code>
+       * <code>optional int64 prev_log_index = 3;</code>
        */
       public Builder setPrevLogIndex(long value) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000004;
         prevLogIndex_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 prev_log_index = 4;</code>
+       * <code>optional int64 prev_log_index = 3;</code>
        */
       public Builder clearPrevLogIndex() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         prevLogIndex_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional int64 prev_log_term = 5;
+      // optional int64 prev_log_term = 4;
       private long prevLogTerm_ ;
       /**
-       * <code>optional int64 prev_log_term = 5;</code>
+       * <code>optional int64 prev_log_term = 4;</code>
        */
       public boolean hasPrevLogTerm() {
-        return ((bitField0_ & 0x00000010) == 0x00000010);
+        return ((bitField0_ & 0x00000008) == 0x00000008);
       }
       /**
-       * <code>optional int64 prev_log_term = 5;</code>
+       * <code>optional int64 prev_log_term = 4;</code>
        */
       public long getPrevLogTerm() {
         return prevLogTerm_;
       }
       /**
-       * <code>optional int64 prev_log_term = 5;</code>
+       * <code>optional int64 prev_log_term = 4;</code>
        */
       public Builder setPrevLogTerm(long value) {
-        bitField0_ |= 0x00000010;
+        bitField0_ |= 0x00000008;
         prevLogTerm_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 prev_log_term = 5;</code>
+       * <code>optional int64 prev_log_term = 4;</code>
        */
       public Builder clearPrevLogTerm() {
-        bitField0_ = (bitField0_ & ~0x00000010);
+        bitField0_ = (bitField0_ & ~0x00000008);
         prevLogTerm_ = 0L;
         onChanged();
         return this;
       }
 
-      // repeated .ohmdb.replication.LogEntry entries = 6;
+      // repeated .ohmdb.replication.LogEntry entries = 5;
       private java.util.List<ohmdb.replication.Raft.LogEntry> entries_ =
         java.util.Collections.emptyList();
       private void ensureEntriesIsMutable() {
-        if (!((bitField0_ & 0x00000020) == 0x00000020)) {
+        if (!((bitField0_ & 0x00000010) == 0x00000010)) {
           entries_ = new java.util.ArrayList<ohmdb.replication.Raft.LogEntry>(entries_);
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000010;
          }
       }
 
@@ -4609,7 +4211,7 @@ public final class Raft {
           ohmdb.replication.Raft.LogEntry, ohmdb.replication.Raft.LogEntry.Builder, ohmdb.replication.Raft.LogEntryOrBuilder> entriesBuilder_;
 
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public java.util.List<ohmdb.replication.Raft.LogEntry> getEntriesList() {
         if (entriesBuilder_ == null) {
@@ -4619,7 +4221,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public int getEntriesCount() {
         if (entriesBuilder_ == null) {
@@ -4629,7 +4231,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.Raft.LogEntry getEntries(int index) {
         if (entriesBuilder_ == null) {
@@ -4639,7 +4241,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder setEntries(
           int index, ohmdb.replication.Raft.LogEntry value) {
@@ -4656,7 +4258,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder setEntries(
           int index, ohmdb.replication.Raft.LogEntry.Builder builderForValue) {
@@ -4670,7 +4272,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addEntries(ohmdb.replication.Raft.LogEntry value) {
         if (entriesBuilder_ == null) {
@@ -4686,7 +4288,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addEntries(
           int index, ohmdb.replication.Raft.LogEntry value) {
@@ -4703,7 +4305,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addEntries(
           ohmdb.replication.Raft.LogEntry.Builder builderForValue) {
@@ -4717,7 +4319,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addEntries(
           int index, ohmdb.replication.Raft.LogEntry.Builder builderForValue) {
@@ -4731,7 +4333,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addAllEntries(
           java.lang.Iterable<? extends ohmdb.replication.Raft.LogEntry> values) {
@@ -4745,12 +4347,12 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder clearEntries() {
         if (entriesBuilder_ == null) {
           entries_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000020);
+          bitField0_ = (bitField0_ & ~0x00000010);
           onChanged();
         } else {
           entriesBuilder_.clear();
@@ -4758,7 +4360,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder removeEntries(int index) {
         if (entriesBuilder_ == null) {
@@ -4771,14 +4373,14 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.Raft.LogEntry.Builder getEntriesBuilder(
           int index) {
         return getEntriesFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.Raft.LogEntryOrBuilder getEntriesOrBuilder(
           int index) {
@@ -4788,7 +4390,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public java.util.List<? extends ohmdb.replication.Raft.LogEntryOrBuilder> 
            getEntriesOrBuilderList() {
@@ -4799,14 +4401,14 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.Raft.LogEntry.Builder addEntriesBuilder() {
         return getEntriesFieldBuilder().addBuilder(
             ohmdb.replication.Raft.LogEntry.getDefaultInstance());
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.Raft.LogEntry.Builder addEntriesBuilder(
           int index) {
@@ -4814,7 +4416,7 @@ public final class Raft {
             index, ohmdb.replication.Raft.LogEntry.getDefaultInstance());
       }
       /**
-       * <code>repeated .ohmdb.replication.LogEntry entries = 6;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public java.util.List<ohmdb.replication.Raft.LogEntry.Builder> 
            getEntriesBuilderList() {
@@ -4827,7 +4429,7 @@ public final class Raft {
           entriesBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               ohmdb.replication.Raft.LogEntry, ohmdb.replication.Raft.LogEntry.Builder, ohmdb.replication.Raft.LogEntryOrBuilder>(
                   entries_,
-                  ((bitField0_ & 0x00000020) == 0x00000020),
+                  ((bitField0_ & 0x00000010) == 0x00000010),
                   getParentForChildren(),
                   isClean());
           entries_ = null;
@@ -4835,34 +4437,34 @@ public final class Raft {
         return entriesBuilder_;
       }
 
-      // optional int64 commit_index = 7;
+      // optional int64 commit_index = 6;
       private long commitIndex_ ;
       /**
-       * <code>optional int64 commit_index = 7;</code>
+       * <code>optional int64 commit_index = 6;</code>
        */
       public boolean hasCommitIndex() {
-        return ((bitField0_ & 0x00000040) == 0x00000040);
+        return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
-       * <code>optional int64 commit_index = 7;</code>
+       * <code>optional int64 commit_index = 6;</code>
        */
       public long getCommitIndex() {
         return commitIndex_;
       }
       /**
-       * <code>optional int64 commit_index = 7;</code>
+       * <code>optional int64 commit_index = 6;</code>
        */
       public Builder setCommitIndex(long value) {
-        bitField0_ |= 0x00000040;
+        bitField0_ |= 0x00000020;
         commitIndex_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 commit_index = 7;</code>
+       * <code>optional int64 commit_index = 6;</code>
        */
       public Builder clearCommitIndex() {
-        bitField0_ = (bitField0_ & ~0x00000040);
+        bitField0_ = (bitField0_ & ~0x00000020);
         commitIndex_ = 0L;
         onChanged();
         return this;
@@ -4882,48 +4484,33 @@ public final class Raft {
   public interface AppendEntriesReplyOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional string quorum_id = 1;
+    // optional int64 term = 1;
     /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    boolean hasQuorumId();
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    java.lang.String getQuorumId();
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getQuorumIdBytes();
-
-    // optional int64 term = 2;
-    /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     boolean hasTerm();
     /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     long getTerm();
 
-    // optional bool success = 3;
+    // optional bool success = 2;
     /**
-     * <code>optional bool success = 3;</code>
+     * <code>optional bool success = 2;</code>
      */
     boolean hasSuccess();
     /**
-     * <code>optional bool success = 3;</code>
+     * <code>optional bool success = 2;</code>
      */
     boolean getSuccess();
 
-    // optional int64 my_last_log_entry = 4;
+    // optional int64 my_last_log_entry = 3;
     /**
-     * <code>optional int64 my_last_log_entry = 4;</code>
+     * <code>optional int64 my_last_log_entry = 3;</code>
      */
     boolean hasMyLastLogEntry();
     /**
-     * <code>optional int64 my_last_log_entry = 4;</code>
+     * <code>optional int64 my_last_log_entry = 3;</code>
      */
     long getMyLastLogEntry();
   }
@@ -4978,23 +4565,18 @@ public final class Raft {
               }
               break;
             }
-            case 10: {
+            case 8: {
               bitField0_ |= 0x00000001;
-              quorumId_ = input.readBytes();
+              term_ = input.readInt64();
               break;
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              term_ = input.readInt64();
+              success_ = input.readBool();
               break;
             }
             case 24: {
               bitField0_ |= 0x00000004;
-              success_ = input.readBool();
-              break;
-            }
-            case 32: {
-              bitField0_ |= 0x00000008;
               myLastLogEntry_ = input.readInt64();
               break;
             }
@@ -5038,99 +4620,55 @@ public final class Raft {
     }
 
     private int bitField0_;
-    // optional string quorum_id = 1;
-    public static final int QUORUM_ID_FIELD_NUMBER = 1;
-    private java.lang.Object quorumId_;
+    // optional int64 term = 1;
+    public static final int TERM_FIELD_NUMBER = 1;
+    private long term_;
     /**
-     * <code>optional string quorum_id = 1;</code>
+     * <code>optional int64 term = 1;</code>
      */
-    public boolean hasQuorumId() {
+    public boolean hasTerm() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public java.lang.String getQuorumId() {
-      java.lang.Object ref = quorumId_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          quorumId_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>optional string quorum_id = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getQuorumIdBytes() {
-      java.lang.Object ref = quorumId_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        quorumId_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    // optional int64 term = 2;
-    public static final int TERM_FIELD_NUMBER = 2;
-    private long term_;
-    /**
-     * <code>optional int64 term = 2;</code>
-     */
-    public boolean hasTerm() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>optional int64 term = 2;</code>
+     * <code>optional int64 term = 1;</code>
      */
     public long getTerm() {
       return term_;
     }
 
-    // optional bool success = 3;
-    public static final int SUCCESS_FIELD_NUMBER = 3;
+    // optional bool success = 2;
+    public static final int SUCCESS_FIELD_NUMBER = 2;
     private boolean success_;
     /**
-     * <code>optional bool success = 3;</code>
+     * <code>optional bool success = 2;</code>
      */
     public boolean hasSuccess() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
+      return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional bool success = 3;</code>
+     * <code>optional bool success = 2;</code>
      */
     public boolean getSuccess() {
       return success_;
     }
 
-    // optional int64 my_last_log_entry = 4;
-    public static final int MY_LAST_LOG_ENTRY_FIELD_NUMBER = 4;
+    // optional int64 my_last_log_entry = 3;
+    public static final int MY_LAST_LOG_ENTRY_FIELD_NUMBER = 3;
     private long myLastLogEntry_;
     /**
-     * <code>optional int64 my_last_log_entry = 4;</code>
+     * <code>optional int64 my_last_log_entry = 3;</code>
      */
     public boolean hasMyLastLogEntry() {
-      return ((bitField0_ & 0x00000008) == 0x00000008);
+      return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional int64 my_last_log_entry = 4;</code>
+     * <code>optional int64 my_last_log_entry = 3;</code>
      */
     public long getMyLastLogEntry() {
       return myLastLogEntry_;
     }
 
     private void initFields() {
-      quorumId_ = "";
       term_ = 0L;
       success_ = false;
       myLastLogEntry_ = 0L;
@@ -5148,16 +4686,13 @@ public final class Raft {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getQuorumIdBytes());
+        output.writeInt64(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt64(2, term_);
+        output.writeBool(2, success_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBool(3, success_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        output.writeInt64(4, myLastLogEntry_);
+        output.writeInt64(3, myLastLogEntry_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -5170,19 +4705,15 @@ public final class Raft {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getQuorumIdBytes());
+          .computeInt64Size(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(2, term_);
+          .computeBoolSize(2, success_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBoolSize(3, success_);
-      }
-      if (((bitField0_ & 0x00000008) == 0x00000008)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(4, myLastLogEntry_);
+          .computeInt64Size(3, myLastLogEntry_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -5300,14 +4831,12 @@ public final class Raft {
 
       public Builder clear() {
         super.clear();
-        quorumId_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
         term_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         success_ = false;
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         myLastLogEntry_ = 0L;
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -5339,17 +4868,13 @@ public final class Raft {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.quorumId_ = quorumId_;
+        result.term_ = term_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.term_ = term_;
+        result.success_ = success_;
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
-        }
-        result.success_ = success_;
-        if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-          to_bitField0_ |= 0x00000008;
         }
         result.myLastLogEntry_ = myLastLogEntry_;
         result.bitField0_ = to_bitField0_;
@@ -5368,11 +4893,6 @@ public final class Raft {
 
       public Builder mergeFrom(ohmdb.replication.Raft.AppendEntriesReply other) {
         if (other == ohmdb.replication.Raft.AppendEntriesReply.getDefaultInstance()) return this;
-        if (other.hasQuorumId()) {
-          bitField0_ |= 0x00000001;
-          quorumId_ = other.quorumId_;
-          onChanged();
-        }
         if (other.hasTerm()) {
           setTerm(other.getTerm());
         }
@@ -5409,174 +4929,100 @@ public final class Raft {
       }
       private int bitField0_;
 
-      // optional string quorum_id = 1;
-      private java.lang.Object quorumId_ = "";
+      // optional int64 term = 1;
+      private long term_ ;
       /**
-       * <code>optional string quorum_id = 1;</code>
+       * <code>optional int64 term = 1;</code>
        */
-      public boolean hasQuorumId() {
+      public boolean hasTerm() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public java.lang.String getQuorumId() {
-        java.lang.Object ref = quorumId_;
-        if (!(ref instanceof java.lang.String)) {
-          java.lang.String s = ((com.google.protobuf.ByteString) ref)
-              .toStringUtf8();
-          quorumId_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getQuorumIdBytes() {
-        java.lang.Object ref = quorumId_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          quorumId_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder setQuorumId(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        quorumId_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder clearQuorumId() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        quorumId_ = getDefaultInstance().getQuorumId();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string quorum_id = 1;</code>
-       */
-      public Builder setQuorumIdBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        quorumId_ = value;
-        onChanged();
-        return this;
-      }
-
-      // optional int64 term = 2;
-      private long term_ ;
-      /**
-       * <code>optional int64 term = 2;</code>
-       */
-      public boolean hasTerm() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public long getTerm() {
         return term_;
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public Builder setTerm(long value) {
-        bitField0_ |= 0x00000002;
+        bitField0_ |= 0x00000001;
         term_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 term = 2;</code>
+       * <code>optional int64 term = 1;</code>
        */
       public Builder clearTerm() {
-        bitField0_ = (bitField0_ & ~0x00000002);
+        bitField0_ = (bitField0_ & ~0x00000001);
         term_ = 0L;
         onChanged();
         return this;
       }
 
-      // optional bool success = 3;
+      // optional bool success = 2;
       private boolean success_ ;
       /**
-       * <code>optional bool success = 3;</code>
+       * <code>optional bool success = 2;</code>
        */
       public boolean hasSuccess() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
+        return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional bool success = 3;</code>
+       * <code>optional bool success = 2;</code>
        */
       public boolean getSuccess() {
         return success_;
       }
       /**
-       * <code>optional bool success = 3;</code>
+       * <code>optional bool success = 2;</code>
        */
       public Builder setSuccess(boolean value) {
-        bitField0_ |= 0x00000004;
+        bitField0_ |= 0x00000002;
         success_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional bool success = 3;</code>
+       * <code>optional bool success = 2;</code>
        */
       public Builder clearSuccess() {
-        bitField0_ = (bitField0_ & ~0x00000004);
+        bitField0_ = (bitField0_ & ~0x00000002);
         success_ = false;
         onChanged();
         return this;
       }
 
-      // optional int64 my_last_log_entry = 4;
+      // optional int64 my_last_log_entry = 3;
       private long myLastLogEntry_ ;
       /**
-       * <code>optional int64 my_last_log_entry = 4;</code>
+       * <code>optional int64 my_last_log_entry = 3;</code>
        */
       public boolean hasMyLastLogEntry() {
-        return ((bitField0_ & 0x00000008) == 0x00000008);
+        return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>optional int64 my_last_log_entry = 4;</code>
+       * <code>optional int64 my_last_log_entry = 3;</code>
        */
       public long getMyLastLogEntry() {
         return myLastLogEntry_;
       }
       /**
-       * <code>optional int64 my_last_log_entry = 4;</code>
+       * <code>optional int64 my_last_log_entry = 3;</code>
        */
       public Builder setMyLastLogEntry(long value) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000004;
         myLastLogEntry_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int64 my_last_log_entry = 4;</code>
+       * <code>optional int64 my_last_log_entry = 3;</code>
        */
       public Builder clearMyLastLogEntry() {
-        bitField0_ = (bitField0_ & ~0x00000008);
+        bitField0_ = (bitField0_ & ~0x00000004);
         myLastLogEntry_ = 0L;
         onChanged();
         return this;
@@ -5632,33 +5078,29 @@ public final class Raft {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\nraft.proto\022\021ohmdb.replication\"\320\003\n\017Raft" +
+      "\n\nraft.proto\022\021ohmdb.replication\"\363\002\n\017Raft" +
       "WireMessage\022\022\n\nmessage_id\030\001 \001(\003\022\021\n\tsende" +
-      "r_id\030\002 \001(\003\022\023\n\013receiver_id\030\003 \001(\003\022D\n\014messa" +
-      "ge_type\030\004 \001(\0162..ohmdb.replication.RaftWi" +
-      "reMessage.MessageType\0224\n\014request_vote\030\005 " +
-      "\001(\0132\036.ohmdb.replication.RequestVote\0227\n\nv" +
-      "ote_reply\030\006 \001(\0132#.ohmdb.replication.Requ" +
-      "estVoteReply\0228\n\016append_entries\030\007 \001(\0132 .o" +
-      "hmdb.replication.AppendEntries\022;\n\014append" +
-      "_reply\030\010 \001(\0132%.ohmdb.replication.AppendE",
-      "ntriesReply\"U\n\013MessageType\022\020\n\014REQUEST_VO" +
-      "TE\020\000\022\016\n\nVOTE_REPLY\020\001\022\022\n\016APPEND_ENTRIES\020\002" +
-      "\022\020\n\014APPEND_REPLY\020\003\"5\n\010LogEntry\022\014\n\004term\030\001" +
-      " \001(\003\022\r\n\005index\030\002 \001(\003\022\014\n\004data\030\003 \001(\014\"s\n\013Req" +
-      "uestVote\022\021\n\tquorum_id\030\001 \001(\t\022\014\n\004term\030\002 \001(" +
-      "\003\022\024\n\014candidate_id\030\003 \001(\003\022\026\n\016last_log_inde" +
-      "x\030\004 \001(\003\022\025\n\rlast_log_term\030\005 \001(\003\"I\n\020Reques" +
-      "tVoteReply\022\021\n\tquorum_id\030\001 \001(\t\022\014\n\004term\030\002 " +
-      "\001(\003\022\024\n\014vote_granted\030\003 \001(\010\"\266\001\n\rAppendEntr" +
-      "ies\022\021\n\tquorum_id\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\021\n\t",
-      "leader_id\030\003 \001(\003\022\026\n\016prev_log_index\030\004 \001(\003\022" +
-      "\025\n\rprev_log_term\030\005 \001(\003\022,\n\007entries\030\006 \003(\0132" +
-      "\033.ohmdb.replication.LogEntry\022\024\n\014commit_i" +
-      "ndex\030\007 \001(\003\"a\n\022AppendEntriesReply\022\021\n\tquor" +
-      "um_id\030\001 \001(\t\022\014\n\004term\030\002 \001(\003\022\017\n\007success\030\003 \001" +
-      "(\010\022\031\n\021my_last_log_entry\030\004 \001(\003B\025\n\021ohmdb.r" +
-      "eplicationH\001"
+      "r_id\030\002 \001(\003\022\023\n\013receiver_id\030\003 \001(\003\022\021\n\tquoru" +
+      "m_id\030\004 \001(\t\022\020\n\010in_reply\030\005 \001(\010\0224\n\014request_" +
+      "vote\030d \001(\0132\036.ohmdb.replication.RequestVo" +
+      "te\022?\n\022request_vote_reply\030e \001(\0132#.ohmdb.r" +
+      "eplication.RequestVoteReply\0228\n\016append_en" +
+      "tries\030f \001(\0132 .ohmdb.replication.AppendEn" +
+      "tries\022C\n\024append_entries_reply\030g \001(\0132%.oh" +
+      "mdb.replication.AppendEntriesReply*\t\010\350\007\020",
+      "\200\200\200\200\002\"5\n\010LogEntry\022\014\n\004term\030\001 \001(\003\022\r\n\005index" +
+      "\030\002 \001(\003\022\014\n\004data\030\003 \001(\014\"`\n\013RequestVote\022\014\n\004t" +
+      "erm\030\001 \001(\003\022\024\n\014candidate_id\030\002 \001(\003\022\026\n\016last_" +
+      "log_index\030\003 \001(\003\022\025\n\rlast_log_term\030\004 \001(\003\"6" +
+      "\n\020RequestVoteReply\022\014\n\004term\030\001 \001(\003\022\024\n\014vote" +
+      "_granted\030\002 \001(\010\"\243\001\n\rAppendEntries\022\014\n\004term" +
+      "\030\001 \001(\003\022\021\n\tleader_id\030\002 \001(\003\022\026\n\016prev_log_in" +
+      "dex\030\003 \001(\003\022\025\n\rprev_log_term\030\004 \001(\003\022,\n\007entr" +
+      "ies\030\005 \003(\0132\033.ohmdb.replication.LogEntry\022\024" +
+      "\n\014commit_index\030\006 \001(\003\"N\n\022AppendEntriesRep",
+      "ly\022\014\n\004term\030\001 \001(\003\022\017\n\007success\030\002 \001(\010\022\031\n\021my_" +
+      "last_log_entry\030\003 \001(\003B\025\n\021ohmdb.replicatio" +
+      "nH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -5670,7 +5112,7 @@ public final class Raft {
           internal_static_ohmdb_replication_RaftWireMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_RaftWireMessage_descriptor,
-              new java.lang.String[] { "MessageId", "SenderId", "ReceiverId", "MessageType", "RequestVote", "VoteReply", "AppendEntries", "AppendReply", });
+              new java.lang.String[] { "MessageId", "SenderId", "ReceiverId", "QuorumId", "InReply", "RequestVote", "RequestVoteReply", "AppendEntries", "AppendEntriesReply", });
           internal_static_ohmdb_replication_LogEntry_descriptor =
             getDescriptor().getMessageTypes().get(1);
           internal_static_ohmdb_replication_LogEntry_fieldAccessorTable = new
@@ -5682,25 +5124,25 @@ public final class Raft {
           internal_static_ohmdb_replication_RequestVote_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_RequestVote_descriptor,
-              new java.lang.String[] { "QuorumId", "Term", "CandidateId", "LastLogIndex", "LastLogTerm", });
+              new java.lang.String[] { "Term", "CandidateId", "LastLogIndex", "LastLogTerm", });
           internal_static_ohmdb_replication_RequestVoteReply_descriptor =
             getDescriptor().getMessageTypes().get(3);
           internal_static_ohmdb_replication_RequestVoteReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_RequestVoteReply_descriptor,
-              new java.lang.String[] { "QuorumId", "Term", "VoteGranted", });
+              new java.lang.String[] { "Term", "VoteGranted", });
           internal_static_ohmdb_replication_AppendEntries_descriptor =
             getDescriptor().getMessageTypes().get(4);
           internal_static_ohmdb_replication_AppendEntries_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_AppendEntries_descriptor,
-              new java.lang.String[] { "QuorumId", "Term", "LeaderId", "PrevLogIndex", "PrevLogTerm", "Entries", "CommitIndex", });
+              new java.lang.String[] { "Term", "LeaderId", "PrevLogIndex", "PrevLogTerm", "Entries", "CommitIndex", });
           internal_static_ohmdb_replication_AppendEntriesReply_descriptor =
             getDescriptor().getMessageTypes().get(5);
           internal_static_ohmdb_replication_AppendEntriesReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_replication_AppendEntriesReply_descriptor,
-              new java.lang.String[] { "QuorumId", "Term", "Success", "MyLastLogEntry", });
+              new java.lang.String[] { "Term", "Success", "MyLastLogEntry", });
           return null;
         }
       };

@@ -16,6 +16,11 @@ message StopService {
   optional string stop_reason = 3;
 }
 
+message ServiceSubCommand {
+  optional string service_name = 1;
+  optional string sub_command = 2;
+}
+
 message CommandReply {
   optional bool command_success = 1;
   optional string command_stdout = 2;

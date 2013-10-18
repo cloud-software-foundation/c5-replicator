@@ -16,7 +16,7 @@
  */
 package ohmdb.replication.rpc;
 
-import com.google.protobuf.MessageLite;
+import com.google.protobuf.Message;
 
 /**
  * An rpc reply in response to a 'wire request'.
@@ -25,10 +25,9 @@ public class RpcReply extends RpcMessage {
      /**
       *  Invert the to/from and quote the messageId.
       *
-      * @param inReplyTo
-      * @param message
+      * @param message the reply message
       */
-    public RpcReply(RpcWireRequest inReplyTo, MessageLite message) {
-        super(inReplyTo.from, inReplyTo.to, inReplyTo.messageId, message);
+    public RpcReply(Message message) {
+        super(0, 0, null, message);
     }
 }

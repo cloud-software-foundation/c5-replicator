@@ -68,4 +68,24 @@ public interface OhmServer extends Service {
             this.state = state;
         }
     }
+
+    public Channel<ConfigKeyUpdated> getConfigUpdateChannel();
+    public static class ConfigKeyUpdated {
+        public final String configKey;
+        public final Object configValue;
+
+        public ConfigKeyUpdated(String configKey, Object configValue) {
+            this.configKey = configKey;
+            this.configValue = configValue;
+        }
+
+        @Override
+        public String toString() {
+            return "ConfigKeyUpdated{" +
+                    "configKey='" + configKey + '\'' +
+                    ", configValue=" + configValue +
+                    '}';
+        }
+
+    }
 }

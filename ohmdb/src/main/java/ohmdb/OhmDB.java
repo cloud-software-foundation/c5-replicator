@@ -25,6 +25,7 @@ import com.google.protobuf.MessageLite;
 import io.netty.channel.nio.NioEventLoopGroup;
 import ohmdb.discovery.BeaconService;
 import ohmdb.messages.ControlMessages;
+import ohmdb.replication.ReplicatorService;
 import ohmdb.util.FiberOnly;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
@@ -216,7 +217,6 @@ public class OhmDB extends AbstractService implements OhmServer {
     private final Map<String,OhmService> serviceRegistry = new HashMap<>();
 
     private final long nodeId;
-//    private final String clusterName;
 
     private final Channel<MessageLite> commandChannel = new MemoryChannel<>();
 
@@ -244,6 +244,13 @@ public class OhmDB extends AbstractService implements OhmServer {
     @Override
     public ConfigDirectory getConfigDirectory() {
         return configDirectory;
+    }
+
+    @Override
+    public Channel<ConfigKeyUpdated> getConfigUpdateChannel() {
+
+        // TODO this
+        return null;
     }
 
 
@@ -355,19 +362,30 @@ public class OhmDB extends AbstractService implements OhmServer {
             throw new Exception("Cant start running service: " + serviceName);
         }
 
-        if (serviceName.equals("BeaconService")) {
-            Map<String, Integer> l = new HashMap<>();
-            for (String name : serviceRegistry.keySet()) {
-                l.put(name, 1);
+        switch (serviceName) {
+            case "BeaconService": {
+                Map<String, Integer> l = new HashMap<>();
+                for (String name : serviceRegistry.keySet()) {
+                    l.put(name, 1);
+                }
+
+                OhmService service = new BeaconService(this.nodeId, servicePort, fiberPool.create(), workerGroup, l, this);
+                service.addListener(new ServiceListenerPublisher(service), serverFiber);
+
+                service.start();
+                serviceRegistry.put(serviceName, service);
+                break;
             }
+            case "ReplicatorService": {
+                OhmService service = new ReplicatorService(fiberPool, bossGroup, workerGroup, servicePort, this);
+                service.addListener(new ServiceListenerPublisher(service), serverFiber);
 
-            OhmService service = new BeaconService(this.nodeId, servicePort, fiberPool.create(), workerGroup, l, this);
-            service.addListener(new ServiceListenerPublisher(service), serverFiber);
-
-            service.start();
-            serviceRegistry.put(serviceName, service);
-        } else {
-            throw new Exception("No such service as " + serviceName);
+                service.start();
+                serviceRegistry.put(serviceName, service);
+                break;
+            }
+            default:
+                throw new Exception("No such service as " + serviceName);
         }
 
         return true;
@@ -381,7 +399,6 @@ public class OhmDB extends AbstractService implements OhmServer {
             return ;
         }
 
-        // TODO service dependencies so if you stop one service, you have to stop the dependents.
 
         theService.stop();
     }

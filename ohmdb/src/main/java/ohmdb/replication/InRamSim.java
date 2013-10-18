@@ -158,14 +158,11 @@ public class InRamSim {
 
     private void messageForwarder(final Request<RpcRequest, RpcWireReply> origMsg) {
 
-        // ok, who sent this?!!!!!
         final RpcRequest request = origMsg.getRequest();
 //        final OutgoingRpcRequest request = origMsg.getRequest();
 //        msgSize.update(request.message.getSerializedSize());
         final long dest = request.to;
-        // find it:
         final ReplicatorInstance repl = replicators.get(dest);
-//        final FleaseLease fl = fleaseRunners.get(dest);
         if (repl == null) {
             // boo
             LOG.error("Request to non exist {}", dest);
@@ -176,21 +173,15 @@ public class InRamSim {
         messages.mark();
         messageTxn.inc();
 
-        //LOG.debug("Forwarding message from {} to {}, contents: {}", request.from, request.to, request.message);
-        // Construct and send a IncomingRpcRequest from the OutgoingRpcRequest.
-        // There is absolutely no way to know who this is from at this point from the infrastructure.
-        //final IncomingRpcRequest newRequest = new IncomingRpcRequest(1, request.from, request.message);
-        final RpcWireRequest newRequest = new RpcWireRequest(request.to, request.from, 1, request.message);
+        final RpcWireRequest newRequest = new RpcWireRequest(request.from, request.quorumId, request.message);
         AsyncRequest.withOneReply(rpcFiber, repl.getIncomingChannel(), newRequest, new Callback<RpcReply>() {
             @Override
             public void onMessage(RpcReply msg) {
-                // Translate the OutgoingRpcReply -> IncomingRpcReply.
-                //LOG.debug("Forwarding reply message from {} back to {}, contents: {}", dest, request.to, msg.message);
                 messages.mark();
                 messageTxn.dec();
 //                msgSize.update(msg.message.getSerializedSize());
-                RpcWireReply newReply = new RpcWireReply(msg.to, msg.from, msg.messageId, msg.message);
-//                IncomingRpcReply newReply = new IncomingRpcReply(msg.message, dest);
+                // Note that 'RpcReply' has an empty from/to/messageId.  We must know from our context (and so we do)
+                RpcWireReply newReply = new RpcWireReply(request.to, request.quorumId, msg.message);
                 origMsg.reply(newReply);
             }
         });

@@ -16,7 +16,8 @@
  */
 package ohmdb.replication.rpc;
 
-import com.google.protobuf.MessageLite;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Message;
 import ohmdb.replication.Raft;
 
 /**
@@ -33,21 +34,39 @@ import ohmdb.replication.Raft;
 public class RpcMessage {
     public final long to;
     public final long from;
-    public final long messageId;
+    public final String quorumId;
 
-    public final MessageLite message;
+    public final Message message;
 
-    public RpcMessage(long to, long from, long messageId, MessageLite message) {
+    public RpcMessage(long to, long from, String quorumId, Message message) {
         this.to = to;
         this.from = from;
-        this.messageId = messageId;
+        this.quorumId = quorumId;
 
         this.message = message;
     }
 
     @Override
     public String toString() {
-        return String.format("From: %d to: %d message: %d contents: %s", from, to, messageId, message);
+        return String.format("From: %d to: %d message: %s contents: %s", from, to, quorumId, message);
+    }
+
+    /**
+     * Returns a builder that has only the 'message' part set.  Since the to/from/quorumId may or may not
+     * be actually set in this class, we can't really rely on it now.
+     *
+     * @return a builder that forms the basis of the rest of the message.
+     */
+    public Raft.RaftWireMessage.Builder getWireMessageFragment() {
+        Raft.RaftWireMessage.Builder builder = Raft.RaftWireMessage.newBuilder();
+
+        //builder.setAppendEntries() // append_entries
+        Descriptors.Descriptor d = Raft.RaftWireMessage.getDescriptor();
+        // TODO NB: AppendEntries -> append_entries, because fuck you protobuf.
+        Descriptors.FieldDescriptor fd = d.findFieldByName(message.getDescriptorForType().getName());
+        builder.setField(fd, message);
+
+        return builder;
     }
 
     public boolean isAppendMessage() {
@@ -61,18 +80,6 @@ public class RpcMessage {
     }
     public boolean isRequestVoteReplyMessage() {
         return message instanceof Raft.RequestVoteReply;
-    }
-
-    public String getQuorumId() {
-        if (isAppendMessage())
-            return getAppendMessage().getQuorumId();
-        if (isAppendReplyMessage())
-            return getAppendReplyMessage().getQuorumId();
-        if (isRequestVoteMessage())
-            return getRequestVoteMessage().getQuorumId();
-        if (isRequestVoteReplyMessage())
-            return getRequestVoteReplyMessage().getQuorumId();
-        throw new RuntimeException("Unknown message type is impossible");
     }
 
     public Raft.AppendEntries getAppendMessage() {

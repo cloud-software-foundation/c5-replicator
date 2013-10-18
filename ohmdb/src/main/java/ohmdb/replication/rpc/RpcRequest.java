@@ -16,20 +16,20 @@
  */
 package ohmdb.replication.rpc;
 
-import com.google.protobuf.MessageLite;
+import com.google.protobuf.Message;
 
 /**
- * RPC Requests from the client => dont need a message id.
- * RPC Requests from the WIRE => message id already comes with.
+ * An outbound request for the transport.  Since the transport knows who 'we' are, the only
+ * params required is a 'to' and which quorumId is being involved.  Oh yes and the actual message.
  *
- * An outbound request for the sender subsystem.
+ * Actually scratch that, apparently certain types of transports (InRamSim) don't know who 'we' are.  So include that.
  */
 public class RpcRequest extends RpcMessage {
 
-    public RpcRequest(long to, long from, MessageLite message) {
+    public RpcRequest(long to, long from, String quorumId, Message message) {
         // Note that the RPC system should sub in a message id, that is an implementation detail
         // since not all transports (eg: in RAM only transport) need message IDs to keep request/replies in line.
-        super(to, from, 0, message);
+        super(to, from, quorumId, message);
     }
 }
 

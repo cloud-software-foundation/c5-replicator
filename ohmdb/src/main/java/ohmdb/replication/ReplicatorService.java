@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.MessageLite;
+import com.google.protobuf.Message;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -62,10 +62,7 @@ import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -100,35 +97,27 @@ public class ReplicatorService extends AbstractService implements OhmService {
         return replicatorStateChanges;
     }
 
-    private class Persister implements RaftInfoPersistence {
+    // TODO this should be actually via whatever configuration system we end up using.
+    private static class Info implements RaftInformationInterface {
+
         @Override
-        public long readCurrentTerm(String quorumId) throws IOException {
-            return getLongofFile(quorumId, 0);
+        public long currentTimeMillis() {
+            return System.currentTimeMillis();
         }
 
         @Override
-        public long readVotedFor(String quorumId) throws IOException {
-            return getLongofFile(quorumId, 1);
-        }
-
-        private long getLongofFile(String quorumId, int whichLine) throws IOException {
-            List<String> datas = server.getConfigDirectory().readFile(quorumId, "raft-data");
-            if (datas.size() != 2)
-                return 0; // corrupt file?
-
-            try {
-                return Long.parseLong(datas.get(whichLine));
-            } catch (NumberFormatException e) {
-                return 0; // corrupt file sucks?
-            }
+        public long electionCheckRate() {
+            return 100;
         }
 
         @Override
-        public void writeCurrentTermAndVotedFor(String quorumId, long currentTerm, long votedFor) throws IOException {
-            List<String> datas = new ArrayList<>(2);
-            datas.add(Long.toString(currentTerm));
-            datas.add(Long.toString(votedFor));
-            server.getConfigDirectory().writeFile(quorumId, "raft-data", datas);
+        public long electionTimeout() {
+            return 1000;
+        }
+
+        @Override
+        public long groupCommitDelay() {
+            return 100;
         }
     }
 
@@ -148,6 +137,7 @@ public class ReplicatorService extends AbstractService implements OhmService {
     private final Map<Session, Long> outstandingRPCbySession = new HashMap<>();
 
     private final RequestChannel<RpcRequest, RpcWireReply> outgoingRequests = new MemoryRequestChannel<>();
+
 
 
     private ServerBootstrap serverBootstrap;
@@ -201,57 +191,62 @@ public class ReplicatorService extends AbstractService implements OhmService {
             return;
         }
 
-        Request<RpcRequest, RpcWireReply> request = outstandingRPCs.get(messageId);
-        if (request == null) {
+        if (msg.hasInReply() && msg.getInReply()) {
+            Request<RpcRequest, RpcWireReply> request = outstandingRPCs.get(messageId);
+            if (request == null) {
+                LOG.error("Got a reply message_id {} which we don't track", messageId);
+                return;
+            }
+
+            Message subMsg = null;
+            // TODO Fixme here
+//        switch (msg.getMessageType()) {
+//            case REQUEST_VOTE:
+//                LOG.error("Got request_vote message as a 'reply' to message id {}", messageId);
+//                subMsg = msg.getRequestVote();
+//                break;
+//            case VOTE_REPLY:
+//                subMsg = msg.getVoteReply();
+//                break;
+//            case APPEND_ENTRIES:
+//                LOG.error("Got an append_entries message as a 'reply' to message id {}", messageId);
+//                subMsg = msg.getAppendEntries();
+//                break;
+//            case APPEND_REPLY:
+//                subMsg = msg.getAppendReply();
+//                break;
+//        }
+
+            outstandingRPCs.remove(messageId);
+            outstandingRPCbySession.remove(request.getSession());
+            request.reply(new RpcWireReply(msg.getSenderId(), msg.getQuorumId(), subMsg));
+
+        } else {
             handleWireNonReplyMessage(channel, msg);
-            return;
         }
-
-        // NB: Handling a REPLY so only REPLY messages are allowed here....
-
-        // TODO this is absolutely killing me, why does protobuf have to suck so badly?
-        MessageLite subMsg = null;
-        switch (msg.getMessageType()) {
-            case REQUEST_VOTE:
-                LOG.error("Got request_vote message as a 'reply' to message id {}", messageId);
-                subMsg = msg.getRequestVote();
-                break;
-            case VOTE_REPLY:
-                subMsg = msg.getVoteReply();
-                break;
-            case APPEND_ENTRIES:
-                LOG.error("Got an append_entries message as a 'reply' to message id {}", messageId);
-                subMsg = msg.getAppendEntries();
-                break;
-            case APPEND_REPLY:
-                subMsg = msg.getAppendReply();
-                break;
-        }
-
-        outstandingRPCs.remove(messageId);
-        outstandingRPCbySession.remove(request.getSession());
-        request.reply(new RpcWireReply(msg.getReceiverId(), msg.getSenderId(), messageId, subMsg));
     }
 
+    @FiberOnly
     private void handleWireNonReplyMessage(final Channel channel, final RaftWireMessage msg) {
-        MessageLite subMsg = null;
-        switch (msg.getMessageType()) {
-            case REQUEST_VOTE:
-                subMsg = msg.getRequestVote();
-                break;
-            case VOTE_REPLY:
-                LOG.error("Got vote_reply with no outstanding request for message id {}", msg.getMessageId());
-                return;
-            case APPEND_ENTRIES:
-                subMsg = msg.getAppendEntries();
-                break;
-            case APPEND_REPLY:
-                LOG.error("Got append_reply with no outstanding request for message id {}", msg.getMessageId());
-                return;
-        }
+        Message subMsg = null;
+         // TODO fix me here
+//        switch (msg.getMessageType()) {
+//            case REQUEST_VOTE:
+//                subMsg = msg.getRequestVote();
+//                break;
+//            case VOTE_REPLY:
+//                LOG.error("Got vote_reply with no outstanding request for message id {}", msg.getMessageId());
+//                return;
+//            case APPEND_ENTRIES:
+//                subMsg = msg.getAppendEntries();
+//                break;
+//            case APPEND_REPLY:
+//                LOG.error("Got append_reply with no outstanding request for message id {}", msg.getMessageId());
+//                return;
+//        }
 
-        RpcWireRequest wireRequest = new RpcWireRequest(msg.getReceiverId(), msg.getSenderId(), msg.getMessageId(), subMsg);
-        String quorumId = wireRequest.getQuorumId();
+        RpcWireRequest wireRequest = new RpcWireRequest(msg.getSenderId(), msg.getQuorumId(), subMsg);
+        String quorumId = wireRequest.quorumId;
 
         ReplicatorInstance replInst = replicatorInstances.get(quorumId);
         if (replInst == null) {
@@ -268,19 +263,12 @@ public class ReplicatorService extends AbstractService implements OhmService {
                     return;
                 }
 
-                RaftWireMessage.Builder b = RaftWireMessage.newBuilder()
-                        .setSenderId(server.getNodeId())
+                RaftWireMessage.Builder b = reply.getWireMessageFragment();
+                b.setSenderId(server.getNodeId())
+                        .setInReply(true)
+                        .setQuorumId(msg.getQuorumId())
                         .setReceiverId(msg.getSenderId())
                         .setMessageId(msg.getMessageId());
-
-                if (reply.isAppendReplyMessage()) {
-                    b.setMessageType(RaftWireMessage.MessageType.APPEND_REPLY);
-                    b.setAppendReply(reply.getAppendReplyMessage());
-                }
-                if (reply.isRequestVoteReplyMessage()) {
-                    b.setMessageType(RaftWireMessage.MessageType.VOTE_REPLY);
-                    b.setVoteReply(reply.getRequestVoteReplyMessage());
-                }
 
                 channel.write(b);
                 channel.flush();
@@ -359,13 +347,14 @@ public class ReplicatorService extends AbstractService implements OhmService {
                         .setMessageId(messageId)
                         .setSenderId(server.getNodeId())
                         .setReceiverId(to);
-                if (request.isAppendMessage()) {
-                    msgBuilder.setMessageType(RaftWireMessage.MessageType.APPEND_ENTRIES)
-                            .setAppendEntries(request.getAppendMessage());
-                } else if (request.isRequestVoteMessage()) {
-                    msgBuilder.setMessageType(RaftWireMessage.MessageType.REQUEST_VOTE)
-                            .setRequestVote(request.getRequestVoteMessage());
-                } //else {
+                // TODO fixme here!
+//                if (request.isAppendMessage()) {
+//                    msgBuilder.setMessageType(RaftWireMessage.MessageType.APPEND_ENTRIES)
+//                            .setAppendEntries(request.getAppendMessage());
+//                } else if (request.isRequestVoteMessage()) {
+//                    msgBuilder.setMessageType(RaftWireMessage.MessageType.REQUEST_VOTE)
+//                            .setRequestVote(request.getRequestVoteMessage());
+//                } //else {
                     // v bad, not possible really.
 
                 channel.write(msgBuilder);
@@ -374,19 +363,20 @@ public class ReplicatorService extends AbstractService implements OhmService {
         });
     }
 
-    private void handleLoopBackMessage(final Request<RpcRequest, RpcWireReply> message) {
-        final long toFrom = server.getNodeId();
-        final RpcRequest request = message.getRequest();
-        String quorumId = request.getQuorumId();
+    private void handleLoopBackMessage(final Request<RpcRequest, RpcWireReply> origMessage) {
+        final long toFrom = server.getNodeId(); // I am me.
+        final RpcRequest request = origMessage.getRequest();
+        final String quorumId = request.quorumId;
 
+        // Funny thing we don't have a direct handle on who sent us this message, so we have to do this. Sok though.
         final ReplicatorInstance repl = replicatorInstances.get(quorumId);
         assert repl != null;
-        final RpcWireRequest newRequest = new RpcWireRequest(toFrom, toFrom, 0, request.message);
+        final RpcWireRequest newRequest = new RpcWireRequest(toFrom, quorumId, request.message);
         AsyncRequest.withOneReply(fiber, repl.getIncomingChannel(), newRequest, new Callback<RpcReply>() {
             @Override
             public void onMessage(RpcReply msg) {
-                RpcWireReply newReply = new RpcWireReply(toFrom, toFrom, 0, msg.message);
-                message.reply(newReply);
+                RpcWireReply newReply = new RpcWireReply(toFrom, quorumId, msg.message);
+                origMessage.reply(newReply);
             }
         });
     }

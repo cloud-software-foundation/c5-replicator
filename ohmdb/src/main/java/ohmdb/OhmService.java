@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Service;
 
 /**
  * An internal service.  Extends guava services.
+ * TODO service dependencies so if you stop one service, you have to stop the dependents.
  */
 public interface OhmService extends Service {
 

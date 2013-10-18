@@ -1456,6 +1456,633 @@ public final class ControlMessages {
     // @@protoc_insertion_point(class_scope:ohmdb.messages.StopService)
   }
 
+  public interface ServiceSubCommandOrBuilder
+      extends com.google.protobuf.MessageOrBuilder {
+
+    // optional string service_name = 1;
+    /**
+     * <code>optional string service_name = 1;</code>
+     */
+    boolean hasServiceName();
+    /**
+     * <code>optional string service_name = 1;</code>
+     */
+    java.lang.String getServiceName();
+    /**
+     * <code>optional string service_name = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getServiceNameBytes();
+
+    // optional string sub_command = 2;
+    /**
+     * <code>optional string sub_command = 2;</code>
+     */
+    boolean hasSubCommand();
+    /**
+     * <code>optional string sub_command = 2;</code>
+     */
+    java.lang.String getSubCommand();
+    /**
+     * <code>optional string sub_command = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getSubCommandBytes();
+  }
+  /**
+   * Protobuf type {@code ohmdb.messages.ServiceSubCommand}
+   */
+  public static final class ServiceSubCommand extends
+      com.google.protobuf.GeneratedMessage
+      implements ServiceSubCommandOrBuilder {
+    // Use ServiceSubCommand.newBuilder() to construct.
+    private ServiceSubCommand(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private ServiceSubCommand(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final ServiceSubCommand defaultInstance;
+    public static ServiceSubCommand getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public ServiceSubCommand getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ServiceSubCommand(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              bitField0_ |= 0x00000001;
+              serviceName_ = input.readBytes();
+              break;
+            }
+            case 18: {
+              bitField0_ |= 0x00000002;
+              subCommand_ = input.readBytes();
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              ohmdb.messages.ControlMessages.ServiceSubCommand.class, ohmdb.messages.ControlMessages.ServiceSubCommand.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<ServiceSubCommand> PARSER =
+        new com.google.protobuf.AbstractParser<ServiceSubCommand>() {
+      public ServiceSubCommand parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ServiceSubCommand(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ServiceSubCommand> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    // optional string service_name = 1;
+    public static final int SERVICE_NAME_FIELD_NUMBER = 1;
+    private java.lang.Object serviceName_;
+    /**
+     * <code>optional string service_name = 1;</code>
+     */
+    public boolean hasServiceName() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional string service_name = 1;</code>
+     */
+    public java.lang.String getServiceName() {
+      java.lang.Object ref = serviceName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          serviceName_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string service_name = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getServiceNameBytes() {
+      java.lang.Object ref = serviceName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        serviceName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    // optional string sub_command = 2;
+    public static final int SUB_COMMAND_FIELD_NUMBER = 2;
+    private java.lang.Object subCommand_;
+    /**
+     * <code>optional string sub_command = 2;</code>
+     */
+    public boolean hasSubCommand() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>optional string sub_command = 2;</code>
+     */
+    public java.lang.String getSubCommand() {
+      java.lang.Object ref = subCommand_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          subCommand_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string sub_command = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getSubCommandBytes() {
+      java.lang.Object ref = subCommand_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        subCommand_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private void initFields() {
+      serviceName_ = "";
+      subCommand_ = "";
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized != -1) return isInitialized == 1;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, getServiceNameBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, getSubCommandBytes());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, getServiceNameBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, getSubCommandBytes());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(ohmdb.messages.ControlMessages.ServiceSubCommand prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code ohmdb.messages.ServiceSubCommand}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder>
+       implements ohmdb.messages.ControlMessages.ServiceSubCommandOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                ohmdb.messages.ControlMessages.ServiceSubCommand.class, ohmdb.messages.ControlMessages.ServiceSubCommand.Builder.class);
+      }
+
+      // Construct using ohmdb.messages.ControlMessages.ServiceSubCommand.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        serviceName_ = "";
+        bitField0_ = (bitField0_ & ~0x00000001);
+        subCommand_ = "";
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_descriptor;
+      }
+
+      public ohmdb.messages.ControlMessages.ServiceSubCommand getDefaultInstanceForType() {
+        return ohmdb.messages.ControlMessages.ServiceSubCommand.getDefaultInstance();
+      }
+
+      public ohmdb.messages.ControlMessages.ServiceSubCommand build() {
+        ohmdb.messages.ControlMessages.ServiceSubCommand result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public ohmdb.messages.ControlMessages.ServiceSubCommand buildPartial() {
+        ohmdb.messages.ControlMessages.ServiceSubCommand result = new ohmdb.messages.ControlMessages.ServiceSubCommand(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.serviceName_ = serviceName_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.subCommand_ = subCommand_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof ohmdb.messages.ControlMessages.ServiceSubCommand) {
+          return mergeFrom((ohmdb.messages.ControlMessages.ServiceSubCommand)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(ohmdb.messages.ControlMessages.ServiceSubCommand other) {
+        if (other == ohmdb.messages.ControlMessages.ServiceSubCommand.getDefaultInstance()) return this;
+        if (other.hasServiceName()) {
+          bitField0_ |= 0x00000001;
+          serviceName_ = other.serviceName_;
+          onChanged();
+        }
+        if (other.hasSubCommand()) {
+          bitField0_ |= 0x00000002;
+          subCommand_ = other.subCommand_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        ohmdb.messages.ControlMessages.ServiceSubCommand parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (ohmdb.messages.ControlMessages.ServiceSubCommand) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      // optional string service_name = 1;
+      private java.lang.Object serviceName_ = "";
+      /**
+       * <code>optional string service_name = 1;</code>
+       */
+      public boolean hasServiceName() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>optional string service_name = 1;</code>
+       */
+      public java.lang.String getServiceName() {
+        java.lang.Object ref = serviceName_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          serviceName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string service_name = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getServiceNameBytes() {
+        java.lang.Object ref = serviceName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          serviceName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string service_name = 1;</code>
+       */
+      public Builder setServiceName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        serviceName_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string service_name = 1;</code>
+       */
+      public Builder clearServiceName() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        serviceName_ = getDefaultInstance().getServiceName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string service_name = 1;</code>
+       */
+      public Builder setServiceNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        serviceName_ = value;
+        onChanged();
+        return this;
+      }
+
+      // optional string sub_command = 2;
+      private java.lang.Object subCommand_ = "";
+      /**
+       * <code>optional string sub_command = 2;</code>
+       */
+      public boolean hasSubCommand() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>optional string sub_command = 2;</code>
+       */
+      public java.lang.String getSubCommand() {
+        java.lang.Object ref = subCommand_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          subCommand_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string sub_command = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getSubCommandBytes() {
+        java.lang.Object ref = subCommand_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          subCommand_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string sub_command = 2;</code>
+       */
+      public Builder setSubCommand(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        subCommand_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string sub_command = 2;</code>
+       */
+      public Builder clearSubCommand() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        subCommand_ = getDefaultInstance().getSubCommand();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string sub_command = 2;</code>
+       */
+      public Builder setSubCommandBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        subCommand_ = value;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:ohmdb.messages.ServiceSubCommand)
+    }
+
+    static {
+      defaultInstance = new ServiceSubCommand(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:ohmdb.messages.ServiceSubCommand)
+  }
+
   public interface CommandReplyOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
@@ -2175,6 +2802,11 @@ public final class ControlMessages {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_ohmdb_messages_StopService_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
+    internal_static_ohmdb_messages_ServiceSubCommand_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_ohmdb_messages_ServiceSubCommand_fieldAccessorTable;
+  private static com.google.protobuf.Descriptors.Descriptor
     internal_static_ohmdb_messages_CommandReply_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -2193,9 +2825,11 @@ public final class ControlMessages {
       "\n\014service_port\030\002 \001(\005\022\024\n\014service_argv\030\003 \001" +
       "(\t\"K\n\013StopService\022\024\n\014service_name\030\001 \001(\t\022" +
       "\021\n\thard_stop\030\002 \001(\010\022\023\n\013stop_reason\030\003 \001(\t\"" +
-      "W\n\014CommandReply\022\027\n\017command_success\030\001 \001(\010" +
-      "\022\026\n\016command_stdout\030\002 \001(\t\022\026\n\016command_stde" +
-      "rr\030\003 \001(\tB\022\n\016ohmdb.messagesH\001"
+      ">\n\021ServiceSubCommand\022\024\n\014service_name\030\001 \001" +
+      "(\t\022\023\n\013sub_command\030\002 \001(\t\"W\n\014CommandReply\022" +
+      "\027\n\017command_success\030\001 \001(\010\022\026\n\016command_stdo" +
+      "ut\030\002 \001(\t\022\026\n\016command_stderr\030\003 \001(\tB\022\n\016ohmd" +
+      "b.messagesH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -2214,8 +2848,14 @@ public final class ControlMessages {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_messages_StopService_descriptor,
               new java.lang.String[] { "ServiceName", "HardStop", "StopReason", });
-          internal_static_ohmdb_messages_CommandReply_descriptor =
+          internal_static_ohmdb_messages_ServiceSubCommand_descriptor =
             getDescriptor().getMessageTypes().get(2);
+          internal_static_ohmdb_messages_ServiceSubCommand_fieldAccessorTable = new
+            com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+              internal_static_ohmdb_messages_ServiceSubCommand_descriptor,
+              new java.lang.String[] { "ServiceName", "SubCommand", });
+          internal_static_ohmdb_messages_CommandReply_descriptor =
+            getDescriptor().getMessageTypes().get(3);
           internal_static_ohmdb_messages_CommandReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_messages_CommandReply_descriptor,
