@@ -62,6 +62,7 @@ public class ReplicatorInstance {
     private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
     private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
     private final Channel<ReplicatorInstanceStateChange> stateChangeChannel;
+    private final Channel<IndexCommitNotice> commitNoticeChannel;
 
     /********** final fields *************/
     private final Fiber fiber;
@@ -125,7 +126,8 @@ public class ReplicatorInstance {
                               RaftInformationInterface info,
                               RaftInfoPersistence persister,
                               RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
-                              final Channel<ReplicatorInstanceStateChange> stateChangeChannel) {
+                              final Channel<ReplicatorInstanceStateChange> stateChangeChannel,
+                              final Channel<IndexCommitNotice> commitNoticeChannel) {
         this.fiber = fiber;
         this.myId = myId;
         this.quorumId = quorumId;
@@ -135,6 +137,7 @@ public class ReplicatorInstance {
         this.info = info;
         this.persister = persister;
         this.stateChangeChannel = stateChangeChannel;
+        this.commitNoticeChannel = commitNoticeChannel;
         Random r = new Random();
         this.myElectionTimeout = r.nextInt((int) info.electionTimeout()) + info.electionTimeout();
         this.lastRPC = info.currentTimeMillis();
@@ -151,9 +154,7 @@ public class ReplicatorInstance {
                             new ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.RUNNING, null));
                 } catch (IOException e) {
                     LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
-                    stateChangeChannel.publish(
-                            new ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.FAILED, e));
-                    fiber.dispose(); // kill us forever.
+                    failReplicatorInstance(e);
                 }
             }
         });
@@ -174,6 +175,12 @@ public class ReplicatorInstance {
 
         LOG.debug("{} started {} with election timeout {}", myId, this.quorumId, this.myElectionTimeout);
         fiber.start();
+    }
+
+    private void failReplicatorInstance(Throwable e) {
+        stateChangeChannel.publish(
+                new ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
+        fiber.dispose(); // kill us forever.
     }
 
     // public API:
@@ -277,7 +284,7 @@ public class ReplicatorInstance {
 
     @FiberOnly
     private void doAppendMessage(final Request<RpcWireRequest, RpcReply> message) {
-        Raft.AppendEntries msg = message.getRequest().getAppendMessage();
+        final Raft.AppendEntries msg = message.getRequest().getAppendMessage();
 
         // 1. return if term < currentTerm (sec 5.1)
         if (msg.getTerm() < currentTerm) {
@@ -378,15 +385,19 @@ public class ReplicatorInstance {
 
                 // delete this and all subsequent entries:
                 ListenableFuture<Boolean> truncateResult = log.truncateLog(entryIndex);
-                // TODO don't wait for the truncate inline, wait for a callback (then what?)
+                // TODO consider a better way than to busywait this thread. This is a single-thread scalability problem.
                 try {
                     boolean wasTruncated = truncateResult.get();
                     if (!wasTruncated) {
-                        LOG.error("{} unable to truncate log to {}", myId, entryIndex);
-                        // TODO figure out how to deal with this.
+                        LOG.error("{} unable to truncate log to {}, instance failure", myId, entryIndex);
+                        // This replicator instance is failed, mark it so and exit.
+                        failReplicatorInstance(new Exception("Unable to truncate logfile, cannot continue"));
+                        return; // just quit out and the fiber will be over.
                     }
                 } catch (InterruptedException|ExecutionException e) {
                     LOG.error("oops", e);
+                    failReplicatorInstance(e);
+                    return;
                 }
 
                 // add this entry to the list of things to commit to.
@@ -403,9 +414,6 @@ public class ReplicatorInstance {
 
         // 8. apply newly committed entries to state machine
 
-        // TODO make/broadcast 'lastCommittedIdx' known throughout the local system.
-        long lastCommittedIdx = msg.getCommitIndex();
-
         // wait for the log to commit before returning message.  But do so async.
         Futures.addCallback(logCommitNotification, new FutureCallback<Boolean>() {
             @Override
@@ -417,10 +425,15 @@ public class ReplicatorInstance {
 
                 RpcReply reply = new RpcReply(m);
                 message.reply(reply);
+
+                // Notify and mark the last committed index.
+                lastCommittedIndex = msg.getCommitIndex();
+                notifyLastCommitted();
             }
 
             @Override
             public void onFailure(Throwable t) {
+                // TODO A log commit failure is probably a fatal error.
                 // TODO better error reporting. A log commit failure will e a serious issue.
                 Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
                         .setTerm(currentTerm)
@@ -806,30 +819,31 @@ public class ReplicatorInstance {
             return ;
         }
         this.lastCommittedIndex = mostAcked;
+        notifyLastCommitted();
         LOG.info("{} discovered new visible entry {}", myId, lastCommittedIndex);
 
         // TODO take action and notify clients (pending new system frameworks)
+    }
+
+    private void notifyLastCommitted() {
+        commitNoticeChannel.publish(new IndexCommitNotice(this, lastCommittedIndex));
     }
 
     private void setVotedFor(long votedFor) {
         try {
             persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
         } catch (IOException e) {
-            stateChangeChannel.publish(new ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
-            fiber.dispose();
+            failReplicatorInstance(e);
         }
-        //persister.writeVotedFor(votedFor);
 
         this.votedFor = votedFor;
     }
 
     private void setCurrentTerm(long newTerm) {
-        //persister.writeCurrentTerm(newTerm);
         try {
             persister.writeCurrentTermAndVotedFor(quorumId, newTerm, 0);
         } catch (IOException e) {
-            stateChangeChannel.publish(new ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
-            fiber.dispose();
+            failReplicatorInstance(e);
         }
 
         this.currentTerm = newTerm;

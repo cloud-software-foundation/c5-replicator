@@ -93,7 +93,18 @@ public class ReplicatorService extends AbstractService implements OhmService {
         return this.port;
     }
 
+    private MemoryChannel<IndexCommitNotice> indexCommitNotices = new MemoryChannel<>();
+
+    public org.jetlang.channels.Channel<IndexCommitNotice> getIndexCommitNotices() {
+        return indexCommitNotices;
+    }
+
     private MemoryChannel<ReplicatorInstanceStateChange> replicatorStateChanges = new MemoryChannel<>();
+
+    /**
+     * When a replicator changes state (eg: goes from
+     * @return
+     */
     public org.jetlang.channels.Channel<ReplicatorInstanceStateChange> getReplicatorStateChanges() {
         return replicatorStateChanges;
     }
@@ -390,7 +401,7 @@ public class ReplicatorService extends AbstractService implements OhmService {
         fiber.start();
 
         LOG.warn("ReplicatorService now waiting for service dependency on BeaconService");
-        // we arent technically started until this service dependency is retrieved.
+        // we aren't technically started until this service dependency is retrieved.
         ListenableFuture<BeaconService> f = server.getBeaconService();
         Futures.addCallback(f, new FutureCallback<BeaconService>() {
             @Override
@@ -448,7 +459,6 @@ public class ReplicatorService extends AbstractService implements OhmService {
                                 @Override
                                 public void onMessage(SessionClosed<RpcRequest> message) {
                                     // Clean up cancelled requests.
-
                                     handleCancelledSession(message.getSession());
                                 }
                             });

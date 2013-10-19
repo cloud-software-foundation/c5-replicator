@@ -107,6 +107,7 @@ public class InRamSim {
     final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
     final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
     final Channel<ReplicatorInstanceStateChange> stateChanges = new MemoryChannel<>();
+    final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
     final Fiber rpcFiber;
     final List<Long> peerIds = new ArrayList<>();
     private final PoolFiberFactory fiberPool;
@@ -133,7 +134,8 @@ public class InRamSim {
                     new Info(plusMillis),
                     new Persister(),
                     rpcChannel,
-                    stateChanges);
+                    stateChanges,
+                    commitNotices);
             replicators.put(peerId, rep);
             plusMillis += 500;
         }
@@ -146,6 +148,12 @@ public class InRamSim {
             @Override
             public void onMessage(Request<RpcRequest, RpcWireReply> message) {
                 messageForwarder(message);
+            }
+        });
+        commitNotices.subscribe(rpcFiber, new Callback<IndexCommitNotice>() {
+            @Override
+            public void onMessage(IndexCommitNotice message) {
+                LOG.debug("Commit notice {}", message);
             }
         });
 
