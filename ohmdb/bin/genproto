@@ -19,5 +19,5 @@
 #   permission notice:
 #
 
-(cd src/main/resources/ ; protoc *.proto --java_out=../java)
+(cd src/main/resources/ ; protoc *.proto -I. --java_out=../java)
 

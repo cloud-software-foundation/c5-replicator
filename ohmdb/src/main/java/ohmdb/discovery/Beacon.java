@@ -790,9 +790,9 @@ public final class Beacon {
   public interface ServiceDescriptorOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
     
-    // optional string service_name = 1;
-    boolean hasServiceName();
-    String getServiceName();
+    // optional .ohmdb.messages.ServiceType service = 1;
+    boolean hasService();
+    ohmdb.messages.ControlMessages.ServiceType getService();
     
     // optional uint32 service_port = 2;
     boolean hasServicePort();
@@ -827,36 +827,14 @@ public final class Beacon {
     }
     
     private int bitField0_;
-    // optional string service_name = 1;
-    public static final int SERVICE_NAME_FIELD_NUMBER = 1;
-    private java.lang.Object serviceName_;
-    public boolean hasServiceName() {
+    // optional .ohmdb.messages.ServiceType service = 1;
+    public static final int SERVICE_FIELD_NUMBER = 1;
+    private ohmdb.messages.ControlMessages.ServiceType service_;
+    public boolean hasService() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
-    public String getServiceName() {
-      java.lang.Object ref = serviceName_;
-      if (ref instanceof String) {
-        return (String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        String s = bs.toStringUtf8();
-        if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-          serviceName_ = s;
-        }
-        return s;
-      }
-    }
-    private com.google.protobuf.ByteString getServiceNameBytes() {
-      java.lang.Object ref = serviceName_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-        serviceName_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public ohmdb.messages.ControlMessages.ServiceType getService() {
+      return service_;
     }
     
     // optional uint32 service_port = 2;
@@ -870,7 +848,7 @@ public final class Beacon {
     }
     
     private void initFields() {
-      serviceName_ = "";
+      service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
       servicePort_ = 0;
     }
     private byte memoizedIsInitialized = -1;
@@ -886,7 +864,7 @@ public final class Beacon {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getServiceNameBytes());
+        output.writeEnum(1, service_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeUInt32(2, servicePort_);
@@ -902,7 +880,7 @@ public final class Beacon {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getServiceNameBytes());
+          .computeEnumSize(1, service_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
@@ -1032,7 +1010,7 @@ public final class Beacon {
       
       public Builder clear() {
         super.clear();
-        serviceName_ = "";
+        service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
         bitField0_ = (bitField0_ & ~0x00000001);
         servicePort_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -1077,7 +1055,7 @@ public final class Beacon {
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.serviceName_ = serviceName_;
+        result.service_ = service_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
@@ -1098,8 +1076,8 @@ public final class Beacon {
       
       public Builder mergeFrom(ohmdb.discovery.Beacon.ServiceDescriptor other) {
         if (other == ohmdb.discovery.Beacon.ServiceDescriptor.getDefaultInstance()) return this;
-        if (other.hasServiceName()) {
-          setServiceName(other.getServiceName());
+        if (other.hasService()) {
+          setService(other.getService());
         }
         if (other.hasServicePort()) {
           setServicePort(other.getServicePort());
@@ -1135,9 +1113,15 @@ public final class Beacon {
               }
               break;
             }
-            case 10: {
-              bitField0_ |= 0x00000001;
-              serviceName_ = input.readBytes();
+            case 8: {
+              int rawValue = input.readEnum();
+              ohmdb.messages.ControlMessages.ServiceType value = ohmdb.messages.ControlMessages.ServiceType.valueOf(rawValue);
+              if (value == null) {
+                unknownFields.mergeVarintField(1, rawValue);
+              } else {
+                bitField0_ |= 0x00000001;
+                service_ = value;
+              }
               break;
             }
             case 16: {
@@ -1151,40 +1135,28 @@ public final class Beacon {
       
       private int bitField0_;
       
-      // optional string service_name = 1;
-      private java.lang.Object serviceName_ = "";
-      public boolean hasServiceName() {
+      // optional .ohmdb.messages.ServiceType service = 1;
+      private ohmdb.messages.ControlMessages.ServiceType service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+      public boolean hasService() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
-      public String getServiceName() {
-        java.lang.Object ref = serviceName_;
-        if (!(ref instanceof String)) {
-          String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-          serviceName_ = s;
-          return s;
-        } else {
-          return (String) ref;
-        }
+      public ohmdb.messages.ControlMessages.ServiceType getService() {
+        return service_;
       }
-      public Builder setServiceName(String value) {
+      public Builder setService(ohmdb.messages.ControlMessages.ServiceType value) {
         if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        serviceName_ = value;
-        onChanged();
-        return this;
-      }
-      public Builder clearServiceName() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        serviceName_ = getDefaultInstance().getServiceName();
-        onChanged();
-        return this;
-      }
-      void setServiceName(com.google.protobuf.ByteString value) {
+          throw new NullPointerException();
+        }
         bitField0_ |= 0x00000001;
-        serviceName_ = value;
+        service_ = value;
         onChanged();
+        return this;
+      }
+      public Builder clearService() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+        onChanged();
+        return this;
       }
       
       // optional uint32 service_port = 2;
@@ -1238,13 +1210,14 @@ public final class Beacon {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\014beacon.proto\022\016ohmdb.election\"\202\001\n\014Avail" +
-      "ability\022\017\n\007node_id\030\001 \001(\003\022\031\n\021base_network" +
-      "_port\030\002 \001(\005\022\021\n\taddresses\030\003 \003(\t\0223\n\010servic" +
-      "es\030\004 \003(\0132!.ohmdb.election.ServiceDescrip" +
-      "tor\"?\n\021ServiceDescriptor\022\024\n\014service_name" +
-      "\030\001 \001(\t\022\024\n\014service_port\030\002 \001(\rB\023\n\017ohmdb.di" +
-      "scoveryH\001"
+      "\n\014beacon.proto\022\016ohmdb.election\032\026control_" +
+      "messages.proto\"\202\001\n\014Availability\022\017\n\007node_" +
+      "id\030\001 \001(\003\022\031\n\021base_network_port\030\002 \001(\005\022\021\n\ta" +
+      "ddresses\030\003 \003(\t\0223\n\010services\030\004 \003(\0132!.ohmdb" +
+      ".election.ServiceDescriptor\"W\n\021ServiceDe" +
+      "scriptor\022,\n\007service\030\001 \001(\0162\033.ohmdb.messag" +
+      "es.ServiceType\022\024\n\014service_port\030\002 \001(\rB\023\n\017" +
+      "ohmdb.discoveryH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -1264,7 +1237,7 @@ public final class Beacon {
           internal_static_ohmdb_election_ServiceDescriptor_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_ohmdb_election_ServiceDescriptor_descriptor,
-              new java.lang.String[] { "ServiceName", "ServicePort", },
+              new java.lang.String[] { "Service", "ServicePort", },
               ohmdb.discovery.Beacon.ServiceDescriptor.class,
               ohmdb.discovery.Beacon.ServiceDescriptor.Builder.class);
           return null;
@@ -1273,6 +1246,7 @@ public final class Beacon {
     com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          ohmdb.messages.ControlMessages.getDescriptor(),
         }, assigner);
   }
   

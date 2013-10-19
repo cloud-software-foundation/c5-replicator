@@ -59,13 +59,14 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static ohmdb.discovery.Beacon.Availability;
+import static ohmdb.messages.ControlMessages.ServiceType;
 
 public class BeaconService extends AbstractService implements OhmService {
     private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
 
     @Override
-    public String getServiceName() {
-        return "BeaconService";
+    public ServiceType getServiceType() {
+        return ServiceType.Discovery;
     }
 
     @Override
@@ -80,18 +81,18 @@ public class BeaconService extends AbstractService implements OhmService {
 
     public static class NodeInfoRequest {
         public final long nodeId;
-        public final String serviceName;
+        public final ServiceType serviceType;
 
-        public NodeInfoRequest(long nodeId, String serviceName) {
+        public NodeInfoRequest(long nodeId, ServiceType serviceType) {
             this.nodeId = nodeId;
-            this.serviceName = serviceName;
+            this.serviceType = serviceType;
         }
 
         @Override
         public String toString() {
             return "NodeInfoRequest{" +
                     "nodeId=" + nodeId +
-                    ", serviceName='" + serviceName + '\'' +
+                    ", serviceType=" + serviceType +
                     '}';
         }
     }
@@ -132,12 +133,11 @@ public class BeaconService extends AbstractService implements OhmService {
             return;
         }
 
-        Integer servicePort = peer.services.get(req.serviceName);
+        Integer servicePort = peer.services.get(req.serviceType);
         if (servicePort == null) {
             message.reply(NodeInfoReply.NO_REPLY);
             return;
         }
-
 
         List<String> peerAddrs = peer.availability.getAddressesList();
         // does this service run on that peer?
@@ -150,14 +150,14 @@ public class BeaconService extends AbstractService implements OhmService {
     public static class NodeInfo {
         public final Availability availability;
         public final long lastContactTime;
-        public final ImmutableMap<String, Integer> services;
+        public final ImmutableMap<ServiceType, Integer> services;
 
         public NodeInfo(Availability availability, long lastContactTime) {
             this.availability = availability;
             this.lastContactTime = lastContactTime;
-            ImmutableMap.Builder b = ImmutableMap.builder();
+            ImmutableMap.Builder<ServiceType, Integer> b = ImmutableMap.builder();
             for (Beacon.ServiceDescriptor serviceDescriptor : availability.getServicesList()) {
-                b.put(serviceDescriptor.getServiceName(), serviceDescriptor.getServicePort());
+                b.put(serviceDescriptor.getService(), serviceDescriptor.getServicePort());
             }
             services = b.build();
         }
@@ -185,7 +185,7 @@ public class BeaconService extends AbstractService implements OhmService {
     private final long nodeId;
     private final int discoveryPort;
     private final NioEventLoopGroup eventLoop;
-    private final Map<String, Integer> serviceInfo = new HashMap<>();
+    private final Map<ServiceType, Integer> serviceInfo = new HashMap<>();
     private final Map<Long, NodeInfo> peers = new HashMap<>();
     private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
     private final Fiber fiber;
@@ -218,7 +218,7 @@ public class BeaconService extends AbstractService implements OhmService {
     public BeaconService(long nodeId, int discoveryPort,
                          final Fiber fiber,
                          NioEventLoopGroup eventLoop,
-                         Map<String, Integer> services,
+                         Map<ServiceType, Integer> services,
                          OhmServer theOhmServer
                          ) throws InterruptedException, SocketException {
         this.discoveryPort = discoveryPort;
@@ -259,10 +259,10 @@ public class BeaconService extends AbstractService implements OhmService {
                 .setNodeId(nodeId);
 
         List<Beacon.ServiceDescriptor> msgServices = new ArrayList<>(serviceInfo.size());
-        for (String svcName : serviceInfo.keySet()) {
+        for (ServiceType serviceType : serviceInfo.keySet()) {
             msgServices.add(Beacon.ServiceDescriptor.newBuilder()
-            .setServiceName(svcName)
-            .setServicePort(serviceInfo.get(svcName))
+            .setService(serviceType)
+            .setServicePort(serviceInfo.get(serviceType))
             .build());
         }
 
@@ -286,12 +286,12 @@ public class BeaconService extends AbstractService implements OhmService {
     @FiberOnly
     private void serviceChange(OhmServer.ServiceStateChange message) {
         if (message.state == State.RUNNING) {
-            LOG.debug("BeaconService adding running service {} on port {}", message.service.getServiceName(), message.service.port());
-            serviceInfo.put(message.service.getServiceName(), message.service.port());
+            LOG.debug("BeaconService adding running service {} on port {}", message.service.getServiceType(), message.service.port());
+            serviceInfo.put(message.service.getServiceType(), message.service.port());
         } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
-            LOG.debug("BeaconService removed service {} on port {} with state {}", message.service.getServiceName(), message.service.port(),
+            LOG.debug("BeaconService removed service {} on port {} with state {}", message.service.getServiceType(), message.service.port(),
                     message.state);
-            serviceInfo.remove(message.service.getServiceName());
+            serviceInfo.remove(message.service.getServiceType());
         } else {
             LOG.debug("BeaconService got unknown service change {}", message);
         }

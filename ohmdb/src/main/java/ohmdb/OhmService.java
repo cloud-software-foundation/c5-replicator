@@ -17,6 +17,7 @@
 package ohmdb;
 
 import com.google.common.util.concurrent.Service;
+import ohmdb.messages.ControlMessages;
 
 /**
  * An internal service.  Extends guava services.
@@ -24,7 +25,7 @@ import com.google.common.util.concurrent.Service;
  */
 public interface OhmService extends Service {
 
-    public String getServiceName();
+    public ControlMessages.ServiceType getServiceType();
     public boolean hasPort();
     public int port();
 }

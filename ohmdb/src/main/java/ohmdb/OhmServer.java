@@ -27,6 +27,8 @@ import org.jetlang.channels.RequestChannel;
 
 import java.util.concurrent.ExecutionException;
 
+import static ohmdb.messages.ControlMessages.ServiceType;
+
 /**
  * Provides bootstrapping and other service introspection and management utilities.  Ideally we can run multiple
  * OhmServer on the same JVM for testing (may be conflicts with the discovery methods).
@@ -36,7 +38,7 @@ public interface OhmServer extends Service {
 
     public long getNodeId();
 
-    public ListenableFuture<OhmService> getServiceByName(String serviceName);
+    public ListenableFuture<OhmService> getService(ServiceType service);
 
     public Channel<MessageLite> getCommandChannel();
 
@@ -44,8 +46,8 @@ public interface OhmServer extends Service {
 
     public Channel<ServiceStateChange> getServiceRegisteredChannel();
 
-    public ImmutableMap<String, OhmService> getServices() throws ExecutionException, InterruptedException;
-    public ListenableFuture<ImmutableMap<String, OhmService>> getServices2();
+    public ImmutableMap<ServiceType, OhmService> getServices() throws ExecutionException, InterruptedException;
+    public ListenableFuture<ImmutableMap<ServiceType, OhmService>> getServices2();
 
     public ListenableFuture<BeaconService> getBeaconService();
 

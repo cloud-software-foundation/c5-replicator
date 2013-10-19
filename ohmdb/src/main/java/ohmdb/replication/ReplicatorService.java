@@ -66,6 +66,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static ohmdb.messages.ControlMessages.ServiceType;
 import static ohmdb.replication.Raft.RaftWireMessage;
 
 /**
@@ -78,8 +79,8 @@ public class ReplicatorService extends AbstractService implements OhmService {
     /**************** OhmService informational methods ************************************/
 
     @Override
-    public String getServiceName() {
-        return "ReplicatorService";
+    public ServiceType getServiceType() {
+        return ServiceType.Replication;
     }
 
     @Override
@@ -298,7 +299,7 @@ public class ReplicatorService extends AbstractService implements OhmService {
             handleLoopBackMessage(message);
         }
 
-        BeaconService.NodeInfoRequest nodeInfoRequest = new BeaconService.NodeInfoRequest(to, "ReplicatorService");
+        BeaconService.NodeInfoRequest nodeInfoRequest = new BeaconService.NodeInfoRequest(to, ServiceType.Replication);
         AsyncRequest.withOneReply(fiber, beaconService.getNodeInfo(), nodeInfoRequest, new Callback<BeaconService.NodeInfoReply>() {
             @FiberOnly
             @Override

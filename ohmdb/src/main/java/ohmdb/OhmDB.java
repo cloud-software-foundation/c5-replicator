@@ -59,6 +59,7 @@ import static ohmdb.OhmStatic.getRandomPath;
 import static ohmdb.OhmStatic.recoverOhmServer;
 import static ohmdb.log.OLog.moveAwayOldLogs;
 import static ohmdb.messages.ControlMessages.CommandReply;
+import static ohmdb.messages.ControlMessages.ServiceType;
 import static ohmdb.messages.ControlMessages.StartService;
 import static ohmdb.messages.ControlMessages.StopService;
 
@@ -71,7 +72,6 @@ import static ohmdb.messages.ControlMessages.StopService;
  */
 public class OhmDB extends AbstractService implements OhmServer {
     private static final Logger LOG = LoggerFactory.getLogger(OhmDB.class);
-  private Fiber tabletServicesFiber;
 
   public static void main(String[] args) throws Exception {
         String cfgPath = "/tmp/ohmdb-ryan-" + System.currentTimeMillis();
@@ -95,7 +95,7 @@ public class OhmDB extends AbstractService implements OhmServer {
 
         // issue startup commands here that are common/we always want:
         ControlMessages.StartService startBeacon = ControlMessages.StartService.newBuilder()
-                .setServiceName("BeaconService")
+                .setService(ServiceType.Discovery)
                 .setServicePort(54333)
                 .setServiceArgv("")
                 .build();
@@ -154,20 +154,20 @@ public class OhmDB extends AbstractService implements OhmServer {
 //    }
 
     @Override
-    public ListenableFuture<OhmService> getServiceByName(final String serviceName) {
+    public ListenableFuture<OhmService> getService(final ServiceType service) {
         final SettableFuture<OhmService> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
-                future.set(serviceRegistry.get(serviceName));
+                future.set(serviceRegistry.get(service));
             }
         });
         return future;
     }
 
     @Override
-    public ImmutableMap<String, OhmService> getServices() throws ExecutionException, InterruptedException {
-        final SettableFuture<ImmutableMap<String, OhmService>> future = SettableFuture.create();
+    public ImmutableMap<ServiceType, OhmService> getServices() throws ExecutionException, InterruptedException {
+        final SettableFuture<ImmutableMap<ServiceType, OhmService>> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
@@ -177,8 +177,8 @@ public class OhmDB extends AbstractService implements OhmServer {
         return future.get();
     }
     @Override
-    public ListenableFuture<ImmutableMap<String, OhmService>> getServices2() {
-        final SettableFuture<ImmutableMap<String, OhmService>> future = SettableFuture.create();
+    public ListenableFuture<ImmutableMap<ServiceType, OhmService>> getServices2() {
+        final SettableFuture<ImmutableMap<ServiceType, OhmService>> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
@@ -196,13 +196,13 @@ public class OhmDB extends AbstractService implements OhmServer {
             public void run() {
 
                 // What happens iff the serviceRegistry has EMPTY?
-                if (!serviceRegistry.containsKey("BeaconService")) {
+                if (!serviceRegistry.containsKey(ServiceType.Discovery)) {
                     // listen to the registration stream:
                     final Disposable[] d = new Disposable[]{null};
                     d[0] = getServiceRegisteredChannel().subscribe(serverFiber, new Callback<ServiceStateChange>() {
                         @Override
                         public void onMessage(ServiceStateChange message) {
-                            if (message.service.getServiceName().equals("BeaconService")) {
+                            if (message.service.getServiceType().equals(ServiceType.Discovery)) {
                                 future.set((BeaconService) message.service);
 
                                 assert d[0] != null;  // this is pretty much impossible because of how fibers work.
@@ -212,7 +212,7 @@ public class OhmDB extends AbstractService implements OhmServer {
                     });
                 }
 
-                future.set((BeaconService) serviceRegistry.get("BeaconService"));
+                future.set((BeaconService) serviceRegistry.get(ServiceType.Discovery));
             }
         });
         return future;
@@ -220,13 +220,15 @@ public class OhmDB extends AbstractService implements OhmServer {
 
 
     /**** Implementation ****/
+    private Fiber tabletServicesFiber;
+
     private Fiber serverFiber;
     private final ConfigDirectory configDirectory;
 
     // The mapping between service name and the instance.
-    private final Map<String,OhmService> serviceRegistry = new HashMap<>();
+    private final Map<ServiceType, OhmService> serviceRegistry = new HashMap<>();
 
-    private final long nodeId;
+     private final long nodeId;
 
     private final Channel<MessageLite> commandChannel = new MemoryChannel<>();
 
@@ -268,12 +270,12 @@ public class OhmDB extends AbstractService implements OhmServer {
     private void processCommandMessage(MessageLite msg) throws Exception {
         if (msg instanceof StartService) {
             StartService message = (StartService) msg;
-            startService(message.getServiceName(), message.getServicePort(), message.getServiceArgv());
+            startService(message.getService(), message.getServicePort(), message.getServiceArgv());
         }
         else if (msg instanceof StopService) {
             StopService message = (StopService)msg;
 
-            stopService(message.getServiceName(), message.getHardStop(), message.getStopReason());
+            stopService(message.getService(), message.getHardStop(), message.getStopReason());
         }
     }
 
@@ -285,15 +287,15 @@ public class OhmDB extends AbstractService implements OhmServer {
 
             if (r instanceof StartService) {
                 StartService message = (StartService)r;
-                startService(message.getServiceName(), message.getServicePort(), message.getServiceArgv());
+                startService(message.getService(), message.getServicePort(), message.getServiceArgv());
 
-                stdout = String.format("Service %s started", message.getServiceName());
+                stdout = String.format("Service %s started", message.getService());
             } else if (r instanceof StopService) {
                 StopService message = (StopService)r;
 
-                stopService(message.getServiceName(), message.getHardStop(), message.getStopReason());
+                stopService(message.getService(), message.getHardStop(), message.getStopReason());
 
-                stdout = String.format("Service %s started", message.getServiceName());
+                stdout = String.format("Service %s started", message.getService());
             } else {
                 CommandReply reply = CommandReply.newBuilder()
                         .setCommandSuccess(false)
@@ -347,7 +349,7 @@ public class OhmDB extends AbstractService implements OhmServer {
         public void terminated(State from) {
             // TODO move this into a subscriber of ourselves?
             LOG.debug("Terminated service {}", service);
-            serviceRegistry.remove(service.getServiceName());
+            serviceRegistry.remove(service.getServiceType());
             publishEvent(State.TERMINATED);
         }
 
@@ -365,17 +367,17 @@ public class OhmDB extends AbstractService implements OhmServer {
     }
 
     @FiberOnly
-    private boolean startService(final String serviceName, final int servicePort, String serviceArgv) throws Exception {
-        if (serviceRegistry.containsKey(serviceName)) {
+    private boolean startService(final ServiceType serviceType, final int servicePort, String serviceArgv) throws Exception {
+        if (serviceRegistry.containsKey(serviceType)) {
             // already running, dont start twice?
-            LOG.warn("Service {} already running", serviceName);
-            throw new Exception("Cant start running service: " + serviceName);
+            LOG.warn("Service {} already running", serviceType);
+            throw new Exception("Cant start running service: " + serviceType);
         }
 
-        switch (serviceName) {
-            case "BeaconService": {
-                Map<String, Integer> l = new HashMap<>();
-                for (String name : serviceRegistry.keySet()) {
+        switch (serviceType) {
+            case Discovery: {
+                Map<ServiceType, Integer> l = new HashMap<>();
+                for (ServiceType name : serviceRegistry.keySet()) {
                     l.put(name, 1);
                 }
 
@@ -383,32 +385,31 @@ public class OhmDB extends AbstractService implements OhmServer {
                 service.addListener(new ServiceListenerPublisher(service), serverFiber);
 
                 service.start();
-                serviceRegistry.put(serviceName, service);
+                serviceRegistry.put(serviceType, service);
                 break;
             }
-            case "ReplicatorService": {
+            case Replication: {
                 OhmService service = new ReplicatorService(fiberPool, bossGroup, workerGroup, servicePort, this);
                 service.addListener(new ServiceListenerPublisher(service), serverFiber);
 
                 service.start();
-                serviceRegistry.put(serviceName, service);
+                serviceRegistry.put(serviceType, service);
                 break;
             }
             default:
-                throw new Exception("No such service as " + serviceName);
+                throw new Exception("No such service as " + serviceType);
         }
 
         return true;
     }
 
     @FiberOnly
-    private void stopService(String serviceName, boolean hardStop, String stopReason) {
-        Service theService = serviceRegistry.get(serviceName);
+    private void stopService(ServiceType serviceType, boolean hardStop, String stopReason) {
+        Service theService = serviceRegistry.get(serviceType);
         if (theService == null) {
-            LOG.debug("Cant stop service {}, not in registry", serviceName);
+            LOG.debug("Cant stop service {}, not in registry", serviceType);
             return ;
         }
-
 
         theService.stop();
     }
@@ -434,6 +435,7 @@ public class OhmDB extends AbstractService implements OhmServer {
 
 
       try {
+          // TODO we probably shouldnt run services threads as daemons, instead prefer to do orderly shutdown.
         tabletServicesFiber = new ThreadFiber(new RunnableExecutorImpl(), "Tablet-Services", true);
         tabletServicesFiber.execute(new RegionServer(8080));
 
