@@ -185,7 +185,7 @@ public class OLog implements AutoCloseable {
     Log.OLogEntry nextEntry;
 
     do {
-      // Handle tombestones TODO
+      // TODO Handle tombestones
       nextEntry = Log.OLogEntry.parseDelimitedFrom(fileInputStream);
       // EOF
       if (nextEntry == null) {
