@@ -20,6 +20,7 @@ import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import ohmdb.ReplicationService;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -106,8 +107,8 @@ public class InRamSim {
     final int peerSize;
     final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
     final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
-    final Channel<ReplicatorInstanceStateChange> stateChanges = new MemoryChannel<>();
-    final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
+    final Channel<ReplicationService.ReplicatorInstanceStateChange> stateChanges = new MemoryChannel<>();
+    final Channel<ReplicationService.IndexCommitNotice> commitNotices = new MemoryChannel<>();
     final Fiber rpcFiber;
     final List<Long> peerIds = new ArrayList<>();
     private final PoolFiberFactory fiberPool;
@@ -150,9 +151,9 @@ public class InRamSim {
                 messageForwarder(message);
             }
         });
-        commitNotices.subscribe(rpcFiber, new Callback<IndexCommitNotice>() {
+        commitNotices.subscribe(rpcFiber, new Callback<ReplicationService.IndexCommitNotice>() {
             @Override
-            public void onMessage(IndexCommitNotice message) {
+            public void onMessage(ReplicationService.IndexCommitNotice message) {
                 LOG.debug("Commit notice {}", message);
             }
         });

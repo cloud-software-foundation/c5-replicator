@@ -7,6 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
+import ohmdb.ReplicationService;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -38,7 +39,7 @@ import static ohmdb.replication.Raft.LogEntry;
 /**
  * Single instantation of a raft / log / lease
  */
-public class ReplicatorInstance {
+public class ReplicatorInstance implements ReplicationService.Replicator {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorInstance.class);
 
     @Override
@@ -60,8 +61,8 @@ public class ReplicatorInstance {
 
     private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
     private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
-    private final Channel<ReplicatorInstanceStateChange> stateChangeChannel;
-    private final Channel<IndexCommitNotice> commitNoticeChannel;
+    private final Channel<ReplicationService.ReplicatorInstanceStateChange> stateChangeChannel;
+    private final Channel<ReplicationService.IndexCommitNotice> commitNoticeChannel;
 
     /********** final fields *************/
     private final Fiber fiber;
@@ -78,6 +79,7 @@ public class ReplicatorInstance {
     private long myFirstIndexAsLeader;
     private long lastCommittedIndex;
 
+    @Override
     public String getQuorumId() {
         return quorumId;
     }
@@ -125,8 +127,8 @@ public class ReplicatorInstance {
                               RaftInformationInterface info,
                               RaftInfoPersistence persister,
                               RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
-                              final Channel<ReplicatorInstanceStateChange> stateChangeChannel,
-                              final Channel<IndexCommitNotice> commitNoticeChannel) {
+                              final Channel<ReplicationService.ReplicatorInstanceStateChange> stateChangeChannel,
+                              final Channel<ReplicationService.IndexCommitNotice> commitNoticeChannel) {
         this.fiber = fiber;
         this.myId = myId;
         this.quorumId = quorumId;
@@ -150,7 +152,7 @@ public class ReplicatorInstance {
                     readPersistentData();
                     // indicate we are running!
                     stateChangeChannel.publish(
-                            new ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.RUNNING, null));
+                            new ReplicationService.ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.RUNNING, null));
                 } catch (IOException e) {
                     LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
                     failReplicatorInstance(e);
@@ -178,19 +180,13 @@ public class ReplicatorInstance {
 
     private void failReplicatorInstance(Throwable e) {
         stateChangeChannel.publish(
-                new ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
+                new ReplicationService.ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
         fiber.dispose(); // kill us forever.
     }
 
     // public API:
 
-    /**
-     * TODO change the type of datum to a protobuf that is useful.
-     *
-     * Log a datum
-     * @param datum some data to log.
-     * @return a listenable for the index number OR null if we aren't the leader.
-     */
+    @Override
     public ListenableFuture<Long> logData(byte[] datum) throws InterruptedException {
         if (!isLeader()) {
             LOG.debug("{} attempted to logData on a non-leader", myId);
@@ -858,7 +854,7 @@ public class ReplicatorInstance {
     }
 
     private void notifyLastCommitted() {
-        commitNoticeChannel.publish(new IndexCommitNotice(this, lastCommittedIndex));
+        commitNoticeChannel.publish(new ReplicationService.IndexCommitNotice(this, lastCommittedIndex));
     }
 
     private void setVotedFor(long votedFor) {
@@ -882,6 +878,7 @@ public class ReplicatorInstance {
         this.votedFor = 0;
     }
 
+    @Override
     public long getId() {
         return myId;
     }
@@ -890,6 +887,7 @@ public class ReplicatorInstance {
         fiber.dispose();
     }
 
+    @Override
     public boolean isLeader() {
         return myState == State.LEADER;
     }
