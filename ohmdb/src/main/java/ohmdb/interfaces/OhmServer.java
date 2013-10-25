@@ -30,11 +30,15 @@ import java.util.concurrent.ExecutionException;
 import static ohmdb.messages.ControlMessages.ServiceType;
 
 /**
+ * The root interface for all other services and modules to get around inside the server.
+ * <p/>
  * Provides bootstrapping and other service introspection and management utilities.  Ideally we can run multiple
  * OhmServer on the same JVM for testing (may be conflicts with the discovery methods).
  */
 public interface OhmServer extends Service {
-    /***** Interface type public methods ******/
+    /**
+     * ** Interface type public methods *****
+     */
 
     public long getNodeId();
 
@@ -47,6 +51,7 @@ public interface OhmServer extends Service {
     public Channel<ServiceStateChange> getServiceRegisteredChannel();
 
     public ImmutableMap<ServiceType, OhmService> getServices() throws ExecutionException, InterruptedException;
+
     public ListenableFuture<ImmutableMap<ServiceType, OhmService>> getServices2();
 
     public ConfigDirectory getConfigDirectory();
@@ -70,6 +75,7 @@ public interface OhmServer extends Service {
     }
 
     public Channel<ConfigKeyUpdated> getConfigUpdateChannel();
+
     public static class ConfigKeyUpdated {
         public final String configKey;
         public final Object configValue;

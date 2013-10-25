@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package ohmdb.interfaces;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -5,39 +21,39 @@ import ohmdb.replication.ReplicatorInstance;
 import org.jetlang.channels.Channel;
 
 /**
- *
+ * The replication service/module.  The API to other services internal to ohmdb.
  */
 public interface ReplicationService extends OhmService {
-    Channel<IndexCommitNotice> getIndexCommitNotices();
+    public Channel<IndexCommitNotice> getIndexCommitNotices();
 
     /**
      * When a replicator changes state (eg: goes from
+     *
      * @return
      */
-    Channel<ReplicatorInstanceStateChange> getReplicatorStateChanges();
+    public Channel<ReplicatorInstanceStateChange> getReplicatorStateChanges();
 
     /**
      * information about when a replicator instance changes state. replicator instances publish these to indicate
      * success or failure.
-     *
+     * <p/>
      * A previously successful replicator can encounter a fatal error and then send one of these to notify other
      * components.
-     *
+     * <p/>
      * A replicator can have 2 states:
      * <ul>
-     *     <li>{@link com.google.common.util.concurrent.Service.State.FAILED}</li>
-     *     <li>{@link com.google.common.util.concurrent.Service.State.RUNNING}</li>
+     * <li>{@link com.google.common.util.concurrent.Service.State.FAILED}</li>
+     * <li>{@link com.google.common.util.concurrent.Service.State.RUNNING}</li>
      * </ul>
-    */
+     */
     public static class ReplicatorInstanceStateChange {
         public final Replicator instance;
         public final State state;
         public final Throwable optError;
 
         /**
-         *
          * @param instance the replicator instance that is affected
-         * @param state the state we have entered (FAILED|RUNNING)
+         * @param state    the state we have entered (FAILED|RUNNING)
          * @param optError the optional error (can be null)
          */
         public ReplicatorInstanceStateChange(Replicator instance, State state, Throwable optError) {
@@ -87,8 +103,9 @@ public interface ReplicationService extends OhmService {
 
         /**
          * TODO change the type of datum to a protobuf that is useful.
-         *
+         * <p/>
          * Log a datum
+         *
          * @param datum some data to log.
          * @return a listenable for the index number OR null if we aren't the leader.
          */

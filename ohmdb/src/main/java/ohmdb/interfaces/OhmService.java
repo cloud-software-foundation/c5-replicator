@@ -21,12 +21,18 @@ import ohmdb.messages.ControlMessages;
 
 /**
  * An internal service.  Extends guava services.
+ * <p/>
+ * An internal service is a component that can be started/stopped, and is the official
+ * internal interface between different modules.
+ * <p/>
  * TODO service dependencies so if you stop one service, you have to stop the dependents.
  */
 public interface OhmService extends Service {
 
     public ControlMessages.ServiceType getServiceType();
+
     public boolean hasPort();
+
     public int port();
 
     // TODO formalize dependencies for automated start order, etc etc
