@@ -43,7 +43,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import ohmdb.DiscoveryService;
 import ohmdb.OhmServer;
-import ohmdb.OhmService;
+import ohmdb.ReplicationService;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -73,7 +73,7 @@ import static ohmdb.replication.Raft.RaftWireMessage;
  * TODO we dont have a way to actually START a freaking ReplicatorInstance - YET.
  * TODO consider being symmetric in how we handle sent messages.
  */
-public class ReplicatorService extends AbstractService implements OhmService {
+public class ReplicatorService extends AbstractService implements ReplicationService {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorService.class);
 
     /**************** OhmService informational methods ************************************/
@@ -95,16 +95,14 @@ public class ReplicatorService extends AbstractService implements OhmService {
 
     private MemoryChannel<IndexCommitNotice> indexCommitNotices = new MemoryChannel<>();
 
+    @Override
     public org.jetlang.channels.Channel<IndexCommitNotice> getIndexCommitNotices() {
         return indexCommitNotices;
     }
 
     private MemoryChannel<ReplicatorInstanceStateChange> replicatorStateChanges = new MemoryChannel<>();
 
-    /**
-     * When a replicator changes state (eg: goes from
-     * @return
-     */
+    @Override
     public org.jetlang.channels.Channel<ReplicatorInstanceStateChange> getReplicatorStateChanges() {
         return replicatorStateChanges;
     }
