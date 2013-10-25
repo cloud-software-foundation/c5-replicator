@@ -147,22 +147,37 @@ public class OhmDB extends AbstractService implements OhmServer {
         return nodeId;
     }
 
-//    public Service getServiceByName(String serviceName) {
-        // do this on the fiber:
-//        return serviceRegistry.get(serviceName);
-//
-//    }
-
     @Override
-    public ListenableFuture<OhmService> getService(final ServiceType service) {
+    public ListenableFuture<OhmService> getService(final ServiceType serviceType) {
         final SettableFuture<OhmService> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
-                future.set(serviceRegistry.get(service));
+
+                // What happens iff the serviceRegistry has EMPTY?
+                if (!serviceRegistry.containsKey(serviceType)) {
+                    // listen to the registration stream:
+                    final Disposable[] d = new Disposable[]{null};
+                    d[0] = getServiceRegisteredChannel().subscribe(serverFiber, new Callback<ServiceStateChange>() {
+                        @Override
+                        public void onMessage(ServiceStateChange message) {
+                            if (message.state != State.RUNNING) return;
+
+                            if (message.service.getServiceType().equals(serviceType)) {
+                                future.set(message.service);
+
+                                assert d[0] != null;  // this is pretty much impossible because of how fibers work.
+                                d[0].dispose();
+                            }
+                        }
+                    });
+                }
+
+                future.set(serviceRegistry.get(serviceType));
             }
         });
         return future;
+
     }
 
     @Override
@@ -187,37 +202,6 @@ public class OhmDB extends AbstractService implements OhmServer {
         });
         return future;
     }
-
-    @Override
-    public ListenableFuture<DiscoveryService> getBeaconService() {
-        final SettableFuture<DiscoveryService> future = SettableFuture.create();
-        serverFiber.execute(new Runnable() {
-            @Override
-            public void run() {
-
-                // What happens iff the serviceRegistry has EMPTY?
-                if (!serviceRegistry.containsKey(ServiceType.Discovery)) {
-                    // listen to the registration stream:
-                    final Disposable[] d = new Disposable[]{null};
-                    d[0] = getServiceRegisteredChannel().subscribe(serverFiber, new Callback<ServiceStateChange>() {
-                        @Override
-                        public void onMessage(ServiceStateChange message) {
-                            if (message.service.getServiceType().equals(ServiceType.Discovery)) {
-                                future.set((DiscoveryService) message.service);
-
-                                assert d[0] != null;  // this is pretty much impossible because of how fibers work.
-                                d[0].dispose();
-                            }
-                        }
-                    });
-                }
-
-                future.set((DiscoveryService) serviceRegistry.get(ServiceType.Discovery));
-            }
-        });
-        return future;
-    }
-
 
     /**** Implementation ****/
     private Fiber tabletServicesFiber;

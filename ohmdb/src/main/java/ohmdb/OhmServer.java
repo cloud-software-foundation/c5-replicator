@@ -48,8 +48,6 @@ public interface OhmServer extends Service {
     public ImmutableMap<ServiceType, OhmService> getServices() throws ExecutionException, InterruptedException;
     public ListenableFuture<ImmutableMap<ServiceType, OhmService>> getServices2();
 
-    public ListenableFuture<DiscoveryService> getBeaconService();
-
     public ConfigDirectory getConfigDirectory();
 
     public static class ServiceStateChange {

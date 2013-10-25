@@ -28,4 +28,8 @@ public interface OhmService extends Service {
     public ControlMessages.ServiceType getServiceType();
     public boolean hasPort();
     public int port();
+
+    // TODO formalize dependencies for automated start order, etc etc
+    //public List<ControlMessages.ServiceType> getDependencies();
+
 }

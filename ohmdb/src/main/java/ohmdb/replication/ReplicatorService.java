@@ -43,6 +43,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import ohmdb.DiscoveryService;
 import ohmdb.OhmServer;
+import ohmdb.OhmService;
 import ohmdb.ReplicationService;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
@@ -400,11 +401,11 @@ public class ReplicatorService extends AbstractService implements ReplicationSer
 
         LOG.warn("ReplicatorService now waiting for service dependency on BeaconService");
         // we aren't technically started until this service dependency is retrieved.
-        ListenableFuture<DiscoveryService> f = server.getBeaconService();
-        Futures.addCallback(f, new FutureCallback<DiscoveryService>() {
+        ListenableFuture<OhmService> f = server.getService(ServiceType.Discovery);
+        Futures.addCallback(f, new FutureCallback<OhmService>() {
             @Override
-            public void onSuccess(DiscoveryService result) {
-                discoveryService = result;
+            public void onSuccess(OhmService result) {
+                discoveryService = (DiscoveryService) result;
 
                 // finish init:
                 try {
