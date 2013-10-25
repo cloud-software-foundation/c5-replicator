@@ -24,6 +24,8 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.MessageLite;
 import io.netty.channel.nio.NioEventLoopGroup;
 import ohmdb.discovery.BeaconService;
+import ohmdb.interfaces.OhmServer;
+import ohmdb.interfaces.OhmService;
 import ohmdb.messages.ControlMessages;
 import ohmdb.regionserver.RegistryFile;
 import ohmdb.replication.ReplicatorService;

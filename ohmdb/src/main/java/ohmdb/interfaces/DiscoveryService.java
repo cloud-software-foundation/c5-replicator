@@ -1,4 +1,4 @@
-package ohmdb;
+package ohmdb.interfaces;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;

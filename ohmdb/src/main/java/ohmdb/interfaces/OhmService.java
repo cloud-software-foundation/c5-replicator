@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package ohmdb;
+package ohmdb.interfaces;
 
 import com.google.common.util.concurrent.Service;
 import ohmdb.messages.ControlMessages;

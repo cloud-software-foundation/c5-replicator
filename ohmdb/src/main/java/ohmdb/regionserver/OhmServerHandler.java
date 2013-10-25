@@ -2,7 +2,7 @@ package ohmdb.regionserver;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import ohmdb.OhmServer;
+import ohmdb.interfaces.OhmServer;
 import ohmdb.OhmStatic;
 import ohmdb.client.generated.ClientProtos;
 import ohmdb.regionserver.scanner.ScanRunnable;
