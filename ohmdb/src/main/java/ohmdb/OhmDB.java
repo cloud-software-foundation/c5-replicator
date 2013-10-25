@@ -189,8 +189,8 @@ public class OhmDB extends AbstractService implements OhmServer {
     }
 
     @Override
-    public ListenableFuture<BeaconService> getBeaconService() {
-        final SettableFuture<BeaconService> future = SettableFuture.create();
+    public ListenableFuture<DiscoveryService> getBeaconService() {
+        final SettableFuture<DiscoveryService> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
@@ -203,7 +203,7 @@ public class OhmDB extends AbstractService implements OhmServer {
                         @Override
                         public void onMessage(ServiceStateChange message) {
                             if (message.service.getServiceType().equals(ServiceType.Discovery)) {
-                                future.set((BeaconService) message.service);
+                                future.set((DiscoveryService) message.service);
 
                                 assert d[0] != null;  // this is pretty much impossible because of how fibers work.
                                 d[0].dispose();
@@ -212,7 +212,7 @@ public class OhmDB extends AbstractService implements OhmServer {
                     });
                 }
 
-                future.set((BeaconService) serviceRegistry.get(ServiceType.Discovery));
+                future.set((DiscoveryService) serviceRegistry.get(ServiceType.Discovery));
             }
         });
         return future;

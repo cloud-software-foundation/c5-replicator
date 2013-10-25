@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.protobuf.MessageLite;
-import ohmdb.discovery.BeaconService;
 import ohmdb.messages.ControlMessages;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.RequestChannel;
@@ -49,7 +48,7 @@ public interface OhmServer extends Service {
     public ImmutableMap<ServiceType, OhmService> getServices() throws ExecutionException, InterruptedException;
     public ListenableFuture<ImmutableMap<ServiceType, OhmService>> getServices2();
 
-    public ListenableFuture<BeaconService> getBeaconService();
+    public ListenableFuture<DiscoveryService> getBeaconService();
 
     public ConfigDirectory getConfigDirectory();
 

@@ -41,9 +41,9 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import ohmdb.DiscoveryService;
 import ohmdb.OhmServer;
 import ohmdb.OhmService;
-import ohmdb.discovery.BeaconService;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -156,7 +156,7 @@ public class ReplicatorService extends AbstractService implements OhmService {
     private Bootstrap outgoingBootstrap;
 
     // Initalized in the service start, by the time any messages or fiber executions trigger, this should be not-null
-    private BeaconService beaconService = null;
+    private DiscoveryService discoveryService = null;
     private Channel listenChannel;
 
     private long messageIdGen = 1;
@@ -310,11 +310,11 @@ public class ReplicatorService extends AbstractService implements OhmService {
             handleLoopBackMessage(message);
         }
 
-        BeaconService.NodeInfoRequest nodeInfoRequest = new BeaconService.NodeInfoRequest(to, ServiceType.Replication);
-        AsyncRequest.withOneReply(fiber, beaconService.getNodeInfo(), nodeInfoRequest, new Callback<BeaconService.NodeInfoReply>() {
+        DiscoveryService.NodeInfoRequest nodeInfoRequest = new DiscoveryService.NodeInfoRequest(to, ServiceType.Replication);
+        AsyncRequest.withOneReply(fiber, discoveryService.getNodeInfo(), nodeInfoRequest, new Callback<DiscoveryService.NodeInfoReply>() {
             @FiberOnly
             @Override
-            public void onMessage(BeaconService.NodeInfoReply nodeInfoReply) {
+            public void onMessage(DiscoveryService.NodeInfoReply nodeInfoReply) {
                 if (!nodeInfoReply.found) {
                     // TODO signal TCP/transport layer failure in a better way
                     message.reply(null);
@@ -402,11 +402,11 @@ public class ReplicatorService extends AbstractService implements OhmService {
 
         LOG.warn("ReplicatorService now waiting for service dependency on BeaconService");
         // we aren't technically started until this service dependency is retrieved.
-        ListenableFuture<BeaconService> f = server.getBeaconService();
-        Futures.addCallback(f, new FutureCallback<BeaconService>() {
+        ListenableFuture<DiscoveryService> f = server.getBeaconService();
+        Futures.addCallback(f, new FutureCallback<DiscoveryService>() {
             @Override
-            public void onSuccess(BeaconService result) {
-                beaconService = result;
+            public void onSuccess(DiscoveryService result) {
+                discoveryService = result;
 
                 // finish init:
                 try {

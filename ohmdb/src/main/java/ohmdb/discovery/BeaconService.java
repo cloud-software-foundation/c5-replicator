@@ -32,8 +32,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import ohmdb.DiscoveryService;
 import ohmdb.OhmServer;
-import ohmdb.OhmService;
 import ohmdb.codec.UdpProtobufDecoder;
 import ohmdb.codec.UdpProtobufEncoder;
 import ohmdb.util.FiberOnly;
@@ -61,7 +61,7 @@ import java.util.concurrent.TimeUnit;
 import static ohmdb.discovery.Beacon.Availability;
 import static ohmdb.messages.ControlMessages.ServiceType;
 
-public class BeaconService extends AbstractService implements OhmService {
+public class BeaconService extends AbstractService implements DiscoveryService {
     private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
 
     @Override
@@ -79,48 +79,8 @@ public class BeaconService extends AbstractService implements OhmService {
         return discoveryPort;
     }
 
-    public static class NodeInfoRequest {
-        public final long nodeId;
-        public final ServiceType serviceType;
-
-        public NodeInfoRequest(long nodeId, ServiceType serviceType) {
-            this.nodeId = nodeId;
-            this.serviceType = serviceType;
-        }
-
-        @Override
-        public String toString() {
-            return "NodeInfoRequest{" +
-                    "nodeId=" + nodeId +
-                    ", serviceType=" + serviceType +
-                    '}';
-        }
-    }
-    public static class NodeInfoReply {
-        /**
-         * Was the node/service information found?
-         */
-        public final boolean found;
-        public final List<String> addresses;
-        public final int port;
-
-        public NodeInfoReply(boolean found, List<String> addresses, int port) {
-            this.found = found;
-            this.addresses = addresses;
-            this.port = port;
-        }
-
-        @Override
-        public String toString() {
-            return "NodeInfoReply{" +
-                    "found=" + found +
-                    ", addresses=" + addresses +
-                    ", port=" + port +
-                    '}';
-        }
-        public final static NodeInfoReply NO_REPLY = new NodeInfoReply(false, null, 0);
-    }
     private final RequestChannel<NodeInfoRequest, NodeInfoReply> nodeInfoRequests = new MemoryRequestChannel<>();
+    @Override
     public RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo() {
         return nodeInfoRequests;
     }
@@ -142,34 +102,6 @@ public class BeaconService extends AbstractService implements OhmService {
         List<String> peerAddrs = peer.availability.getAddressesList();
         // does this service run on that peer?
         message.reply(new NodeInfoReply(true, peerAddrs, servicePort));
-    }
-
-    /**
-     * Information about a node.
-     */
-    public static class NodeInfo {
-        public final Availability availability;
-        public final long lastContactTime;
-        public final ImmutableMap<ServiceType, Integer> services;
-
-        public NodeInfo(Availability availability, long lastContactTime) {
-            this.availability = availability;
-            this.lastContactTime = lastContactTime;
-            ImmutableMap.Builder<ServiceType, Integer> b = ImmutableMap.builder();
-            for (Beacon.ServiceDescriptor serviceDescriptor : availability.getServicesList()) {
-                b.put(serviceDescriptor.getService(), serviceDescriptor.getServicePort());
-            }
-            services = b.build();
-        }
-
-        public NodeInfo(Availability availability) {
-            this(availability, System.currentTimeMillis());
-        }
-
-        @Override
-        public String toString() {
-            return availability + " last contact: " + lastContactTime;
-        }
     }
 
     @Override
@@ -229,6 +161,7 @@ public class BeaconService extends AbstractService implements OhmService {
         this.eventLoop = eventLoop;
     }
 
+    @Override
     public ListenableFuture<ImmutableMap<Long, NodeInfo>> getState() {
         final SettableFuture<ImmutableMap<Long,NodeInfo>> future = SettableFuture.create();
 
