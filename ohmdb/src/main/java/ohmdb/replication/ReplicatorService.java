@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.Message;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -182,7 +181,6 @@ public class ReplicatorService extends AbstractService implements ReplicationSer
             super.channelActive(ctx);
         }
 
-
         @Override
         protected void channelRead0(final ChannelHandlerContext ctx, final RaftWireMessage msg) throws Exception {
             fiber.execute(new Runnable() {
@@ -209,54 +207,17 @@ public class ReplicatorService extends AbstractService implements ReplicationSer
                 return;
             }
 
-            Message subMsg = null;
-            // TODO Fixme here
-//        switch (msg.getMessageType()) {
-//            case REQUEST_VOTE:
-//                LOG.error("Got request_vote message as a 'reply' to message id {}", messageId);
-//                subMsg = msg.getRequestVote();
-//                break;
-//            case VOTE_REPLY:
-//                subMsg = msg.getVoteReply();
-//                break;
-//            case APPEND_ENTRIES:
-//                LOG.error("Got an append_entries message as a 'reply' to message id {}", messageId);
-//                subMsg = msg.getAppendEntries();
-//                break;
-//            case APPEND_REPLY:
-//                subMsg = msg.getAppendReply();
-//                break;
-//        }
-
             outstandingRPCs.remove(messageId);
             outstandingRPCbySession.remove(request.getSession());
-            request.reply(new RpcWireReply(msg.getSenderId(), msg.getQuorumId(), subMsg));
-
+            request.reply(new RpcWireReply(msg));
         } else {
-            handleWireNonReplyMessage(channel, msg);
+            handleWireRequestMessage(channel, msg);
         }
     }
 
     @FiberOnly
-    private void handleWireNonReplyMessage(final Channel channel, final RaftWireMessage msg) {
-        Message subMsg = null;
-         // TODO fix me here
-//        switch (msg.getMessageType()) {
-//            case REQUEST_VOTE:
-//                subMsg = msg.getRequestVote();
-//                break;
-//            case VOTE_REPLY:
-//                LOG.error("Got vote_reply with no outstanding request for message id {}", msg.getMessageId());
-//                return;
-//            case APPEND_ENTRIES:
-//                subMsg = msg.getAppendEntries();
-//                break;
-//            case APPEND_REPLY:
-//                LOG.error("Got append_reply with no outstanding request for message id {}", msg.getMessageId());
-//                return;
-//        }
-
-        RpcWireRequest wireRequest = new RpcWireRequest(msg.getSenderId(), msg.getQuorumId(), subMsg);
+    private void handleWireRequestMessage(final Channel channel, final RaftWireMessage msg) {
+        RpcWireRequest wireRequest = new RpcWireRequest(msg);
         String quorumId = wireRequest.quorumId;
 
         ReplicatorInstance replInst = replicatorInstances.get(quorumId);
@@ -354,19 +315,11 @@ public class ReplicatorService extends AbstractService implements ReplicationSer
                 outstandingRPCs.put(messageId, message);
                 outstandingRPCbySession.put(message.getSession(), messageId);
 
-                RaftWireMessage.Builder msgBuilder = RaftWireMessage.newBuilder()
-                        .setMessageId(messageId)
+                RaftWireMessage.Builder msgBuilder = request.getWireMessageFragment();
+
+                msgBuilder.setMessageId(messageId)
                         .setSenderId(server.getNodeId())
                         .setReceiverId(to);
-                // TODO fixme here!
-//                if (request.isAppendMessage()) {
-//                    msgBuilder.setMessageType(RaftWireMessage.MessageType.APPEND_ENTRIES)
-//                            .setAppendEntries(request.getAppendMessage());
-//                } else if (request.isRequestVoteMessage()) {
-//                    msgBuilder.setMessageType(RaftWireMessage.MessageType.REQUEST_VOTE)
-//                            .setRequestVote(request.getRequestVoteMessage());
-//                } //else {
-                    // v bad, not possible really.
 
                 channel.write(msgBuilder);
                 channel.flush();

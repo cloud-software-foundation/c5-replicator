@@ -14,10 +14,11 @@ message RaftWireMessage {
   // Is this a reply message?
   optional bool        in_reply = 5;
 
-  optional RequestVote          request_vote = 100;
-  optional RequestVoteReply     request_vote_reply = 101;
-  optional AppendEntries        append_entries = 102;
-  optional AppendEntriesReply   append_entries_reply = 103;
+  // The struct and the field name must match for reflection reasons.
+  optional RequestVote          RequestVote = 100;
+  optional RequestVoteReply     RequestVoteReply = 101;
+  optional AppendEntries        AppendEntries = 102;
+  optional AppendEntriesReply   AppendEntriesReply = 103;
 
   extensions 1000 to max;
 }

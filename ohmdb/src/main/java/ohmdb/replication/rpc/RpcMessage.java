@@ -20,6 +20,8 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import ohmdb.replication.Raft;
 
+import java.util.Map;
+
 /**
  * Wrap a rpc message, this could/should get serialized to the wire (eg: RaftWireMessage)
  *
@@ -38,12 +40,28 @@ public class RpcMessage {
 
     public final Message message;
 
-    public RpcMessage(long to, long from, String quorumId, Message message) {
+    protected RpcMessage(long to, long from, String quorumId, Message message) {
         this.to = to;
         this.from = from;
         this.quorumId = quorumId;
 
         this.message = message;
+    }
+
+    protected RpcMessage(Raft.RaftWireMessage wireMessage) {
+        this(wireMessage.getReceiverId(), wireMessage.getSenderId(), wireMessage.getQuorumId(), getSubMsg(wireMessage));
+    }
+
+    static Message getSubMsg(Raft.RaftWireMessage wireMessage) {
+        Map<Descriptors.FieldDescriptor, Object> fields = wireMessage.getAllFields();
+
+        for (Descriptors.FieldDescriptor fd : fields.keySet()) {
+            if (fd.getNumber() >= 100 && fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
+                return (Message) wireMessage.getField(fd);
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -60,9 +78,8 @@ public class RpcMessage {
     public Raft.RaftWireMessage.Builder getWireMessageFragment() {
         Raft.RaftWireMessage.Builder builder = Raft.RaftWireMessage.newBuilder();
 
-        //builder.setAppendEntries() // append_entries
         Descriptors.Descriptor d = Raft.RaftWireMessage.getDescriptor();
-        // TODO NB: AppendEntries -> append_entries, because fuck you protobuf.
+        // Note, the structure/class name must match the field name.  Kind of ugly but.
         Descriptors.FieldDescriptor fd = d.findFieldByName(message.getDescriptorForType().getName());
         builder.setField(fd, message);
 

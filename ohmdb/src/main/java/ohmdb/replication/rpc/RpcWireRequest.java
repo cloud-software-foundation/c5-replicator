@@ -16,11 +16,8 @@
  */
 package ohmdb.replication.rpc;
 
-import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
 import ohmdb.replication.Raft;
-
-import java.util.Map;
 
 /**
  * And RPC request from off the wire, from a remote sender.
@@ -32,21 +29,7 @@ public class RpcWireRequest extends RpcMessage {
     }
 
     public RpcWireRequest(Raft.RaftWireMessage wireMessage) {
-        // parse out things:
-        super(wireMessage.getReceiverId(), wireMessage.getSenderId(), wireMessage.getQuorumId(), getSubMsg(wireMessage));
+        super(wireMessage);
     }
-
-    private static Message getSubMsg(Raft.RaftWireMessage wireMessage) {
-        Map<Descriptors.FieldDescriptor, Object> fields = wireMessage.getAllFields();
-
-        for (Descriptors.FieldDescriptor fd : fields.keySet()) {
-            if (fd.getIndex() >= 100) {
-                return (Message) wireMessage.getField(fd);
-            }
-        }
-
-        return null;
-    }
-
 }
 

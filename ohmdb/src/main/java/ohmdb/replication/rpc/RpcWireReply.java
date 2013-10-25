@@ -17,14 +17,18 @@
 package ohmdb.replication.rpc;
 
 import com.google.protobuf.Message;
-import com.google.protobuf.MessageLite;
+import ohmdb.replication.Raft;
 
 /**
- * A reply from the wire, a remote agent, replying to a request.
+ * A reply from the wire - a remote agent - replying to a request.
  */
 public class RpcWireReply extends RpcMessage {
 
     public RpcWireReply(long from, String quorumId, Message message) {
         super(0, from, quorumId, message);
+    }
+
+    public RpcWireReply(Raft.RaftWireMessage msg) {
+        super(msg);
     }
 }
