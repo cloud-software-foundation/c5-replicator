@@ -101,6 +101,7 @@ public class OLog implements AutoCloseable {
     boolean success = false;
     do {
       try {
+          // TODO this needs to be processed on a background thread, not while the caller is waiting. Async notification.
         this.logOutputStream.flush();
         this.logOutputStream.getChannel().force(false);
         success = true;

@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static ohmdb.replication.Raft.LogEntry;
@@ -283,11 +282,11 @@ public class ReplicatorInstance {
     }
 
     @FiberOnly
-    private void doAppendMessage(final Request<RpcWireRequest, RpcReply> message) {
-        final Raft.AppendEntries msg = message.getRequest().getAppendMessage();
+    private void doAppendMessage(final Request<RpcWireRequest, RpcReply> request) {
+        final Raft.AppendEntries appendMessage = request.getRequest().getAppendMessage();
 
         // 1. return if term < currentTerm (sec 5.1)
-        if (msg.getTerm() < currentTerm) {
+        if (appendMessage.getTerm() < currentTerm) {
             // TODO is this the correct message reply?
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
                     .setTerm(currentTerm)
@@ -295,13 +294,13 @@ public class ReplicatorInstance {
                     .build();
 
             RpcReply reply = new RpcReply(m);
-            message.reply(reply);
+            request.reply(reply);
             return;
         }
 
         // 2. if term > currentTerm, set it (sec 5.1)
-        if (msg.getTerm() > currentTerm) {
-            setCurrentTerm(msg.getTerm());
+        if (appendMessage.getTerm() > currentTerm) {
+            setCurrentTerm(appendMessage.getTerm());
         }
 
         // 3. Step down if we are a leader or a candidate (sec 5.2, 5.5)
@@ -312,22 +311,22 @@ public class ReplicatorInstance {
         // 4. reset election timeout
         lastRPC = info.currentTimeMillis();
 
-        if (msg.getEntriesCount() == 0) {
+        if (appendMessage.getEntriesCount() == 0) {
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
                     .setTerm(currentTerm)
                     .setSuccess(true)
                     .build();
 
             RpcReply reply = new RpcReply(m);
-            message.reply(reply);
+            request.reply(reply);
             return;
         }
 
         // 5. return failure if log doesn't contain an entry at
         // prevLogIndex who's term matches prevLogTerm (sec 5.3)
         // if msgPrevLogIndex == 0 -> special case of starting the log!
-        long msgPrevLogIndex = msg.getPrevLogIndex();
-        long msgPrevLogTerm = msg.getPrevLogTerm();
+        long msgPrevLogIndex = appendMessage.getPrevLogIndex();
+        long msgPrevLogTerm = appendMessage.getPrevLogTerm();
         if (msgPrevLogIndex != 0 && log.getLogTerm(msgPrevLogIndex) != msgPrevLogTerm) {
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
                     .setTerm(currentTerm)
@@ -336,15 +335,90 @@ public class ReplicatorInstance {
                     .build();
 
             RpcReply reply = new RpcReply(m);
-            message.reply(reply);
+            request.reply(reply);
             return;
         }
 
         // 6. if existing entries conflict with new entries, delete all
         // existing entries starting with first conflicting entry (sec 5.3)
+        // nb: The process in which we fix the local log may involve a async log operation, so that is entirely
+        // hidden up in this future.  Note that the process can fail, so we handle that as well.
+        ListenableFuture<ArrayList<LogEntry>> entriesToCommitFuture = validateAndFixLocalLog(request, appendMessage);
+        Futures.addCallback(entriesToCommitFuture, new FutureCallback<ArrayList<LogEntry>>() {
+            @Override
+            public void onSuccess(ArrayList<LogEntry> entriesToCommit) {
+
+                // 7. Append any new entries not already in the log.
+                ListenableFuture<Boolean> logCommitNotification = log.logEntries(entriesToCommit);
+
+                // 8. apply newly committed entries to state machine
+
+                // wait for the log to commit before returning message.  But do so async.
+                Futures.addCallback(logCommitNotification, new FutureCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
+                                .setTerm(currentTerm)
+                                .setSuccess(true)
+                                .build();
+
+                        RpcReply reply = new RpcReply(m);
+                        request.reply(reply);
+
+                        // Notify and mark the last committed index.
+                        lastCommittedIndex = appendMessage.getCommitIndex();
+                        notifyLastCommitted();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        // TODO A log commit failure is probably a fatal error. Quit the instance?
+                        // TODO better error reporting. A log commit failure will be a serious issue.
+                        Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
+                                .setTerm(currentTerm)
+                                .setSuccess(false)
+                                .build();
+
+                        RpcReply reply = new RpcReply(m);
+                        request.reply(reply);
+                    }
+                }, fiber);
+
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
+                        .setTerm(currentTerm)
+                        .setSuccess(false)
+                        .build();
+
+                RpcReply reply = new RpcReply(m);
+                request.reply(reply);
+            }
+        }, fiber);
+
+
+    }
+
+    private ListenableFuture<ArrayList<LogEntry>> validateAndFixLocalLog(Request<RpcWireRequest, RpcReply> request,
+                                                                         Raft.AppendEntries appendMessage) {
+        final SettableFuture<ArrayList<LogEntry>> future = SettableFuture.create();
+
+        validateAndFixLocalLog0(request, appendMessage, future);
+        return future;
+    }
+
+    private void validateAndFixLocalLog0(final Request<RpcWireRequest, RpcReply> request,
+                                         final Raft.AppendEntries appendMessage,
+                                         final SettableFuture<ArrayList<LogEntry>> future) {
+
+        // 6. if existing entries conflict with new entries, delete all
+        // existing entries starting with first conflicting entry (sec 5.3)
+
         long nextIndex = log.getLastIndex()+1;
 
-        List<LogEntry> entries =  msg.getEntriesList();
+        List<LogEntry> entries =  appendMessage.getEntriesList();
         ArrayList<LogEntry> entriesToCommit = new ArrayList<>(entries.size());
         for (LogEntry entry : entries) {
             long entryIndex = entry.getIndex();
@@ -363,15 +437,7 @@ public class ReplicatorInstance {
                 LOG.error("{} log entry missing, i expected {} and the next in the message is {}",
                         myId, nextIndex, entryIndex);
 
-                // TODO handle this situation a little better if possible
-                // reply with an error message leaving the log borked.
-                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setTerm(currentTerm)
-                        .setSuccess(false)
-                        .build();
-
-                RpcReply reply = new RpcReply(m);
-                message.reply(reply);
+                future.setException(new Exception("Log entry missing"));
                 return;
             }
 
@@ -379,71 +445,37 @@ public class ReplicatorInstance {
             assert entryIndex < nextIndex;
 
             if (log.getLogTerm(entryIndex) != entry.getTerm()) {
+                // This is generally expected to be fairly uncommon.  To prevent busywaiting on the truncate,
+                // we basically just redo some work (that ideally shouldn't be too expensive).
+
+                // So after this point, we basically return immediately, with a callback schedule.
+
                 // conflict:
                 LOG.debug("{} log conflict at idx {} my term: {} term from leader: {}, truncating log after this point", myId,
                         entryIndex, log.getLogTerm(entryIndex), entry.getTerm());
 
                 // delete this and all subsequent entries:
                 ListenableFuture<Boolean> truncateResult = log.truncateLog(entryIndex);
-                // TODO consider a better way than to busywait this thread. This is a single-thread scalability problem.
-                try {
-                    boolean wasTruncated = truncateResult.get();
-                    if (!wasTruncated) {
-                        LOG.error("{} unable to truncate log to {}, instance failure", myId, entryIndex);
-                        // This replicator instance is failed, mark it so and exit.
-                        failReplicatorInstance(new Exception("Unable to truncate logfile, cannot continue"));
-                        return; // just quit out and the fiber will be over.
+                Futures.addCallback(truncateResult, new FutureCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean ignored) {
+                        // Recurse, which involved a little redo work, but at makes this code easier to reason about.
+                        validateAndFixLocalLog0(request, appendMessage, future);
                     }
-                } catch (InterruptedException|ExecutionException e) {
-                    LOG.error("oops", e);
-                    failReplicatorInstance(e);
-                    return;
-                }
 
-                // add this entry to the list of things to commit to.
-                entriesToCommit.add(entry);
-                nextIndex = entryIndex+1; // continue normal processing after this baby.
+                    @Override
+                    public void onFailure(Throwable t) {
+                        failReplicatorInstance(t);
+                        future.setException(t); // TODO determine if this is the proper thing to do here?
+                    }
+                }, fiber);
+
+                return;
             } //else {
                 // this log entry did NOT conflict we dont need to re-commit this entry.
             //}
         }
-
-        // 7. Append any new entries not already in the log.
-        ListenableFuture<Boolean> logCommitNotification = log.logEntries(entriesToCommit);
-
-
-        // 8. apply newly committed entries to state machine
-
-        // wait for the log to commit before returning message.  But do so async.
-        Futures.addCallback(logCommitNotification, new FutureCallback<Boolean>() {
-            @Override
-            public void onSuccess(Boolean result) {
-                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setTerm(currentTerm)
-                        .setSuccess(true)
-                        .build();
-
-                RpcReply reply = new RpcReply(m);
-                message.reply(reply);
-
-                // Notify and mark the last committed index.
-                lastCommittedIndex = msg.getCommitIndex();
-                notifyLastCommitted();
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                // TODO A log commit failure is probably a fatal error.
-                // TODO better error reporting. A log commit failure will e a serious issue.
-                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setTerm(currentTerm)
-                        .setSuccess(false)
-                        .build();
-
-                RpcReply reply = new RpcReply(m);
-                message.reply(reply);
-            }
-        });
+        future.set(entriesToCommit);
     }
 
     @FiberOnly
@@ -711,7 +743,7 @@ public class ReplicatorInstance {
                     // pretty bad.
                     LOG.error("{} failed to commit to local log {}", myId, t);
                 }
-            });
+            }, fiber);
 
         for (final long peer : peers) {
             if (myId == peer) continue; // dont send myself messages.
