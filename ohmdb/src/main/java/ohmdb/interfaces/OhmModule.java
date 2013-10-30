@@ -20,16 +20,16 @@ import com.google.common.util.concurrent.Service;
 import ohmdb.messages.ControlMessages;
 
 /**
- * An internal service.  Extends guava services.
+ * An internal module. Is a guava module.
  * <p/>
- * An internal service is a component that can be started/stopped, and is the official
+ * An internal module is a component that can be started/stopped, and is the official
  * internal interface between different modules.
  * <p/>
- * TODO service dependencies so if you stop one service, you have to stop the dependents.
+ * TODO module dependencies so if you stop one module, you have to stop the dependents.
  */
-public interface OhmService extends Service {
+public interface OhmModule extends Service {
 
-    public ControlMessages.ServiceType getServiceType();
+    public ControlMessages.ModuleType getModuleType();
 
     public boolean hasPort();
 
@@ -37,5 +37,4 @@ public interface OhmService extends Service {
 
     // TODO formalize dependencies for automated start order, etc etc
     //public List<ControlMessages.ServiceType> getDependencies();
-
 }

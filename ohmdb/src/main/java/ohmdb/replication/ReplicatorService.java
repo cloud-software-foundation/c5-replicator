@@ -40,10 +40,10 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import ohmdb.interfaces.DiscoveryService;
+import ohmdb.interfaces.DiscoveryModule;
+import ohmdb.interfaces.OhmModule;
 import ohmdb.interfaces.OhmServer;
-import ohmdb.interfaces.OhmService;
-import ohmdb.interfaces.ReplicationService;
+import ohmdb.interfaces.ReplicationModule;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -66,21 +66,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static ohmdb.messages.ControlMessages.ServiceType;
+import static ohmdb.messages.ControlMessages.ModuleType;
 import static ohmdb.replication.Raft.RaftWireMessage;
 
 /**
  * TODO we dont have a way to actually START a freaking ReplicatorInstance - YET.
  * TODO consider being symmetric in how we handle sent messages.
  */
-public class ReplicatorService extends AbstractService implements ReplicationService {
+public class ReplicatorService extends AbstractService implements ReplicationModule {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorService.class);
 
-    /**************** OhmService informational methods ************************************/
+    /**************** OhmModule informational methods ************************************/
 
     @Override
-    public ServiceType getServiceType() {
-        return ServiceType.Replication;
+    public ModuleType getModuleType() {
+        return ModuleType.Replication;
     }
 
     @Override
@@ -153,8 +153,8 @@ public class ReplicatorService extends AbstractService implements ReplicationSer
     private ServerBootstrap serverBootstrap;
     private Bootstrap outgoingBootstrap;
 
-    // Initalized in the service start, by the time any messages or fiber executions trigger, this should be not-null
-    private DiscoveryService discoveryService = null;
+    // Initalized in the module start, by the time any messages or fiber executions trigger, this should be not-null
+    private DiscoveryModule discoveryModule = null;
     private Channel listenChannel;
 
     private long messageIdGen = 1;
@@ -270,11 +270,11 @@ public class ReplicatorService extends AbstractService implements ReplicationSer
             handleLoopBackMessage(message);
         }
 
-        DiscoveryService.NodeInfoRequest nodeInfoRequest = new DiscoveryService.NodeInfoRequest(to, ServiceType.Replication);
-        AsyncRequest.withOneReply(fiber, discoveryService.getNodeInfo(), nodeInfoRequest, new Callback<DiscoveryService.NodeInfoReply>() {
+        DiscoveryModule.NodeInfoRequest nodeInfoRequest = new DiscoveryModule.NodeInfoRequest(to, ModuleType.Replication);
+        AsyncRequest.withOneReply(fiber, discoveryModule.getNodeInfo(), nodeInfoRequest, new Callback<DiscoveryModule.NodeInfoReply>() {
             @FiberOnly
             @Override
-            public void onMessage(DiscoveryService.NodeInfoReply nodeInfoReply) {
+            public void onMessage(DiscoveryModule.NodeInfoReply nodeInfoReply) {
                 if (!nodeInfoReply.found) {
                     // TODO signal TCP/transport layer failure in a better way
                     message.reply(null);
@@ -352,13 +352,13 @@ public class ReplicatorService extends AbstractService implements ReplicationSer
         // must start the fiber up early.
         fiber.start();
 
-        LOG.warn("ReplicatorService now waiting for service dependency on BeaconService");
-        // we aren't technically started until this service dependency is retrieved.
-        ListenableFuture<OhmService> f = server.getService(ServiceType.Discovery);
-        Futures.addCallback(f, new FutureCallback<OhmService>() {
+        LOG.warn("ReplicatorService now waiting for module dependency on BeaconService");
+        // we aren't technically started until this module dependency is retrieved.
+        ListenableFuture<OhmModule> f = server.getModule(ModuleType.Discovery);
+        Futures.addCallback(f, new FutureCallback<OhmModule>() {
             @Override
-            public void onSuccess(OhmService result) {
-                discoveryService = (DiscoveryService) result;
+            public void onSuccess(OhmModule result) {
+                discoveryModule = (DiscoveryModule) result;
 
                 // finish init:
                 try {

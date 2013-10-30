@@ -21,9 +21,9 @@ import ohmdb.replication.ReplicatorInstance;
 import org.jetlang.channels.Channel;
 
 /**
- * The replication service/module.  The API to other services internal to ohmdb.
+ * The replication module/module.  The API to other modules internal to ohmdb.
  */
-public interface ReplicationService extends OhmService {
+public interface ReplicationModule extends OhmModule {
     public Channel<IndexCommitNotice> getIndexCommitNotices();
 
     /**

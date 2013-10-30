@@ -25,34 +25,34 @@ import org.jetlang.channels.RequestChannel;
 import java.util.List;
 
 /**
- * The internal/cross module interface to the discovery service.
+ * The internal/cross module interface to the discovery module.
  */
-public interface DiscoveryService extends OhmService {
+public interface DiscoveryModule extends OhmModule {
     RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo();
 
     ListenableFuture<ImmutableMap<Long, NodeInfo>> getState();
 
     public static class NodeInfoRequest {
         public final long nodeId;
-        public final ControlMessages.ServiceType serviceType;
+        public final ControlMessages.ModuleType moduleType;
 
-        public NodeInfoRequest(long nodeId, ControlMessages.ServiceType serviceType) {
+        public NodeInfoRequest(long nodeId, ControlMessages.ModuleType moduleType) {
             this.nodeId = nodeId;
-            this.serviceType = serviceType;
+            this.moduleType = moduleType;
         }
 
         @Override
         public String toString() {
             return "NodeInfoRequest{" +
                     "nodeId=" + nodeId +
-                    ", serviceType=" + serviceType +
+                    ", moduleType=" + moduleType +
                     '}';
         }
     }
 
     public static class NodeInfoReply {
         /**
-         * Was the node/service information found?
+         * Was the node/module information found?
          */
         public final boolean found;
         public final List<String> addresses;
@@ -82,16 +82,16 @@ public interface DiscoveryService extends OhmService {
     public static class NodeInfo {
         public final Beacon.Availability availability;
         public final long lastContactTime;
-        public final ImmutableMap<ControlMessages.ServiceType, Integer> services;
+        public final ImmutableMap<ControlMessages.ModuleType, Integer> modules;
 
         public NodeInfo(Beacon.Availability availability, long lastContactTime) {
             this.availability = availability;
             this.lastContactTime = lastContactTime;
-            ImmutableMap.Builder<ControlMessages.ServiceType, Integer> b = ImmutableMap.builder();
-            for (Beacon.ServiceDescriptor serviceDescriptor : availability.getServicesList()) {
-                b.put(serviceDescriptor.getService(), serviceDescriptor.getServicePort());
+            ImmutableMap.Builder<ControlMessages.ModuleType, Integer> b = ImmutableMap.builder();
+            for (Beacon.ModuleDescriptor moduleDescriptor : availability.getModulesList()) {
+                b.put(moduleDescriptor.getModule(), moduleDescriptor.getModulePort());
             }
-            services = b.build();
+            modules = b.build();
         }
 
         public NodeInfo(Beacon.Availability availability) {

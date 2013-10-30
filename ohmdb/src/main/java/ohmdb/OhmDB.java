@@ -24,9 +24,8 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.MessageLite;
 import io.netty.channel.nio.NioEventLoopGroup;
 import ohmdb.discovery.BeaconService;
+import ohmdb.interfaces.OhmModule;
 import ohmdb.interfaces.OhmServer;
-import ohmdb.interfaces.OhmService;
-import ohmdb.messages.ControlMessages;
 import ohmdb.regionserver.RegistryFile;
 import ohmdb.replication.ReplicatorService;
 import ohmdb.util.FiberOnly;
@@ -61,16 +60,16 @@ import static ohmdb.OhmStatic.getRandomPath;
 import static ohmdb.OhmStatic.recoverOhmServer;
 import static ohmdb.log.OLog.moveAwayOldLogs;
 import static ohmdb.messages.ControlMessages.CommandReply;
-import static ohmdb.messages.ControlMessages.ServiceType;
-import static ohmdb.messages.ControlMessages.StartService;
-import static ohmdb.messages.ControlMessages.StopService;
+import static ohmdb.messages.ControlMessages.ModuleType;
+import static ohmdb.messages.ControlMessages.StartModule;
+import static ohmdb.messages.ControlMessages.StopModule;
 
 
 /**
- * Holds information about all other services, can start/stop other services, etc.
+ * Holds information about all other modules, can start/stop other modules, etc.
  * Knows the 'root' information about this server as well, such as NodeId, etc.
  *
- * To shut down the 'server' service is to shut down the server.
+ * To shut down the 'server' module is to shut down the server.
  */
 public class OhmDB extends AbstractService implements OhmServer {
     private static final Logger LOG = LoggerFactory.getLogger(OhmDB.class);
@@ -96,10 +95,10 @@ public class OhmDB extends AbstractService implements OhmServer {
         instance.start();
 
         // issue startup commands here that are common/we always want:
-        ControlMessages.StartService startBeacon = ControlMessages.StartService.newBuilder()
-                .setService(ServiceType.Discovery)
-                .setServicePort(54333)
-                .setServiceArgv("")
+        StartModule startBeacon = StartModule.newBuilder()
+                .setModule(ModuleType.Discovery)
+                .setModulePort(54333)
+                .setModuleArgv("")
                 .build();
         instance.getCommandChannel().publish(startBeacon);
 
@@ -150,23 +149,23 @@ public class OhmDB extends AbstractService implements OhmServer {
     }
 
     @Override
-    public ListenableFuture<OhmService> getService(final ServiceType serviceType) {
-        final SettableFuture<OhmService> future = SettableFuture.create();
+    public ListenableFuture<OhmModule> getModule(final ModuleType moduleType) {
+        final SettableFuture<OhmModule> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
 
-                // What happens iff the serviceRegistry has EMPTY?
-                if (!serviceRegistry.containsKey(serviceType)) {
+                // What happens iff the moduleRegistry has EMPTY?
+                if (!moduleRegistry.containsKey(moduleType)) {
                     // listen to the registration stream:
                     final Disposable[] d = new Disposable[]{null};
-                    d[0] = getServiceRegisteredChannel().subscribe(serverFiber, new Callback<ServiceStateChange>() {
+                    d[0] = getModuleStateChangeChannel().subscribe(serverFiber, new Callback<ModuleStateChange>() {
                         @Override
-                        public void onMessage(ServiceStateChange message) {
+                        public void onMessage(ModuleStateChange message) {
                             if (message.state != State.RUNNING) return;
 
-                            if (message.service.getServiceType().equals(serviceType)) {
-                                future.set(message.service);
+                            if (message.module.getModuleType().equals(moduleType)) {
+                                future.set(message.module);
 
                                 assert d[0] != null;  // this is pretty much impossible because of how fibers work.
                                 d[0].dispose();
@@ -175,7 +174,7 @@ public class OhmDB extends AbstractService implements OhmServer {
                     });
                 }
 
-                future.set(serviceRegistry.get(serviceType));
+                future.set(moduleRegistry.get(moduleType));
             }
         });
         return future;
@@ -183,23 +182,23 @@ public class OhmDB extends AbstractService implements OhmServer {
     }
 
     @Override
-    public ImmutableMap<ServiceType, OhmService> getServices() throws ExecutionException, InterruptedException {
-        final SettableFuture<ImmutableMap<ServiceType, OhmService>> future = SettableFuture.create();
+    public ImmutableMap<ModuleType, OhmModule> getModules() throws ExecutionException, InterruptedException {
+        final SettableFuture<ImmutableMap<ModuleType, OhmModule>> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
-                future.set(ImmutableMap.copyOf(serviceRegistry));
+                future.set(ImmutableMap.copyOf(moduleRegistry));
             }
         });
         return future.get();
     }
     @Override
-    public ListenableFuture<ImmutableMap<ServiceType, OhmService>> getServices2() {
-        final SettableFuture<ImmutableMap<ServiceType, OhmService>> future = SettableFuture.create();
+    public ListenableFuture<ImmutableMap<ModuleType, OhmModule>> getModules2() {
+        final SettableFuture<ImmutableMap<ModuleType, OhmModule>> future = SettableFuture.create();
         serverFiber.execute(new Runnable() {
             @Override
             public void run() {
-                future.set(ImmutableMap.copyOf(serviceRegistry));
+                future.set(ImmutableMap.copyOf(moduleRegistry));
             }
         });
         return future;
@@ -211,8 +210,8 @@ public class OhmDB extends AbstractService implements OhmServer {
     private Fiber serverFiber;
     private final ConfigDirectory configDirectory;
 
-    // The mapping between service name and the instance.
-    private final Map<ServiceType, OhmService> serviceRegistry = new HashMap<>();
+    // The mapping between module name and the instance.
+    private final Map<ModuleType, OhmModule> moduleRegistry = new HashMap<>();
 
      private final long nodeId;
 
@@ -233,9 +232,9 @@ public class OhmDB extends AbstractService implements OhmServer {
         return commandRequests;
     }
 
-    private final Channel<ServiceStateChange> serviceRegisteredChannel = new MemoryChannel<>();
+    private final Channel<ModuleStateChange> serviceRegisteredChannel = new MemoryChannel<>();
     @Override
-    public Channel<ServiceStateChange> getServiceRegisteredChannel() {
+    public Channel<ModuleStateChange> getModuleStateChangeChannel() {
         return serviceRegisteredChannel;
     }
 
@@ -254,14 +253,14 @@ public class OhmDB extends AbstractService implements OhmServer {
 
     @FiberOnly
     private void processCommandMessage(MessageLite msg) throws Exception {
-        if (msg instanceof StartService) {
-            StartService message = (StartService) msg;
-            startService(message.getService(), message.getServicePort(), message.getServiceArgv());
+        if (msg instanceof StartModule) {
+            StartModule message = (StartModule) msg;
+            startModule(message.getModule(), message.getModulePort(), message.getModuleArgv());
         }
-        else if (msg instanceof StopService) {
-            StopService message = (StopService)msg;
+        else if (msg instanceof StopModule) {
+            StopModule message = (StopModule)msg;
 
-            stopService(message.getService(), message.getHardStop(), message.getStopReason());
+            stopModule(message.getModule(), message.getHardStop(), message.getStopReason());
         }
     }
 
@@ -271,17 +270,17 @@ public class OhmDB extends AbstractService implements OhmServer {
         try {
             String stdout = "";
 
-            if (r instanceof StartService) {
-                StartService message = (StartService)r;
-                startService(message.getService(), message.getServicePort(), message.getServiceArgv());
+            if (r instanceof StartModule) {
+                StartModule message = (StartModule)r;
+                startModule(message.getModule(), message.getModulePort(), message.getModuleArgv());
 
-                stdout = String.format("Service %s started", message.getService());
-            } else if (r instanceof StopService) {
-                StopService message = (StopService)r;
+                stdout = String.format("Module %s started", message.getModule());
+            } else if (r instanceof StopModule) {
+                StopModule message = (StopModule)r;
 
-                stopService(message.getService(), message.getHardStop(), message.getStopReason());
+                stopModule(message.getModule(), message.getHardStop(), message.getStopReason());
 
-                stdout = String.format("Service %s started", message.getService());
+                stdout = String.format("Module %s started", message.getModule());
             } else {
                 CommandReply reply = CommandReply.newBuilder()
                         .setCommandSuccess(false)
@@ -306,126 +305,126 @@ public class OhmDB extends AbstractService implements OhmServer {
         }
     }
 
-    private class ServiceListenerPublisher implements Listener {
-        private final OhmService service;
+    private class ModuleListenerPublisher implements Listener {
+        private final OhmModule module;
 
-        private ServiceListenerPublisher(OhmService service) {
-            this.service = service;
+        private ModuleListenerPublisher(OhmModule module) {
+            this.module = module;
         }
 
         @Override
         public void starting() {
-            LOG.debug("Starting service {}", service);
+            LOG.debug("Starting module {}", module);
             publishEvent(State.STARTING);
         }
 
         @Override
         public void running() {
-            LOG.debug("Running service {}", service);
+            LOG.debug("Running module {}", module);
             publishEvent(State.RUNNING);
         }
 
         @Override
         public void stopping(State from) {
-            LOG.debug("Stopping service {}", service);
+            LOG.debug("Stopping module {}", module);
             publishEvent(State.STOPPING);
         }
 
         @Override
         public void terminated(State from) {
             // TODO move this into a subscriber of ourselves?
-            LOG.debug("Terminated service {}", service);
-            serviceRegistry.remove(service.getServiceType());
+            LOG.debug("Terminated module {}", module);
+            moduleRegistry.remove(module.getModuleType());
             publishEvent(State.TERMINATED);
         }
 
         @Override
         public void failed(State from, Throwable failure) {
-            LOG.debug("Failed service {}", service);
+            LOG.debug("Failed module {}", module);
             publishEvent(State.FAILED);
         }
 
         private void publishEvent(State state) {
-            ServiceStateChange p = new ServiceStateChange(service, state);
-            getServiceRegisteredChannel().publish(p);
+            ModuleStateChange p = new ModuleStateChange(module, state);
+            getModuleStateChangeChannel().publish(p);
         }
 
     }
 
     @FiberOnly
-    private boolean startService(final ServiceType serviceType, final int servicePort, String serviceArgv) throws Exception {
-        if (serviceRegistry.containsKey(serviceType)) {
+    private boolean startModule(final ModuleType moduleType, final int modulePort, String moduleArgv) throws Exception {
+        if (moduleRegistry.containsKey(moduleType)) {
             // already running, dont start twice?
-            LOG.warn("Service {} already running", serviceType);
-            throw new Exception("Cant start running service: " + serviceType);
+            LOG.warn("Module {} already running", moduleType);
+            throw new Exception("Cant start, running, module: " + moduleType);
         }
 
-        switch (serviceType) {
+        switch (moduleType) {
             case Discovery: {
-                Map<ServiceType, Integer> l = new HashMap<>();
-                for (ServiceType name : serviceRegistry.keySet()) {
+                Map<ModuleType, Integer> l = new HashMap<>();
+                for (ModuleType name : moduleRegistry.keySet()) {
                     l.put(name, 1);
                 }
 
-                OhmService service = new BeaconService(this.nodeId, servicePort, fiberPool.create(), workerGroup, l, this);
-                service.addListener(new ServiceListenerPublisher(service), serverFiber);
+                OhmModule module = new BeaconService(this.nodeId, modulePort, fiberPool.create(), workerGroup, l, this);
+                module.addListener(new ModuleListenerPublisher(module), serverFiber);
 
-                service.start();
-                serviceRegistry.put(serviceType, service);
+                module.start();
+                moduleRegistry.put(moduleType, module);
                 break;
             }
             case Replication: {
-                OhmService service = new ReplicatorService(fiberPool, bossGroup, workerGroup, servicePort, this);
-                service.addListener(new ServiceListenerPublisher(service), serverFiber);
+                OhmModule module = new ReplicatorService(fiberPool, bossGroup, workerGroup, modulePort, this);
+                module.addListener(new ModuleListenerPublisher(module), serverFiber);
 
-                service.start();
-                serviceRegistry.put(serviceType, service);
+                module.start();
+                moduleRegistry.put(moduleType, module);
                 break;
             }
             default:
-                throw new Exception("No such service as " + serviceType);
+                throw new Exception("No such module as " + moduleType);
         }
 
         return true;
     }
 
     @FiberOnly
-    private void stopService(ServiceType serviceType, boolean hardStop, String stopReason) {
-        Service theService = serviceRegistry.get(serviceType);
-        if (theService == null) {
-            LOG.debug("Cant stop service {}, not in registry", serviceType);
+    private void stopModule(ModuleType moduleType, boolean hardStop, String stopReason) {
+        Service theModule = moduleRegistry.get(moduleType);
+        if (theModule == null) {
+            LOG.debug("Cant stop module {}, not in registry", moduleType);
             return ;
         }
 
-        theService.stop();
+        theModule.stop();
     }
 
     @Override
     protected void doStart() {
-      Configuration conf = HBaseConfiguration.create();
-      Path path;
-      path = Paths.get(getRandomPath());
-      RegistryFile registryFile;
-      try {
-        registryFile = new RegistryFile(path);
-        moveAwayOldLogs(path.toString());
+        Configuration conf = HBaseConfiguration.create();
+        Path path;
+        path = Paths.get(getRandomPath());
+        RegistryFile registryFile;
+        try {
+            registryFile = new RegistryFile(path);
+            moveAwayOldLogs(path.toString());
 
-        if (existingRegister(registryFile)) {
-          recoverOhmServer(conf, path, registryFile);
-        } else {
-          bootStrapRegions(conf, path, registryFile);
+            if (existingRegister(registryFile)) {
+                recoverOhmServer(conf, path, registryFile);
+            } else {
+                bootStrapRegions(conf, path, registryFile);
+            }
+        } catch (Exception e) {
+            notifyFailed(e);
         }
-      } catch (Exception e) {
-        notifyFailed(e);
-      }
 
 
-      try {
-          // TODO we probably shouldnt run services threads as daemons, instead prefer to do orderly shutdown.
-        tabletServicesFiber = new ThreadFiber(new RunnableExecutorImpl(), "Tablet-Services", true);
-        tabletServicesFiber.execute(new RegionServer(8080));
+        try {
+            // TODO we probably shouldnt run modules threads as daemons, instead prefer to do orderly shutdown.
+            tabletServicesFiber = new ThreadFiber(new RunnableExecutorImpl(), "Tablet-Services", true);
+            tabletServicesFiber.execute(new RegionServer(8080));
 
-        serverFiber = new ThreadFiber(new RunnableExecutorImpl(), "OhmDb-Server", false);
+            serverFiber = new ThreadFiber(new RunnableExecutorImpl(), "OhmDb-Server", false);
             fiberPool = new PoolFiberFactory(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
             bossGroup = new NioEventLoopGroup(1);
             workerGroup = new NioEventLoopGroup();
@@ -451,7 +450,7 @@ public class OhmDB extends AbstractService implements OhmServer {
             serverFiber.start();
             tabletServicesFiber.start();
 
-        notifyStarted();
+            notifyStarted();
         } catch (Exception e) {
             notifyFailed(e);
         }
@@ -461,7 +460,7 @@ public class OhmDB extends AbstractService implements OhmServer {
     @Override
     protected void doStop() {
 
-        // stop service set.
+        // stop module set.
 
         // write any last minute persistent data to disk (is there any?)
 

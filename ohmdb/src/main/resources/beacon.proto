@@ -16,12 +16,12 @@ message Availability {
   // The network addresses we can be reached at
   repeated string addresses = 3;
 
-  // The services this node is running and the ports it's running on.
-  repeated ServiceDescriptor services = 4;
+  // The modules this node is running and the ports they're running on.
+  repeated ModuleDescriptor modules = 4;
 }
 
-// Service name to service port mapping.
-message ServiceDescriptor {
-  optional ohmdb.messages.ServiceType service = 1;
-  optional uint32 service_port = 2;
+// Module name to module port mapping.
+message ModuleDescriptor {
+  optional ohmdb.messages.ModuleType module = 1;
+  optional uint32 module_port = 2;
 }

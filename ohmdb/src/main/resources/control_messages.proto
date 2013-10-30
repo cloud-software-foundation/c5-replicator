@@ -3,31 +3,35 @@ package ohmdb.messages;
 option java_package = "ohmdb.messages";
 option optimize_for = SPEED;
 
-enum ServiceType {
-  Discovery = 1;
-  Replication = 2;
+enum ModuleType {
+    // Cluster discovery module
+    Discovery = 1;
+    // Replication module (RAFT)
+    Replication = 2;
+    // Tablet module (eg: HRegion)
+    Tablet = 3;
 }
 
-message StartService {
-  optional ServiceType service = 1;
-  optional int32 service_port = 2;
-  optional string service_argv = 3;
+message StartModule {
+    optional ModuleType module = 1;
+    optional int32 module_port = 2;
+    optional string module_argv = 3;
 }
 
-message StopService {
-  optional ServiceType service = 1;
-  // Set this to true to make it a 'hard stop', otherwise a graceful shutdown will be used.
-  optional bool hard_stop = 2;
-  optional string stop_reason = 3;
+message StopModule {
+    optional ModuleType module = 1;
+    // Set this to true to make it a 'hard stop', otherwise a graceful shutdown will be used.
+    optional bool hard_stop = 2;
+    optional string stop_reason = 3;
 }
 
-message ServiceSubCommand {
-  optional ServiceType service = 1;
-  optional string sub_command = 2;
+message ModuleSubCommand {
+    optional ModuleType module = 1;
+    optional string sub_command = 2;
 }
 
 message CommandReply {
-  optional bool command_success = 1;
-  optional string command_stdout = 2;
-  optional string command_stderr = 3;
+    optional bool command_success = 1;
+    optional string command_stdout = 2;
+    optional string command_stderr = 3;
 }

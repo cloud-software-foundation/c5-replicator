@@ -27,12 +27,12 @@ import org.jetlang.channels.RequestChannel;
 
 import java.util.concurrent.ExecutionException;
 
-import static ohmdb.messages.ControlMessages.ServiceType;
+import static ohmdb.messages.ControlMessages.ModuleType;
 
 /**
- * The root interface for all other services and modules to get around inside the server.
+ * The root interface for all other modules and modules to get around inside the server.
  * <p/>
- * Provides bootstrapping and other service introspection and management utilities.  Ideally we can run multiple
+ * Provides bootstrapping and other module introspection and management utilities.  Ideally we can run multiple
  * OhmServer on the same JVM for testing (may be conflicts with the discovery methods).
  */
 public interface OhmServer extends Service {
@@ -42,34 +42,34 @@ public interface OhmServer extends Service {
 
     public long getNodeId();
 
-    public ListenableFuture<OhmService> getService(ServiceType service);
+    public ListenableFuture<OhmModule> getModule(ModuleType moduleType);
 
     public Channel<MessageLite> getCommandChannel();
 
     public RequestChannel<MessageLite, ControlMessages.CommandReply> getCommandRequests();
 
-    public Channel<ServiceStateChange> getServiceRegisteredChannel();
+    public Channel<ModuleStateChange> getModuleStateChangeChannel();
 
-    public ImmutableMap<ServiceType, OhmService> getServices() throws ExecutionException, InterruptedException;
+    public ImmutableMap<ModuleType, OhmModule> getModules() throws ExecutionException, InterruptedException;
 
-    public ListenableFuture<ImmutableMap<ServiceType, OhmService>> getServices2();
+    public ListenableFuture<ImmutableMap<ModuleType, OhmModule>> getModules2();
 
     public ConfigDirectory getConfigDirectory();
 
-    public static class ServiceStateChange {
-        public final OhmService service;
+    public static class ModuleStateChange {
+        public final OhmModule module;
         public final State state;
 
         @Override
         public String toString() {
-            return "ServiceStateChange{" +
-                    ", service=" + service +
+            return "ModuleStateChange{" +
+                    ", module=" + module +
                     ", state=" + state +
                     '}';
         }
 
-        public ServiceStateChange(OhmService service, State state) {
-            this.service = service;
+        public ModuleStateChange(OhmModule module, State state) {
+            this.module = module;
             this.state = state;
         }
     }

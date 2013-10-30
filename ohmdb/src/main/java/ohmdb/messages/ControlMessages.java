@@ -9,49 +9,82 @@ public final class ControlMessages {
       com.google.protobuf.ExtensionRegistry registry) {
   }
   /**
-   * Protobuf enum {@code ohmdb.messages.ServiceType}
+   * Protobuf enum {@code ohmdb.messages.ModuleType}
    */
-  public enum ServiceType
+  public enum ModuleType
       implements com.google.protobuf.ProtocolMessageEnum {
     /**
      * <code>Discovery = 1;</code>
+     *
+     * <pre>
+     * Cluster discovery module
+     * </pre>
      */
     Discovery(0, 1),
     /**
      * <code>Replication = 2;</code>
+     *
+     * <pre>
+     * Replication module (RAFT)
+     * </pre>
      */
     Replication(1, 2),
+    /**
+     * <code>Tablet = 3;</code>
+     *
+     * <pre>
+     * Tablet module (eg: HRegion)
+     * </pre>
+     */
+    Tablet(2, 3),
     ;
 
     /**
      * <code>Discovery = 1;</code>
+     *
+     * <pre>
+     * Cluster discovery module
+     * </pre>
      */
     public static final int Discovery_VALUE = 1;
     /**
      * <code>Replication = 2;</code>
+     *
+     * <pre>
+     * Replication module (RAFT)
+     * </pre>
      */
     public static final int Replication_VALUE = 2;
+    /**
+     * <code>Tablet = 3;</code>
+     *
+     * <pre>
+     * Tablet module (eg: HRegion)
+     * </pre>
+     */
+    public static final int Tablet_VALUE = 3;
 
 
     public final int getNumber() { return value; }
 
-    public static ServiceType valueOf(int value) {
+    public static ModuleType valueOf(int value) {
       switch (value) {
         case 1: return Discovery;
         case 2: return Replication;
+        case 3: return Tablet;
         default: return null;
       }
     }
 
-    public static com.google.protobuf.Internal.EnumLiteMap<ServiceType>
+    public static com.google.protobuf.Internal.EnumLiteMap<ModuleType>
         internalGetValueMap() {
       return internalValueMap;
     }
-    private static com.google.protobuf.Internal.EnumLiteMap<ServiceType>
+    private static com.google.protobuf.Internal.EnumLiteMap<ModuleType>
         internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<ServiceType>() {
-            public ServiceType findValueByNumber(int number) {
-              return ServiceType.valueOf(number);
+          new com.google.protobuf.Internal.EnumLiteMap<ModuleType>() {
+            public ModuleType findValueByNumber(int number) {
+              return ModuleType.valueOf(number);
             }
           };
 
@@ -68,9 +101,9 @@ public final class ControlMessages {
       return ohmdb.messages.ControlMessages.getDescriptor().getEnumTypes().get(0);
     }
 
-    private static final ServiceType[] VALUES = values();
+    private static final ModuleType[] VALUES = values();
 
-    public static ServiceType valueOf(
+    public static ModuleType valueOf(
         com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
       if (desc.getType() != getDescriptor()) {
         throw new java.lang.IllegalArgumentException(
@@ -82,71 +115,71 @@ public final class ControlMessages {
     private final int index;
     private final int value;
 
-    private ServiceType(int index, int value) {
+    private ModuleType(int index, int value) {
       this.index = index;
       this.value = value;
     }
 
-    // @@protoc_insertion_point(enum_scope:ohmdb.messages.ServiceType)
+    // @@protoc_insertion_point(enum_scope:ohmdb.messages.ModuleType)
   }
 
-  public interface StartServiceOrBuilder
+  public interface StartModuleOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .ohmdb.messages.ServiceType service = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    boolean hasService();
+    boolean hasModule();
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    ohmdb.messages.ControlMessages.ServiceType getService();
+    ohmdb.messages.ControlMessages.ModuleType getModule();
 
-    // optional int32 service_port = 2;
+    // optional int32 module_port = 2;
     /**
-     * <code>optional int32 service_port = 2;</code>
+     * <code>optional int32 module_port = 2;</code>
      */
-    boolean hasServicePort();
+    boolean hasModulePort();
     /**
-     * <code>optional int32 service_port = 2;</code>
+     * <code>optional int32 module_port = 2;</code>
      */
-    int getServicePort();
+    int getModulePort();
 
-    // optional string service_argv = 3;
+    // optional string module_argv = 3;
     /**
-     * <code>optional string service_argv = 3;</code>
+     * <code>optional string module_argv = 3;</code>
      */
-    boolean hasServiceArgv();
+    boolean hasModuleArgv();
     /**
-     * <code>optional string service_argv = 3;</code>
+     * <code>optional string module_argv = 3;</code>
      */
-    java.lang.String getServiceArgv();
+    java.lang.String getModuleArgv();
     /**
-     * <code>optional string service_argv = 3;</code>
+     * <code>optional string module_argv = 3;</code>
      */
     com.google.protobuf.ByteString
-        getServiceArgvBytes();
+        getModuleArgvBytes();
   }
   /**
-   * Protobuf type {@code ohmdb.messages.StartService}
+   * Protobuf type {@code ohmdb.messages.StartModule}
    */
-  public static final class StartService extends
+  public static final class StartModule extends
       com.google.protobuf.GeneratedMessage
-      implements StartServiceOrBuilder {
-    // Use StartService.newBuilder() to construct.
-    private StartService(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      implements StartModuleOrBuilder {
+    // Use StartModule.newBuilder() to construct.
+    private StartModule(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private StartService(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private StartModule(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final StartService defaultInstance;
-    public static StartService getDefaultInstance() {
+    private static final StartModule defaultInstance;
+    public static StartModule getDefaultInstance() {
       return defaultInstance;
     }
 
-    public StartService getDefaultInstanceForType() {
+    public StartModule getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -156,7 +189,7 @@ public final class ControlMessages {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private StartService(
+    private StartModule(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -181,23 +214,23 @@ public final class ControlMessages {
             }
             case 8: {
               int rawValue = input.readEnum();
-              ohmdb.messages.ControlMessages.ServiceType value = ohmdb.messages.ControlMessages.ServiceType.valueOf(rawValue);
+              ohmdb.messages.ControlMessages.ModuleType value = ohmdb.messages.ControlMessages.ModuleType.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(1, rawValue);
               } else {
                 bitField0_ |= 0x00000001;
-                service_ = value;
+                module_ = value;
               }
               break;
             }
             case 16: {
               bitField0_ |= 0x00000002;
-              servicePort_ = input.readInt32();
+              modulePort_ = input.readInt32();
               break;
             }
             case 26: {
               bitField0_ |= 0x00000004;
-              serviceArgv_ = input.readBytes();
+              moduleArgv_ = input.readBytes();
               break;
             }
           }
@@ -214,78 +247,78 @@ public final class ControlMessages {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartService_descriptor;
+      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartModule_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartService_fieldAccessorTable
+      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartModule_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              ohmdb.messages.ControlMessages.StartService.class, ohmdb.messages.ControlMessages.StartService.Builder.class);
+              ohmdb.messages.ControlMessages.StartModule.class, ohmdb.messages.ControlMessages.StartModule.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<StartService> PARSER =
-        new com.google.protobuf.AbstractParser<StartService>() {
-      public StartService parsePartialFrom(
+    public static com.google.protobuf.Parser<StartModule> PARSER =
+        new com.google.protobuf.AbstractParser<StartModule>() {
+      public StartModule parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StartService(input, extensionRegistry);
+        return new StartModule(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<StartService> getParserForType() {
+    public com.google.protobuf.Parser<StartModule> getParserForType() {
       return PARSER;
     }
 
     private int bitField0_;
-    // optional .ohmdb.messages.ServiceType service = 1;
-    public static final int SERVICE_FIELD_NUMBER = 1;
-    private ohmdb.messages.ControlMessages.ServiceType service_;
+    // optional .ohmdb.messages.ModuleType module = 1;
+    public static final int MODULE_FIELD_NUMBER = 1;
+    private ohmdb.messages.ControlMessages.ModuleType module_;
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    public boolean hasService() {
+    public boolean hasModule() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    public ohmdb.messages.ControlMessages.ServiceType getService() {
-      return service_;
+    public ohmdb.messages.ControlMessages.ModuleType getModule() {
+      return module_;
     }
 
-    // optional int32 service_port = 2;
-    public static final int SERVICE_PORT_FIELD_NUMBER = 2;
-    private int servicePort_;
+    // optional int32 module_port = 2;
+    public static final int MODULE_PORT_FIELD_NUMBER = 2;
+    private int modulePort_;
     /**
-     * <code>optional int32 service_port = 2;</code>
+     * <code>optional int32 module_port = 2;</code>
      */
-    public boolean hasServicePort() {
+    public boolean hasModulePort() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>optional int32 service_port = 2;</code>
+     * <code>optional int32 module_port = 2;</code>
      */
-    public int getServicePort() {
-      return servicePort_;
+    public int getModulePort() {
+      return modulePort_;
     }
 
-    // optional string service_argv = 3;
-    public static final int SERVICE_ARGV_FIELD_NUMBER = 3;
-    private java.lang.Object serviceArgv_;
+    // optional string module_argv = 3;
+    public static final int MODULE_ARGV_FIELD_NUMBER = 3;
+    private java.lang.Object moduleArgv_;
     /**
-     * <code>optional string service_argv = 3;</code>
+     * <code>optional string module_argv = 3;</code>
      */
-    public boolean hasServiceArgv() {
+    public boolean hasModuleArgv() {
       return ((bitField0_ & 0x00000004) == 0x00000004);
     }
     /**
-     * <code>optional string service_argv = 3;</code>
+     * <code>optional string module_argv = 3;</code>
      */
-    public java.lang.String getServiceArgv() {
-      java.lang.Object ref = serviceArgv_;
+    public java.lang.String getModuleArgv() {
+      java.lang.Object ref = moduleArgv_;
       if (ref instanceof java.lang.String) {
         return (java.lang.String) ref;
       } else {
@@ -293,22 +326,22 @@ public final class ControlMessages {
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
         if (bs.isValidUtf8()) {
-          serviceArgv_ = s;
+          moduleArgv_ = s;
         }
         return s;
       }
     }
     /**
-     * <code>optional string service_argv = 3;</code>
+     * <code>optional string module_argv = 3;</code>
      */
     public com.google.protobuf.ByteString
-        getServiceArgvBytes() {
-      java.lang.Object ref = serviceArgv_;
+        getModuleArgvBytes() {
+      java.lang.Object ref = moduleArgv_;
       if (ref instanceof java.lang.String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        serviceArgv_ = b;
+        moduleArgv_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
@@ -316,9 +349,9 @@ public final class ControlMessages {
     }
 
     private void initFields() {
-      service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
-      servicePort_ = 0;
-      serviceArgv_ = "";
+      module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
+      modulePort_ = 0;
+      moduleArgv_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -333,13 +366,13 @@ public final class ControlMessages {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeEnum(1, service_.getNumber());
+        output.writeEnum(1, module_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeInt32(2, servicePort_);
+        output.writeInt32(2, modulePort_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBytes(3, getServiceArgvBytes());
+        output.writeBytes(3, getModuleArgvBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -352,15 +385,15 @@ public final class ControlMessages {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, service_.getNumber());
+          .computeEnumSize(1, module_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, servicePort_);
+          .computeInt32Size(2, modulePort_);
       }
       if (((bitField0_ & 0x00000004) == 0x00000004)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, getServiceArgvBytes());
+          .computeBytesSize(3, getModuleArgvBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -374,53 +407,53 @@ public final class ControlMessages {
       return super.writeReplace();
     }
 
-    public static ohmdb.messages.ControlMessages.StartService parseFrom(
+    public static ohmdb.messages.ControlMessages.StartModule parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseFrom(
+    public static ohmdb.messages.ControlMessages.StartModule parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseFrom(byte[] data)
+    public static ohmdb.messages.ControlMessages.StartModule parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseFrom(
+    public static ohmdb.messages.ControlMessages.StartModule parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseFrom(java.io.InputStream input)
+    public static ohmdb.messages.ControlMessages.StartModule parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseFrom(
+    public static ohmdb.messages.ControlMessages.StartModule parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseDelimitedFrom(java.io.InputStream input)
+    public static ohmdb.messages.ControlMessages.StartModule parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseDelimitedFrom(
+    public static ohmdb.messages.ControlMessages.StartModule parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseFrom(
+    public static ohmdb.messages.ControlMessages.StartModule parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.StartService parseFrom(
+    public static ohmdb.messages.ControlMessages.StartModule parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -429,7 +462,7 @@ public final class ControlMessages {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(ohmdb.messages.ControlMessages.StartService prototype) {
+    public static Builder newBuilder(ohmdb.messages.ControlMessages.StartModule prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -441,24 +474,24 @@ public final class ControlMessages {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.messages.StartService}
+     * Protobuf type {@code ohmdb.messages.StartModule}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements ohmdb.messages.ControlMessages.StartServiceOrBuilder {
+       implements ohmdb.messages.ControlMessages.StartModuleOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartService_descriptor;
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartModule_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartService_fieldAccessorTable
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartModule_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                ohmdb.messages.ControlMessages.StartService.class, ohmdb.messages.ControlMessages.StartService.Builder.class);
+                ohmdb.messages.ControlMessages.StartModule.class, ohmdb.messages.ControlMessages.StartModule.Builder.class);
       }
 
-      // Construct using ohmdb.messages.ControlMessages.StartService.newBuilder()
+      // Construct using ohmdb.messages.ControlMessages.StartModule.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -478,11 +511,11 @@ public final class ControlMessages {
 
       public Builder clear() {
         super.clear();
-        service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+        module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
         bitField0_ = (bitField0_ & ~0x00000001);
-        servicePort_ = 0;
+        modulePort_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
-        serviceArgv_ = "";
+        moduleArgv_ = "";
         bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
@@ -493,62 +526,62 @@ public final class ControlMessages {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartService_descriptor;
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StartModule_descriptor;
       }
 
-      public ohmdb.messages.ControlMessages.StartService getDefaultInstanceForType() {
-        return ohmdb.messages.ControlMessages.StartService.getDefaultInstance();
+      public ohmdb.messages.ControlMessages.StartModule getDefaultInstanceForType() {
+        return ohmdb.messages.ControlMessages.StartModule.getDefaultInstance();
       }
 
-      public ohmdb.messages.ControlMessages.StartService build() {
-        ohmdb.messages.ControlMessages.StartService result = buildPartial();
+      public ohmdb.messages.ControlMessages.StartModule build() {
+        ohmdb.messages.ControlMessages.StartModule result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public ohmdb.messages.ControlMessages.StartService buildPartial() {
-        ohmdb.messages.ControlMessages.StartService result = new ohmdb.messages.ControlMessages.StartService(this);
+      public ohmdb.messages.ControlMessages.StartModule buildPartial() {
+        ohmdb.messages.ControlMessages.StartModule result = new ohmdb.messages.ControlMessages.StartModule(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.service_ = service_;
+        result.module_ = module_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.servicePort_ = servicePort_;
+        result.modulePort_ = modulePort_;
         if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
           to_bitField0_ |= 0x00000004;
         }
-        result.serviceArgv_ = serviceArgv_;
+        result.moduleArgv_ = moduleArgv_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof ohmdb.messages.ControlMessages.StartService) {
-          return mergeFrom((ohmdb.messages.ControlMessages.StartService)other);
+        if (other instanceof ohmdb.messages.ControlMessages.StartModule) {
+          return mergeFrom((ohmdb.messages.ControlMessages.StartModule)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(ohmdb.messages.ControlMessages.StartService other) {
-        if (other == ohmdb.messages.ControlMessages.StartService.getDefaultInstance()) return this;
-        if (other.hasService()) {
-          setService(other.getService());
+      public Builder mergeFrom(ohmdb.messages.ControlMessages.StartModule other) {
+        if (other == ohmdb.messages.ControlMessages.StartModule.getDefaultInstance()) return this;
+        if (other.hasModule()) {
+          setModule(other.getModule());
         }
-        if (other.hasServicePort()) {
-          setServicePort(other.getServicePort());
+        if (other.hasModulePort()) {
+          setModulePort(other.getModulePort());
         }
-        if (other.hasServiceArgv()) {
+        if (other.hasModuleArgv()) {
           bitField0_ |= 0x00000004;
-          serviceArgv_ = other.serviceArgv_;
+          moduleArgv_ = other.moduleArgv_;
           onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
@@ -563,11 +596,11 @@ public final class ControlMessages {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        ohmdb.messages.ControlMessages.StartService parsedMessage = null;
+        ohmdb.messages.ControlMessages.StartModule parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (ohmdb.messages.ControlMessages.StartService) e.getUnfinishedMessage();
+          parsedMessage = (ohmdb.messages.ControlMessages.StartModule) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -578,172 +611,172 @@ public final class ControlMessages {
       }
       private int bitField0_;
 
-      // optional .ohmdb.messages.ServiceType service = 1;
-      private ohmdb.messages.ControlMessages.ServiceType service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+      // optional .ohmdb.messages.ModuleType module = 1;
+      private ohmdb.messages.ControlMessages.ModuleType module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public boolean hasService() {
+      public boolean hasModule() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public ohmdb.messages.ControlMessages.ServiceType getService() {
-        return service_;
+      public ohmdb.messages.ControlMessages.ModuleType getModule() {
+        return module_;
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public Builder setService(ohmdb.messages.ControlMessages.ServiceType value) {
+      public Builder setModule(ohmdb.messages.ControlMessages.ModuleType value) {
         if (value == null) {
           throw new NullPointerException();
         }
         bitField0_ |= 0x00000001;
-        service_ = value;
+        module_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public Builder clearService() {
+      public Builder clearModule() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+        module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
         onChanged();
         return this;
       }
 
-      // optional int32 service_port = 2;
-      private int servicePort_ ;
+      // optional int32 module_port = 2;
+      private int modulePort_ ;
       /**
-       * <code>optional int32 service_port = 2;</code>
+       * <code>optional int32 module_port = 2;</code>
        */
-      public boolean hasServicePort() {
+      public boolean hasModulePort() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>optional int32 service_port = 2;</code>
+       * <code>optional int32 module_port = 2;</code>
        */
-      public int getServicePort() {
-        return servicePort_;
+      public int getModulePort() {
+        return modulePort_;
       }
       /**
-       * <code>optional int32 service_port = 2;</code>
+       * <code>optional int32 module_port = 2;</code>
        */
-      public Builder setServicePort(int value) {
+      public Builder setModulePort(int value) {
         bitField0_ |= 0x00000002;
-        servicePort_ = value;
+        modulePort_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int32 service_port = 2;</code>
+       * <code>optional int32 module_port = 2;</code>
        */
-      public Builder clearServicePort() {
+      public Builder clearModulePort() {
         bitField0_ = (bitField0_ & ~0x00000002);
-        servicePort_ = 0;
+        modulePort_ = 0;
         onChanged();
         return this;
       }
 
-      // optional string service_argv = 3;
-      private java.lang.Object serviceArgv_ = "";
+      // optional string module_argv = 3;
+      private java.lang.Object moduleArgv_ = "";
       /**
-       * <code>optional string service_argv = 3;</code>
+       * <code>optional string module_argv = 3;</code>
        */
-      public boolean hasServiceArgv() {
+      public boolean hasModuleArgv() {
         return ((bitField0_ & 0x00000004) == 0x00000004);
       }
       /**
-       * <code>optional string service_argv = 3;</code>
+       * <code>optional string module_argv = 3;</code>
        */
-      public java.lang.String getServiceArgv() {
-        java.lang.Object ref = serviceArgv_;
+      public java.lang.String getModuleArgv() {
+        java.lang.Object ref = moduleArgv_;
         if (!(ref instanceof java.lang.String)) {
           java.lang.String s = ((com.google.protobuf.ByteString) ref)
               .toStringUtf8();
-          serviceArgv_ = s;
+          moduleArgv_ = s;
           return s;
         } else {
           return (java.lang.String) ref;
         }
       }
       /**
-       * <code>optional string service_argv = 3;</code>
+       * <code>optional string module_argv = 3;</code>
        */
       public com.google.protobuf.ByteString
-          getServiceArgvBytes() {
-        java.lang.Object ref = serviceArgv_;
+          getModuleArgvBytes() {
+        java.lang.Object ref = moduleArgv_;
         if (ref instanceof String) {
           com.google.protobuf.ByteString b = 
               com.google.protobuf.ByteString.copyFromUtf8(
                   (java.lang.String) ref);
-          serviceArgv_ = b;
+          moduleArgv_ = b;
           return b;
         } else {
           return (com.google.protobuf.ByteString) ref;
         }
       }
       /**
-       * <code>optional string service_argv = 3;</code>
+       * <code>optional string module_argv = 3;</code>
        */
-      public Builder setServiceArgv(
+      public Builder setModuleArgv(
           java.lang.String value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000004;
-        serviceArgv_ = value;
+        moduleArgv_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional string service_argv = 3;</code>
+       * <code>optional string module_argv = 3;</code>
        */
-      public Builder clearServiceArgv() {
+      public Builder clearModuleArgv() {
         bitField0_ = (bitField0_ & ~0x00000004);
-        serviceArgv_ = getDefaultInstance().getServiceArgv();
+        moduleArgv_ = getDefaultInstance().getModuleArgv();
         onChanged();
         return this;
       }
       /**
-       * <code>optional string service_argv = 3;</code>
+       * <code>optional string module_argv = 3;</code>
        */
-      public Builder setServiceArgvBytes(
+      public Builder setModuleArgvBytes(
           com.google.protobuf.ByteString value) {
         if (value == null) {
     throw new NullPointerException();
   }
   bitField0_ |= 0x00000004;
-        serviceArgv_ = value;
+        moduleArgv_ = value;
         onChanged();
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.messages.StartService)
+      // @@protoc_insertion_point(builder_scope:ohmdb.messages.StartModule)
     }
 
     static {
-      defaultInstance = new StartService(true);
+      defaultInstance = new StartModule(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.messages.StartService)
+    // @@protoc_insertion_point(class_scope:ohmdb.messages.StartModule)
   }
 
-  public interface StopServiceOrBuilder
+  public interface StopModuleOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .ohmdb.messages.ServiceType service = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    boolean hasService();
+    boolean hasModule();
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    ohmdb.messages.ControlMessages.ServiceType getService();
+    ohmdb.messages.ControlMessages.ModuleType getModule();
 
     // optional bool hard_stop = 2;
     /**
@@ -779,24 +812,24 @@ public final class ControlMessages {
         getStopReasonBytes();
   }
   /**
-   * Protobuf type {@code ohmdb.messages.StopService}
+   * Protobuf type {@code ohmdb.messages.StopModule}
    */
-  public static final class StopService extends
+  public static final class StopModule extends
       com.google.protobuf.GeneratedMessage
-      implements StopServiceOrBuilder {
-    // Use StopService.newBuilder() to construct.
-    private StopService(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      implements StopModuleOrBuilder {
+    // Use StopModule.newBuilder() to construct.
+    private StopModule(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private StopService(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private StopModule(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final StopService defaultInstance;
-    public static StopService getDefaultInstance() {
+    private static final StopModule defaultInstance;
+    public static StopModule getDefaultInstance() {
       return defaultInstance;
     }
 
-    public StopService getDefaultInstanceForType() {
+    public StopModule getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -806,7 +839,7 @@ public final class ControlMessages {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private StopService(
+    private StopModule(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -831,12 +864,12 @@ public final class ControlMessages {
             }
             case 8: {
               int rawValue = input.readEnum();
-              ohmdb.messages.ControlMessages.ServiceType value = ohmdb.messages.ControlMessages.ServiceType.valueOf(rawValue);
+              ohmdb.messages.ControlMessages.ModuleType value = ohmdb.messages.ControlMessages.ModuleType.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(1, rawValue);
               } else {
                 bitField0_ |= 0x00000001;
-                service_ = value;
+                module_ = value;
               }
               break;
             }
@@ -864,46 +897,46 @@ public final class ControlMessages {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopService_descriptor;
+      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopModule_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopService_fieldAccessorTable
+      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopModule_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              ohmdb.messages.ControlMessages.StopService.class, ohmdb.messages.ControlMessages.StopService.Builder.class);
+              ohmdb.messages.ControlMessages.StopModule.class, ohmdb.messages.ControlMessages.StopModule.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<StopService> PARSER =
-        new com.google.protobuf.AbstractParser<StopService>() {
-      public StopService parsePartialFrom(
+    public static com.google.protobuf.Parser<StopModule> PARSER =
+        new com.google.protobuf.AbstractParser<StopModule>() {
+      public StopModule parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StopService(input, extensionRegistry);
+        return new StopModule(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<StopService> getParserForType() {
+    public com.google.protobuf.Parser<StopModule> getParserForType() {
       return PARSER;
     }
 
     private int bitField0_;
-    // optional .ohmdb.messages.ServiceType service = 1;
-    public static final int SERVICE_FIELD_NUMBER = 1;
-    private ohmdb.messages.ControlMessages.ServiceType service_;
+    // optional .ohmdb.messages.ModuleType module = 1;
+    public static final int MODULE_FIELD_NUMBER = 1;
+    private ohmdb.messages.ControlMessages.ModuleType module_;
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    public boolean hasService() {
+    public boolean hasModule() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    public ohmdb.messages.ControlMessages.ServiceType getService() {
-      return service_;
+    public ohmdb.messages.ControlMessages.ModuleType getModule() {
+      return module_;
     }
 
     // optional bool hard_stop = 2;
@@ -974,7 +1007,7 @@ public final class ControlMessages {
     }
 
     private void initFields() {
-      service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+      module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
       hardStop_ = false;
       stopReason_ = "";
     }
@@ -991,7 +1024,7 @@ public final class ControlMessages {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeEnum(1, service_.getNumber());
+        output.writeEnum(1, module_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeBool(2, hardStop_);
@@ -1010,7 +1043,7 @@ public final class ControlMessages {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, service_.getNumber());
+          .computeEnumSize(1, module_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
@@ -1032,53 +1065,53 @@ public final class ControlMessages {
       return super.writeReplace();
     }
 
-    public static ohmdb.messages.ControlMessages.StopService parseFrom(
+    public static ohmdb.messages.ControlMessages.StopModule parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseFrom(
+    public static ohmdb.messages.ControlMessages.StopModule parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseFrom(byte[] data)
+    public static ohmdb.messages.ControlMessages.StopModule parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseFrom(
+    public static ohmdb.messages.ControlMessages.StopModule parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseFrom(java.io.InputStream input)
+    public static ohmdb.messages.ControlMessages.StopModule parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseFrom(
+    public static ohmdb.messages.ControlMessages.StopModule parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseDelimitedFrom(java.io.InputStream input)
+    public static ohmdb.messages.ControlMessages.StopModule parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseDelimitedFrom(
+    public static ohmdb.messages.ControlMessages.StopModule parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseFrom(
+    public static ohmdb.messages.ControlMessages.StopModule parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.StopService parseFrom(
+    public static ohmdb.messages.ControlMessages.StopModule parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -1087,7 +1120,7 @@ public final class ControlMessages {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(ohmdb.messages.ControlMessages.StopService prototype) {
+    public static Builder newBuilder(ohmdb.messages.ControlMessages.StopModule prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -1099,24 +1132,24 @@ public final class ControlMessages {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.messages.StopService}
+     * Protobuf type {@code ohmdb.messages.StopModule}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements ohmdb.messages.ControlMessages.StopServiceOrBuilder {
+       implements ohmdb.messages.ControlMessages.StopModuleOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopService_descriptor;
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopModule_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopService_fieldAccessorTable
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopModule_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                ohmdb.messages.ControlMessages.StopService.class, ohmdb.messages.ControlMessages.StopService.Builder.class);
+                ohmdb.messages.ControlMessages.StopModule.class, ohmdb.messages.ControlMessages.StopModule.Builder.class);
       }
 
-      // Construct using ohmdb.messages.ControlMessages.StopService.newBuilder()
+      // Construct using ohmdb.messages.ControlMessages.StopModule.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1136,7 +1169,7 @@ public final class ControlMessages {
 
       public Builder clear() {
         super.clear();
-        service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+        module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
         bitField0_ = (bitField0_ & ~0x00000001);
         hardStop_ = false;
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -1151,29 +1184,29 @@ public final class ControlMessages {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopService_descriptor;
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_StopModule_descriptor;
       }
 
-      public ohmdb.messages.ControlMessages.StopService getDefaultInstanceForType() {
-        return ohmdb.messages.ControlMessages.StopService.getDefaultInstance();
+      public ohmdb.messages.ControlMessages.StopModule getDefaultInstanceForType() {
+        return ohmdb.messages.ControlMessages.StopModule.getDefaultInstance();
       }
 
-      public ohmdb.messages.ControlMessages.StopService build() {
-        ohmdb.messages.ControlMessages.StopService result = buildPartial();
+      public ohmdb.messages.ControlMessages.StopModule build() {
+        ohmdb.messages.ControlMessages.StopModule result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public ohmdb.messages.ControlMessages.StopService buildPartial() {
-        ohmdb.messages.ControlMessages.StopService result = new ohmdb.messages.ControlMessages.StopService(this);
+      public ohmdb.messages.ControlMessages.StopModule buildPartial() {
+        ohmdb.messages.ControlMessages.StopModule result = new ohmdb.messages.ControlMessages.StopModule(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.service_ = service_;
+        result.module_ = module_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
@@ -1188,18 +1221,18 @@ public final class ControlMessages {
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof ohmdb.messages.ControlMessages.StopService) {
-          return mergeFrom((ohmdb.messages.ControlMessages.StopService)other);
+        if (other instanceof ohmdb.messages.ControlMessages.StopModule) {
+          return mergeFrom((ohmdb.messages.ControlMessages.StopModule)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(ohmdb.messages.ControlMessages.StopService other) {
-        if (other == ohmdb.messages.ControlMessages.StopService.getDefaultInstance()) return this;
-        if (other.hasService()) {
-          setService(other.getService());
+      public Builder mergeFrom(ohmdb.messages.ControlMessages.StopModule other) {
+        if (other == ohmdb.messages.ControlMessages.StopModule.getDefaultInstance()) return this;
+        if (other.hasModule()) {
+          setModule(other.getModule());
         }
         if (other.hasHardStop()) {
           setHardStop(other.getHardStop());
@@ -1221,11 +1254,11 @@ public final class ControlMessages {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        ohmdb.messages.ControlMessages.StopService parsedMessage = null;
+        ohmdb.messages.ControlMessages.StopModule parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (ohmdb.messages.ControlMessages.StopService) e.getUnfinishedMessage();
+          parsedMessage = (ohmdb.messages.ControlMessages.StopModule) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -1236,38 +1269,38 @@ public final class ControlMessages {
       }
       private int bitField0_;
 
-      // optional .ohmdb.messages.ServiceType service = 1;
-      private ohmdb.messages.ControlMessages.ServiceType service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+      // optional .ohmdb.messages.ModuleType module = 1;
+      private ohmdb.messages.ControlMessages.ModuleType module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public boolean hasService() {
+      public boolean hasModule() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public ohmdb.messages.ControlMessages.ServiceType getService() {
-        return service_;
+      public ohmdb.messages.ControlMessages.ModuleType getModule() {
+        return module_;
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public Builder setService(ohmdb.messages.ControlMessages.ServiceType value) {
+      public Builder setModule(ohmdb.messages.ControlMessages.ModuleType value) {
         if (value == null) {
           throw new NullPointerException();
         }
         bitField0_ |= 0x00000001;
-        service_ = value;
+        module_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public Builder clearService() {
+      public Builder clearModule() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+        module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
         onChanged();
         return this;
       }
@@ -1395,29 +1428,29 @@ public final class ControlMessages {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.messages.StopService)
+      // @@protoc_insertion_point(builder_scope:ohmdb.messages.StopModule)
     }
 
     static {
-      defaultInstance = new StopService(true);
+      defaultInstance = new StopModule(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.messages.StopService)
+    // @@protoc_insertion_point(class_scope:ohmdb.messages.StopModule)
   }
 
-  public interface ServiceSubCommandOrBuilder
+  public interface ModuleSubCommandOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .ohmdb.messages.ServiceType service = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    boolean hasService();
+    boolean hasModule();
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    ohmdb.messages.ControlMessages.ServiceType getService();
+    ohmdb.messages.ControlMessages.ModuleType getModule();
 
     // optional string sub_command = 2;
     /**
@@ -1435,24 +1468,24 @@ public final class ControlMessages {
         getSubCommandBytes();
   }
   /**
-   * Protobuf type {@code ohmdb.messages.ServiceSubCommand}
+   * Protobuf type {@code ohmdb.messages.ModuleSubCommand}
    */
-  public static final class ServiceSubCommand extends
+  public static final class ModuleSubCommand extends
       com.google.protobuf.GeneratedMessage
-      implements ServiceSubCommandOrBuilder {
-    // Use ServiceSubCommand.newBuilder() to construct.
-    private ServiceSubCommand(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      implements ModuleSubCommandOrBuilder {
+    // Use ModuleSubCommand.newBuilder() to construct.
+    private ModuleSubCommand(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
       super(builder);
       this.unknownFields = builder.getUnknownFields();
     }
-    private ServiceSubCommand(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+    private ModuleSubCommand(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
 
-    private static final ServiceSubCommand defaultInstance;
-    public static ServiceSubCommand getDefaultInstance() {
+    private static final ModuleSubCommand defaultInstance;
+    public static ModuleSubCommand getDefaultInstance() {
       return defaultInstance;
     }
 
-    public ServiceSubCommand getDefaultInstanceForType() {
+    public ModuleSubCommand getDefaultInstanceForType() {
       return defaultInstance;
     }
 
@@ -1462,7 +1495,7 @@ public final class ControlMessages {
         getUnknownFields() {
       return this.unknownFields;
     }
-    private ServiceSubCommand(
+    private ModuleSubCommand(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1487,12 +1520,12 @@ public final class ControlMessages {
             }
             case 8: {
               int rawValue = input.readEnum();
-              ohmdb.messages.ControlMessages.ServiceType value = ohmdb.messages.ControlMessages.ServiceType.valueOf(rawValue);
+              ohmdb.messages.ControlMessages.ModuleType value = ohmdb.messages.ControlMessages.ModuleType.valueOf(rawValue);
               if (value == null) {
                 unknownFields.mergeVarintField(1, rawValue);
               } else {
                 bitField0_ |= 0x00000001;
-                service_ = value;
+                module_ = value;
               }
               break;
             }
@@ -1515,46 +1548,46 @@ public final class ControlMessages {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_descriptor;
+      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_fieldAccessorTable
+      return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              ohmdb.messages.ControlMessages.ServiceSubCommand.class, ohmdb.messages.ControlMessages.ServiceSubCommand.Builder.class);
+              ohmdb.messages.ControlMessages.ModuleSubCommand.class, ohmdb.messages.ControlMessages.ModuleSubCommand.Builder.class);
     }
 
-    public static com.google.protobuf.Parser<ServiceSubCommand> PARSER =
-        new com.google.protobuf.AbstractParser<ServiceSubCommand>() {
-      public ServiceSubCommand parsePartialFrom(
+    public static com.google.protobuf.Parser<ModuleSubCommand> PARSER =
+        new com.google.protobuf.AbstractParser<ModuleSubCommand>() {
+      public ModuleSubCommand parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-        return new ServiceSubCommand(input, extensionRegistry);
+        return new ModuleSubCommand(input, extensionRegistry);
       }
     };
 
     @java.lang.Override
-    public com.google.protobuf.Parser<ServiceSubCommand> getParserForType() {
+    public com.google.protobuf.Parser<ModuleSubCommand> getParserForType() {
       return PARSER;
     }
 
     private int bitField0_;
-    // optional .ohmdb.messages.ServiceType service = 1;
-    public static final int SERVICE_FIELD_NUMBER = 1;
-    private ohmdb.messages.ControlMessages.ServiceType service_;
+    // optional .ohmdb.messages.ModuleType module = 1;
+    public static final int MODULE_FIELD_NUMBER = 1;
+    private ohmdb.messages.ControlMessages.ModuleType module_;
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    public boolean hasService() {
+    public boolean hasModule() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
-    public ohmdb.messages.ControlMessages.ServiceType getService() {
-      return service_;
+    public ohmdb.messages.ControlMessages.ModuleType getModule() {
+      return module_;
     }
 
     // optional string sub_command = 2;
@@ -1601,7 +1634,7 @@ public final class ControlMessages {
     }
 
     private void initFields() {
-      service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+      module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
       subCommand_ = "";
     }
     private byte memoizedIsInitialized = -1;
@@ -1617,7 +1650,7 @@ public final class ControlMessages {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeEnum(1, service_.getNumber());
+        output.writeEnum(1, module_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeBytes(2, getSubCommandBytes());
@@ -1633,7 +1666,7 @@ public final class ControlMessages {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, service_.getNumber());
+          .computeEnumSize(1, module_.getNumber());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
@@ -1651,53 +1684,53 @@ public final class ControlMessages {
       return super.writeReplace();
     }
 
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(byte[] data)
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return PARSER.parseFrom(data, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(java.io.InputStream input)
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseFrom(input, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseDelimitedFrom(java.io.InputStream input)
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseDelimitedFrom(
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return PARSER.parseDelimitedFrom(input, extensionRegistry);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return PARSER.parseFrom(input);
     }
-    public static ohmdb.messages.ControlMessages.ServiceSubCommand parseFrom(
+    public static ohmdb.messages.ControlMessages.ModuleSubCommand parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -1706,7 +1739,7 @@ public final class ControlMessages {
 
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(ohmdb.messages.ControlMessages.ServiceSubCommand prototype) {
+    public static Builder newBuilder(ohmdb.messages.ControlMessages.ModuleSubCommand prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -1718,24 +1751,24 @@ public final class ControlMessages {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.messages.ServiceSubCommand}
+     * Protobuf type {@code ohmdb.messages.ModuleSubCommand}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements ohmdb.messages.ControlMessages.ServiceSubCommandOrBuilder {
+       implements ohmdb.messages.ControlMessages.ModuleSubCommandOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_descriptor;
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_fieldAccessorTable
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
-                ohmdb.messages.ControlMessages.ServiceSubCommand.class, ohmdb.messages.ControlMessages.ServiceSubCommand.Builder.class);
+                ohmdb.messages.ControlMessages.ModuleSubCommand.class, ohmdb.messages.ControlMessages.ModuleSubCommand.Builder.class);
       }
 
-      // Construct using ohmdb.messages.ControlMessages.ServiceSubCommand.newBuilder()
+      // Construct using ohmdb.messages.ControlMessages.ModuleSubCommand.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1755,7 +1788,7 @@ public final class ControlMessages {
 
       public Builder clear() {
         super.clear();
-        service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+        module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
         bitField0_ = (bitField0_ & ~0x00000001);
         subCommand_ = "";
         bitField0_ = (bitField0_ & ~0x00000002);
@@ -1768,29 +1801,29 @@ public final class ControlMessages {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ServiceSubCommand_descriptor;
+        return ohmdb.messages.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_descriptor;
       }
 
-      public ohmdb.messages.ControlMessages.ServiceSubCommand getDefaultInstanceForType() {
-        return ohmdb.messages.ControlMessages.ServiceSubCommand.getDefaultInstance();
+      public ohmdb.messages.ControlMessages.ModuleSubCommand getDefaultInstanceForType() {
+        return ohmdb.messages.ControlMessages.ModuleSubCommand.getDefaultInstance();
       }
 
-      public ohmdb.messages.ControlMessages.ServiceSubCommand build() {
-        ohmdb.messages.ControlMessages.ServiceSubCommand result = buildPartial();
+      public ohmdb.messages.ControlMessages.ModuleSubCommand build() {
+        ohmdb.messages.ControlMessages.ModuleSubCommand result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
 
-      public ohmdb.messages.ControlMessages.ServiceSubCommand buildPartial() {
-        ohmdb.messages.ControlMessages.ServiceSubCommand result = new ohmdb.messages.ControlMessages.ServiceSubCommand(this);
+      public ohmdb.messages.ControlMessages.ModuleSubCommand buildPartial() {
+        ohmdb.messages.ControlMessages.ModuleSubCommand result = new ohmdb.messages.ControlMessages.ModuleSubCommand(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
           to_bitField0_ |= 0x00000001;
         }
-        result.service_ = service_;
+        result.module_ = module_;
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
@@ -1801,18 +1834,18 @@ public final class ControlMessages {
       }
 
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof ohmdb.messages.ControlMessages.ServiceSubCommand) {
-          return mergeFrom((ohmdb.messages.ControlMessages.ServiceSubCommand)other);
+        if (other instanceof ohmdb.messages.ControlMessages.ModuleSubCommand) {
+          return mergeFrom((ohmdb.messages.ControlMessages.ModuleSubCommand)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
 
-      public Builder mergeFrom(ohmdb.messages.ControlMessages.ServiceSubCommand other) {
-        if (other == ohmdb.messages.ControlMessages.ServiceSubCommand.getDefaultInstance()) return this;
-        if (other.hasService()) {
-          setService(other.getService());
+      public Builder mergeFrom(ohmdb.messages.ControlMessages.ModuleSubCommand other) {
+        if (other == ohmdb.messages.ControlMessages.ModuleSubCommand.getDefaultInstance()) return this;
+        if (other.hasModule()) {
+          setModule(other.getModule());
         }
         if (other.hasSubCommand()) {
           bitField0_ |= 0x00000002;
@@ -1831,11 +1864,11 @@ public final class ControlMessages {
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws java.io.IOException {
-        ohmdb.messages.ControlMessages.ServiceSubCommand parsedMessage = null;
+        ohmdb.messages.ControlMessages.ModuleSubCommand parsedMessage = null;
         try {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (ohmdb.messages.ControlMessages.ServiceSubCommand) e.getUnfinishedMessage();
+          parsedMessage = (ohmdb.messages.ControlMessages.ModuleSubCommand) e.getUnfinishedMessage();
           throw e;
         } finally {
           if (parsedMessage != null) {
@@ -1846,38 +1879,38 @@ public final class ControlMessages {
       }
       private int bitField0_;
 
-      // optional .ohmdb.messages.ServiceType service = 1;
-      private ohmdb.messages.ControlMessages.ServiceType service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+      // optional .ohmdb.messages.ModuleType module = 1;
+      private ohmdb.messages.ControlMessages.ModuleType module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public boolean hasService() {
+      public boolean hasModule() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public ohmdb.messages.ControlMessages.ServiceType getService() {
-        return service_;
+      public ohmdb.messages.ControlMessages.ModuleType getModule() {
+        return module_;
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public Builder setService(ohmdb.messages.ControlMessages.ServiceType value) {
+      public Builder setModule(ohmdb.messages.ControlMessages.ModuleType value) {
         if (value == null) {
           throw new NullPointerException();
         }
         bitField0_ |= 0x00000001;
-        service_ = value;
+        module_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional .ohmdb.messages.ServiceType service = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
-      public Builder clearService() {
+      public Builder clearModule() {
         bitField0_ = (bitField0_ & ~0x00000001);
-        service_ = ohmdb.messages.ControlMessages.ServiceType.Discovery;
+        module_ = ohmdb.messages.ControlMessages.ModuleType.Discovery;
         onChanged();
         return this;
       }
@@ -1956,15 +1989,15 @@ public final class ControlMessages {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.messages.ServiceSubCommand)
+      // @@protoc_insertion_point(builder_scope:ohmdb.messages.ModuleSubCommand)
     }
 
     static {
-      defaultInstance = new ServiceSubCommand(true);
+      defaultInstance = new ModuleSubCommand(true);
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.messages.ServiceSubCommand)
+    // @@protoc_insertion_point(class_scope:ohmdb.messages.ModuleSubCommand)
   }
 
   public interface CommandReplyOrBuilder
@@ -2676,20 +2709,20 @@ public final class ControlMessages {
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_messages_StartService_descriptor;
+    internal_static_ohmdb_messages_StartModule_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_messages_StartService_fieldAccessorTable;
+      internal_static_ohmdb_messages_StartModule_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_messages_StopService_descriptor;
+    internal_static_ohmdb_messages_StopModule_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_messages_StopService_fieldAccessorTable;
+      internal_static_ohmdb_messages_StopModule_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_messages_ServiceSubCommand_descriptor;
+    internal_static_ohmdb_messages_ModuleSubCommand_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_messages_ServiceSubCommand_fieldAccessorTable;
+      internal_static_ohmdb_messages_ModuleSubCommand_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
     internal_static_ohmdb_messages_CommandReply_descriptor;
   private static
@@ -2705,17 +2738,17 @@ public final class ControlMessages {
   static {
     java.lang.String[] descriptorData = {
       "\n\026control_messages.proto\022\016ohmdb.messages" +
-      "\"h\n\014StartService\022,\n\007service\030\001 \001(\0162\033.ohmd" +
-      "b.messages.ServiceType\022\024\n\014service_port\030\002" +
-      " \001(\005\022\024\n\014service_argv\030\003 \001(\t\"c\n\013StopServic" +
-      "e\022,\n\007service\030\001 \001(\0162\033.ohmdb.messages.Serv" +
-      "iceType\022\021\n\thard_stop\030\002 \001(\010\022\023\n\013stop_reaso" +
-      "n\030\003 \001(\t\"V\n\021ServiceSubCommand\022,\n\007service\030" +
-      "\001 \001(\0162\033.ohmdb.messages.ServiceType\022\023\n\013su" +
-      "b_command\030\002 \001(\t\"W\n\014CommandReply\022\027\n\017comma" +
-      "nd_success\030\001 \001(\010\022\026\n\016command_stdout\030\002 \001(\t",
-      "\022\026\n\016command_stderr\030\003 \001(\t*-\n\013ServiceType\022" +
-      "\r\n\tDiscovery\020\001\022\017\n\013Replication\020\002B\022\n\016ohmdb" +
+      "\"c\n\013StartModule\022*\n\006module\030\001 \001(\0162\032.ohmdb." +
+      "messages.ModuleType\022\023\n\013module_port\030\002 \001(\005" +
+      "\022\023\n\013module_argv\030\003 \001(\t\"`\n\nStopModule\022*\n\006m" +
+      "odule\030\001 \001(\0162\032.ohmdb.messages.ModuleType\022" +
+      "\021\n\thard_stop\030\002 \001(\010\022\023\n\013stop_reason\030\003 \001(\t\"" +
+      "S\n\020ModuleSubCommand\022*\n\006module\030\001 \001(\0162\032.oh" +
+      "mdb.messages.ModuleType\022\023\n\013sub_command\030\002" +
+      " \001(\t\"W\n\014CommandReply\022\027\n\017command_success\030" +
+      "\001 \001(\010\022\026\n\016command_stdout\030\002 \001(\t\022\026\n\016command",
+      "_stderr\030\003 \001(\t*8\n\nModuleType\022\r\n\tDiscovery" +
+      "\020\001\022\017\n\013Replication\020\002\022\n\n\006Tablet\020\003B\022\n\016ohmdb" +
       ".messagesH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
@@ -2723,24 +2756,24 @@ public final class ControlMessages {
         public com.google.protobuf.ExtensionRegistry assignDescriptors(
             com.google.protobuf.Descriptors.FileDescriptor root) {
           descriptor = root;
-          internal_static_ohmdb_messages_StartService_descriptor =
+          internal_static_ohmdb_messages_StartModule_descriptor =
             getDescriptor().getMessageTypes().get(0);
-          internal_static_ohmdb_messages_StartService_fieldAccessorTable = new
+          internal_static_ohmdb_messages_StartModule_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_messages_StartService_descriptor,
-              new java.lang.String[] { "Service", "ServicePort", "ServiceArgv", });
-          internal_static_ohmdb_messages_StopService_descriptor =
+              internal_static_ohmdb_messages_StartModule_descriptor,
+              new java.lang.String[] { "Module", "ModulePort", "ModuleArgv", });
+          internal_static_ohmdb_messages_StopModule_descriptor =
             getDescriptor().getMessageTypes().get(1);
-          internal_static_ohmdb_messages_StopService_fieldAccessorTable = new
+          internal_static_ohmdb_messages_StopModule_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_messages_StopService_descriptor,
-              new java.lang.String[] { "Service", "HardStop", "StopReason", });
-          internal_static_ohmdb_messages_ServiceSubCommand_descriptor =
+              internal_static_ohmdb_messages_StopModule_descriptor,
+              new java.lang.String[] { "Module", "HardStop", "StopReason", });
+          internal_static_ohmdb_messages_ModuleSubCommand_descriptor =
             getDescriptor().getMessageTypes().get(2);
-          internal_static_ohmdb_messages_ServiceSubCommand_fieldAccessorTable = new
+          internal_static_ohmdb_messages_ModuleSubCommand_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_messages_ServiceSubCommand_descriptor,
-              new java.lang.String[] { "Service", "SubCommand", });
+              internal_static_ohmdb_messages_ModuleSubCommand_descriptor,
+              new java.lang.String[] { "Module", "SubCommand", });
           internal_static_ohmdb_messages_CommandReply_descriptor =
             getDescriptor().getMessageTypes().get(3);
           internal_static_ohmdb_messages_CommandReply_fieldAccessorTable = new

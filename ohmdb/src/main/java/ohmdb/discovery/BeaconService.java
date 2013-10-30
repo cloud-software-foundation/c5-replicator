@@ -32,7 +32,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import ohmdb.interfaces.DiscoveryService;
+import ohmdb.interfaces.DiscoveryModule;
 import ohmdb.interfaces.OhmServer;
 import ohmdb.codec.UdpProtobufDecoder;
 import ohmdb.codec.UdpProtobufEncoder;
@@ -59,14 +59,14 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static ohmdb.discovery.Beacon.Availability;
-import static ohmdb.messages.ControlMessages.ServiceType;
+import static ohmdb.messages.ControlMessages.ModuleType;
 
-public class BeaconService extends AbstractService implements DiscoveryService {
+public class BeaconService extends AbstractService implements DiscoveryModule {
     private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
 
     @Override
-    public ServiceType getServiceType() {
-        return ServiceType.Discovery;
+    public ModuleType getModuleType() {
+        return ModuleType.Discovery;
     }
 
     @Override
@@ -93,14 +93,14 @@ public class BeaconService extends AbstractService implements DiscoveryService {
             return;
         }
 
-        Integer servicePort = peer.services.get(req.serviceType);
+        Integer servicePort = peer.modules.get(req.moduleType);
         if (servicePort == null) {
             message.reply(NodeInfoReply.NO_REPLY);
             return;
         }
 
         List<String> peerAddrs = peer.availability.getAddressesList();
-        // does this service run on that peer?
+        // does this module run on that peer?
         message.reply(new NodeInfoReply(true, peerAddrs, servicePort));
     }
 
@@ -112,12 +112,12 @@ public class BeaconService extends AbstractService implements DiscoveryService {
                 '}';
     }
 
-    // For main system services/pubsub stuff.
+    // For main system modules/pubsub stuff.
     private final OhmServer ohmServer;
     private final long nodeId;
     private final int discoveryPort;
     private final NioEventLoopGroup eventLoop;
-    private final Map<ServiceType, Integer> serviceInfo = new HashMap<>();
+    private final Map<ModuleType, Integer> moduleInfo = new HashMap<>();
     private final Map<Long, NodeInfo> peers = new HashMap<>();
     private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
     private final Fiber fiber;
@@ -150,13 +150,13 @@ public class BeaconService extends AbstractService implements DiscoveryService {
     public BeaconService(long nodeId, int discoveryPort,
                          final Fiber fiber,
                          NioEventLoopGroup eventLoop,
-                         Map<ServiceType, Integer> services,
+                         Map<ModuleType, Integer> modules,
                          OhmServer theOhmServer
                          ) throws InterruptedException, SocketException {
         this.discoveryPort = discoveryPort;
         this.nodeId = nodeId;
         this.fiber = fiber;
-        serviceInfo.putAll(services);
+        moduleInfo.putAll(modules);
         this.ohmServer = theOhmServer;
         this.eventLoop = eventLoop;
     }
@@ -191,15 +191,15 @@ public class BeaconService extends AbstractService implements DiscoveryService {
                 .addAllAddresses(localIPs)
                 .setNodeId(nodeId);
 
-        List<Beacon.ServiceDescriptor> msgServices = new ArrayList<>(serviceInfo.size());
-        for (ServiceType serviceType : serviceInfo.keySet()) {
-            msgServices.add(Beacon.ServiceDescriptor.newBuilder()
-            .setService(serviceType)
-            .setServicePort(serviceInfo.get(serviceType))
-            .build());
+        List<Beacon.ModuleDescriptor> msgModules = new ArrayList<>(moduleInfo.size());
+        for (ModuleType moduleType : moduleInfo.keySet()) {
+            msgModules.add(Beacon.ModuleDescriptor.newBuilder()
+                    .setModule(moduleType)
+                    .setModulePort(moduleInfo.get(moduleType))
+                    .build());
         }
 
-        beaconMessage.addAllServices(msgServices);
+        beaconMessage.addAllModules(msgModules);
 
         broadcastChannel.writeAndFlush(new UdpProtobufEncoder.UdpProtobufMessage(sendAddress, beaconMessage));
     }
@@ -217,16 +217,16 @@ public class BeaconService extends AbstractService implements DiscoveryService {
     }
 
     @FiberOnly
-    private void serviceChange(OhmServer.ServiceStateChange message) {
+    private void serviceChange(OhmServer.ModuleStateChange message) {
         if (message.state == State.RUNNING) {
-            LOG.debug("BeaconService adding running service {} on port {}", message.service.getServiceType(), message.service.port());
-            serviceInfo.put(message.service.getServiceType(), message.service.port());
+            LOG.debug("BeaconService adding running module {} on port {}", message.module.getModuleType(), message.module.port());
+            moduleInfo.put(message.module.getModuleType(), message.module.port());
         } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
-            LOG.debug("BeaconService removed service {} on port {} with state {}", message.service.getServiceType(), message.service.port(),
+            LOG.debug("BeaconService removed module {} on port {} with state {}", message.module.getModuleType(), message.module.port(),
                     message.state);
-            serviceInfo.remove(message.service.getServiceType());
+            moduleInfo.remove(message.module.getModuleType());
         } else {
-            LOG.debug("BeaconService got unknown service change {}", message);
+            LOG.debug("BeaconService got unknown module change {}", message);
         }
     }
 
@@ -287,9 +287,9 @@ public class BeaconService extends AbstractService implements DiscoveryService {
                         }
                     }, 2, 10, TimeUnit.SECONDS);
 
-                    ohmServer.getServiceRegisteredChannel().subscribe(fiber, new Callback<OhmServer.ServiceStateChange>() {
+                    ohmServer.getModuleStateChangeChannel().subscribe(fiber, new Callback<OhmServer.ModuleStateChange>() {
                         @Override
-                        public void onMessage(OhmServer.ServiceStateChange message) {
+                        public void onMessage(OhmServer.ModuleStateChange message) {
                             serviceChange(message);
                         }
                     });

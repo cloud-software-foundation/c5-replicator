@@ -7,7 +7,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
-import ohmdb.interfaces.ReplicationService;
+import ohmdb.interfaces.ReplicationModule;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -39,7 +39,7 @@ import static ohmdb.replication.Raft.LogEntry;
 /**
  * Single instantation of a raft / log / lease
  */
-public class ReplicatorInstance implements ReplicationService.Replicator {
+public class ReplicatorInstance implements ReplicationModule.Replicator {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorInstance.class);
 
     @Override
@@ -61,8 +61,8 @@ public class ReplicatorInstance implements ReplicationService.Replicator {
 
     private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
     private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
-    private final Channel<ReplicationService.ReplicatorInstanceStateChange> stateChangeChannel;
-    private final Channel<ReplicationService.IndexCommitNotice> commitNoticeChannel;
+    private final Channel<ReplicationModule.ReplicatorInstanceStateChange> stateChangeChannel;
+    private final Channel<ReplicationModule.IndexCommitNotice> commitNoticeChannel;
 
     /********** final fields *************/
     private final Fiber fiber;
@@ -127,8 +127,8 @@ public class ReplicatorInstance implements ReplicationService.Replicator {
                               RaftInformationInterface info,
                               RaftInfoPersistence persister,
                               RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
-                              final Channel<ReplicationService.ReplicatorInstanceStateChange> stateChangeChannel,
-                              final Channel<ReplicationService.IndexCommitNotice> commitNoticeChannel) {
+                              final Channel<ReplicationModule.ReplicatorInstanceStateChange> stateChangeChannel,
+                              final Channel<ReplicationModule.IndexCommitNotice> commitNoticeChannel) {
         this.fiber = fiber;
         this.myId = myId;
         this.quorumId = quorumId;
@@ -152,7 +152,7 @@ public class ReplicatorInstance implements ReplicationService.Replicator {
                     readPersistentData();
                     // indicate we are running!
                     stateChangeChannel.publish(
-                            new ReplicationService.ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.RUNNING, null));
+                            new ReplicationModule.ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.RUNNING, null));
                 } catch (IOException e) {
                     LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
                     failReplicatorInstance(e);
@@ -180,7 +180,7 @@ public class ReplicatorInstance implements ReplicationService.Replicator {
 
     private void failReplicatorInstance(Throwable e) {
         stateChangeChannel.publish(
-                new ReplicationService.ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
+                new ReplicationModule.ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
         fiber.dispose(); // kill us forever.
     }
 
@@ -854,7 +854,7 @@ public class ReplicatorInstance implements ReplicationService.Replicator {
     }
 
     private void notifyLastCommitted() {
-        commitNoticeChannel.publish(new ReplicationService.IndexCommitNotice(this, lastCommittedIndex));
+        commitNoticeChannel.publish(new ReplicationModule.IndexCommitNotice(this, lastCommittedIndex));
     }
 
     private void setVotedFor(long votedFor) {

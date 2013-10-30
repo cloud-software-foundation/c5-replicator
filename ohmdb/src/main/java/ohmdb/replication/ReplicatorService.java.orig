@@ -42,7 +42,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import ohmdb.interfaces.OhmServer;
-import ohmdb.interfaces.OhmService;
+import ohmdb.interfaces.OhmModule;
 import ohmdb.discovery.BeaconService;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
@@ -156,7 +156,7 @@ public class ReplicatorService extends AbstractService implements OhmService {
     private ServerBootstrap serverBootstrap;
     private Bootstrap outgoingBootstrap;
 
-    // Initalized in the service start, by the time any messages or fiber executions trigger, this should be not-null
+    // Initalized in the module start, by the time any messages or fiber executions trigger, this should be not-null
     private BeaconService beaconService = null;
     private Channel listenChannel;
 
@@ -410,8 +410,8 @@ public class ReplicatorService extends AbstractService implements OhmService {
         // must start the fiber up early.
         fiber.start();
 
-        LOG.warn("ReplicatorService now waiting for service dependency on BeaconService");
-        // we arent technically started until this service dependency is retrieved.
+        LOG.warn("ReplicatorService now waiting for module dependency on BeaconService");
+        // we arent technically started until this module dependency is retrieved.
         ListenableFuture<BeaconService> f = server.getBeaconService();
         Futures.addCallback(f, new FutureCallback<BeaconService>() {
             @Override
