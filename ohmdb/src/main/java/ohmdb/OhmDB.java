@@ -369,6 +369,9 @@ public class OhmDB extends AbstractService implements OhmServer {
                 OhmModule module = new BeaconService(this.nodeId, modulePort, fiberPool.create(), workerGroup, l, this);
                 module.addListener(new ModuleListenerPublisher(module), serverFiber);
 
+                // check and wait for service dependencies:
+
+
                 module.start();
                 moduleRegistry.put(moduleType, module);
                 break;

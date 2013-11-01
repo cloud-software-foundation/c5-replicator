@@ -16,6 +16,7 @@
  */
 package ohmdb.interfaces;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import ohmdb.messages.ControlMessages;
 
@@ -25,7 +26,7 @@ import ohmdb.messages.ControlMessages;
  * An internal module is a component that can be started/stopped, and is the official
  * internal interface between different modules.
  * <p/>
- * TODO module dependencies so if you stop one module, you have to stop the dependents.
+ * TODO module dependencies so if you stop one module, you have to stop the dependencies.
  */
 public interface OhmModule extends Service {
 
@@ -34,7 +35,4 @@ public interface OhmModule extends Service {
     public boolean hasPort();
 
     public int port();
-
-    // TODO formalize dependencies for automated start order, etc etc
-    //public List<ControlMessages.ServiceType> getDependencies();
 }

@@ -16,6 +16,7 @@
  */
 package ohmdb.discovery;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -36,6 +37,7 @@ import ohmdb.interfaces.DiscoveryModule;
 import ohmdb.interfaces.OhmServer;
 import ohmdb.codec.UdpProtobufDecoder;
 import ohmdb.codec.UdpProtobufEncoder;
+import ohmdb.messages.ControlMessages;
 import ohmdb.util.FiberOnly;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;

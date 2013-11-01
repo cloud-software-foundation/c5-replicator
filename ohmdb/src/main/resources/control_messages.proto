@@ -10,6 +10,12 @@ enum ModuleType {
     Replication = 2;
     // Tablet module (eg: HRegion)
     Tablet = 3;
+    // Client RPC module
+    Client = 4;
+    // Management Module
+    Management = 5;
+    // Main services module
+    Services = 6;
 }
 
 message StartModule {
