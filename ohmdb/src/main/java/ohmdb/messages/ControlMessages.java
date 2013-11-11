@@ -38,13 +38,13 @@ public final class ControlMessages {
      */
     Tablet(2, 3),
     /**
-     * <code>Client = 4;</code>
+     * <code>RegionServer = 4;</code>
      *
      * <pre>
-     * Client RPC module
+     * RegionServer RPC module
      * </pre>
      */
-    Client(3, 4),
+    RegionServer(3, 4),
     /**
      * <code>Management = 5;</code>
      *
@@ -53,14 +53,6 @@ public final class ControlMessages {
      * </pre>
      */
     Management(4, 5),
-    /**
-     * <code>Services = 6;</code>
-     *
-     * <pre>
-     * Main services module
-     * </pre>
-     */
-    Services(5, 6),
     ;
 
     /**
@@ -88,13 +80,13 @@ public final class ControlMessages {
      */
     public static final int Tablet_VALUE = 3;
     /**
-     * <code>Client = 4;</code>
+     * <code>RegionServer = 4;</code>
      *
      * <pre>
-     * Client RPC module
+     * RegionServer RPC module
      * </pre>
      */
-    public static final int Client_VALUE = 4;
+    public static final int RegionServer_VALUE = 4;
     /**
      * <code>Management = 5;</code>
      *
@@ -103,14 +95,6 @@ public final class ControlMessages {
      * </pre>
      */
     public static final int Management_VALUE = 5;
-    /**
-     * <code>Services = 6;</code>
-     *
-     * <pre>
-     * Main services module
-     * </pre>
-     */
-    public static final int Services_VALUE = 6;
 
 
     public final int getNumber() { return value; }
@@ -120,9 +104,8 @@ public final class ControlMessages {
         case 1: return Discovery;
         case 2: return Replication;
         case 3: return Tablet;
-        case 4: return Client;
+        case 4: return RegionServer;
         case 5: return Management;
-        case 6: return Services;
         default: return null;
       }
     }
@@ -2798,10 +2781,10 @@ public final class ControlMessages {
       "mdb.messages.ModuleType\022\023\n\013sub_command\030\002" +
       " \001(\t\"W\n\014CommandReply\022\027\n\017command_success\030" +
       "\001 \001(\010\022\026\n\016command_stdout\030\002 \001(\t\022\026\n\016command",
-      "_stderr\030\003 \001(\t*b\n\nModuleType\022\r\n\tDiscovery" +
-      "\020\001\022\017\n\013Replication\020\002\022\n\n\006Tablet\020\003\022\n\n\006Clien" +
-      "t\020\004\022\016\n\nManagement\020\005\022\014\n\010Services\020\006B\022\n\016ohm" +
-      "db.messagesH\001"
+      "_stderr\030\003 \001(\t*Z\n\nModuleType\022\r\n\tDiscovery" +
+      "\020\001\022\017\n\013Replication\020\002\022\n\n\006Tablet\020\003\022\020\n\014Regio" +
+      "nServer\020\004\022\016\n\nManagement\020\005B\022\n\016ohmdb.messa" +
+      "gesH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {

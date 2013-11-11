@@ -27,6 +27,7 @@ import java.util.List;
 /**
  * The internal/cross module interface to the discovery module.
  */
+@ModuleTypeBinding(ControlMessages.ModuleType.Discovery)
 public interface DiscoveryModule extends OhmModule {
     RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo();
 

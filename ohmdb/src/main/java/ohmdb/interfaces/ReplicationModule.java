@@ -17,12 +17,15 @@
 package ohmdb.interfaces;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import ohmdb.messages.ControlMessages;
 import ohmdb.replication.ReplicatorInstance;
 import org.jetlang.channels.Channel;
 
 /**
  * The replication module/module.  The API to other modules internal to ohmdb.
  */
+@DependsOn(DiscoveryModule.class)
+@ModuleTypeBinding(ControlMessages.ModuleType.Replication)
 public interface ReplicationModule extends OhmModule {
     public Channel<IndexCommitNotice> getIndexCommitNotices();
 
