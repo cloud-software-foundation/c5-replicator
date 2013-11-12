@@ -108,6 +108,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
             @Override
             public void run() {
                 if (replicatorInstances.containsKey(quorumId)) {
+                    LOG.debug("Replicator for quorum {} exists already", quorumId);
                     future.set(replicatorInstances.get(quorumId));
                     return;
                 }
@@ -116,6 +117,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                     LOG.error("Creating replicator for {}, peer list didnt contain myself", quorumId, peers);
                     peers.add(server.getNodeId());
                 }
+                LOG.debug("Creating replicator instance for {} peers {}", quorumId, peers);
                 Mooring logMooring = logModule.getMooring(quorumId);
                 ReplicatorInstance instance =
                         new ReplicatorInstance(fiberFactory.create(),
@@ -309,8 +311,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         final long to = request.to;
 
         if (to == server.getNodeId()) {
-            //loop back that
             handleLoopBackMessage(message);
+            return;
         }
 
         DiscoveryModule.NodeInfoRequest nodeInfoRequest = new DiscoveryModule.NodeInfoRequest(to, ModuleType.Replication);
@@ -338,6 +340,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                             if (future.isSuccess()) {
                                 sendMessage0(message, future.channel());
                             } else {
+                                // TODO this is a bad way to signal failure.
                                 message.reply(null);
                             }
                         }
@@ -377,11 +380,16 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
         // Funny thing we don't have a direct handle on who sent us this message, so we have to do this. Sok though.
         final ReplicatorInstance repl = replicatorInstances.get(quorumId);
-        assert repl != null;
+        if (repl == null) {
+            // rare failure condition, whereby the replicator died AFTER it send messages.
+            return; // ignore the message.
+        }
+
         final RpcWireRequest newRequest = new RpcWireRequest(toFrom, quorumId, request.message);
         AsyncRequest.withOneReply(fiber, repl.getIncomingChannel(), newRequest, new Callback<RpcReply>() {
             @Override
             public void onMessage(RpcReply msg) {
+                assert msg.message != null;
                 RpcWireReply newReply = new RpcWireReply(toFrom, quorumId, msg.message);
                 origMessage.reply(newReply);
             }
@@ -395,99 +403,106 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         // must start the fiber up early.
         fiber.start();
 
-        LOG.warn("ReplicatorService now waiting for module dependency on BeaconService");
 
-        // TODO this is a shitty way to do this, more refactoring is necessary.
-        ListenableFuture<OhmModule> logListen = server.getModule(ModuleType.Log);
-        try {
-            this.logModule = (LogModule) logListen.get();
-        } catch (InterruptedException | ExecutionException e) {
-            notifyFailed(e);
-        }
-
-        ListenableFuture<OhmModule> f = server.getModule(ModuleType.Discovery);
-        Futures.addCallback(f, new FutureCallback<OhmModule>() {
+        fiber.execute(new Runnable() {
             @Override
-            public void onSuccess(OhmModule result) {
-                discoveryModule = (DiscoveryModule) result;
+            public void run() {
+                // TODO this is a shitty way to do this, more refactoring is necessary.
+                LOG.warn("ReplicatorService now waiting for module dependency on Log & BeaconService");
 
-                // finish init:
+                ListenableFuture<OhmModule> logListen = server.getModule(ModuleType.Log);
                 try {
-                    ChannelInitializer<SocketChannel> initer = new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            ChannelPipeline p = ch.pipeline();
-                            p.addLast("frameDecode", new ProtobufVarint32FrameDecoder());
-                            p.addLast("pbufDecode", new ProtobufDecoder(RaftWireMessage.getDefaultInstance()));
+                    logModule = (LogModule) logListen.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    notifyFailed(e);
+                }
 
-                            p.addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender());
-                            p.addLast("pbufEncoder", new ProtobufEncoder());
+                ListenableFuture<OhmModule> f = server.getModule(ModuleType.Discovery);
+                Futures.addCallback(f, new FutureCallback<OhmModule>() {
+                    @Override
+                    public void onSuccess(OhmModule result) {
+                        discoveryModule = (DiscoveryModule) result;
 
-                            p.addLast(new MessageHandler());
-                        }
-                    };
-
-                    serverBootstrap = new ServerBootstrap();
-                    serverBootstrap.group(bossGroup, workerGroup)
-                            .channel(NioServerSocketChannel.class)
-                            .option(ChannelOption.SO_REUSEADDR, true)
-                            .option(ChannelOption.SO_BACKLOG, 100)
-                            .childOption(ChannelOption.TCP_NODELAY, true)
-                            .childHandler(initer);
-                    serverBootstrap.bind(port).addListener(new ChannelFutureListener() {
-                        @Override
-                        public void operationComplete(ChannelFuture future) throws Exception {
-                            if (future.isSuccess()) {
-                                listenChannel = future.channel();
-                            } else {
-                                LOG.error("Unable to bind! ", future.cause());
-                            }
-                        }
-                    });
-
-                    outgoingBootstrap = new Bootstrap();
-                    outgoingBootstrap.group(workerGroup)
-                            .channel(NioSocketChannel.class)
-                            .option(ChannelOption.SO_REUSEADDR, true)
-                            .option(ChannelOption.TCP_NODELAY, true)
-                            .handler(initer);
-
-                    outgoingRequests.subscribe(fiber, new Callback<Request<RpcRequest, RpcWireReply>>() {
-                        @Override
-                        public void onMessage(Request<RpcRequest, RpcWireReply> message) {
-                            handleOutgoingMessage(message);
-                        }
-                    }, new Callback<SessionClosed<RpcRequest>>() {
-                                @FiberOnly
+                        // finish init:
+                        try {
+                            ChannelInitializer<SocketChannel> initer = new ChannelInitializer<SocketChannel>() {
                                 @Override
-                                public void onMessage(SessionClosed<RpcRequest> message) {
-                                    // Clean up cancelled requests.
-                                    handleCancelledSession(message.getSession());
+                                protected void initChannel(SocketChannel ch) throws Exception {
+                                    ChannelPipeline p = ch.pipeline();
+                                    p.addLast("frameDecode", new ProtobufVarint32FrameDecoder());
+                                    p.addLast("pbufDecode", new ProtobufDecoder(RaftWireMessage.getDefaultInstance()));
+
+                                    p.addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender());
+                                    p.addLast("pbufEncoder", new ProtobufEncoder());
+
+                                    p.addLast(new MessageHandler());
+                                }
+                            };
+
+                            serverBootstrap = new ServerBootstrap();
+                            serverBootstrap.group(bossGroup, workerGroup)
+                                    .channel(NioServerSocketChannel.class)
+                                    .option(ChannelOption.SO_REUSEADDR, true)
+                                    .option(ChannelOption.SO_BACKLOG, 100)
+                                    .childOption(ChannelOption.TCP_NODELAY, true)
+                                    .childHandler(initer);
+                            serverBootstrap.bind(port).addListener(new ChannelFutureListener() {
+                                @Override
+                                public void operationComplete(ChannelFuture future) throws Exception {
+                                    if (future.isSuccess()) {
+                                        listenChannel = future.channel();
+                                    } else {
+                                        LOG.error("Unable to bind! ", future.cause());
+                                    }
                                 }
                             });
 
-                    replicatorStateChanges.subscribe(fiber, new Callback<ReplicatorInstanceStateChange>() {
-                        @Override
-                        public void onMessage(ReplicatorInstanceStateChange message) {
-                            if (message.state == State.FAILED) {
-                                LOG.error("replicator {} indicates failure, removing!", message.instance);
-                                replicatorInstances.remove(message.instance.getQuorumId());
-                            } else {
-                                LOG.debug("replicator indicates state change {}", message);
-                            }
+                            outgoingBootstrap = new Bootstrap();
+                            outgoingBootstrap.group(workerGroup)
+                                    .channel(NioSocketChannel.class)
+                                    .option(ChannelOption.SO_REUSEADDR, true)
+                                    .option(ChannelOption.TCP_NODELAY, true)
+                                    .handler(initer);
+
+                            outgoingRequests.subscribe(fiber, new Callback<Request<RpcRequest, RpcWireReply>>() {
+                                        @Override
+                                        public void onMessage(Request<RpcRequest, RpcWireReply> message) {
+                                            handleOutgoingMessage(message);
+                                        }
+                                    }, new Callback<SessionClosed<RpcRequest>>() {
+                                        @FiberOnly
+                                        @Override
+                                        public void onMessage(SessionClosed<RpcRequest> message) {
+                                            // Clean up cancelled requests.
+                                            handleCancelledSession(message.getSession());
+                                        }
+                                    });
+
+                            replicatorStateChanges.subscribe(fiber, new Callback<ReplicatorInstanceStateChange>() {
+                                @Override
+                                public void onMessage(ReplicatorInstanceStateChange message) {
+                                    if (message.state == State.FAILED) {
+                                        LOG.error("replicator {} indicates failure, removing. Error {}", message.instance,
+                                                message.optError);
+                                        replicatorInstances.remove(message.instance.getQuorumId());
+                                    } else {
+                                        LOG.debug("replicator indicates state change {}", message);
+                                    }
+                                }
+                            });
+
+                            notifyStarted();
+                        } catch (Exception e) {
+                            notifyFailed(e);
                         }
-                    });
+                    }
 
-                    notifyStarted();
-                } catch (Exception e) {
-                    notifyFailed(e);
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                LOG.error("ReplicatorService unable to retrieve BeaconService!", t);
-                notifyFailed(t);
+                    @Override
+                    public void onFailure(Throwable t) {
+                        LOG.error("ReplicatorService unable to retrieve BeaconService!", t);
+                        notifyFailed(t);
+                    }
+                }, fiber);
             }
         });
     }

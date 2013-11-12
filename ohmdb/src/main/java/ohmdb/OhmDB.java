@@ -28,6 +28,7 @@ import ohmdb.interfaces.OhmModule;
 import ohmdb.interfaces.OhmServer;
 import ohmdb.log.LogService;
 import ohmdb.replication.ReplicatorService;
+import ohmdb.tablet.TabletService;
 import ohmdb.util.FiberOnly;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
@@ -87,6 +88,8 @@ public class OhmDB extends AbstractService implements OhmServer {
         instance = new OhmDB(cfgDir);
         instance.start();
 
+        Random rnd = new Random();
+
         // issue startup commands here that are common/we always want:
         StartModule startLog = StartModule.newBuilder()
                 .setModule(ModuleType.Log)
@@ -102,6 +105,20 @@ public class OhmDB extends AbstractService implements OhmServer {
                 .build();
         instance.getCommandChannel().publish(startBeacon);
 
+
+        StartModule startReplication = StartModule.newBuilder()
+                .setModule(ModuleType.Replication)
+                .setModulePort(rnd.nextInt(30000) + 1024)
+                .setModuleArgv("")
+                .build();
+        instance.getCommandChannel().publish(startReplication);
+
+        StartModule startTablet = StartModule.newBuilder()
+                .setModule(ModuleType.Tablet)
+                .setModulePort(0)
+                .setModuleArgv("")
+                .build();
+        instance.getCommandChannel().publish(startTablet);
 
     }
 
@@ -364,7 +381,7 @@ public class OhmDB extends AbstractService implements OhmServer {
             case Discovery: {
                 Map<ModuleType, Integer> l = new HashMap<>();
                 for (ModuleType name : moduleRegistry.keySet()) {
-                    l.put(name, 1);
+                    l.put(name, moduleRegistry.get(name).port());
                 }
 
                 OhmModule module = new BeaconService(this.nodeId, modulePort, fiberPool.create(), workerGroup, l, this);
@@ -379,6 +396,14 @@ public class OhmDB extends AbstractService implements OhmServer {
             case Log: {
                 OhmModule module = new LogService(this);
                 startServiceModule(module);
+
+                break;
+            }
+            case Tablet: {
+                OhmModule module = new TabletService(fiberPool, this);
+                startServiceModule(module);
+
+                break;
             }
 
             default:
@@ -389,6 +414,7 @@ public class OhmDB extends AbstractService implements OhmServer {
     }
 
     private void startServiceModule(OhmModule module) {
+        LOG.info("Starting service {}", module.getModuleType());
         module.addListener(new ModuleListenerPublisher(module), serverFiber);
 
         module.start();

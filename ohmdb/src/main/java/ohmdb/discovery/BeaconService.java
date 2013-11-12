@@ -16,7 +16,6 @@
  */
 package ohmdb.discovery;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -33,11 +32,10 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import ohmdb.interfaces.DiscoveryModule;
-import ohmdb.interfaces.OhmServer;
 import ohmdb.codec.UdpProtobufDecoder;
 import ohmdb.codec.UdpProtobufEncoder;
-import ohmdb.messages.ControlMessages;
+import ohmdb.interfaces.DiscoveryModule;
+import ohmdb.interfaces.OhmServer;
 import ohmdb.util.FiberOnly;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
@@ -177,6 +175,12 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         return future;
     }
 
+    org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
+    @Override
+    public org.jetlang.channels.Channel<NewNodeVisible> getNewNodeNotifications() {
+        return newNodeVisibleChannel;
+    }
+
     private ImmutableMap<Long, NodeInfo> getCopyOfState() {
         return ImmutableMap.copyOf(peers);
     }
@@ -215,7 +219,12 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         }
         // Always just overwrite what was already there for now.
         // TODO consider a more sophisticated merge strategy?
-        peers.put(message.getNodeId(), new NodeInfo(message));
+        NodeInfo nodeInfo = new NodeInfo(message);
+        if (!peers.containsKey(message.getNodeId())) {
+            getNewNodeNotifications().publish(new NewNodeVisible(message.getNodeId(), nodeInfo));
+        }
+
+        peers.put(message.getNodeId(), nodeInfo);
     }
 
     @FiberOnly
@@ -228,7 +237,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                     message.state);
             moduleInfo.remove(message.module.getModuleType());
         } else {
-            LOG.debug("BeaconService got unknown module change {}", message);
+            LOG.debug("BeaconService got unknown state module change {}", message);
         }
     }
 

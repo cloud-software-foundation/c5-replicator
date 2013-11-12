@@ -2,13 +2,7 @@ package ohmdb;
 
 import ohmdb.client.OhmConstants;
 import ohmdb.generated.Log;
-import ohmdb.log.OLogShim;
 import ohmdb.regionserver.RegistryFile;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.regionserver.HRegion;
@@ -18,8 +12,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class OhmStatic {
@@ -30,68 +22,10 @@ public class OhmStatic {
         return OhmConstants.TMP_DIR + random.nextInt();
     }
 
-    public static OLogShim recoverOhmServer(Configuration conf,
-                                            Path path,
-                                            RegistryFile registryFile)
-            throws IOException {
-        Map<HRegionInfo, List<HColumnDescriptor>> registry
-                = registryFile.getRegistry();
-
-        // TODO delete this entire method?
-        //OLogShim hLog = new OLogShim(path.toString());
-        for (HRegionInfo regionInfo : registry.keySet()) {
-            HTableDescriptor hTableDescriptor =
-                    new HTableDescriptor(regionInfo.getTableName());
-
-            for (HColumnDescriptor cf : registry.get(regionInfo)) {
-                hTableDescriptor.addFamily(cf);
-            }
-
-            HRegion region = HRegion.openHRegion(new org.apache.hadoop.fs.Path(path.toString()),
-                    regionInfo,
-                    hTableDescriptor,
-                    null,
-                    conf,
-                    null,
-                    null);
-            onlineRegions.put(region);
-        }
-
-        logReplay(path);
-        //hLog.clearOldLogs(0);
-        return null;
-    }
-
-    public static OLogShim bootStrapRegions(Configuration conf,
-                                            Path path,
-                                            RegistryFile registryFile) throws IOException {
-        byte[] startKey = {0};
-        byte[] endKey = {};
-        TableName tableName = TableName.valueOf("tableName");
-
-        HRegion region;
-        HRegionInfo hRegionInfo = new HRegionInfo(tableName,
-                startKey,
-                endKey);
-
-        HTableDescriptor hTableDescriptor = new HTableDescriptor(tableName);
-        hTableDescriptor.addFamily(new HColumnDescriptor("cf"));
-
-        OLogShim hlog = null;
-        //new OLogShim(path.toString());
-        region = HRegion.createHRegion(hRegionInfo,
-                new org.apache.hadoop.fs.Path(path.toString()),
-                conf,
-                hTableDescriptor,
-                hlog);
-        registryFile.addEntry(hRegionInfo, new HColumnDescriptor("cf"));
-        onlineRegions.put(region);
-        return hlog;
-    }
 
     public static boolean existingRegister(RegistryFile registryFile)
             throws IOException {
-        return registryFile.getRegistry().size() != 0;
+        return registryFile.getRegistry().regions.size() != 0;
     }
 
     private static void logReplay(final Path path) throws IOException {

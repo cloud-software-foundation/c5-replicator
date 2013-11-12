@@ -514,7 +514,6 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         for (long peer : peers) {
             RpcRequest req = new RpcRequest(peer, myId, quorumId, msg);
             AsyncRequest.withOneReply(fiber, sendRpcChannel, req, new Callback<RpcWireReply>() {
-                @FiberOnly
                 @Override
                 public void onMessage(RpcWireReply message) {
                     handleElectionReply0(message, termBeingVotedFor, votes, majority);
@@ -548,6 +547,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
         @Override
         public void run() {
+            LOG.debug("{} request vote timeout to {}, resending RPC", myId, request.to);
             // If we are no longer a candidate, retrying RequestVote is pointless.
             if (myState != State.CANDIDATE)
                 return;
@@ -570,6 +570,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     private void handleElectionReply0(RpcWireReply message, long termBeingVotedFor, List<Long> votes, int majority) {
         // if current term has advanced, these replies are stale and should be ignored:
 
+        if (message == null) {
+            LOG.warn("{} got a NULL message reply, that's unfortunate", myId);
+            return;
+        }
+
         if (currentTerm > termBeingVotedFor) {
             LOG.warn("{} election reply from {}, but currentTerm {} > vote term {}", myId, message.from,
                     currentTerm, termBeingVotedFor);
@@ -581,8 +586,9 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
              // we became not, ignore
              LOG.warn("{} election reply from {} ignored -> in state {}", myId, message.from, myState);
              return;
-         }
+        }
 
+        assert message != null;
         Raft.RequestVoteReply reply = message.getRequestVoteReplyMessage();
 
         if (reply.getTerm() > currentTerm) {
@@ -602,7 +608,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             votes.add(message.from);
         }
 
-        if (votes.size() > majority ) {
+        if (votes.size() >= majority ) {
 
             becomeLeader();
         }
@@ -824,7 +830,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
         long mostAcked = 0;
         for (Map.Entry<Long,Integer> e : bucket.entrySet()) {
-            if (e.getValue() > majority) {
+            if (e.getValue() >= majority) {
                 if (mostAcked != 0) {
                     LOG.warn("{} strange, found more than 1 'most acked' entry: {} and {}", myId, mostAcked, e.getKey());
                 }

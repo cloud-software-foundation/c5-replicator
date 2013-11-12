@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import ohmdb.discovery.Beacon;
 import ohmdb.messages.ControlMessages;
+import org.jetlang.channels.Channel;
 import org.jetlang.channels.RequestChannel;
 
 import java.util.List;
@@ -32,6 +33,26 @@ public interface DiscoveryModule extends OhmModule {
     RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo();
 
     ListenableFuture<ImmutableMap<Long, NodeInfo>> getState();
+
+    Channel<NewNodeVisible> getNewNodeNotifications();
+
+    public static class NewNodeVisible {
+        public final long newNodeId;
+        public final NodeInfo nodeInfo;
+
+        @Override
+        public String toString() {
+            return "NewNodeVisible{" +
+                    "newNodeId=" + newNodeId +
+                    ", nodeInfo=" + nodeInfo +
+                    '}';
+        }
+
+        public NewNodeVisible(long newNodeId, NodeInfo nodeInfo) {
+            this.newNodeId = newNodeId;
+            this.nodeInfo = nodeInfo;
+        }
+    }
 
     public static class NodeInfoRequest {
         public final long nodeId;
