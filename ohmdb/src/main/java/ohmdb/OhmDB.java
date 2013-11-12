@@ -27,6 +27,7 @@ import ohmdb.discovery.BeaconService;
 import ohmdb.interfaces.OhmModule;
 import ohmdb.interfaces.OhmServer;
 import ohmdb.log.LogService;
+import ohmdb.regionserver.RegionServerService;
 import ohmdb.replication.ReplicatorService;
 import ohmdb.tablet.TabletService;
 import ohmdb.util.FiberOnly;
@@ -120,6 +121,12 @@ public class OhmDB extends AbstractService implements OhmServer {
                 .build();
         instance.getCommandChannel().publish(startTablet);
 
+        StartModule startRegionServer = StartModule.newBuilder()
+                .setModule(ModuleType.RegionServer)
+                .setModulePort(8080)
+                .setModuleArgv("")
+                .build();
+        instance.getCommandChannel().publish(startRegionServer);
     }
 
     private static OhmServer instance = null;
@@ -405,6 +412,12 @@ public class OhmDB extends AbstractService implements OhmServer {
 
                 break;
             }
+            case RegionServer: {
+                OhmModule module = new RegionServerService(fiberPool, bossGroup, workerGroup, modulePort, this);
+                startServiceModule(module);
+
+                break;
+            }
 
             default:
                 throw new Exception("No such module as " + moduleType);
@@ -454,10 +467,6 @@ public class OhmDB extends AbstractService implements OhmServer {
 
 
         try {
-            // TODO we probably shouldnt run modules threads as daemons, instead prefer to do orderly shutdown.
-            tabletServicesFiber = new ThreadFiber(new RunnableExecutorImpl(), "Tablet-Services", true);
-            tabletServicesFiber.execute(new RegionServer(8080));
-
             serverFiber = new ThreadFiber(new RunnableExecutorImpl(), "OhmDb-Server", false);
             fiberPool = new PoolFiberFactory(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
             bossGroup = new NioEventLoopGroup(1);

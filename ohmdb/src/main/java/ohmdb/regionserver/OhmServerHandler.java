@@ -17,11 +17,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ohmdb.OhmStatic.getOnlineRegion;
-
 public class OhmServerHandler extends
         SimpleChannelInboundHandler<ClientProtos.Call> {
     ScannerManager scanManager = ScannerManager.INSTANCE;
+
+    private final RegionServerService regionServerService;
+    public OhmServerHandler(RegionServerService myService) {
+        this.regionServerService = myService;
+    }
 
     @Override
     public void channelRead0(final ChannelHandlerContext ctx,
@@ -80,7 +83,7 @@ public class OhmServerHandler extends
                                         + type.name());
                 }
             }
-            HRegion region = getOnlineRegion("1");
+            HRegion region = regionServerService.getOnlineRegion("1");
             region.mutateRow(rm);
         }
         ClientProtos.Response response = ClientProtos
@@ -98,7 +101,7 @@ public class OhmServerHandler extends
         ClientProtos.MutateResponse.Builder mutateResponse =
                 ClientProtos.MutateResponse.newBuilder();
         try {
-            HRegion region = getOnlineRegion("1");
+            HRegion region = regionServerService.getOnlineRegion("1");
             switch (mutateIn.getMutation().getMutateType()) {
                 case PUT:
                     region.put(ReverseProtobufUtil.toPut(mutateIn.getMutation(), null));
@@ -138,7 +141,8 @@ public class OhmServerHandler extends
             fiber.start();
             channel = new MemoryChannel<>();
 
-            ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId);
+            ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId,
+                    regionServerService.getOnlineRegion("1"));
             channel.subscribe(fiber, scanRunnable);
             scanManager.addChannel(scannerId, channel);
         }
@@ -162,7 +166,7 @@ public class OhmServerHandler extends
         ClientProtos.Get getIn = call.getGet().getGet();
         ClientProtos.GetResponse.Builder getResponse =
                 ClientProtos.GetResponse.newBuilder();
-        HRegion region = getOnlineRegion("1");
+        HRegion region = regionServerService.getOnlineRegion("1");
         Result result = region.get(ReverseProtobufUtil.toGet(getIn));
         if (! getIn.getExistenceOnly()){
             getResponse.setResult(ReverseProtobufUtil.toResult(result));

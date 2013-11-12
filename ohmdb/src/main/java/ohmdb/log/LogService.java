@@ -17,12 +17,9 @@
 package ohmdb.log;
 
 import com.google.common.util.concurrent.AbstractService;
-import ohmdb.OnlineRegions;
-import ohmdb.client.OhmConstants;
 import ohmdb.interfaces.LogModule;
 import ohmdb.interfaces.OhmServer;
 import ohmdb.messages.ControlMessages;
-import org.apache.hadoop.hbase.regionserver.HRegion;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -96,17 +93,17 @@ public class LogService extends AbstractService implements LogModule {
       int i = 0;
 
       private void flushAndCompact(int i) throws IOException {
-        for (HRegion region : OnlineRegions.INSTANCE.regions()) {
-          region.flushcache();
-          region.getLog().rollWriter();
-          if (i % OhmConstants.AMOUNT_OF_FLUSH_PER_COMPACT == 0) {
-            region.compactStores();
-          }
-          if (i % OhmConstants.AMOUNT_OF_FLUSH_PER_OLD_LOG_CLEAR == 0) {
-            olog.clearOldLogs(System.currentTimeMillis()
-                    - OhmConstants.OLD_LOG_CLEAR_AGE);
-          }
-        }
+//        for (HRegion region : OnlineRegions.INSTANCE.regions()) {
+//          region.flushcache();
+//          region.getLog().rollWriter();
+//          if (i % OhmConstants.AMOUNT_OF_FLUSH_PER_COMPACT == 0) {
+//            region.compactStores();
+//          }
+//          if (i % OhmConstants.AMOUNT_OF_FLUSH_PER_OLD_LOG_CLEAR == 0) {
+//            olog.clearOldLogs(System.currentTimeMillis()
+//                    - OhmConstants.OLD_LOG_CLEAR_AGE);
+//          }
+//        }
       }
 
       @Override
