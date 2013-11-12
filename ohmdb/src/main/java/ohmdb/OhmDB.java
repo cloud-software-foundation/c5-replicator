@@ -26,11 +26,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import ohmdb.discovery.BeaconService;
 import ohmdb.interfaces.OhmModule;
 import ohmdb.interfaces.OhmServer;
-import ohmdb.regionserver.RegistryFile;
+import ohmdb.log.LogService;
 import ohmdb.replication.ReplicatorService;
 import ohmdb.util.FiberOnly;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
@@ -46,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,10 +51,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
-import static ohmdb.OhmStatic.bootStrapRegions;
-import static ohmdb.OhmStatic.existingRegister;
-import static ohmdb.OhmStatic.getRandomPath;
-import static ohmdb.OhmStatic.recoverOhmServer;
 import static ohmdb.log.OLog.moveAwayOldLogs;
 import static ohmdb.messages.ControlMessages.CommandReply;
 import static ohmdb.messages.ControlMessages.ModuleType;
@@ -74,7 +67,7 @@ import static ohmdb.messages.ControlMessages.StopModule;
 public class OhmDB extends AbstractService implements OhmServer {
     private static final Logger LOG = LoggerFactory.getLogger(OhmDB.class);
 
-  public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         String cfgPath = "/tmp/ohmdb-ryan-" + System.currentTimeMillis();
 
         if (args.length > 0) {
@@ -95,12 +88,20 @@ public class OhmDB extends AbstractService implements OhmServer {
         instance.start();
 
         // issue startup commands here that are common/we always want:
+        StartModule startLog = StartModule.newBuilder()
+                .setModule(ModuleType.Log)
+                .setModulePort(0)
+                .setModuleArgv("")
+                .build();
+        instance.getCommandChannel().publish(startLog);
+
         StartModule startBeacon = StartModule.newBuilder()
                 .setModule(ModuleType.Discovery)
                 .setModulePort(54333)
                 .setModuleArgv("")
                 .build();
         instance.getCommandChannel().publish(startBeacon);
+
 
     }
 
@@ -367,28 +368,31 @@ public class OhmDB extends AbstractService implements OhmServer {
                 }
 
                 OhmModule module = new BeaconService(this.nodeId, modulePort, fiberPool.create(), workerGroup, l, this);
-                module.addListener(new ModuleListenerPublisher(module), serverFiber);
-
-                // check and wait for service dependencies:
-
-
-                module.start();
-                moduleRegistry.put(moduleType, module);
+                startServiceModule(module);
                 break;
             }
             case Replication: {
                 OhmModule module = new ReplicatorService(fiberPool, bossGroup, workerGroup, modulePort, this);
-                module.addListener(new ModuleListenerPublisher(module), serverFiber);
-
-                module.start();
-                moduleRegistry.put(moduleType, module);
+                startServiceModule(module);
                 break;
             }
+            case Log: {
+                OhmModule module = new LogService(this);
+                startServiceModule(module);
+            }
+
             default:
                 throw new Exception("No such module as " + moduleType);
         }
 
         return true;
+    }
+
+    private void startServiceModule(OhmModule module) {
+        module.addListener(new ModuleListenerPublisher(module), serverFiber);
+
+        module.start();
+        moduleRegistry.put(module.getModuleType(), module);
     }
 
     @FiberOnly
@@ -404,20 +408,21 @@ public class OhmDB extends AbstractService implements OhmServer {
 
     @Override
     protected void doStart() {
-        Configuration conf = HBaseConfiguration.create();
-        Path path;
-        path = Paths.get(getRandomPath());
-        RegistryFile registryFile;
+//        Path path;
+//        path = Paths.get(getRandomPath());
+//        RegistryFile registryFile;
         try {
-            registryFile = new RegistryFile(path);
-            moveAwayOldLogs(path.toString());
+//            registryFile = new RegistryFile(configDirectory.baseConfigPath);
 
-            if (existingRegister(registryFile)) {
-                recoverOhmServer(conf, path, registryFile);
-            } else {
-                bootStrapRegions(conf, path, registryFile);
-            }
-        } catch (Exception e) {
+            // TODO this should probably be done somewhere else.
+            moveAwayOldLogs(configDirectory.baseConfigPath);
+
+//            if (existingRegister(registryFile)) {
+//                recoverOhmServer(conf, path, registryFile);
+//            } else {
+//                bootStrapRegions(conf, path, registryFile);
+//            }
+        } catch (IOException e) {
             notifyFailed(e);
         }
 

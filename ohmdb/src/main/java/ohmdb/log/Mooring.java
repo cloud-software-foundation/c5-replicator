@@ -26,14 +26,14 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Mooring implements RaftLogAbstraction {
-    private final OLog log;
-    long nodeId;
-    HashMap<Long, Long> latestTombstones = new HashMap<>();
+    final OLog log;
+    final String quorumId;
+    HashMap<String, Long> latestTombstones = new HashMap<>();
     long currentTerm = 0;
     long lastIndex = 0;
 
-    Mooring(OLog log, long nodeId) {
-        this.nodeId = nodeId;
+    Mooring(OLog log, String quorumId) {
+        this.quorumId = quorumId;
         this.log = log;
     }
 
@@ -47,20 +47,20 @@ public class Mooring implements RaftLogAbstraction {
                     .setTombStone(false)
                     .setTerm(entry.getTerm())
                     .setIndex(idx)
-                    .setNodeId(nodeId)
+                    .setQuorumId(quorumId)
                     .setValue(entry.getData()).build());
         }
-        return this.log.logEntry(oLogEntries, nodeId);
+        return this.log.logEntry(oLogEntries, quorumId);
     }
 
     @Override
     public Raft.LogEntry getLogEntry(long index) {
-        return this.log.getLogEntry(index, nodeId);
+        return this.log.getLogEntry(index, quorumId);
     }
 
     @Override
     public long getLogTerm(long index) {
-        return this.log.getLogTerm(index, nodeId);
+        return this.log.getLogTerm(index, quorumId);
     }
 
     @Override
@@ -75,17 +75,17 @@ public class Mooring implements RaftLogAbstraction {
 
     @Override
     public ListenableFuture<Boolean> truncateLog(long entryIndex) {
-        updateInMemoryTombstone(nodeId, entryIndex);
-        return this.log.truncateLog(entryIndex, nodeId);
+        updateInMemoryTombstone(quorumId, entryIndex);
+        return this.log.truncateLog(entryIndex, quorumId);
     }
 
-    private void updateInMemoryTombstone(long nodeId, long entryIndex) {
-        if (!this.latestTombstones.containsKey(nodeId)) {
-            this.latestTombstones.put(nodeId, entryIndex);
+    private void updateInMemoryTombstone(String quorumId, long entryIndex) {
+        if (!this.latestTombstones.containsKey(quorumId)) {
+            this.latestTombstones.put(quorumId, entryIndex);
         } else {
-            long latestIndex = this.latestTombstones.get(nodeId);
+            long latestIndex = this.latestTombstones.get(quorumId);
             if (latestIndex < entryIndex) {
-                this.latestTombstones.put(nodeId, entryIndex);
+                this.latestTombstones.put(quorumId, entryIndex);
             }
         }
     }

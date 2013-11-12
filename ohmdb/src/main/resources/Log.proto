@@ -54,7 +54,7 @@ message Entry {
 }
 
 message OLogEntry {
-    required uint64 nodeId = 1;
+    required string quorumId = 1;
     required uint64 index = 2;
     required bool tombStone = 3;
     optional uint64 term = 4;

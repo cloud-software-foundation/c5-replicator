@@ -14,6 +14,8 @@ enum ModuleType {
     RegionServer = 4;
     // Management Module
     Management = 5;
+    // Write Ahead Log Module
+    Log = 6;
 }
 
 message StartModule {

@@ -16,11 +16,11 @@
  */
 package ohmdb.replication;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -42,10 +42,11 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import ohmdb.interfaces.DiscoveryModule;
+import ohmdb.interfaces.LogModule;
 import ohmdb.interfaces.OhmModule;
 import ohmdb.interfaces.OhmServer;
 import ohmdb.interfaces.ReplicationModule;
-import ohmdb.messages.ControlMessages;
+import ohmdb.log.Mooring;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -67,6 +68,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static ohmdb.messages.ControlMessages.ModuleType;
@@ -97,6 +99,42 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
 
     private MemoryChannel<IndexCommitNotice> indexCommitNotices = new MemoryChannel<>();
+
+    @Override
+    public ListenableFuture<Replicator> createReplicator(final String quorumId,
+                                                         final List<Long> peers) {
+        final SettableFuture<Replicator> future = SettableFuture.create();
+        fiber.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (replicatorInstances.containsKey(quorumId)) {
+                    future.set(replicatorInstances.get(quorumId));
+                    return;
+                }
+
+                if (!peers.contains(server.getNodeId())) {
+                    LOG.error("Creating replicator for {}, peer list didnt contain myself", quorumId, peers);
+                    peers.add(server.getNodeId());
+                }
+                Mooring logMooring = logModule.getMooring(quorumId);
+                ReplicatorInstance instance =
+                        new ReplicatorInstance(fiberFactory.create(),
+                                server.getNodeId(),
+                                quorumId,
+                                peers,
+                                logMooring,
+                                new Info(),
+                                persister,
+                                outgoingRequests,
+                                replicatorStateChanges,
+                                indexCommitNotices
+                                );
+                replicatorInstances.put(quorumId, instance);
+                future.set(instance);
+            }
+        });
+        return future;
+    }
 
     @Override
     public org.jetlang.channels.Channel<IndexCommitNotice> getIndexCommitNotices() {
@@ -150,14 +188,14 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     private final Map<Session, Long> outstandingRPCbySession = new HashMap<>();
 
     private final RequestChannel<RpcRequest, RpcWireReply> outgoingRequests = new MemoryRequestChannel<>();
-
-
+    private final Persister persister;
 
     private ServerBootstrap serverBootstrap;
     private Bootstrap outgoingBootstrap;
 
     // Initalized in the module start, by the time any messages or fiber executions trigger, this should be not-null
     private DiscoveryModule discoveryModule = null;
+    private LogModule logModule = null;
     private Channel listenChannel;
 
     private long messageIdGen = 1;
@@ -173,6 +211,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         this.server = server;
         this.fiber = fiberFactory.create();
         this.allChannels = new DefaultChannelGroup(workerGroup.next());
+
+        this.persister = new Persister(server.getConfigDirectory());
     }
 
     /****************** Handlers for netty/messages from the wire/TCP ************************/
@@ -356,7 +396,15 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         fiber.start();
 
         LOG.warn("ReplicatorService now waiting for module dependency on BeaconService");
-        // we aren't technically started until this module dependency is retrieved.
+
+        // TODO this is a shitty way to do this, more refactoring is necessary.
+        ListenableFuture<OhmModule> logListen = server.getModule(ModuleType.Log);
+        try {
+            this.logModule = (LogModule) logListen.get();
+        } catch (InterruptedException | ExecutionException e) {
+            notifyFailed(e);
+        }
+
         ListenableFuture<OhmModule> f = server.getModule(ModuleType.Discovery);
         Futures.addCallback(f, new FutureCallback<OhmModule>() {
             @Override

@@ -42,6 +42,7 @@ public interface OhmServer extends Service {
 
     public long getNodeId();
 
+    // TODO this could be generified if we used an interface instead of ModuleType
     public ListenableFuture<OhmModule> getModule(ModuleType moduleType);
 
     public Channel<MessageLite> getCommandChannel();

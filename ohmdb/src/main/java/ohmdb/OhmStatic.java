@@ -25,19 +25,20 @@ import java.util.Random;
 public class OhmStatic {
     private final static OnlineRegions onlineRegions = OnlineRegions.INSTANCE;
 
-    static String getRandomPath() {
+    public static String getRandomPath() {
         Random random = new Random();
         return OhmConstants.TMP_DIR + random.nextInt();
     }
 
-    static OLogShim recoverOhmServer(Configuration conf,
-                                     Path path,
-                                     RegistryFile registryFile)
+    public static OLogShim recoverOhmServer(Configuration conf,
+                                            Path path,
+                                            RegistryFile registryFile)
             throws IOException {
         Map<HRegionInfo, List<HColumnDescriptor>> registry
                 = registryFile.getRegistry();
 
-        OLogShim hLog = new OLogShim(path.toString());
+        // TODO delete this entire method?
+        //OLogShim hLog = new OLogShim(path.toString());
         for (HRegionInfo regionInfo : registry.keySet()) {
             HTableDescriptor hTableDescriptor =
                     new HTableDescriptor(regionInfo.getTableName());
@@ -49,7 +50,7 @@ public class OhmStatic {
             HRegion region = HRegion.openHRegion(new org.apache.hadoop.fs.Path(path.toString()),
                     regionInfo,
                     hTableDescriptor,
-                    hLog,
+                    null,
                     conf,
                     null,
                     null);
@@ -57,13 +58,13 @@ public class OhmStatic {
         }
 
         logReplay(path);
-        hLog.clearOldLogs(0);
-        return hLog;
+        //hLog.clearOldLogs(0);
+        return null;
     }
 
-    static OLogShim bootStrapRegions(Configuration conf,
-                                     Path path,
-                                     RegistryFile registryFile) throws IOException {
+    public static OLogShim bootStrapRegions(Configuration conf,
+                                            Path path,
+                                            RegistryFile registryFile) throws IOException {
         byte[] startKey = {0};
         byte[] endKey = {};
         TableName tableName = TableName.valueOf("tableName");
@@ -76,7 +77,8 @@ public class OhmStatic {
         HTableDescriptor hTableDescriptor = new HTableDescriptor(tableName);
         hTableDescriptor.addFamily(new HColumnDescriptor("cf"));
 
-        OLogShim hlog = new OLogShim(path.toString());
+        OLogShim hlog = null;
+        //new OLogShim(path.toString());
         region = HRegion.createHRegion(hRegionInfo,
                 new org.apache.hadoop.fs.Path(path.toString()),
                 conf,
@@ -87,7 +89,7 @@ public class OhmStatic {
         return hlog;
     }
 
-    static boolean existingRegister(RegistryFile registryFile)
+    public static boolean existingRegister(RegistryFile registryFile)
             throws IOException {
         return registryFile.getRegistry().size() != 0;
     }

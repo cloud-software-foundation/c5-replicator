@@ -47,208 +47,209 @@ public class OLog implements AutoCloseable {
   Path logPath;
   private FileOutputStream logOutputStream;
 
-  public OLog(String basePath) throws IOException {
-    this.fileNum = System.currentTimeMillis();
-    this.walDir = Paths.get(basePath, OhmConstants.WAL_DIR);
-    this.archiveLogPath = Paths.get(basePath, OhmConstants.ARCHIVE_DIR);
-    this.logPath = Paths.get(walDir.toString(), OhmConstants.LOG_NAME + fileNum);
+  public OLog(Path basePath) throws IOException {
+      this.fileNum = System.currentTimeMillis();
+      this.walDir = basePath.resolve(OhmConstants.WAL_DIR);
+      this.archiveLogPath = basePath.resolve(OhmConstants.ARCHIVE_DIR);
+      this.logPath = walDir.resolve(OhmConstants.LOG_NAME + fileNum);
 
-    if (!logPath.getParent().toFile().exists()) {
-      boolean success = logPath.getParent().toFile().mkdirs();
-      if (!success) {
-        throw new IOException("Unable to setup logPath");
-      }
-    }
 
-    if (!archiveLogPath.toFile().exists()) {
-      boolean success = archiveLogPath.toFile().mkdirs();
-      if (!success) {
-        throw new IOException("Unable to setup archive Log Path");
+      if (!logPath.getParent().toFile().exists()) {
+          boolean success = logPath.getParent().toFile().mkdirs();
+          if (!success) {
+              throw new IOException("Unable to setup logPath");
+          }
       }
-    }
-    logOutputStream = new FileOutputStream(logPath.toFile(), true);
+
+      if (!archiveLogPath.toFile().exists()) {
+          boolean success = archiveLogPath.toFile().mkdirs();
+          if (!success) {
+              throw new IOException("Unable to setup archive Log Path");
+          }
+      }
+      logOutputStream = new FileOutputStream(logPath.toFile(), true);
   }
 
-  public static void moveAwayOldLogs(final String basePath)
-      throws IOException {
-    Path walPath = Paths.get(basePath, OhmConstants.WAL_DIR);
-    Path archiveLogPath = Paths.get(basePath, OhmConstants.ARCHIVE_DIR);
-    File[] files = walPath.toFile().listFiles();
+    public static void moveAwayOldLogs(final Path basePath)
+            throws IOException {
+        Path walPath = basePath.resolve(OhmConstants.WAL_DIR);
+        Path archiveLogPath = basePath.resolve(OhmConstants.ARCHIVE_DIR);
+        File[] files = walPath.toFile().listFiles();
 
-    if (files == null) {
-      return;
+        if (files == null) {
+            return;
+        }
+
+        if (!archiveLogPath.toFile().exists()) {
+            boolean success = archiveLogPath.toFile().mkdirs();
+            if (!success) {
+                throw new IOException("Unable to setup archive Log Path");
+            }
+        }
+
+        for (File file : files) {
+            boolean success = file.renameTo(archiveLogPath
+                    .resolve(file.getName())
+                    .toFile());
+            if (!success) {
+                String err = "Unable to move: " + file + " to " + archiveLogPath;
+                throw new IOException(err);
+            }
+        }
     }
 
-    if (!archiveLogPath.toFile().exists()) {
-      boolean success = archiveLogPath.toFile().mkdirs();
-      if (!success) {
-        throw new IOException("Unable to setup archive Log Path");
-      }
+    public void sync(SettableFuture<Boolean> syncComplete) throws IOException {
+        boolean success = false;
+        do {
+            try {
+                // TODO this needs to be processed on a background thread, not while the caller is waiting. Async notification.
+                this.logOutputStream.flush();
+                this.logOutputStream.getChannel().force(false);
+                success = true;
+                syncComplete.set(true);
+            } catch (ClosedChannelException e) {
+                try {
+                    Thread.sleep(RETRY_WAIT_TIME);
+                } catch (InterruptedException e1) {
+                    throw new IOException(e1);
+                }
+            }
+        } while (!success);
     }
 
-    for (File file : files) {
-      boolean success = file.renameTo(archiveLogPath
-          .resolve(file.getName())
-          .toFile());
-      if (!success) {
-        String err = "Unable to move: " + file + " to " + archiveLogPath;
-        throw new IOException(err);
-      }
-    }
-  }
-
-  public void sync(SettableFuture<Boolean> syncComplete) throws IOException {
-    boolean success = false;
-    do {
-      try {
-          // TODO this needs to be processed on a background thread, not while the caller is waiting. Async notification.
-        this.logOutputStream.flush();
-        this.logOutputStream.getChannel().force(false);
-        success = true;
-        syncComplete.set(true);
-      } catch (ClosedChannelException e) {
+    @Override
+    public void close() throws IOException {
+        SettableFuture<Boolean> syncComplete = SettableFuture.create();
+        this.sync(syncComplete);
         try {
-          Thread.sleep(RETRY_WAIT_TIME);
-        } catch (InterruptedException e1) {
-          throw new IOException(e1);
+            syncComplete.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new IOException(e);
         }
-      }
-    } while (!success);
-  }
-
-  @Override
-  public void close() throws IOException {
-    SettableFuture<Boolean> syncComplete = SettableFuture.create();
-    this.sync(syncComplete);
-    try {
-      syncComplete.get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new IOException(e);
-    }
-    this.logOutputStream.close();
-  }
-
-  public void roll() throws IOException, ExecutionException, InterruptedException {
-    this.close();
-    boolean success = logPath.toFile().renameTo(archiveLogPath
-        .resolve(logPath.toFile().getName())
-        .toFile());
-    if (!success) {
-      String err = "Unable to move: " + logPath + " to " + archiveLogPath;
-      throw new IOException(err);
+        this.logOutputStream.close();
     }
 
-    this.fileNum = System.currentTimeMillis();
-    this.logPath = Paths.get(this.walDir.toString(), OhmConstants.LOG_NAME + fileNum);
-
-    logOutputStream = new FileOutputStream(this.logPath.toFile(),
-        true);
-  }
-
-  /**
-   * Clean out old logs
-   *
-   * @param timestamp Only clear logs older than timestamp. Or if 0 then always
-   *                  remove.
-   * @throws IOException
-   */
-  public void clearOldLogs(long timestamp) throws IOException {
-    File[] files = this.archiveLogPath.toFile().listFiles();
-    if (files == null) {
-      return;
-    }
-
-    for (File file : files) {
-      LOG.debug("Removing old log file" + file);
-      if (timestamp == 0 || file.lastModified() > timestamp) {
-        boolean success = file.delete();
+    public void roll() throws IOException, ExecutionException, InterruptedException {
+        this.close();
+        boolean success = logPath.toFile().renameTo(archiveLogPath
+                .resolve(logPath.toFile().getName())
+                .toFile());
         if (!success) {
-          throw new IOException("Unable to delete file:" + file);
+            String err = "Unable to move: " + logPath + " to " + archiveLogPath;
+            throw new IOException(err);
         }
-      }
+
+        this.fileNum = System.currentTimeMillis();
+        this.logPath = Paths.get(this.walDir.toString(), OhmConstants.LOG_NAME + fileNum);
+
+        logOutputStream = new FileOutputStream(this.logPath.toFile(),
+                true);
     }
-  }
 
-  /**
-   * @param index
-   * @param nodeId
-   * @return The log data for a node at an index or null if not found.
-   */
+    /**
+     * Clean out old logs
+     *
+     * @param timestamp Only clear logs older than timestamp. Or if 0 then always
+     *                  remove.
+     * @throws IOException
+     */
+    public void clearOldLogs(long timestamp) throws IOException {
+        File[] files = this.archiveLogPath.toFile().listFiles();
+        if (files == null) {
+            return;
+        }
 
-  private Log.OLogEntry getLogDataFromDisk(long index, long nodeId)
-      throws IOException, ExecutionException, InterruptedException {
-    SettableFuture<Boolean> f = SettableFuture.create();
-    this.sync(f);
-    f.get();
-
-    FileInputStream fileInputStream = new FileInputStream(logOutputStream.getFD());
-    Log.OLogEntry nextEntry;
-
-    do {
-      // TODO Handle tombestones
-      nextEntry = Log.OLogEntry.parseDelimitedFrom(fileInputStream);
-      // EOF
-      if (nextEntry == null) {
-        return null;
-      }
-    } while (nextEntry.getNodeId() != nodeId && nextEntry.getIndex() != index);
-
-    return nextEntry;
-  }
-
-  public ListenableFuture<Boolean> logEntry(List<Log.OLogEntry> entries, long raftId) {
-    SettableFuture<Boolean> completionNotification = SettableFuture.create();
-    try {
-      for (Log.OLogEntry entry : entries) {
-        entry.writeDelimitedTo(this.logOutputStream);
-      }
-      completionNotification.set(true);
-      return completionNotification;
-    } catch (IOException e) {
-      completionNotification.setException(e);
-      return completionNotification;
+        for (File file : files) {
+            LOG.debug("Removing old log file" + file);
+            if (timestamp == 0 || file.lastModified() > timestamp) {
+                boolean success = file.delete();
+                if (!success) {
+                    throw new IOException("Unable to delete file:" + file);
+                }
+            }
+        }
     }
-  }
 
-  public Raft.LogEntry getLogEntry(long index, long nodeId) {
-    try {
-      Log.OLogEntry ologEntry = getLogDataFromDisk(index, nodeId);
-      return Raft
-          .LogEntry
-          .newBuilder()
-          .setIndex(ologEntry.getIndex())
-          .setTerm(ologEntry.getTerm())
-          .setData(ologEntry.getValue())
-          .build();
+    /**
+     * @param index
+     * @param quorumId
+     * @return The log data for a node at an index or null if not found.
+     */
 
-    } catch (IOException | InterruptedException | ExecutionException e) {
-      throw new RuntimeException("CRASH!");
+    private Log.OLogEntry getLogDataFromDisk(long index, String quorumId)
+            throws IOException, ExecutionException, InterruptedException {
+        SettableFuture<Boolean> f = SettableFuture.create();
+        this.sync(f);
+        f.get();
+
+        FileInputStream fileInputStream = new FileInputStream(logOutputStream.getFD());
+        Log.OLogEntry nextEntry;
+
+        do {
+            // TODO Handle tombestones
+            nextEntry = Log.OLogEntry.parseDelimitedFrom(fileInputStream);
+            // EOF
+            if (nextEntry == null) {
+                return null;
+            }
+        } while (!nextEntry.getQuorumId().equals(quorumId) && nextEntry.getIndex() != index);
+
+        return nextEntry;
     }
-  }
 
-  public long getLogTerm(long index, long nodeId) {
-    try {
-      return getLogDataFromDisk(index, nodeId).getTerm();
-    } catch (IOException | ExecutionException | InterruptedException e) {
-
-      throw new RuntimeException("CRASH!");
+    public ListenableFuture<Boolean> logEntry(List<Log.OLogEntry> entries, String quorumId) {
+        SettableFuture<Boolean> completionNotification = SettableFuture.create();
+        try {
+            for (Log.OLogEntry entry : entries) {
+                entry.writeDelimitedTo(this.logOutputStream);
+            }
+            completionNotification.set(true);
+            return completionNotification;
+        } catch (IOException e) {
+            completionNotification.setException(e);
+            return completionNotification;
+        }
     }
-  }
 
-  public ListenableFuture<Boolean> truncateLog(long entryIndex, long raftId) {
-    try {
-      SettableFuture<Boolean> truncateComplete = SettableFuture.create();
-      Log.OLogEntry entry = Log.OLogEntry.newBuilder()
-          .setTombStone(true)
-          .setIndex(entryIndex)
-          .setNodeId(raftId).build();
+    public Raft.LogEntry getLogEntry(long index, String quorumId) {
+        try {
+            Log.OLogEntry ologEntry = getLogDataFromDisk(index, quorumId);
+            return Raft
+                    .LogEntry
+                    .newBuilder()
+                    .setIndex(ologEntry.getIndex())
+                    .setTerm(ologEntry.getTerm())
+                    .setData(ologEntry.getValue())
+                    .build();
 
-      entry.writeDelimitedTo(this.logOutputStream);
-      this.sync(truncateComplete);
-      return truncateComplete;
-    } catch (Exception e) {
-      throw new RuntimeException("CRASH!");
+        } catch (IOException | InterruptedException | ExecutionException e) {
+            throw new RuntimeException("CRASH!");
+        }
     }
-  }
+
+    public long getLogTerm(long index, String quorumId) {
+        try {
+            return getLogDataFromDisk(index, quorumId).getTerm();
+        } catch (IOException | ExecutionException | InterruptedException e) {
+
+            throw new RuntimeException("CRASH!");
+        }
+    }
+
+    public ListenableFuture<Boolean> truncateLog(long entryIndex, String quorumId) {
+        try {
+            SettableFuture<Boolean> truncateComplete = SettableFuture.create();
+            Log.OLogEntry entry = Log.OLogEntry.newBuilder()
+                    .setTombStone(true)
+                    .setIndex(entryIndex)
+                    .setQuorumId(quorumId).build();
+
+            entry.writeDelimitedTo(this.logOutputStream);
+            this.sync(truncateComplete);
+            return truncateComplete;
+        } catch (Exception e) {
+            throw new RuntimeException("CRASH!");
+        }
+    }
 
 }

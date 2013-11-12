@@ -21,12 +21,17 @@ import ohmdb.messages.ControlMessages;
 import ohmdb.replication.ReplicatorInstance;
 import org.jetlang.channels.Channel;
 
+import java.util.List;
+
 /**
  * The replication module/module.  The API to other modules internal to ohmdb.
  */
-@DependsOn(DiscoveryModule.class)
+@DependsOn({DiscoveryModule.class, LogModule.class})
 @ModuleTypeBinding(ControlMessages.ModuleType.Replication)
 public interface ReplicationModule extends OhmModule {
+    ListenableFuture<Replicator> createReplicator(String quorumId,
+                                                  List<Long> peers);
+
     public Channel<IndexCommitNotice> getIndexCommitNotices();
 
     /**

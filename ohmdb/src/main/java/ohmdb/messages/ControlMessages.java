@@ -53,6 +53,14 @@ public final class ControlMessages {
      * </pre>
      */
     Management(4, 5),
+    /**
+     * <code>Log = 6;</code>
+     *
+     * <pre>
+     * Write Ahead Log Module
+     * </pre>
+     */
+    Log(5, 6),
     ;
 
     /**
@@ -95,6 +103,14 @@ public final class ControlMessages {
      * </pre>
      */
     public static final int Management_VALUE = 5;
+    /**
+     * <code>Log = 6;</code>
+     *
+     * <pre>
+     * Write Ahead Log Module
+     * </pre>
+     */
+    public static final int Log_VALUE = 6;
 
 
     public final int getNumber() { return value; }
@@ -106,6 +122,7 @@ public final class ControlMessages {
         case 3: return Tablet;
         case 4: return RegionServer;
         case 5: return Management;
+        case 6: return Log;
         default: return null;
       }
     }
@@ -2781,10 +2798,10 @@ public final class ControlMessages {
       "mdb.messages.ModuleType\022\023\n\013sub_command\030\002" +
       " \001(\t\"W\n\014CommandReply\022\027\n\017command_success\030" +
       "\001 \001(\010\022\026\n\016command_stdout\030\002 \001(\t\022\026\n\016command",
-      "_stderr\030\003 \001(\t*Z\n\nModuleType\022\r\n\tDiscovery" +
+      "_stderr\030\003 \001(\t*c\n\nModuleType\022\r\n\tDiscovery" +
       "\020\001\022\017\n\013Replication\020\002\022\n\n\006Tablet\020\003\022\020\n\014Regio" +
-      "nServer\020\004\022\016\n\nManagement\020\005B\022\n\016ohmdb.messa" +
-      "gesH\001"
+      "nServer\020\004\022\016\n\nManagement\020\005\022\007\n\003Log\020\006B\022\n\016oh" +
+      "mdb.messagesH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
