@@ -70,7 +70,7 @@ public class OhmDB extends AbstractService implements OhmServer {
     private static final Logger LOG = LoggerFactory.getLogger(OhmDB.class);
 
     public static void main(String[] args) throws Exception {
-        String cfgPath = "/tmp/ohmdb-ryan-" + System.currentTimeMillis();
+        String cfgPath = "/tmp/ryan/ohmdb-" + System.currentTimeMillis();
 
         if (args.length > 0) {
             cfgPath = args[0];
@@ -123,7 +123,7 @@ public class OhmDB extends AbstractService implements OhmServer {
 
         StartModule startRegionServer = StartModule.newBuilder()
                 .setModule(ModuleType.RegionServer)
-                .setModulePort(8080)
+                .setModulePort(8080+rnd.nextInt(1000))
                 .setModuleArgv("")
                 .build();
         instance.getCommandChannel().publish(startRegionServer);

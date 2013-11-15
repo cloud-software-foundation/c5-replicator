@@ -212,7 +212,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
     @FiberOnly
     private void processWireMessage(Availability message) {
-        LOG.debug("Got incoming message {}", message);
+        LOG.trace("Got incoming message {}", message);
         if (!message.hasNodeId()) {
             LOG.error("Incoming availability message does not have node id, ignoring!");
             return;
@@ -334,6 +334,8 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         List<String> ips = new LinkedList<>();
         for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
             NetworkInterface iface = interfaces.nextElement();
+            if (iface.isPointToPoint())
+                continue; //ignore tunnel type interfaces
             for (Enumeration<InetAddress> addrs = iface.getInetAddresses(); addrs.hasMoreElements(); ) {
                 InetAddress addr = addrs.nextElement();
                 if (addr.isLoopbackAddress() || addr.isLinkLocalAddress() || addr.isAnyLocalAddress()) {

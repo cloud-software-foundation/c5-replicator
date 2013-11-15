@@ -123,6 +123,8 @@ public interface ReplicationModule extends OhmModule {
 
         boolean isLeader();
 
+        void start();
+
         // TODO add these maybe in the future
         // public ImmutableList<Long> getQuorum();
     }

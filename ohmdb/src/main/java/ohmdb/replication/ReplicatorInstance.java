@@ -113,6 +113,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     // Election timers, etc.
     private long lastRPC;
     private long myElectionTimeout;
+    private long whosLeader = 0;
     private Disposable electionChecker;
 
     private final RaftLogAbstraction log;
@@ -174,8 +175,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             }
         }, info.electionCheckRate(), info.electionCheckRate(), TimeUnit.MILLISECONDS);
 
-        LOG.debug("{} started {} with election timeout {}", myId, this.quorumId, this.myElectionTimeout);
-        fiber.start();
+        LOG.debug("{} primed {}", myId, this.quorumId);
     }
 
     private void failReplicatorInstance(Throwable e) {
@@ -307,6 +307,12 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         // 4. reset election timeout
         lastRPC = info.currentTimeMillis();
 
+        long theLeader = appendMessage.getLeaderId();
+        if (whosLeader != theLeader) {
+            LOG.debug("{} discovered new leader: {}", myId, theLeader);
+            whosLeader = theLeader;
+        }
+
         if (appendMessage.getEntriesCount() == 0) {
             Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
                     .setTerm(currentTerm)
@@ -393,8 +399,6 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                 request.reply(reply);
             }
         }, fiber);
-
-
     }
 
     private ListenableFuture<ArrayList<LogEntry>> validateAndFixLocalLog(Request<RpcWireRequest, RpcReply> request,
@@ -547,14 +551,17 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
         @Override
         public void run() {
-            LOG.debug("{} request vote timeout to {}, resending RPC", myId, request.to);
             // If we are no longer a candidate, retrying RequestVote is pointless.
             if (myState != State.CANDIDATE)
                 return;
 
             // Also if the term goes forward somehow, this is also out of date, and drop it.
-            if (currentTerm > termBeingVotedFor)
+            if (currentTerm > termBeingVotedFor) {
+                LOG.debug("{} request vote timeout, current term has moved on, abandoning this request", myId);
                 return;
+            }
+
+            LOG.debug("{} request vote timeout to {}, resending RPC", myId, request.to);
 
             // Note we are using 'this' as the recursive timeout.
             AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
@@ -896,6 +903,12 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     @Override
     public boolean isLeader() {
         return myState == State.LEADER;
+    }
+
+    @Override
+    public void start() {
+        LOG.debug("{} started {} with election timeout {}", myId, this.quorumId, this.myElectionTimeout);
+        fiber.start();
     }
 
 }

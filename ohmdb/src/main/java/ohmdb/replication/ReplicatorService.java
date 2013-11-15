@@ -321,14 +321,16 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
             @Override
             public void onMessage(DiscoveryModule.NodeInfoReply nodeInfoReply) {
                 if (!nodeInfoReply.found) {
+                    LOG.debug("Can't find the info for the peer {}", to);
                     // TODO signal TCP/transport layer failure in a better way
-                    message.reply(null);
+                    //message.reply(null);
                     return;
                 }
 
                 // what if existing outgoing connection attempt?
                 ChannelFuture channelFuture = connections.get(to);
                 if (channelFuture == null) {
+                    LOG.debug("Connecting to peer {} at address {} port {}", to, nodeInfoReply.addresses.get(0), nodeInfoReply.port);
                     channelFuture = outgoingBootstrap.connect(nodeInfoReply.addresses.get(0), nodeInfoReply.port);
                     connections.put(to, channelFuture);
                 }
@@ -338,10 +340,29 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                         @Override
                         public void operationComplete(ChannelFuture future) throws Exception {
                             if (future.isSuccess()) {
+                                //LOG.debug("Connected to peer {}, sending message!", to);
                                 sendMessage0(message, future.channel());
                             } else {
+                                fiber.execute(new Runnable() {
+
+                                    @Override
+                                    public void run() {
+                                        ChannelFuture cf = connections.get(to);
+                                        if (cf != null) {
+                                            if (cf.isDone()) {
+                                                // we had hit a failure, erase this
+                                                LOG.debug("Removing failed channel for peer {}", to);
+                                                connections.remove(to);
+                                            }
+                                        }
+                                    }
+                                });
+
+                                // Don't signal failure to the replicator instance, they will time out.
+
+
                                 // TODO this is a bad way to signal failure.
-                                message.reply(null);
+                                //message.reply(null);
                             }
                         }
                     });
@@ -354,6 +375,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
             @FiberOnly
             @Override
             public void run() {
+
                 RpcRequest request = message.getRequest();
                 long to = request.to;
                 long messageId = messageIdGen++;
@@ -361,9 +383,12 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 outstandingRPCs.put(messageId, message);
                 outstandingRPCbySession.put(message.getSession(), messageId);
 
+                LOG.trace("Sending message id {} to {} / {}", messageId, to, request.quorumId);
+
                 RaftWireMessage.Builder msgBuilder = request.getWireMessageFragment();
 
                 msgBuilder.setMessageId(messageId)
+                        .setQuorumId(request.quorumId)
                         .setSenderId(server.getNodeId())
                         .setReceiverId(to);
 
@@ -476,7 +501,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                                             // Clean up cancelled requests.
                                             handleCancelledSession(message.getSession());
                                         }
-                                    });
+                                    }
+                            );
 
                             replicatorStateChanges.subscribe(fiber, new Callback<ReplicatorInstanceStateChange>() {
                                 @Override

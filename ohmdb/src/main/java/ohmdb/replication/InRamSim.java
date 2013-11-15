@@ -137,6 +137,7 @@ public class InRamSim {
                     rpcChannel,
                     stateChanges,
                     commitNotices);
+            rep.start();
             replicators.put(peerId, rep);
             plusMillis += 500;
         }

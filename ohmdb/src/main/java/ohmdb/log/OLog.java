@@ -187,7 +187,11 @@ public class OLog implements AutoCloseable {
 
         do {
             // TODO Handle tombestones
+            try {
             nextEntry = Log.OLogEntry.parseDelimitedFrom(fileInputStream);
+            } catch (IOException e) {
+                return null;
+            }
             // EOF
             if (nextEntry == null) {
                 return null;
@@ -223,16 +227,18 @@ public class OLog implements AutoCloseable {
                     .build();
 
         } catch (IOException | InterruptedException | ExecutionException e) {
-            throw new RuntimeException("CRASH!");
+            throw new RuntimeException("CRASH!", e);
         }
     }
 
     public long getLogTerm(long index, String quorumId) {
         try {
-            return getLogDataFromDisk(index, quorumId).getTerm();
+            Log.OLogEntry logEntry = getLogDataFromDisk(index, quorumId);
+            if (logEntry == null) return 0;
+            return logEntry.getTerm();
         } catch (IOException | ExecutionException | InterruptedException e) {
 
-            throw new RuntimeException("CRASH!");
+            throw new RuntimeException("CRASH!", e);
         }
     }
 
