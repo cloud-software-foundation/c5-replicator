@@ -17,7 +17,7 @@
 package ohmdb.replication.rpc;
 
 import com.google.protobuf.Message;
-import ohmdb.replication.Raft;
+import ohmdb.replication.generated.Raft;
 
 /**
  * A reply from the wire - a remote agent - replying to a request.

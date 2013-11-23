@@ -17,6 +17,7 @@
 package ohmdb.replication;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import ohmdb.replication.generated.Raft;
 
 import java.util.List;
 

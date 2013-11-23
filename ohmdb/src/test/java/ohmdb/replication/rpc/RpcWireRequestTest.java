@@ -17,7 +17,7 @@
 package ohmdb.replication.rpc;
 
 
-import ohmdb.replication.Raft;
+import ohmdb.replication.generated.Raft;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

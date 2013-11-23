@@ -21,13 +21,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.protobuf.MessageLite;
 import ohmdb.ConfigDirectory;
-import ohmdb.messages.ControlMessages;
+import ohmdb.messages.generated.ControlMessages;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.RequestChannel;
 
 import java.util.concurrent.ExecutionException;
 
-import static ohmdb.messages.ControlMessages.ModuleType;
+import static ohmdb.messages.generated.ControlMessages.ModuleType;
 
 /**
  * The root interface for all other modules and modules to get around inside the server.

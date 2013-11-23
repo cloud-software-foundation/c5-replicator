@@ -1,6 +1,6 @@
 package ohmdb.replication;
 
-option java_package = "ohmdb.replication";
+option java_package = "ohmdb.replication.generated";
 option optimize_for = SPEED;
 
 message RaftWireMessage {

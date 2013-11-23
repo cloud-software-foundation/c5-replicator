@@ -1,6 +1,6 @@
 package ohmdb.messages;
 
-option java_package = "ohmdb.messages";
+option java_package = "ohmdb.messages.generated";
 option optimize_for = SPEED;
 
 enum ModuleType {

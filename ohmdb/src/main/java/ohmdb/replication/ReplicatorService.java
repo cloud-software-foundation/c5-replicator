@@ -47,6 +47,7 @@ import ohmdb.interfaces.OhmModule;
 import ohmdb.interfaces.OhmServer;
 import ohmdb.interfaces.ReplicationModule;
 import ohmdb.log.Mooring;
+import ohmdb.messages.generated.ControlMessages;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -71,8 +72,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static ohmdb.messages.ControlMessages.ModuleType;
-import static ohmdb.replication.Raft.RaftWireMessage;
+import static ohmdb.messages.generated.ControlMessages.ModuleType;
+import static ohmdb.replication.generated.Raft.RaftWireMessage;
 
 /**
  * TODO we dont have a way to actually START a freaking ReplicatorInstance - YET.

@@ -24,7 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import ohmdb.client.OhmConstants;
 import ohmdb.generated.Log;
-import ohmdb.replication.Raft;
+import ohmdb.replication.generated.Raft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

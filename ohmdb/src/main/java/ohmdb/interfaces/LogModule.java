@@ -18,7 +18,7 @@ package ohmdb.interfaces;
 
 import ohmdb.log.Mooring;
 import ohmdb.log.OLog;
-import ohmdb.messages.ControlMessages;
+import ohmdb.messages.generated.ControlMessages;
 
 /**
  *

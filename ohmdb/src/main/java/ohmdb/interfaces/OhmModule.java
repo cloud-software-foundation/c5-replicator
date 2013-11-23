@@ -18,7 +18,7 @@ package ohmdb.interfaces;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
-import ohmdb.messages.ControlMessages;
+import ohmdb.messages.generated.ControlMessages;
 
 /**
  * An internal module. Is a guava module.

@@ -18,7 +18,7 @@ package ohmdb.log;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import ohmdb.generated.Log;
-import ohmdb.replication.Raft;
+import ohmdb.replication.generated.Raft;
 import ohmdb.replication.RaftLogAbstraction;
 
 import java.util.ArrayList;

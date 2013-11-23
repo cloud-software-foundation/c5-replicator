@@ -8,6 +8,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 import ohmdb.interfaces.ReplicationModule;
+import ohmdb.replication.generated.Raft;
 import ohmdb.replication.rpc.RpcReply;
 import ohmdb.replication.rpc.RpcRequest;
 import ohmdb.replication.rpc.RpcWireReply;
@@ -34,7 +35,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static ohmdb.replication.Raft.LogEntry;
+import static ohmdb.replication.generated.Raft.LogEntry;
 
 /**
  * Single instantation of a raft / log / lease

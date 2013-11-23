@@ -1,6 +1,6 @@
 package ohmdb.election;
 
-option java_package = "ohmdb.discovery";
+option java_package = "ohmdb.discovery.generated";
 option optimize_for = SPEED;
 
 import "control_messages.proto";
@@ -22,6 +22,6 @@ message Availability {
 
 // Module name to module port mapping.
 message ModuleDescriptor {
-  optional ohmdb.messages.ModuleType module = 1;
+  optional ohmdb.messages.generated.ModuleType module = 1;
   optional uint32 module_port = 2;
 }

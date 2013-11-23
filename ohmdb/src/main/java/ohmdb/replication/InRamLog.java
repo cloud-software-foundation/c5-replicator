@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import java.util.ArrayList;
 import java.util.List;
 
-import static ohmdb.replication.Raft.LogEntry;
+import static ohmdb.replication.generated.Raft.LogEntry;
 
 /**
 

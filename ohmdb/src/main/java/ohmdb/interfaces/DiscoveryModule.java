@@ -18,8 +18,8 @@ package ohmdb.interfaces;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
-import ohmdb.discovery.Beacon;
-import ohmdb.messages.ControlMessages;
+import ohmdb.discovery.generated.Beacon;
+import ohmdb.messages.generated.ControlMessages;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.RequestChannel;
 

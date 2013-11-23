@@ -17,7 +17,7 @@
 package ohmdb.interfaces;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import ohmdb.messages.ControlMessages;
+import ohmdb.messages.generated.ControlMessages;
 import ohmdb.replication.ReplicatorInstance;
 import org.jetlang.channels.Channel;
 

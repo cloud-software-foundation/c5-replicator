@@ -19,7 +19,7 @@ package ohmdb.log;
 import com.google.common.util.concurrent.AbstractService;
 import ohmdb.interfaces.LogModule;
 import ohmdb.interfaces.OhmServer;
-import ohmdb.messages.ControlMessages;
+import ohmdb.messages.generated.ControlMessages;
 
 import java.io.IOException;
 import java.util.HashMap;

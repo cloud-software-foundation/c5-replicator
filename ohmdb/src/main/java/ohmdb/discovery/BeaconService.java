@@ -34,6 +34,7 @@ import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import ohmdb.codec.UdpProtobufDecoder;
 import ohmdb.codec.UdpProtobufEncoder;
+import ohmdb.discovery.generated.Beacon;
 import ohmdb.interfaces.DiscoveryModule;
 import ohmdb.interfaces.OhmServer;
 import ohmdb.util.FiberOnly;
@@ -58,8 +59,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static ohmdb.discovery.Beacon.Availability;
-import static ohmdb.messages.ControlMessages.ModuleType;
+import static ohmdb.discovery.generated.Beacon.Availability;
+import static ohmdb.messages.generated.ControlMessages.ModuleType;
 
 public class BeaconService extends AbstractService implements DiscoveryModule {
     private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);

@@ -17,7 +17,7 @@
 package ohmdb.replication.rpc;
 
 import com.google.protobuf.Message;
-import ohmdb.replication.Raft;
+import ohmdb.replication.generated.Raft;
 
 /**
  * And RPC request from off the wire, from a remote sender.

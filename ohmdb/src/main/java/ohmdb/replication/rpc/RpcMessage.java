@@ -18,7 +18,7 @@ package ohmdb.replication.rpc;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.Message;
-import ohmdb.replication.Raft;
+import ohmdb.replication.generated.Raft;
 
 import java.util.Map;
 

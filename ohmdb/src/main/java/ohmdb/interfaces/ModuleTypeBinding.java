@@ -1,6 +1,6 @@
 package ohmdb.interfaces;
 
-import ohmdb.messages.ControlMessages;
+import ohmdb.messages.generated.ControlMessages;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

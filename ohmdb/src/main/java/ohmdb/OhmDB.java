@@ -54,10 +54,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 import static ohmdb.log.OLog.moveAwayOldLogs;
-import static ohmdb.messages.ControlMessages.CommandReply;
-import static ohmdb.messages.ControlMessages.ModuleType;
-import static ohmdb.messages.ControlMessages.StartModule;
-import static ohmdb.messages.ControlMessages.StopModule;
+import static ohmdb.messages.generated.ControlMessages.CommandReply;
+import static ohmdb.messages.generated.ControlMessages.ModuleType;
+import static ohmdb.messages.generated.ControlMessages.StartModule;
+import static ohmdb.messages.generated.ControlMessages.StopModule;
 
 
 /**
