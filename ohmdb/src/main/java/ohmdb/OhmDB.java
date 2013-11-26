@@ -502,10 +502,10 @@ public class OhmDB extends AbstractService implements OhmServer {
 
     @Override
     protected void doStop() {
-
         // stop module set.
 
-        // write any last minute persistent data to disk (is there any?)
+        // TODO write any last minute persistent data to disk (is there any?)
+        // note: guava docs recommend doing long-acting operations in separate thread
 
         serverFiber.dispose();
 
