@@ -2,7 +2,7 @@
   <settings default="agpl3">
     <module2copyright>
       <element module="agpl-hfile" copyright="agpl3-addon" />
-      <element module="agpl-bsd-flease" copyright="agpl3-addon" />
+      <element module="agpl-hbase" copyright="agpl3-addon" />
       <element module="All" copyright="agpl3" />
     </module2copyright>
     <LanguageOptions name="JAVA">
@@ -10,6 +10,7 @@
     </LanguageOptions>
     <LanguageOptions name="__TEMPLATE__">
       <option name="addBlankAfter" value="false" />
+      <option name="lenBefore" value="8080" />
     </LanguageOptions>
   </settings>
 </component>
