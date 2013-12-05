@@ -44,7 +44,7 @@
     </build>
     <dependencies>
         <!-- TODO depend on our own minimized hbase-server component soon -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
             <version>${hbase.version}</version>
@@ -66,8 +66,12 @@
                     <groupId>org.slf4j</groupId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency>-->
 
+        <dependency>
+            <groupId>ohmdb</groupId>
+            <artifactId>hbase-server</artifactId>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
