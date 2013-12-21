@@ -17,26 +17,10 @@
  *  This file incorporates work covered by the following copyright and
  *  permission notice:
  */
+package ohmdb.log;
 
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-// This file contains protocol buffers that are used for filters
+// The models are hand-built in c5db, and this is the package they are in.
+option java_model_package = "ohmdb.log.";
 
 option java_package = "ohmdb.generated";
 option java_outer_classname = "Log";
@@ -44,19 +28,88 @@ option java_generic_services = true;
 option java_generate_equals_and_hash = true;
 option optimize_for = SPEED;
 
-message Entry {
-    required string regionInfo  = 1;
-    required bytes key = 2;
-    required bytes family = 3;
-    required bytes column = 4;
-    required bytes value = 5;
-    required uint64 ts = 6;
+/**
+ * This is the physical entry types in the file.  This is not used in any protobuf, but used
+ * while we are writing to the file.
+ */
+enum PhysicalEntryTypes {
+    Header = 1;
+    Trailer = 2;
+    QuorumMapping = 3;  // This is done inline with the data entry
+    MetaData = 4;   // not used right now.
+    Data = 5;
+    // TODO do we need this here?
+    TruncationMarker = 6;
 }
 
+message Entry {
+    repeated bytes key_values = 10;
+
+
+    optional string regionInfo = 1;
+    optional bytes key = 2;
+    optional bytes family = 3;
+    optional bytes column = 4;
+    optional bytes value = 5;
+    optional uint64 ts = 6;
+}
+
+message OLogHeader {
+    optional int32 major_version = 1;
+    optional int32 minor_version = 2;
+    // Additional optional fields as we need them, eg: compression flags, etc.
+}
+
+message OLogTrailer {
+    // just some boring stats maybe. just because.
+    optional fixed32 entry_count = 1;
+    optional fixed32 quorum_count = 2;
+    optional fixed32 truncation_count = 3;
+}
+
+message OLogMetaData {
+    optional int32 quorumTag = 1;
+    optional int64 index = 2;
+    optional int64 term = 3;
+}
+
+
+message OLogData {
+    optional OLogMetaData log_data = 1;
+
+    // Inline quorum tag mapping, that will apply to this entry.
+    optional QuorumMapping quorum_tag_mapping = 2;
+
+    @ByteBuffer
+    repeated bytes kvs = 3;
+}
+
+message QuorumMapping {
+    // The ID to use elsewhere in the file.
+    optional int32 quorumTag = 1;
+    // The actual string that was provided to us.
+    optional string quorumId = 2;
+}
+
+// Marks the truncation of a quorum log.
+message TruncationMarker {
+    optional int32 quorum_tag = 1;
+    optional int64 index = 2;
+
+    // Physical location information of the first truncated entry.
+    optional string file_name = 3;
+    optional int64 file_byte_offset = 4;
+}
+
+
 message OLogEntry {
-    required string quorumId = 1;
-    required uint64 index = 2;
-    required bool tombStone = 3;
-    optional uint64 term = 4;
+    optional string quorumId = 1;
+    optional int64 index = 2;
+
+    optional bool tombStone = 3;
+
+    optional int64 term = 4;
+
+    @ByteBuffer
     optional bytes value = 5;
 }

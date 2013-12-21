@@ -40,33 +40,74 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <groupId>com.dyuproject.protostuff</groupId>
+                <artifactId>protostuff-maven-plugin</artifactId>
+                <version>${protostuff.version}</version>
+                <configuration>
+                    <protoModules>
+                        <protoModule>
+                            <source>src/main/resources/</source>
+                            <outputDir>target/generated-sources/protostuff</outputDir>
+                            <output>java_bean</output>
+                            <encoding>UTF-8</encoding>
+                            <options>
+                                <property>
+                                    <name>generate_field_map</name>
+                                    <value>true</value>
+                                </property>
+                                <property>
+                                    <name>builder_pattern</name>
+                                    <value>true</value>
+                                </property>
+                                <property>
+                                    <name>primitive_numbers_if_optional</name>
+                                    <value>true</value>
+                                </property>
+
+                                <property>
+                                    <name>generate_helper_methods</name>
+                                    <value>true</value>
+                                </property>
+                            </options>
+                        </protoModule>
+                    </protoModules>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+
+            </plugin>
         </plugins>
     </build>
     <dependencies>
-        <!-- TODO depend on our own minimized hbase-server component soon -->
-        <!--<dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
-            <version>${hbase.version}</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>guava</artifactId>
-                    <groupId>com.google.guava</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>protobuf-java</artifactId>
-                    <groupId>com.google.protobuf</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-log4j12</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>slf4j-api</artifactId>
-                    <groupId>org.slf4j</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>-->
+        <dependency>
+            <groupId>com.dyuproject.protostuff</groupId>
+            <artifactId>protostuff-api</artifactId>
+            <version>${protostuff.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.dyuproject.protostuff</groupId>
+            <artifactId>protostuff-runtime</artifactId>
+            <version>${protostuff.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.dyuproject.protostuff</groupId>
+            <artifactId>protostuff-collectionschema</artifactId>
+            <version>${protostuff.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dyuproject.protostuff</groupId>
+            <artifactId>protostuff-core</artifactId>
+            <version>${protostuff.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>ohmdb</groupId>

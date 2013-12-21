@@ -1,61 +1,82 @@
+/*
+ * Copyright (C) 2013  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  This file incorporates work covered by the following copyright and
+ *  permission notice:
+ */
 package ohmdb.replication;
 
 option java_package = "ohmdb.replication.generated";
 option optimize_for = SPEED;
 
 message RaftWireMessage {
-  // envelope.
+    // envelope.
 
-  optional int64       message_id = 1;
-  optional int64       sender_id = 2;
-  // implied and may not be needed to filled in.
-  optional int64       receiver_id = 3;
-  optional string      quorum_id = 4;
-  // Is this a reply message?
-  optional bool        in_reply = 5;
+    optional int64       message_id = 1;
+    optional int64       sender_id = 2;
+    // implied and may not be needed to filled in.
+    optional int64       receiver_id = 3;
+    optional string      quorum_id = 4;
+    // Is this a reply message?
+    optional bool        in_reply = 5;
 
-  // The struct and the field name must match for reflection reasons.
-  optional RequestVote          RequestVote = 100;
-  optional RequestVoteReply     RequestVoteReply = 101;
-  optional AppendEntries        AppendEntries = 102;
-  optional AppendEntriesReply   AppendEntriesReply = 103;
+    // The struct and the field name must match for reflection reasons.
+    optional RequestVote          RequestVote = 100;
+    optional RequestVoteReply     RequestVoteReply = 101;
+    optional AppendEntries        AppendEntries = 102;
+    optional AppendEntriesReply   AppendEntriesReply = 103;
 
-  extensions 1000 to max;
+    extensions 1000 to max;
 }
 
 message LogEntry {
-  optional int64 term = 1;
-  optional int64 index = 2;
-  optional bytes data = 3;
+    optional int64 term = 1;
+    optional int64 index = 2;
+
+
+    optional bytes data = 3;
 }
 
 message RequestVote {
-  optional int64 term = 1;
-  optional int64 candidate_id = 2;
+    optional int64 term = 1;
+    optional int64 candidate_id = 2;
 
-  optional int64 last_log_index = 3;
-  optional int64 last_log_term = 4;
+    optional int64 last_log_index = 3;
+    optional int64 last_log_term = 4;
 }
 
 message RequestVoteReply {
-  // currentTerm, for candidate to update itself
-  optional int64 term = 1;
-  // true means candidate received vote
-  optional bool  vote_granted = 2;
+    // currentTerm, for candidate to update itself
+    optional int64 term = 1;
+    // true means candidate received vote
+    optional bool  vote_granted = 2;
 }
 
 message AppendEntries {
-  optional int64      term = 1;
-  optional int64      leader_id = 2;
-  optional int64      prev_log_index = 3;
-  optional int64      prev_log_term = 4;
-  repeated LogEntry   entries = 5;
-  optional int64      commit_index = 6;
+    optional int64      term = 1;
+    optional int64      leader_id = 2;
+    optional int64      prev_log_index = 3;
+    optional int64      prev_log_term = 4;
+    repeated LogEntry   entries = 5;
+    optional int64      commit_index = 6;
 }
 
 message AppendEntriesReply {
-  optional int64 term = 1;
-  optional bool  success = 2;
+    optional uint64 term = 1;
+    optional bool  success = 2;
 
-  optional int64 my_last_log_entry = 3;
+    optional int64 my_last_log_entry = 3;
 }
