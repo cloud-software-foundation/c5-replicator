@@ -83,9 +83,9 @@ public final class Beacon {
     com.google.protobuf.ByteString
         getAddressesBytes(int index);
 
-    // repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;
+    // repeated .ohmdb.election.ModuleDescriptor modules = 4;
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -94,7 +94,7 @@ public final class Beacon {
     java.util.List<ohmdb.discovery.generated.Beacon.ModuleDescriptor> 
         getModulesList();
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -102,7 +102,7 @@ public final class Beacon {
      */
     ohmdb.discovery.generated.Beacon.ModuleDescriptor getModules(int index);
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -110,7 +110,7 @@ public final class Beacon {
      */
     int getModulesCount();
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -119,7 +119,7 @@ public final class Beacon {
     java.util.List<? extends ohmdb.discovery.generated.Beacon.ModuleDescriptorOrBuilder> 
         getModulesOrBuilderList();
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -129,7 +129,7 @@ public final class Beacon {
         int index);
   }
   /**
-   * Protobuf type {@code ohmdb.discovery.generated.Availability}
+   * Protobuf type {@code ohmdb.election.Availability}
    *
    * <pre>
    * An availability broadcast
@@ -229,12 +229,12 @@ public final class Beacon {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_Availability_descriptor;
+      return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_Availability_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_Availability_fieldAccessorTable
+      return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_Availability_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.discovery.generated.Beacon.Availability.class, ohmdb.discovery.generated.Beacon.Availability.Builder.class);
     }
@@ -349,11 +349,11 @@ public final class Beacon {
       return addresses_.getByteString(index);
     }
 
-    // repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;
+    // repeated .ohmdb.election.ModuleDescriptor modules = 4;
     public static final int MODULES_FIELD_NUMBER = 4;
     private java.util.List<ohmdb.discovery.generated.Beacon.ModuleDescriptor> modules_;
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -363,7 +363,7 @@ public final class Beacon {
       return modules_;
     }
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -374,7 +374,7 @@ public final class Beacon {
       return modules_;
     }
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -384,7 +384,7 @@ public final class Beacon {
       return modules_.size();
     }
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -394,7 +394,7 @@ public final class Beacon {
       return modules_.get(index);
     }
     /**
-     * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+     * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
      *
      * <pre>
      * The modules this node is running and the ports they're running on.
@@ -544,7 +544,7 @@ public final class Beacon {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.discovery.generated.Availability}
+     * Protobuf type {@code ohmdb.election.Availability}
      *
      * <pre>
      * An availability broadcast
@@ -555,12 +555,12 @@ public final class Beacon {
        implements ohmdb.discovery.generated.Beacon.AvailabilityOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_Availability_descriptor;
+        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_Availability_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_Availability_fieldAccessorTable
+        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_Availability_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.discovery.generated.Beacon.Availability.class, ohmdb.discovery.generated.Beacon.Availability.Builder.class);
       }
@@ -607,7 +607,7 @@ public final class Beacon {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_Availability_descriptor;
+        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_Availability_descriptor;
       }
 
       public ohmdb.discovery.generated.Beacon.Availability getDefaultInstanceForType() {
@@ -961,7 +961,7 @@ public final class Beacon {
         return this;
       }
 
-      // repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;
+      // repeated .ohmdb.election.ModuleDescriptor modules = 4;
       private java.util.List<ohmdb.discovery.generated.Beacon.ModuleDescriptor> modules_ =
         java.util.Collections.emptyList();
       private void ensureModulesIsMutable() {
@@ -975,7 +975,7 @@ public final class Beacon {
           ohmdb.discovery.generated.Beacon.ModuleDescriptor, ohmdb.discovery.generated.Beacon.ModuleDescriptor.Builder, ohmdb.discovery.generated.Beacon.ModuleDescriptorOrBuilder> modulesBuilder_;
 
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -989,7 +989,7 @@ public final class Beacon {
         }
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1003,7 +1003,7 @@ public final class Beacon {
         }
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1017,7 +1017,7 @@ public final class Beacon {
         }
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1038,7 +1038,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1056,7 +1056,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1076,7 +1076,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1097,7 +1097,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1115,7 +1115,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1133,7 +1133,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1151,7 +1151,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1168,7 +1168,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1185,7 +1185,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1196,7 +1196,7 @@ public final class Beacon {
         return getModulesFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1210,7 +1210,7 @@ public final class Beacon {
         }
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1225,7 +1225,7 @@ public final class Beacon {
         }
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1236,7 +1236,7 @@ public final class Beacon {
             ohmdb.discovery.generated.Beacon.ModuleDescriptor.getDefaultInstance());
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1248,7 +1248,7 @@ public final class Beacon {
             index, ohmdb.discovery.generated.Beacon.ModuleDescriptor.getDefaultInstance());
       }
       /**
-       * <code>repeated .ohmdb.discovery.generated.ModuleDescriptor modules = 4;</code>
+       * <code>repeated .ohmdb.election.ModuleDescriptor modules = 4;</code>
        *
        * <pre>
        * The modules this node is running and the ports they're running on.
@@ -1273,7 +1273,7 @@ public final class Beacon {
         return modulesBuilder_;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.discovery.generated.Availability)
+      // @@protoc_insertion_point(builder_scope:ohmdb.election.Availability)
     }
 
     static {
@@ -1281,19 +1281,19 @@ public final class Beacon {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.discovery.generated.Availability)
+    // @@protoc_insertion_point(class_scope:ohmdb.election.Availability)
   }
 
   public interface ModuleDescriptorOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .ohmdb.messages.generated.ModuleType module = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     boolean hasModule();
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     ohmdb.messages.generated.ControlMessages.ModuleType getModule();
 
@@ -1308,7 +1308,7 @@ public final class Beacon {
     int getModulePort();
   }
   /**
-   * Protobuf type {@code ohmdb.discovery.generated.ModuleDescriptor}
+   * Protobuf type {@code ohmdb.election.ModuleDescriptor}
    *
    * <pre>
    * Module name to module port mapping.
@@ -1392,12 +1392,12 @@ public final class Beacon {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_ModuleDescriptor_descriptor;
+      return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_ModuleDescriptor_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_ModuleDescriptor_fieldAccessorTable
+      return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_ModuleDescriptor_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.discovery.generated.Beacon.ModuleDescriptor.class, ohmdb.discovery.generated.Beacon.ModuleDescriptor.Builder.class);
     }
@@ -1418,17 +1418,17 @@ public final class Beacon {
     }
 
     private int bitField0_;
-    // optional .ohmdb.messages.generated.ModuleType module = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     public static final int MODULE_FIELD_NUMBER = 1;
     private ohmdb.messages.generated.ControlMessages.ModuleType module_;
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     public boolean hasModule() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     public ohmdb.messages.generated.ControlMessages.ModuleType getModule() {
       return module_;
@@ -1568,7 +1568,7 @@ public final class Beacon {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.discovery.generated.ModuleDescriptor}
+     * Protobuf type {@code ohmdb.election.ModuleDescriptor}
      *
      * <pre>
      * Module name to module port mapping.
@@ -1579,12 +1579,12 @@ public final class Beacon {
        implements ohmdb.discovery.generated.Beacon.ModuleDescriptorOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_ModuleDescriptor_descriptor;
+        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_ModuleDescriptor_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_ModuleDescriptor_fieldAccessorTable
+        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_ModuleDescriptor_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.discovery.generated.Beacon.ModuleDescriptor.class, ohmdb.discovery.generated.Beacon.ModuleDescriptor.Builder.class);
       }
@@ -1622,7 +1622,7 @@ public final class Beacon {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_discovery_generated_ModuleDescriptor_descriptor;
+        return ohmdb.discovery.generated.Beacon.internal_static_ohmdb_election_ModuleDescriptor_descriptor;
       }
 
       public ohmdb.discovery.generated.Beacon.ModuleDescriptor getDefaultInstanceForType() {
@@ -1698,22 +1698,22 @@ public final class Beacon {
       }
       private int bitField0_;
 
-      // optional .ohmdb.messages.generated.ModuleType module = 1;
+      // optional .ohmdb.messages.ModuleType module = 1;
       private ohmdb.messages.generated.ControlMessages.ModuleType module_ = ohmdb.messages.generated.ControlMessages.ModuleType.Discovery;
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public boolean hasModule() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public ohmdb.messages.generated.ControlMessages.ModuleType getModule() {
         return module_;
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public Builder setModule(ohmdb.messages.generated.ControlMessages.ModuleType value) {
         if (value == null) {
@@ -1725,7 +1725,7 @@ public final class Beacon {
         return this;
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public Builder clearModule() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -1767,7 +1767,7 @@ public final class Beacon {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.discovery.generated.ModuleDescriptor)
+      // @@protoc_insertion_point(builder_scope:ohmdb.election.ModuleDescriptor)
     }
 
     static {
@@ -1775,19 +1775,19 @@ public final class Beacon {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.discovery.generated.ModuleDescriptor)
+    // @@protoc_insertion_point(class_scope:ohmdb.election.ModuleDescriptor)
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_discovery_generated_Availability_descriptor;
+    internal_static_ohmdb_election_Availability_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_discovery_generated_Availability_fieldAccessorTable;
+      internal_static_ohmdb_election_Availability_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_discovery_generated_ModuleDescriptor_descriptor;
+    internal_static_ohmdb_election_ModuleDescriptor_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_discovery_generated_ModuleDescriptor_fieldAccessorTable;
+      internal_static_ohmdb_election_ModuleDescriptor_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -1797,32 +1797,31 @@ public final class Beacon {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\014beacon.proto\022\031ohmdb.discovery.generate" +
-      "d\032\026control_messages.proto\"\213\001\n\014Availabili" +
-      "ty\022\017\n\007node_id\030\001 \001(\003\022\031\n\021base_network_port" +
-      "\030\002 \001(\005\022\021\n\taddresses\030\003 \003(\t\022<\n\007modules\030\004 \003" +
-      "(\0132+.ohmdb.discovery.generated.ModuleDes" +
-      "criptor\"]\n\020ModuleDescriptor\0224\n\006module\030\001 " +
-      "\001(\0162$.ohmdb.messages.generated.ModuleTyp" +
-      "e\022\023\n\013module_port\030\002 \001(\rB\035\n\031ohmdb.discover" +
-      "y.generatedH\001"
+      "\n\014beacon.proto\022\016ohmdb.election\032\026control_" +
+      "messages.proto\"\200\001\n\014Availability\022\017\n\007node_" +
+      "id\030\001 \001(\003\022\031\n\021base_network_port\030\002 \001(\005\022\021\n\ta" +
+      "ddresses\030\003 \003(\t\0221\n\007modules\030\004 \003(\0132 .ohmdb." +
+      "election.ModuleDescriptor\"S\n\020ModuleDescr" +
+      "iptor\022*\n\006module\030\001 \001(\0162\032.ohmdb.messages.M" +
+      "oduleType\022\023\n\013module_port\030\002 \001(\rB\035\n\031ohmdb." +
+      "discovery.generatedH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
         public com.google.protobuf.ExtensionRegistry assignDescriptors(
             com.google.protobuf.Descriptors.FileDescriptor root) {
           descriptor = root;
-          internal_static_ohmdb_discovery_generated_Availability_descriptor =
+          internal_static_ohmdb_election_Availability_descriptor =
             getDescriptor().getMessageTypes().get(0);
-          internal_static_ohmdb_discovery_generated_Availability_fieldAccessorTable = new
+          internal_static_ohmdb_election_Availability_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_discovery_generated_Availability_descriptor,
+              internal_static_ohmdb_election_Availability_descriptor,
               new java.lang.String[] { "NodeId", "BaseNetworkPort", "Addresses", "Modules", });
-          internal_static_ohmdb_discovery_generated_ModuleDescriptor_descriptor =
+          internal_static_ohmdb_election_ModuleDescriptor_descriptor =
             getDescriptor().getMessageTypes().get(1);
-          internal_static_ohmdb_discovery_generated_ModuleDescriptor_fieldAccessorTable = new
+          internal_static_ohmdb_election_ModuleDescriptor_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_discovery_generated_ModuleDescriptor_descriptor,
+              internal_static_ohmdb_election_ModuleDescriptor_descriptor,
               new java.lang.String[] { "Module", "ModulePort", });
           return null;
         }

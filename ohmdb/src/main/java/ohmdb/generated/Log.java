@@ -77,7 +77,7 @@ public final class Log {
     long getTs();
   }
   /**
-   * Protobuf type {@code Entry}
+   * Protobuf type {@code ohmdb.log.Entry}
    */
   public static final class Entry extends
       com.google.protobuf.GeneratedMessage
@@ -171,12 +171,12 @@ public final class Log {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.generated.Log.internal_static_Entry_descriptor;
+      return ohmdb.generated.Log.internal_static_ohmdb_log_Entry_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.generated.Log.internal_static_Entry_fieldAccessorTable
+      return ohmdb.generated.Log.internal_static_ohmdb_log_Entry_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.generated.Log.Entry.class, ohmdb.generated.Log.Entry.Builder.class);
     }
@@ -577,19 +577,19 @@ public final class Log {
       return builder;
     }
     /**
-     * Protobuf type {@code Entry}
+     * Protobuf type {@code ohmdb.log.Entry}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.generated.Log.EntryOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.generated.Log.internal_static_Entry_descriptor;
+        return ohmdb.generated.Log.internal_static_ohmdb_log_Entry_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.generated.Log.internal_static_Entry_fieldAccessorTable
+        return ohmdb.generated.Log.internal_static_ohmdb_log_Entry_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.generated.Log.Entry.class, ohmdb.generated.Log.Entry.Builder.class);
       }
@@ -635,7 +635,7 @@ public final class Log {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.generated.Log.internal_static_Entry_descriptor;
+        return ohmdb.generated.Log.internal_static_ohmdb_log_Entry_descriptor;
       }
 
       public ohmdb.generated.Log.Entry getDefaultInstanceForType() {
@@ -1016,7 +1016,7 @@ public final class Log {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:Entry)
+      // @@protoc_insertion_point(builder_scope:ohmdb.log.Entry)
     }
 
     static {
@@ -1024,7 +1024,7 @@ public final class Log {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:Entry)
+    // @@protoc_insertion_point(class_scope:ohmdb.log.Entry)
   }
 
   public interface OLogEntryOrBuilder
@@ -1086,7 +1086,7 @@ public final class Log {
     com.google.protobuf.ByteString getValue();
   }
   /**
-   * Protobuf type {@code OLogEntry}
+   * Protobuf type {@code ohmdb.log.OLogEntry}
    */
   public static final class OLogEntry extends
       com.google.protobuf.GeneratedMessage
@@ -1175,12 +1175,12 @@ public final class Log {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.generated.Log.internal_static_OLogEntry_descriptor;
+      return ohmdb.generated.Log.internal_static_ohmdb_log_OLogEntry_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.generated.Log.internal_static_OLogEntry_fieldAccessorTable
+      return ohmdb.generated.Log.internal_static_ohmdb_log_OLogEntry_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.generated.Log.OLogEntry.class, ohmdb.generated.Log.OLogEntry.Builder.class);
     }
@@ -1536,19 +1536,19 @@ public final class Log {
       return builder;
     }
     /**
-     * Protobuf type {@code OLogEntry}
+     * Protobuf type {@code ohmdb.log.OLogEntry}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.generated.Log.OLogEntryOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.generated.Log.internal_static_OLogEntry_descriptor;
+        return ohmdb.generated.Log.internal_static_ohmdb_log_OLogEntry_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.generated.Log.internal_static_OLogEntry_fieldAccessorTable
+        return ohmdb.generated.Log.internal_static_ohmdb_log_OLogEntry_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.generated.Log.OLogEntry.class, ohmdb.generated.Log.OLogEntry.Builder.class);
       }
@@ -1592,7 +1592,7 @@ public final class Log {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.generated.Log.internal_static_OLogEntry_descriptor;
+        return ohmdb.generated.Log.internal_static_ohmdb_log_OLogEntry_descriptor;
       }
 
       public ohmdb.generated.Log.OLogEntry getDefaultInstanceForType() {
@@ -1912,7 +1912,7 @@ public final class Log {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:OLogEntry)
+      // @@protoc_insertion_point(builder_scope:ohmdb.log.OLogEntry)
     }
 
     static {
@@ -1920,19 +1920,19 @@ public final class Log {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:OLogEntry)
+    // @@protoc_insertion_point(class_scope:ohmdb.log.OLogEntry)
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_Entry_descriptor;
+    internal_static_ohmdb_log_Entry_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_Entry_fieldAccessorTable;
+      internal_static_ohmdb_log_Entry_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_OLogEntry_descriptor;
+    internal_static_ohmdb_log_OLogEntry_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_OLogEntry_fieldAccessorTable;
+      internal_static_ohmdb_log_OLogEntry_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -1942,29 +1942,30 @@ public final class Log {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\tLog.proto\"c\n\005Entry\022\022\n\nregionInfo\030\001 \002(\t" +
-      "\022\013\n\003key\030\002 \002(\014\022\016\n\006family\030\003 \002(\014\022\016\n\006column\030" +
-      "\004 \002(\014\022\r\n\005value\030\005 \002(\014\022\n\n\002ts\030\006 \002(\004\"\\\n\tOLog" +
-      "Entry\022\020\n\010quorumId\030\001 \002(\t\022\r\n\005index\030\002 \002(\004\022\021" +
-      "\n\ttombStone\030\003 \002(\010\022\014\n\004term\030\004 \001(\004\022\r\n\005value" +
-      "\030\005 \001(\014B\036\n\017ohmdb.generatedB\003LogH\001\210\001\001\240\001\001"
+      "\n\tLog.proto\022\tohmdb.log\"c\n\005Entry\022\022\n\nregio" +
+      "nInfo\030\001 \002(\t\022\013\n\003key\030\002 \002(\014\022\016\n\006family\030\003 \002(\014" +
+      "\022\016\n\006column\030\004 \002(\014\022\r\n\005value\030\005 \002(\014\022\n\n\002ts\030\006 " +
+      "\002(\004\"\\\n\tOLogEntry\022\020\n\010quorumId\030\001 \002(\t\022\r\n\005in" +
+      "dex\030\002 \002(\004\022\021\n\ttombStone\030\003 \002(\010\022\014\n\004term\030\004 \001" +
+      "(\004\022\r\n\005value\030\005 \001(\014B\036\n\017ohmdb.generatedB\003Lo" +
+      "gH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
         public com.google.protobuf.ExtensionRegistry assignDescriptors(
             com.google.protobuf.Descriptors.FileDescriptor root) {
           descriptor = root;
-          internal_static_Entry_descriptor =
+          internal_static_ohmdb_log_Entry_descriptor =
             getDescriptor().getMessageTypes().get(0);
-          internal_static_Entry_fieldAccessorTable = new
+          internal_static_ohmdb_log_Entry_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_Entry_descriptor,
+              internal_static_ohmdb_log_Entry_descriptor,
               new java.lang.String[] { "RegionInfo", "Key", "Family", "Column", "Value", "Ts", });
-          internal_static_OLogEntry_descriptor =
+          internal_static_ohmdb_log_OLogEntry_descriptor =
             getDescriptor().getMessageTypes().get(1);
-          internal_static_OLogEntry_fieldAccessorTable = new
+          internal_static_ohmdb_log_OLogEntry_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_OLogEntry_descriptor,
+              internal_static_ohmdb_log_OLogEntry_descriptor,
               new java.lang.String[] { "QuorumId", "Index", "TombStone", "Term", "Value", });
           return null;
         }

@@ -83,9 +83,9 @@ public final class Raft {
      */
     boolean getInReply();
 
-    // optional .ohmdb.replication.generated.RequestVote RequestVote = 100;
+    // optional .ohmdb.replication.RequestVote RequestVote = 100;
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+     * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
      *
      * <pre>
      * The struct and the field name must match for reflection reasons.
@@ -93,7 +93,7 @@ public final class Raft {
      */
     boolean hasRequestVote();
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+     * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
      *
      * <pre>
      * The struct and the field name must match for reflection reasons.
@@ -101,7 +101,7 @@ public final class Raft {
      */
     ohmdb.replication.generated.Raft.RequestVote getRequestVote();
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+     * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
      *
      * <pre>
      * The struct and the field name must match for reflection reasons.
@@ -109,50 +109,50 @@ public final class Raft {
      */
     ohmdb.replication.generated.Raft.RequestVoteOrBuilder getRequestVoteOrBuilder();
 
-    // optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;
+    // optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
      */
     boolean hasRequestVoteReply();
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
      */
     ohmdb.replication.generated.Raft.RequestVoteReply getRequestVoteReply();
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
      */
     ohmdb.replication.generated.Raft.RequestVoteReplyOrBuilder getRequestVoteReplyOrBuilder();
 
-    // optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;
+    // optional .ohmdb.replication.AppendEntries AppendEntries = 102;
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+     * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
      */
     boolean hasAppendEntries();
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+     * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
      */
     ohmdb.replication.generated.Raft.AppendEntries getAppendEntries();
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+     * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
      */
     ohmdb.replication.generated.Raft.AppendEntriesOrBuilder getAppendEntriesOrBuilder();
 
-    // optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;
+    // optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
      */
     boolean hasAppendEntriesReply();
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
      */
     ohmdb.replication.generated.Raft.AppendEntriesReply getAppendEntriesReply();
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
      */
     ohmdb.replication.generated.Raft.AppendEntriesReplyOrBuilder getAppendEntriesReplyOrBuilder();
   }
   /**
-   * Protobuf type {@code ohmdb.replication.generated.RaftWireMessage}
+   * Protobuf type {@code ohmdb.replication.RaftWireMessage}
    *
    * <pre>
    * envelope.
@@ -297,12 +297,12 @@ public final class Raft {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RaftWireMessage_descriptor;
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RaftWireMessage_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RaftWireMessage_fieldAccessorTable
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RaftWireMessage_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.replication.generated.Raft.RaftWireMessage.class, ohmdb.replication.generated.Raft.RaftWireMessage.Builder.class);
     }
@@ -446,11 +446,11 @@ public final class Raft {
       return inReply_;
     }
 
-    // optional .ohmdb.replication.generated.RequestVote RequestVote = 100;
+    // optional .ohmdb.replication.RequestVote RequestVote = 100;
     public static final int REQUESTVOTE_FIELD_NUMBER = 100;
     private ohmdb.replication.generated.Raft.RequestVote requestVote_;
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+     * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
      *
      * <pre>
      * The struct and the field name must match for reflection reasons.
@@ -460,7 +460,7 @@ public final class Raft {
       return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+     * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
      *
      * <pre>
      * The struct and the field name must match for reflection reasons.
@@ -470,7 +470,7 @@ public final class Raft {
       return requestVote_;
     }
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+     * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
      *
      * <pre>
      * The struct and the field name must match for reflection reasons.
@@ -480,67 +480,67 @@ public final class Raft {
       return requestVote_;
     }
 
-    // optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;
+    // optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;
     public static final int REQUESTVOTEREPLY_FIELD_NUMBER = 101;
     private ohmdb.replication.generated.Raft.RequestVoteReply requestVoteReply_;
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
      */
     public boolean hasRequestVoteReply() {
       return ((bitField0_ & 0x00000040) == 0x00000040);
     }
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
      */
     public ohmdb.replication.generated.Raft.RequestVoteReply getRequestVoteReply() {
       return requestVoteReply_;
     }
     /**
-     * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+     * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
      */
     public ohmdb.replication.generated.Raft.RequestVoteReplyOrBuilder getRequestVoteReplyOrBuilder() {
       return requestVoteReply_;
     }
 
-    // optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;
+    // optional .ohmdb.replication.AppendEntries AppendEntries = 102;
     public static final int APPENDENTRIES_FIELD_NUMBER = 102;
     private ohmdb.replication.generated.Raft.AppendEntries appendEntries_;
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+     * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
      */
     public boolean hasAppendEntries() {
       return ((bitField0_ & 0x00000080) == 0x00000080);
     }
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+     * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
      */
     public ohmdb.replication.generated.Raft.AppendEntries getAppendEntries() {
       return appendEntries_;
     }
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+     * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
      */
     public ohmdb.replication.generated.Raft.AppendEntriesOrBuilder getAppendEntriesOrBuilder() {
       return appendEntries_;
     }
 
-    // optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;
+    // optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;
     public static final int APPENDENTRIESREPLY_FIELD_NUMBER = 103;
     private ohmdb.replication.generated.Raft.AppendEntriesReply appendEntriesReply_;
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
      */
     public boolean hasAppendEntriesReply() {
       return ((bitField0_ & 0x00000100) == 0x00000100);
     }
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
      */
     public ohmdb.replication.generated.Raft.AppendEntriesReply getAppendEntriesReply() {
       return appendEntriesReply_;
     }
     /**
-     * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+     * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
      */
     public ohmdb.replication.generated.Raft.AppendEntriesReplyOrBuilder getAppendEntriesReplyOrBuilder() {
       return appendEntriesReply_;
@@ -729,7 +729,7 @@ public final class Raft {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.replication.generated.RaftWireMessage}
+     * Protobuf type {@code ohmdb.replication.RaftWireMessage}
      *
      * <pre>
      * envelope.
@@ -740,12 +740,12 @@ public final class Raft {
           ohmdb.replication.generated.Raft.RaftWireMessage, Builder> implements ohmdb.replication.generated.Raft.RaftWireMessageOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RaftWireMessage_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RaftWireMessage_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RaftWireMessage_fieldAccessorTable
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RaftWireMessage_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.replication.generated.Raft.RaftWireMessage.class, ohmdb.replication.generated.Raft.RaftWireMessage.Builder.class);
       }
@@ -817,7 +817,7 @@ public final class Raft {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RaftWireMessage_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RaftWireMessage_descriptor;
       }
 
       public ohmdb.replication.generated.Raft.RaftWireMessage getDefaultInstanceForType() {
@@ -1203,12 +1203,12 @@ public final class Raft {
         return this;
       }
 
-      // optional .ohmdb.replication.generated.RequestVote RequestVote = 100;
+      // optional .ohmdb.replication.RequestVote RequestVote = 100;
       private ohmdb.replication.generated.Raft.RequestVote requestVote_ = ohmdb.replication.generated.Raft.RequestVote.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.generated.Raft.RequestVote, ohmdb.replication.generated.Raft.RequestVote.Builder, ohmdb.replication.generated.Raft.RequestVoteOrBuilder> requestVoteBuilder_;
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1218,7 +1218,7 @@ public final class Raft {
         return ((bitField0_ & 0x00000020) == 0x00000020);
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1232,7 +1232,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1252,7 +1252,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1270,7 +1270,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1293,7 +1293,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1310,7 +1310,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1322,7 +1322,7 @@ public final class Raft {
         return getRequestVoteFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1336,7 +1336,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVote RequestVote = 100;</code>
+       * <code>optional .ohmdb.replication.RequestVote RequestVote = 100;</code>
        *
        * <pre>
        * The struct and the field name must match for reflection reasons.
@@ -1356,18 +1356,18 @@ public final class Raft {
         return requestVoteBuilder_;
       }
 
-      // optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;
+      // optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;
       private ohmdb.replication.generated.Raft.RequestVoteReply requestVoteReply_ = ohmdb.replication.generated.Raft.RequestVoteReply.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.generated.Raft.RequestVoteReply, ohmdb.replication.generated.Raft.RequestVoteReply.Builder, ohmdb.replication.generated.Raft.RequestVoteReplyOrBuilder> requestVoteReplyBuilder_;
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       public boolean hasRequestVoteReply() {
         return ((bitField0_ & 0x00000040) == 0x00000040);
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       public ohmdb.replication.generated.Raft.RequestVoteReply getRequestVoteReply() {
         if (requestVoteReplyBuilder_ == null) {
@@ -1377,7 +1377,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       public Builder setRequestVoteReply(ohmdb.replication.generated.Raft.RequestVoteReply value) {
         if (requestVoteReplyBuilder_ == null) {
@@ -1393,7 +1393,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       public Builder setRequestVoteReply(
           ohmdb.replication.generated.Raft.RequestVoteReply.Builder builderForValue) {
@@ -1407,7 +1407,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       public Builder mergeRequestVoteReply(ohmdb.replication.generated.Raft.RequestVoteReply value) {
         if (requestVoteReplyBuilder_ == null) {
@@ -1426,7 +1426,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       public Builder clearRequestVoteReply() {
         if (requestVoteReplyBuilder_ == null) {
@@ -1439,7 +1439,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       public ohmdb.replication.generated.Raft.RequestVoteReply.Builder getRequestVoteReplyBuilder() {
         bitField0_ |= 0x00000040;
@@ -1447,7 +1447,7 @@ public final class Raft {
         return getRequestVoteReplyFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       public ohmdb.replication.generated.Raft.RequestVoteReplyOrBuilder getRequestVoteReplyOrBuilder() {
         if (requestVoteReplyBuilder_ != null) {
@@ -1457,7 +1457,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.generated.RequestVoteReply RequestVoteReply = 101;</code>
+       * <code>optional .ohmdb.replication.RequestVoteReply RequestVoteReply = 101;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.generated.Raft.RequestVoteReply, ohmdb.replication.generated.Raft.RequestVoteReply.Builder, ohmdb.replication.generated.Raft.RequestVoteReplyOrBuilder> 
@@ -1473,18 +1473,18 @@ public final class Raft {
         return requestVoteReplyBuilder_;
       }
 
-      // optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;
+      // optional .ohmdb.replication.AppendEntries AppendEntries = 102;
       private ohmdb.replication.generated.Raft.AppendEntries appendEntries_ = ohmdb.replication.generated.Raft.AppendEntries.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.generated.Raft.AppendEntries, ohmdb.replication.generated.Raft.AppendEntries.Builder, ohmdb.replication.generated.Raft.AppendEntriesOrBuilder> appendEntriesBuilder_;
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       public boolean hasAppendEntries() {
         return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       public ohmdb.replication.generated.Raft.AppendEntries getAppendEntries() {
         if (appendEntriesBuilder_ == null) {
@@ -1494,7 +1494,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       public Builder setAppendEntries(ohmdb.replication.generated.Raft.AppendEntries value) {
         if (appendEntriesBuilder_ == null) {
@@ -1510,7 +1510,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       public Builder setAppendEntries(
           ohmdb.replication.generated.Raft.AppendEntries.Builder builderForValue) {
@@ -1524,7 +1524,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       public Builder mergeAppendEntries(ohmdb.replication.generated.Raft.AppendEntries value) {
         if (appendEntriesBuilder_ == null) {
@@ -1543,7 +1543,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       public Builder clearAppendEntries() {
         if (appendEntriesBuilder_ == null) {
@@ -1556,7 +1556,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       public ohmdb.replication.generated.Raft.AppendEntries.Builder getAppendEntriesBuilder() {
         bitField0_ |= 0x00000080;
@@ -1564,7 +1564,7 @@ public final class Raft {
         return getAppendEntriesFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       public ohmdb.replication.generated.Raft.AppendEntriesOrBuilder getAppendEntriesOrBuilder() {
         if (appendEntriesBuilder_ != null) {
@@ -1574,7 +1574,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntries AppendEntries = 102;</code>
+       * <code>optional .ohmdb.replication.AppendEntries AppendEntries = 102;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.generated.Raft.AppendEntries, ohmdb.replication.generated.Raft.AppendEntries.Builder, ohmdb.replication.generated.Raft.AppendEntriesOrBuilder> 
@@ -1590,18 +1590,18 @@ public final class Raft {
         return appendEntriesBuilder_;
       }
 
-      // optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;
+      // optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;
       private ohmdb.replication.generated.Raft.AppendEntriesReply appendEntriesReply_ = ohmdb.replication.generated.Raft.AppendEntriesReply.getDefaultInstance();
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.generated.Raft.AppendEntriesReply, ohmdb.replication.generated.Raft.AppendEntriesReply.Builder, ohmdb.replication.generated.Raft.AppendEntriesReplyOrBuilder> appendEntriesReplyBuilder_;
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       public boolean hasAppendEntriesReply() {
         return ((bitField0_ & 0x00000100) == 0x00000100);
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       public ohmdb.replication.generated.Raft.AppendEntriesReply getAppendEntriesReply() {
         if (appendEntriesReplyBuilder_ == null) {
@@ -1611,7 +1611,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       public Builder setAppendEntriesReply(ohmdb.replication.generated.Raft.AppendEntriesReply value) {
         if (appendEntriesReplyBuilder_ == null) {
@@ -1627,7 +1627,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       public Builder setAppendEntriesReply(
           ohmdb.replication.generated.Raft.AppendEntriesReply.Builder builderForValue) {
@@ -1641,7 +1641,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       public Builder mergeAppendEntriesReply(ohmdb.replication.generated.Raft.AppendEntriesReply value) {
         if (appendEntriesReplyBuilder_ == null) {
@@ -1660,7 +1660,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       public Builder clearAppendEntriesReply() {
         if (appendEntriesReplyBuilder_ == null) {
@@ -1673,7 +1673,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       public ohmdb.replication.generated.Raft.AppendEntriesReply.Builder getAppendEntriesReplyBuilder() {
         bitField0_ |= 0x00000100;
@@ -1681,7 +1681,7 @@ public final class Raft {
         return getAppendEntriesReplyFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       public ohmdb.replication.generated.Raft.AppendEntriesReplyOrBuilder getAppendEntriesReplyOrBuilder() {
         if (appendEntriesReplyBuilder_ != null) {
@@ -1691,7 +1691,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>optional .ohmdb.replication.generated.AppendEntriesReply AppendEntriesReply = 103;</code>
+       * <code>optional .ohmdb.replication.AppendEntriesReply AppendEntriesReply = 103;</code>
        */
       private com.google.protobuf.SingleFieldBuilder<
           ohmdb.replication.generated.Raft.AppendEntriesReply, ohmdb.replication.generated.Raft.AppendEntriesReply.Builder, ohmdb.replication.generated.Raft.AppendEntriesReplyOrBuilder> 
@@ -1707,7 +1707,7 @@ public final class Raft {
         return appendEntriesReplyBuilder_;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.replication.generated.RaftWireMessage)
+      // @@protoc_insertion_point(builder_scope:ohmdb.replication.RaftWireMessage)
     }
 
     static {
@@ -1715,7 +1715,7 @@ public final class Raft {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.replication.generated.RaftWireMessage)
+    // @@protoc_insertion_point(class_scope:ohmdb.replication.RaftWireMessage)
   }
 
   public interface LogEntryOrBuilder
@@ -1752,7 +1752,7 @@ public final class Raft {
     com.google.protobuf.ByteString getData();
   }
   /**
-   * Protobuf type {@code ohmdb.replication.generated.LogEntry}
+   * Protobuf type {@code ohmdb.replication.LogEntry}
    */
   public static final class LogEntry extends
       com.google.protobuf.GeneratedMessage
@@ -1831,12 +1831,12 @@ public final class Raft {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_LogEntry_descriptor;
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_LogEntry_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_LogEntry_fieldAccessorTable
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_LogEntry_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.replication.generated.Raft.LogEntry.class, ohmdb.replication.generated.Raft.LogEntry.Builder.class);
     }
@@ -2031,19 +2031,19 @@ public final class Raft {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.replication.generated.LogEntry}
+     * Protobuf type {@code ohmdb.replication.LogEntry}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.replication.generated.Raft.LogEntryOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_LogEntry_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_LogEntry_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_LogEntry_fieldAccessorTable
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_LogEntry_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.replication.generated.Raft.LogEntry.class, ohmdb.replication.generated.Raft.LogEntry.Builder.class);
       }
@@ -2083,7 +2083,7 @@ public final class Raft {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_LogEntry_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_LogEntry_descriptor;
       }
 
       public ohmdb.replication.generated.Raft.LogEntry getDefaultInstanceForType() {
@@ -2268,7 +2268,7 @@ public final class Raft {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.replication.generated.LogEntry)
+      // @@protoc_insertion_point(builder_scope:ohmdb.replication.LogEntry)
     }
 
     static {
@@ -2276,7 +2276,7 @@ public final class Raft {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.replication.generated.LogEntry)
+    // @@protoc_insertion_point(class_scope:ohmdb.replication.LogEntry)
   }
 
   public interface RequestVoteOrBuilder
@@ -2323,7 +2323,7 @@ public final class Raft {
     long getLastLogTerm();
   }
   /**
-   * Protobuf type {@code ohmdb.replication.generated.RequestVote}
+   * Protobuf type {@code ohmdb.replication.RequestVote}
    */
   public static final class RequestVote extends
       com.google.protobuf.GeneratedMessage
@@ -2407,12 +2407,12 @@ public final class Raft {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVote_descriptor;
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVote_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVote_fieldAccessorTable
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVote_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.replication.generated.Raft.RequestVote.class, ohmdb.replication.generated.Raft.RequestVote.Builder.class);
     }
@@ -2631,19 +2631,19 @@ public final class Raft {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.replication.generated.RequestVote}
+     * Protobuf type {@code ohmdb.replication.RequestVote}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.replication.generated.Raft.RequestVoteOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVote_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVote_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVote_fieldAccessorTable
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVote_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.replication.generated.Raft.RequestVote.class, ohmdb.replication.generated.Raft.RequestVote.Builder.class);
       }
@@ -2685,7 +2685,7 @@ public final class Raft {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVote_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVote_descriptor;
       }
 
       public ohmdb.replication.generated.Raft.RequestVote getDefaultInstanceForType() {
@@ -2907,7 +2907,7 @@ public final class Raft {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.replication.generated.RequestVote)
+      // @@protoc_insertion_point(builder_scope:ohmdb.replication.RequestVote)
     }
 
     static {
@@ -2915,7 +2915,7 @@ public final class Raft {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.replication.generated.RequestVote)
+    // @@protoc_insertion_point(class_scope:ohmdb.replication.RequestVote)
   }
 
   public interface RequestVoteReplyOrBuilder
@@ -2958,7 +2958,7 @@ public final class Raft {
     boolean getVoteGranted();
   }
   /**
-   * Protobuf type {@code ohmdb.replication.generated.RequestVoteReply}
+   * Protobuf type {@code ohmdb.replication.RequestVoteReply}
    */
   public static final class RequestVoteReply extends
       com.google.protobuf.GeneratedMessage
@@ -3032,12 +3032,12 @@ public final class Raft {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVoteReply_descriptor;
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVoteReply_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVoteReply_fieldAccessorTable
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVoteReply_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.replication.generated.Raft.RequestVoteReply.class, ohmdb.replication.generated.Raft.RequestVoteReply.Builder.class);
     }
@@ -3224,19 +3224,19 @@ public final class Raft {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.replication.generated.RequestVoteReply}
+     * Protobuf type {@code ohmdb.replication.RequestVoteReply}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.replication.generated.Raft.RequestVoteReplyOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVoteReply_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVoteReply_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVoteReply_fieldAccessorTable
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVoteReply_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.replication.generated.Raft.RequestVoteReply.class, ohmdb.replication.generated.Raft.RequestVoteReply.Builder.class);
       }
@@ -3274,7 +3274,7 @@ public final class Raft {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_RequestVoteReply_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_RequestVoteReply_descriptor;
       }
 
       public ohmdb.replication.generated.Raft.RequestVoteReply getDefaultInstanceForType() {
@@ -3448,7 +3448,7 @@ public final class Raft {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.replication.generated.RequestVoteReply)
+      // @@protoc_insertion_point(builder_scope:ohmdb.replication.RequestVoteReply)
     }
 
     static {
@@ -3456,7 +3456,7 @@ public final class Raft {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.replication.generated.RequestVoteReply)
+    // @@protoc_insertion_point(class_scope:ohmdb.replication.RequestVoteReply)
   }
 
   public interface AppendEntriesOrBuilder
@@ -3502,27 +3502,27 @@ public final class Raft {
      */
     long getPrevLogTerm();
 
-    // repeated .ohmdb.replication.generated.LogEntry entries = 5;
+    // repeated .ohmdb.replication.LogEntry entries = 5;
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     java.util.List<ohmdb.replication.generated.Raft.LogEntry> 
         getEntriesList();
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     ohmdb.replication.generated.Raft.LogEntry getEntries(int index);
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     int getEntriesCount();
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     java.util.List<? extends ohmdb.replication.generated.Raft.LogEntryOrBuilder> 
         getEntriesOrBuilderList();
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     ohmdb.replication.generated.Raft.LogEntryOrBuilder getEntriesOrBuilder(
         int index);
@@ -3538,7 +3538,7 @@ public final class Raft {
     long getCommitIndex();
   }
   /**
-   * Protobuf type {@code ohmdb.replication.generated.AppendEntries}
+   * Protobuf type {@code ohmdb.replication.AppendEntries}
    */
   public static final class AppendEntries extends
       com.google.protobuf.GeneratedMessage
@@ -3638,12 +3638,12 @@ public final class Raft {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntries_descriptor;
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntries_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntries_fieldAccessorTable
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntries_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.replication.generated.Raft.AppendEntries.class, ohmdb.replication.generated.Raft.AppendEntries.Builder.class);
     }
@@ -3728,36 +3728,36 @@ public final class Raft {
       return prevLogTerm_;
     }
 
-    // repeated .ohmdb.replication.generated.LogEntry entries = 5;
+    // repeated .ohmdb.replication.LogEntry entries = 5;
     public static final int ENTRIES_FIELD_NUMBER = 5;
     private java.util.List<ohmdb.replication.generated.Raft.LogEntry> entries_;
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public java.util.List<ohmdb.replication.generated.Raft.LogEntry> getEntriesList() {
       return entries_;
     }
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public java.util.List<? extends ohmdb.replication.generated.Raft.LogEntryOrBuilder> 
         getEntriesOrBuilderList() {
       return entries_;
     }
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public int getEntriesCount() {
       return entries_.size();
     }
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public ohmdb.replication.generated.Raft.LogEntry getEntries(int index) {
       return entries_.get(index);
     }
     /**
-     * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+     * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
      */
     public ohmdb.replication.generated.Raft.LogEntryOrBuilder getEntriesOrBuilder(
         int index) {
@@ -3930,19 +3930,19 @@ public final class Raft {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.replication.generated.AppendEntries}
+     * Protobuf type {@code ohmdb.replication.AppendEntries}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.replication.generated.Raft.AppendEntriesOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntries_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntries_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntries_fieldAccessorTable
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntries_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.replication.generated.Raft.AppendEntries.class, ohmdb.replication.generated.Raft.AppendEntries.Builder.class);
       }
@@ -3993,7 +3993,7 @@ public final class Raft {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntries_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntries_descriptor;
       }
 
       public ohmdb.replication.generated.Raft.AppendEntries getDefaultInstanceForType() {
@@ -4257,7 +4257,7 @@ public final class Raft {
         return this;
       }
 
-      // repeated .ohmdb.replication.generated.LogEntry entries = 5;
+      // repeated .ohmdb.replication.LogEntry entries = 5;
       private java.util.List<ohmdb.replication.generated.Raft.LogEntry> entries_ =
         java.util.Collections.emptyList();
       private void ensureEntriesIsMutable() {
@@ -4271,7 +4271,7 @@ public final class Raft {
           ohmdb.replication.generated.Raft.LogEntry, ohmdb.replication.generated.Raft.LogEntry.Builder, ohmdb.replication.generated.Raft.LogEntryOrBuilder> entriesBuilder_;
 
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public java.util.List<ohmdb.replication.generated.Raft.LogEntry> getEntriesList() {
         if (entriesBuilder_ == null) {
@@ -4281,7 +4281,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public int getEntriesCount() {
         if (entriesBuilder_ == null) {
@@ -4291,7 +4291,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.generated.Raft.LogEntry getEntries(int index) {
         if (entriesBuilder_ == null) {
@@ -4301,7 +4301,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder setEntries(
           int index, ohmdb.replication.generated.Raft.LogEntry value) {
@@ -4318,7 +4318,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder setEntries(
           int index, ohmdb.replication.generated.Raft.LogEntry.Builder builderForValue) {
@@ -4332,7 +4332,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addEntries(ohmdb.replication.generated.Raft.LogEntry value) {
         if (entriesBuilder_ == null) {
@@ -4348,7 +4348,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addEntries(
           int index, ohmdb.replication.generated.Raft.LogEntry value) {
@@ -4365,7 +4365,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addEntries(
           ohmdb.replication.generated.Raft.LogEntry.Builder builderForValue) {
@@ -4379,7 +4379,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addEntries(
           int index, ohmdb.replication.generated.Raft.LogEntry.Builder builderForValue) {
@@ -4393,7 +4393,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder addAllEntries(
           java.lang.Iterable<? extends ohmdb.replication.generated.Raft.LogEntry> values) {
@@ -4407,7 +4407,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder clearEntries() {
         if (entriesBuilder_ == null) {
@@ -4420,7 +4420,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public Builder removeEntries(int index) {
         if (entriesBuilder_ == null) {
@@ -4433,14 +4433,14 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.generated.Raft.LogEntry.Builder getEntriesBuilder(
           int index) {
         return getEntriesFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.generated.Raft.LogEntryOrBuilder getEntriesOrBuilder(
           int index) {
@@ -4450,7 +4450,7 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public java.util.List<? extends ohmdb.replication.generated.Raft.LogEntryOrBuilder> 
            getEntriesOrBuilderList() {
@@ -4461,14 +4461,14 @@ public final class Raft {
         }
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.generated.Raft.LogEntry.Builder addEntriesBuilder() {
         return getEntriesFieldBuilder().addBuilder(
             ohmdb.replication.generated.Raft.LogEntry.getDefaultInstance());
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public ohmdb.replication.generated.Raft.LogEntry.Builder addEntriesBuilder(
           int index) {
@@ -4476,7 +4476,7 @@ public final class Raft {
             index, ohmdb.replication.generated.Raft.LogEntry.getDefaultInstance());
       }
       /**
-       * <code>repeated .ohmdb.replication.generated.LogEntry entries = 5;</code>
+       * <code>repeated .ohmdb.replication.LogEntry entries = 5;</code>
        */
       public java.util.List<ohmdb.replication.generated.Raft.LogEntry.Builder> 
            getEntriesBuilderList() {
@@ -4530,7 +4530,7 @@ public final class Raft {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.replication.generated.AppendEntries)
+      // @@protoc_insertion_point(builder_scope:ohmdb.replication.AppendEntries)
     }
 
     static {
@@ -4538,19 +4538,19 @@ public final class Raft {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.replication.generated.AppendEntries)
+    // @@protoc_insertion_point(class_scope:ohmdb.replication.AppendEntries)
   }
 
   public interface AppendEntriesReplyOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional int64 term = 1;
+    // optional uint64 term = 1;
     /**
-     * <code>optional int64 term = 1;</code>
+     * <code>optional uint64 term = 1;</code>
      */
     boolean hasTerm();
     /**
-     * <code>optional int64 term = 1;</code>
+     * <code>optional uint64 term = 1;</code>
      */
     long getTerm();
 
@@ -4575,7 +4575,7 @@ public final class Raft {
     long getMyLastLogEntry();
   }
   /**
-   * Protobuf type {@code ohmdb.replication.generated.AppendEntriesReply}
+   * Protobuf type {@code ohmdb.replication.AppendEntriesReply}
    */
   public static final class AppendEntriesReply extends
       com.google.protobuf.GeneratedMessage
@@ -4627,7 +4627,7 @@ public final class Raft {
             }
             case 8: {
               bitField0_ |= 0x00000001;
-              term_ = input.readInt64();
+              term_ = input.readUInt64();
               break;
             }
             case 16: {
@@ -4654,12 +4654,12 @@ public final class Raft {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntriesReply_descriptor;
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntriesReply_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntriesReply_fieldAccessorTable
+      return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntriesReply_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.replication.generated.Raft.AppendEntriesReply.class, ohmdb.replication.generated.Raft.AppendEntriesReply.Builder.class);
     }
@@ -4680,17 +4680,17 @@ public final class Raft {
     }
 
     private int bitField0_;
-    // optional int64 term = 1;
+    // optional uint64 term = 1;
     public static final int TERM_FIELD_NUMBER = 1;
     private long term_;
     /**
-     * <code>optional int64 term = 1;</code>
+     * <code>optional uint64 term = 1;</code>
      */
     public boolean hasTerm() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional int64 term = 1;</code>
+     * <code>optional uint64 term = 1;</code>
      */
     public long getTerm() {
       return term_;
@@ -4746,7 +4746,7 @@ public final class Raft {
                         throws java.io.IOException {
       getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeInt64(1, term_);
+        output.writeUInt64(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         output.writeBool(2, success_);
@@ -4765,7 +4765,7 @@ public final class Raft {
       size = 0;
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt64Size(1, term_);
+          .computeUInt64Size(1, term_);
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
@@ -4854,19 +4854,19 @@ public final class Raft {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.replication.generated.AppendEntriesReply}
+     * Protobuf type {@code ohmdb.replication.AppendEntriesReply}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.replication.generated.Raft.AppendEntriesReplyOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntriesReply_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntriesReply_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntriesReply_fieldAccessorTable
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntriesReply_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.replication.generated.Raft.AppendEntriesReply.class, ohmdb.replication.generated.Raft.AppendEntriesReply.Builder.class);
       }
@@ -4906,7 +4906,7 @@ public final class Raft {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_generated_AppendEntriesReply_descriptor;
+        return ohmdb.replication.generated.Raft.internal_static_ohmdb_replication_AppendEntriesReply_descriptor;
       }
 
       public ohmdb.replication.generated.Raft.AppendEntriesReply getDefaultInstanceForType() {
@@ -4989,22 +4989,22 @@ public final class Raft {
       }
       private int bitField0_;
 
-      // optional int64 term = 1;
+      // optional uint64 term = 1;
       private long term_ ;
       /**
-       * <code>optional int64 term = 1;</code>
+       * <code>optional uint64 term = 1;</code>
        */
       public boolean hasTerm() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional int64 term = 1;</code>
+       * <code>optional uint64 term = 1;</code>
        */
       public long getTerm() {
         return term_;
       }
       /**
-       * <code>optional int64 term = 1;</code>
+       * <code>optional uint64 term = 1;</code>
        */
       public Builder setTerm(long value) {
         bitField0_ |= 0x00000001;
@@ -5013,7 +5013,7 @@ public final class Raft {
         return this;
       }
       /**
-       * <code>optional int64 term = 1;</code>
+       * <code>optional uint64 term = 1;</code>
        */
       public Builder clearTerm() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -5088,7 +5088,7 @@ public final class Raft {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.replication.generated.AppendEntriesReply)
+      // @@protoc_insertion_point(builder_scope:ohmdb.replication.AppendEntriesReply)
     }
 
     static {
@@ -5096,39 +5096,39 @@ public final class Raft {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.replication.generated.AppendEntriesReply)
+    // @@protoc_insertion_point(class_scope:ohmdb.replication.AppendEntriesReply)
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_replication_generated_RaftWireMessage_descriptor;
+    internal_static_ohmdb_replication_RaftWireMessage_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_replication_generated_RaftWireMessage_fieldAccessorTable;
+      internal_static_ohmdb_replication_RaftWireMessage_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_replication_generated_LogEntry_descriptor;
+    internal_static_ohmdb_replication_LogEntry_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_replication_generated_LogEntry_fieldAccessorTable;
+      internal_static_ohmdb_replication_LogEntry_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_replication_generated_RequestVote_descriptor;
+    internal_static_ohmdb_replication_RequestVote_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_replication_generated_RequestVote_fieldAccessorTable;
+      internal_static_ohmdb_replication_RequestVote_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_replication_generated_RequestVoteReply_descriptor;
+    internal_static_ohmdb_replication_RequestVoteReply_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_replication_generated_RequestVoteReply_fieldAccessorTable;
+      internal_static_ohmdb_replication_RequestVoteReply_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_replication_generated_AppendEntries_descriptor;
+    internal_static_ohmdb_replication_AppendEntries_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_replication_generated_AppendEntries_fieldAccessorTable;
+      internal_static_ohmdb_replication_AppendEntries_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_replication_generated_AppendEntriesReply_descriptor;
+    internal_static_ohmdb_replication_AppendEntriesReply_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_replication_generated_AppendEntriesReply_fieldAccessorTable;
+      internal_static_ohmdb_replication_AppendEntriesReply_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -5138,71 +5138,70 @@ public final class Raft {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\nraft.proto\022\033ohmdb.replication.generate" +
-      "d\"\225\003\n\017RaftWireMessage\022\022\n\nmessage_id\030\001 \001(" +
-      "\003\022\021\n\tsender_id\030\002 \001(\003\022\023\n\013receiver_id\030\003 \001(" +
-      "\003\022\021\n\tquorum_id\030\004 \001(\t\022\020\n\010in_reply\030\005 \001(\010\022=" +
-      "\n\013RequestVote\030d \001(\0132(.ohmdb.replication." +
-      "generated.RequestVote\022G\n\020RequestVoteRepl" +
-      "y\030e \001(\0132-.ohmdb.replication.generated.Re" +
-      "questVoteReply\022A\n\rAppendEntries\030f \001(\0132*." +
-      "ohmdb.replication.generated.AppendEntrie" +
-      "s\022K\n\022AppendEntriesReply\030g \001(\0132/.ohmdb.re",
-      "plication.generated.AppendEntriesReply*\t" +
-      "\010\350\007\020\200\200\200\200\002\"5\n\010LogEntry\022\014\n\004term\030\001 \001(\003\022\r\n\005i" +
-      "ndex\030\002 \001(\003\022\014\n\004data\030\003 \001(\014\"`\n\013RequestVote\022" +
-      "\014\n\004term\030\001 \001(\003\022\024\n\014candidate_id\030\002 \001(\003\022\026\n\016l" +
-      "ast_log_index\030\003 \001(\003\022\025\n\rlast_log_term\030\004 \001" +
-      "(\003\"6\n\020RequestVoteReply\022\014\n\004term\030\001 \001(\003\022\024\n\014" +
-      "vote_granted\030\002 \001(\010\"\255\001\n\rAppendEntries\022\014\n\004" +
-      "term\030\001 \001(\003\022\021\n\tleader_id\030\002 \001(\003\022\026\n\016prev_lo" +
-      "g_index\030\003 \001(\003\022\025\n\rprev_log_term\030\004 \001(\003\0226\n\007" +
-      "entries\030\005 \003(\0132%.ohmdb.replication.genera",
-      "ted.LogEntry\022\024\n\014commit_index\030\006 \001(\003\"N\n\022Ap" +
-      "pendEntriesReply\022\014\n\004term\030\001 \001(\003\022\017\n\007succes" +
-      "s\030\002 \001(\010\022\031\n\021my_last_log_entry\030\003 \001(\003B\037\n\033oh" +
-      "mdb.replication.generatedH\001"
+      "\n\nraft.proto\022\021ohmdb.replication\"\355\002\n\017Raft" +
+      "WireMessage\022\022\n\nmessage_id\030\001 \001(\003\022\021\n\tsende" +
+      "r_id\030\002 \001(\003\022\023\n\013receiver_id\030\003 \001(\003\022\021\n\tquoru" +
+      "m_id\030\004 \001(\t\022\020\n\010in_reply\030\005 \001(\010\0223\n\013RequestV" +
+      "ote\030d \001(\0132\036.ohmdb.replication.RequestVot" +
+      "e\022=\n\020RequestVoteReply\030e \001(\0132#.ohmdb.repl" +
+      "ication.RequestVoteReply\0227\n\rAppendEntrie" +
+      "s\030f \001(\0132 .ohmdb.replication.AppendEntrie" +
+      "s\022A\n\022AppendEntriesReply\030g \001(\0132%.ohmdb.re" +
+      "plication.AppendEntriesReply*\t\010\350\007\020\200\200\200\200\002\"",
+      "5\n\010LogEntry\022\014\n\004term\030\001 \001(\003\022\r\n\005index\030\002 \001(\003" +
+      "\022\014\n\004data\030\003 \001(\014\"`\n\013RequestVote\022\014\n\004term\030\001 " +
+      "\001(\003\022\024\n\014candidate_id\030\002 \001(\003\022\026\n\016last_log_in" +
+      "dex\030\003 \001(\003\022\025\n\rlast_log_term\030\004 \001(\003\"6\n\020Requ" +
+      "estVoteReply\022\014\n\004term\030\001 \001(\003\022\024\n\014vote_grant" +
+      "ed\030\002 \001(\010\"\243\001\n\rAppendEntries\022\014\n\004term\030\001 \001(\003" +
+      "\022\021\n\tleader_id\030\002 \001(\003\022\026\n\016prev_log_index\030\003 " +
+      "\001(\003\022\025\n\rprev_log_term\030\004 \001(\003\022,\n\007entries\030\005 " +
+      "\003(\0132\033.ohmdb.replication.LogEntry\022\024\n\014comm" +
+      "it_index\030\006 \001(\003\"N\n\022AppendEntriesReply\022\014\n\004",
+      "term\030\001 \001(\004\022\017\n\007success\030\002 \001(\010\022\031\n\021my_last_l" +
+      "og_entry\030\003 \001(\003B\037\n\033ohmdb.replication.gene" +
+      "ratedH\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
         public com.google.protobuf.ExtensionRegistry assignDescriptors(
             com.google.protobuf.Descriptors.FileDescriptor root) {
           descriptor = root;
-          internal_static_ohmdb_replication_generated_RaftWireMessage_descriptor =
+          internal_static_ohmdb_replication_RaftWireMessage_descriptor =
             getDescriptor().getMessageTypes().get(0);
-          internal_static_ohmdb_replication_generated_RaftWireMessage_fieldAccessorTable = new
+          internal_static_ohmdb_replication_RaftWireMessage_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_replication_generated_RaftWireMessage_descriptor,
+              internal_static_ohmdb_replication_RaftWireMessage_descriptor,
               new java.lang.String[] { "MessageId", "SenderId", "ReceiverId", "QuorumId", "InReply", "RequestVote", "RequestVoteReply", "AppendEntries", "AppendEntriesReply", });
-          internal_static_ohmdb_replication_generated_LogEntry_descriptor =
+          internal_static_ohmdb_replication_LogEntry_descriptor =
             getDescriptor().getMessageTypes().get(1);
-          internal_static_ohmdb_replication_generated_LogEntry_fieldAccessorTable = new
+          internal_static_ohmdb_replication_LogEntry_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_replication_generated_LogEntry_descriptor,
+              internal_static_ohmdb_replication_LogEntry_descriptor,
               new java.lang.String[] { "Term", "Index", "Data", });
-          internal_static_ohmdb_replication_generated_RequestVote_descriptor =
+          internal_static_ohmdb_replication_RequestVote_descriptor =
             getDescriptor().getMessageTypes().get(2);
-          internal_static_ohmdb_replication_generated_RequestVote_fieldAccessorTable = new
+          internal_static_ohmdb_replication_RequestVote_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_replication_generated_RequestVote_descriptor,
+              internal_static_ohmdb_replication_RequestVote_descriptor,
               new java.lang.String[] { "Term", "CandidateId", "LastLogIndex", "LastLogTerm", });
-          internal_static_ohmdb_replication_generated_RequestVoteReply_descriptor =
+          internal_static_ohmdb_replication_RequestVoteReply_descriptor =
             getDescriptor().getMessageTypes().get(3);
-          internal_static_ohmdb_replication_generated_RequestVoteReply_fieldAccessorTable = new
+          internal_static_ohmdb_replication_RequestVoteReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_replication_generated_RequestVoteReply_descriptor,
+              internal_static_ohmdb_replication_RequestVoteReply_descriptor,
               new java.lang.String[] { "Term", "VoteGranted", });
-          internal_static_ohmdb_replication_generated_AppendEntries_descriptor =
+          internal_static_ohmdb_replication_AppendEntries_descriptor =
             getDescriptor().getMessageTypes().get(4);
-          internal_static_ohmdb_replication_generated_AppendEntries_fieldAccessorTable = new
+          internal_static_ohmdb_replication_AppendEntries_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_replication_generated_AppendEntries_descriptor,
+              internal_static_ohmdb_replication_AppendEntries_descriptor,
               new java.lang.String[] { "Term", "LeaderId", "PrevLogIndex", "PrevLogTerm", "Entries", "CommitIndex", });
-          internal_static_ohmdb_replication_generated_AppendEntriesReply_descriptor =
+          internal_static_ohmdb_replication_AppendEntriesReply_descriptor =
             getDescriptor().getMessageTypes().get(5);
-          internal_static_ohmdb_replication_generated_AppendEntriesReply_fieldAccessorTable = new
+          internal_static_ohmdb_replication_AppendEntriesReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_replication_generated_AppendEntriesReply_descriptor,
+              internal_static_ohmdb_replication_AppendEntriesReply_descriptor,
               new java.lang.String[] { "Term", "Success", "MyLastLogEntry", });
           return null;
         }

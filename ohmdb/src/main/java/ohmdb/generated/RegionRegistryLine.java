@@ -80,7 +80,7 @@ public final class RegionRegistryLine {
     long getPeers(int index);
   }
   /**
-   * Protobuf type {@code RegistryLine}
+   * Protobuf type {@code ohmdb.log.RegistryLine}
    */
   public static final class RegistryLine extends
       com.google.protobuf.GeneratedMessage
@@ -199,12 +199,12 @@ public final class RegionRegistryLine {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.generated.RegionRegistryLine.internal_static_RegistryLine_descriptor;
+      return ohmdb.generated.RegionRegistryLine.internal_static_ohmdb_log_RegistryLine_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.generated.RegionRegistryLine.internal_static_RegistryLine_fieldAccessorTable
+      return ohmdb.generated.RegionRegistryLine.internal_static_ohmdb_log_RegistryLine_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.generated.RegionRegistryLine.RegistryLine.class, ohmdb.generated.RegionRegistryLine.RegistryLine.Builder.class);
     }
@@ -588,19 +588,19 @@ public final class RegionRegistryLine {
       return builder;
     }
     /**
-     * Protobuf type {@code RegistryLine}
+     * Protobuf type {@code ohmdb.log.RegistryLine}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.generated.RegionRegistryLine.RegistryLineOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.generated.RegionRegistryLine.internal_static_RegistryLine_descriptor;
+        return ohmdb.generated.RegionRegistryLine.internal_static_ohmdb_log_RegistryLine_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.generated.RegionRegistryLine.internal_static_RegistryLine_fieldAccessorTable
+        return ohmdb.generated.RegionRegistryLine.internal_static_ohmdb_log_RegistryLine_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.generated.RegionRegistryLine.RegistryLine.class, ohmdb.generated.RegionRegistryLine.RegistryLine.Builder.class);
       }
@@ -646,7 +646,7 @@ public final class RegionRegistryLine {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.generated.RegionRegistryLine.internal_static_RegistryLine_descriptor;
+        return ohmdb.generated.RegionRegistryLine.internal_static_ohmdb_log_RegistryLine_descriptor;
       }
 
       public ohmdb.generated.RegionRegistryLine.RegistryLine getDefaultInstanceForType() {
@@ -1061,7 +1061,7 @@ public final class RegionRegistryLine {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:RegistryLine)
+      // @@protoc_insertion_point(builder_scope:ohmdb.log.RegistryLine)
     }
 
     static {
@@ -1069,14 +1069,14 @@ public final class RegionRegistryLine {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:RegistryLine)
+    // @@protoc_insertion_point(class_scope:ohmdb.log.RegistryLine)
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_RegistryLine_descriptor;
+    internal_static_ohmdb_log_RegistryLine_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_RegistryLine_fieldAccessorTable;
+      internal_static_ohmdb_log_RegistryLine_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -1086,22 +1086,22 @@ public final class RegionRegistryLine {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\030RegionRegistryLine.proto\"p\n\014RegistryLi" +
-      "ne\022\021\n\ttableName\030\001 \002(\014\022\020\n\010startKey\030\002 \002(\014\022" +
-      "\016\n\006endKey\030\003 \002(\014\022\020\n\010regionId\030\004 \002(\004\022\n\n\002cf\030" +
-      "\005 \003(\014\022\r\n\005peers\030\006 \003(\004B-\n\017ohmdb.generatedB" +
-      "\022RegionRegistryLineH\001\210\001\001\240\001\001"
+      "\n\030RegionRegistryLine.proto\022\tohmdb.log\"p\n" +
+      "\014RegistryLine\022\021\n\ttableName\030\001 \002(\014\022\020\n\010star" +
+      "tKey\030\002 \002(\014\022\016\n\006endKey\030\003 \002(\014\022\020\n\010regionId\030\004" +
+      " \002(\004\022\n\n\002cf\030\005 \003(\014\022\r\n\005peers\030\006 \003(\004B-\n\017ohmdb" +
+      ".generatedB\022RegionRegistryLineH\001\210\001\001\240\001\001"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
         public com.google.protobuf.ExtensionRegistry assignDescriptors(
             com.google.protobuf.Descriptors.FileDescriptor root) {
           descriptor = root;
-          internal_static_RegistryLine_descriptor =
+          internal_static_ohmdb_log_RegistryLine_descriptor =
             getDescriptor().getMessageTypes().get(0);
-          internal_static_RegistryLine_fieldAccessorTable = new
+          internal_static_ohmdb_log_RegistryLine_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_RegistryLine_descriptor,
+              internal_static_ohmdb_log_RegistryLine_descriptor,
               new java.lang.String[] { "TableName", "StartKey", "EndKey", "RegionId", "Cf", "Peers", });
           return null;
         }

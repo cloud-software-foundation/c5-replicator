@@ -9,7 +9,7 @@ public final class ControlMessages {
       com.google.protobuf.ExtensionRegistry registry) {
   }
   /**
-   * Protobuf enum {@code ohmdb.messages.generated.ModuleType}
+   * Protobuf enum {@code ohmdb.messages.ModuleType}
    */
   public enum ModuleType
       implements com.google.protobuf.ProtocolMessageEnum {
@@ -171,19 +171,19 @@ public final class ControlMessages {
       this.value = value;
     }
 
-    // @@protoc_insertion_point(enum_scope:ohmdb.messages.generated.ModuleType)
+    // @@protoc_insertion_point(enum_scope:ohmdb.messages.ModuleType)
   }
 
   public interface StartModuleOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .ohmdb.messages.generated.ModuleType module = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     boolean hasModule();
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     ohmdb.messages.generated.ControlMessages.ModuleType getModule();
 
@@ -213,7 +213,7 @@ public final class ControlMessages {
         getModuleArgvBytes();
   }
   /**
-   * Protobuf type {@code ohmdb.messages.generated.StartModule}
+   * Protobuf type {@code ohmdb.messages.StartModule}
    */
   public static final class StartModule extends
       com.google.protobuf.GeneratedMessage
@@ -298,12 +298,12 @@ public final class ControlMessages {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StartModule_descriptor;
+      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StartModule_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StartModule_fieldAccessorTable
+      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StartModule_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.messages.generated.ControlMessages.StartModule.class, ohmdb.messages.generated.ControlMessages.StartModule.Builder.class);
     }
@@ -324,17 +324,17 @@ public final class ControlMessages {
     }
 
     private int bitField0_;
-    // optional .ohmdb.messages.generated.ModuleType module = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     public static final int MODULE_FIELD_NUMBER = 1;
     private ohmdb.messages.generated.ControlMessages.ModuleType module_;
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     public boolean hasModule() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     public ohmdb.messages.generated.ControlMessages.ModuleType getModule() {
       return module_;
@@ -525,19 +525,19 @@ public final class ControlMessages {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.messages.generated.StartModule}
+     * Protobuf type {@code ohmdb.messages.StartModule}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.messages.generated.ControlMessages.StartModuleOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StartModule_descriptor;
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StartModule_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StartModule_fieldAccessorTable
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StartModule_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.messages.generated.ControlMessages.StartModule.class, ohmdb.messages.generated.ControlMessages.StartModule.Builder.class);
       }
@@ -577,7 +577,7 @@ public final class ControlMessages {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StartModule_descriptor;
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StartModule_descriptor;
       }
 
       public ohmdb.messages.generated.ControlMessages.StartModule getDefaultInstanceForType() {
@@ -662,22 +662,22 @@ public final class ControlMessages {
       }
       private int bitField0_;
 
-      // optional .ohmdb.messages.generated.ModuleType module = 1;
+      // optional .ohmdb.messages.ModuleType module = 1;
       private ohmdb.messages.generated.ControlMessages.ModuleType module_ = ohmdb.messages.generated.ControlMessages.ModuleType.Discovery;
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public boolean hasModule() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public ohmdb.messages.generated.ControlMessages.ModuleType getModule() {
         return module_;
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public Builder setModule(ohmdb.messages.generated.ControlMessages.ModuleType value) {
         if (value == null) {
@@ -689,7 +689,7 @@ public final class ControlMessages {
         return this;
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public Builder clearModule() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -805,7 +805,7 @@ public final class ControlMessages {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.messages.generated.StartModule)
+      // @@protoc_insertion_point(builder_scope:ohmdb.messages.StartModule)
     }
 
     static {
@@ -813,19 +813,19 @@ public final class ControlMessages {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.messages.generated.StartModule)
+    // @@protoc_insertion_point(class_scope:ohmdb.messages.StartModule)
   }
 
   public interface StopModuleOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .ohmdb.messages.generated.ModuleType module = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     boolean hasModule();
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     ohmdb.messages.generated.ControlMessages.ModuleType getModule();
 
@@ -863,7 +863,7 @@ public final class ControlMessages {
         getStopReasonBytes();
   }
   /**
-   * Protobuf type {@code ohmdb.messages.generated.StopModule}
+   * Protobuf type {@code ohmdb.messages.StopModule}
    */
   public static final class StopModule extends
       com.google.protobuf.GeneratedMessage
@@ -948,12 +948,12 @@ public final class ControlMessages {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StopModule_descriptor;
+      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StopModule_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StopModule_fieldAccessorTable
+      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StopModule_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.messages.generated.ControlMessages.StopModule.class, ohmdb.messages.generated.ControlMessages.StopModule.Builder.class);
     }
@@ -974,17 +974,17 @@ public final class ControlMessages {
     }
 
     private int bitField0_;
-    // optional .ohmdb.messages.generated.ModuleType module = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     public static final int MODULE_FIELD_NUMBER = 1;
     private ohmdb.messages.generated.ControlMessages.ModuleType module_;
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     public boolean hasModule() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     public ohmdb.messages.generated.ControlMessages.ModuleType getModule() {
       return module_;
@@ -1183,19 +1183,19 @@ public final class ControlMessages {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.messages.generated.StopModule}
+     * Protobuf type {@code ohmdb.messages.StopModule}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.messages.generated.ControlMessages.StopModuleOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StopModule_descriptor;
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StopModule_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StopModule_fieldAccessorTable
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StopModule_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.messages.generated.ControlMessages.StopModule.class, ohmdb.messages.generated.ControlMessages.StopModule.Builder.class);
       }
@@ -1235,7 +1235,7 @@ public final class ControlMessages {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_StopModule_descriptor;
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_StopModule_descriptor;
       }
 
       public ohmdb.messages.generated.ControlMessages.StopModule getDefaultInstanceForType() {
@@ -1320,22 +1320,22 @@ public final class ControlMessages {
       }
       private int bitField0_;
 
-      // optional .ohmdb.messages.generated.ModuleType module = 1;
+      // optional .ohmdb.messages.ModuleType module = 1;
       private ohmdb.messages.generated.ControlMessages.ModuleType module_ = ohmdb.messages.generated.ControlMessages.ModuleType.Discovery;
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public boolean hasModule() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public ohmdb.messages.generated.ControlMessages.ModuleType getModule() {
         return module_;
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public Builder setModule(ohmdb.messages.generated.ControlMessages.ModuleType value) {
         if (value == null) {
@@ -1347,7 +1347,7 @@ public final class ControlMessages {
         return this;
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public Builder clearModule() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -1479,7 +1479,7 @@ public final class ControlMessages {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.messages.generated.StopModule)
+      // @@protoc_insertion_point(builder_scope:ohmdb.messages.StopModule)
     }
 
     static {
@@ -1487,19 +1487,19 @@ public final class ControlMessages {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.messages.generated.StopModule)
+    // @@protoc_insertion_point(class_scope:ohmdb.messages.StopModule)
   }
 
   public interface ModuleSubCommandOrBuilder
       extends com.google.protobuf.MessageOrBuilder {
 
-    // optional .ohmdb.messages.generated.ModuleType module = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     boolean hasModule();
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     ohmdb.messages.generated.ControlMessages.ModuleType getModule();
 
@@ -1519,7 +1519,7 @@ public final class ControlMessages {
         getSubCommandBytes();
   }
   /**
-   * Protobuf type {@code ohmdb.messages.generated.ModuleSubCommand}
+   * Protobuf type {@code ohmdb.messages.ModuleSubCommand}
    */
   public static final class ModuleSubCommand extends
       com.google.protobuf.GeneratedMessage
@@ -1599,12 +1599,12 @@ public final class ControlMessages {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_ModuleSubCommand_descriptor;
+      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_ModuleSubCommand_fieldAccessorTable
+      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.messages.generated.ControlMessages.ModuleSubCommand.class, ohmdb.messages.generated.ControlMessages.ModuleSubCommand.Builder.class);
     }
@@ -1625,17 +1625,17 @@ public final class ControlMessages {
     }
 
     private int bitField0_;
-    // optional .ohmdb.messages.generated.ModuleType module = 1;
+    // optional .ohmdb.messages.ModuleType module = 1;
     public static final int MODULE_FIELD_NUMBER = 1;
     private ohmdb.messages.generated.ControlMessages.ModuleType module_;
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     public boolean hasModule() {
       return ((bitField0_ & 0x00000001) == 0x00000001);
     }
     /**
-     * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+     * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
      */
     public ohmdb.messages.generated.ControlMessages.ModuleType getModule() {
       return module_;
@@ -1802,19 +1802,19 @@ public final class ControlMessages {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.messages.generated.ModuleSubCommand}
+     * Protobuf type {@code ohmdb.messages.ModuleSubCommand}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.messages.generated.ControlMessages.ModuleSubCommandOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_ModuleSubCommand_descriptor;
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_ModuleSubCommand_fieldAccessorTable
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.messages.generated.ControlMessages.ModuleSubCommand.class, ohmdb.messages.generated.ControlMessages.ModuleSubCommand.Builder.class);
       }
@@ -1852,7 +1852,7 @@ public final class ControlMessages {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_ModuleSubCommand_descriptor;
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_ModuleSubCommand_descriptor;
       }
 
       public ohmdb.messages.generated.ControlMessages.ModuleSubCommand getDefaultInstanceForType() {
@@ -1930,22 +1930,22 @@ public final class ControlMessages {
       }
       private int bitField0_;
 
-      // optional .ohmdb.messages.generated.ModuleType module = 1;
+      // optional .ohmdb.messages.ModuleType module = 1;
       private ohmdb.messages.generated.ControlMessages.ModuleType module_ = ohmdb.messages.generated.ControlMessages.ModuleType.Discovery;
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public boolean hasModule() {
         return ((bitField0_ & 0x00000001) == 0x00000001);
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public ohmdb.messages.generated.ControlMessages.ModuleType getModule() {
         return module_;
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public Builder setModule(ohmdb.messages.generated.ControlMessages.ModuleType value) {
         if (value == null) {
@@ -1957,7 +1957,7 @@ public final class ControlMessages {
         return this;
       }
       /**
-       * <code>optional .ohmdb.messages.generated.ModuleType module = 1;</code>
+       * <code>optional .ohmdb.messages.ModuleType module = 1;</code>
        */
       public Builder clearModule() {
         bitField0_ = (bitField0_ & ~0x00000001);
@@ -2040,7 +2040,7 @@ public final class ControlMessages {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.messages.generated.ModuleSubCommand)
+      // @@protoc_insertion_point(builder_scope:ohmdb.messages.ModuleSubCommand)
     }
 
     static {
@@ -2048,7 +2048,7 @@ public final class ControlMessages {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.messages.generated.ModuleSubCommand)
+    // @@protoc_insertion_point(class_scope:ohmdb.messages.ModuleSubCommand)
   }
 
   public interface CommandReplyOrBuilder
@@ -2095,7 +2095,7 @@ public final class ControlMessages {
         getCommandStderrBytes();
   }
   /**
-   * Protobuf type {@code ohmdb.messages.generated.CommandReply}
+   * Protobuf type {@code ohmdb.messages.CommandReply}
    */
   public static final class CommandReply extends
       com.google.protobuf.GeneratedMessage
@@ -2174,12 +2174,12 @@ public final class ControlMessages {
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_CommandReply_descriptor;
+      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_CommandReply_descriptor;
     }
 
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_CommandReply_fieldAccessorTable
+      return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_CommandReply_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               ohmdb.messages.generated.ControlMessages.CommandReply.class, ohmdb.messages.generated.ControlMessages.CommandReply.Builder.class);
     }
@@ -2428,19 +2428,19 @@ public final class ControlMessages {
       return builder;
     }
     /**
-     * Protobuf type {@code ohmdb.messages.generated.CommandReply}
+     * Protobuf type {@code ohmdb.messages.CommandReply}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
        implements ohmdb.messages.generated.ControlMessages.CommandReplyOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_CommandReply_descriptor;
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_CommandReply_descriptor;
       }
 
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_CommandReply_fieldAccessorTable
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_CommandReply_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 ohmdb.messages.generated.ControlMessages.CommandReply.class, ohmdb.messages.generated.ControlMessages.CommandReply.Builder.class);
       }
@@ -2480,7 +2480,7 @@ public final class ControlMessages {
 
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_generated_CommandReply_descriptor;
+        return ohmdb.messages.generated.ControlMessages.internal_static_ohmdb_messages_CommandReply_descriptor;
       }
 
       public ohmdb.messages.generated.ControlMessages.CommandReply getDefaultInstanceForType() {
@@ -2748,7 +2748,7 @@ public final class ControlMessages {
         return this;
       }
 
-      // @@protoc_insertion_point(builder_scope:ohmdb.messages.generated.CommandReply)
+      // @@protoc_insertion_point(builder_scope:ohmdb.messages.CommandReply)
     }
 
     static {
@@ -2756,29 +2756,29 @@ public final class ControlMessages {
       defaultInstance.initFields();
     }
 
-    // @@protoc_insertion_point(class_scope:ohmdb.messages.generated.CommandReply)
+    // @@protoc_insertion_point(class_scope:ohmdb.messages.CommandReply)
   }
 
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_messages_generated_StartModule_descriptor;
+    internal_static_ohmdb_messages_StartModule_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_messages_generated_StartModule_fieldAccessorTable;
+      internal_static_ohmdb_messages_StartModule_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_messages_generated_StopModule_descriptor;
+    internal_static_ohmdb_messages_StopModule_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_messages_generated_StopModule_fieldAccessorTable;
+      internal_static_ohmdb_messages_StopModule_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_messages_generated_ModuleSubCommand_descriptor;
+    internal_static_ohmdb_messages_ModuleSubCommand_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_messages_generated_ModuleSubCommand_fieldAccessorTable;
+      internal_static_ohmdb_messages_ModuleSubCommand_fieldAccessorTable;
   private static com.google.protobuf.Descriptors.Descriptor
-    internal_static_ohmdb_messages_generated_CommandReply_descriptor;
+    internal_static_ohmdb_messages_CommandReply_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_ohmdb_messages_generated_CommandReply_fieldAccessorTable;
+      internal_static_ohmdb_messages_CommandReply_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -2788,17 +2788,16 @@ public final class ControlMessages {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\026control_messages.proto\022\030ohmdb.messages" +
-      ".generated\"m\n\013StartModule\0224\n\006module\030\001 \001(" +
-      "\0162$.ohmdb.messages.generated.ModuleType\022" +
-      "\023\n\013module_port\030\002 \001(\005\022\023\n\013module_argv\030\003 \001(" +
-      "\t\"j\n\nStopModule\0224\n\006module\030\001 \001(\0162$.ohmdb." +
-      "messages.generated.ModuleType\022\021\n\thard_st" +
-      "op\030\002 \001(\010\022\023\n\013stop_reason\030\003 \001(\t\"]\n\020ModuleS" +
-      "ubCommand\0224\n\006module\030\001 \001(\0162$.ohmdb.messag" +
-      "es.generated.ModuleType\022\023\n\013sub_command\030\002" +
-      " \001(\t\"W\n\014CommandReply\022\027\n\017command_success\030",
-      "\001 \001(\010\022\026\n\016command_stdout\030\002 \001(\t\022\026\n\016command" +
+      "\n\026control_messages.proto\022\016ohmdb.messages" +
+      "\"c\n\013StartModule\022*\n\006module\030\001 \001(\0162\032.ohmdb." +
+      "messages.ModuleType\022\023\n\013module_port\030\002 \001(\005" +
+      "\022\023\n\013module_argv\030\003 \001(\t\"`\n\nStopModule\022*\n\006m" +
+      "odule\030\001 \001(\0162\032.ohmdb.messages.ModuleType\022" +
+      "\021\n\thard_stop\030\002 \001(\010\022\023\n\013stop_reason\030\003 \001(\t\"" +
+      "S\n\020ModuleSubCommand\022*\n\006module\030\001 \001(\0162\032.oh" +
+      "mdb.messages.ModuleType\022\023\n\013sub_command\030\002" +
+      " \001(\t\"W\n\014CommandReply\022\027\n\017command_success\030" +
+      "\001 \001(\010\022\026\n\016command_stdout\030\002 \001(\t\022\026\n\016command",
       "_stderr\030\003 \001(\t*c\n\nModuleType\022\r\n\tDiscovery" +
       "\020\001\022\017\n\013Replication\020\002\022\n\n\006Tablet\020\003\022\020\n\014Regio" +
       "nServer\020\004\022\016\n\nManagement\020\005\022\007\n\003Log\020\006B\034\n\030oh" +
@@ -2809,29 +2808,29 @@ public final class ControlMessages {
         public com.google.protobuf.ExtensionRegistry assignDescriptors(
             com.google.protobuf.Descriptors.FileDescriptor root) {
           descriptor = root;
-          internal_static_ohmdb_messages_generated_StartModule_descriptor =
+          internal_static_ohmdb_messages_StartModule_descriptor =
             getDescriptor().getMessageTypes().get(0);
-          internal_static_ohmdb_messages_generated_StartModule_fieldAccessorTable = new
+          internal_static_ohmdb_messages_StartModule_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_messages_generated_StartModule_descriptor,
+              internal_static_ohmdb_messages_StartModule_descriptor,
               new java.lang.String[] { "Module", "ModulePort", "ModuleArgv", });
-          internal_static_ohmdb_messages_generated_StopModule_descriptor =
+          internal_static_ohmdb_messages_StopModule_descriptor =
             getDescriptor().getMessageTypes().get(1);
-          internal_static_ohmdb_messages_generated_StopModule_fieldAccessorTable = new
+          internal_static_ohmdb_messages_StopModule_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_messages_generated_StopModule_descriptor,
+              internal_static_ohmdb_messages_StopModule_descriptor,
               new java.lang.String[] { "Module", "HardStop", "StopReason", });
-          internal_static_ohmdb_messages_generated_ModuleSubCommand_descriptor =
+          internal_static_ohmdb_messages_ModuleSubCommand_descriptor =
             getDescriptor().getMessageTypes().get(2);
-          internal_static_ohmdb_messages_generated_ModuleSubCommand_fieldAccessorTable = new
+          internal_static_ohmdb_messages_ModuleSubCommand_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_messages_generated_ModuleSubCommand_descriptor,
+              internal_static_ohmdb_messages_ModuleSubCommand_descriptor,
               new java.lang.String[] { "Module", "SubCommand", });
-          internal_static_ohmdb_messages_generated_CommandReply_descriptor =
+          internal_static_ohmdb_messages_CommandReply_descriptor =
             getDescriptor().getMessageTypes().get(3);
-          internal_static_ohmdb_messages_generated_CommandReply_fieldAccessorTable = new
+          internal_static_ohmdb_messages_CommandReply_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-              internal_static_ohmdb_messages_generated_CommandReply_descriptor,
+              internal_static_ohmdb_messages_CommandReply_descriptor,
               new java.lang.String[] { "CommandSuccess", "CommandStdout", "CommandStderr", });
           return null;
         }
