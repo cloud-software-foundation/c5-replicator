@@ -3,14 +3,14 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>ohmdb</groupId>
+    <groupId>c5db</groupId>
     <artifactId>parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
-        <module>ohmdb</module>
-        <module>ohmdb-client</module>
+        <module>c5db</module>
+        <module>c5db-client</module>
         <module>hbase-common</module>
         <module>hbase-hadoop-compat</module>
         <module>hbase-protocol</module>
@@ -282,51 +282,51 @@
                 <version>${netty.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
-                <artifactId>ohmdb-client</artifactId>
+                <groupId>c5db</groupId>
+                <artifactId>c5db-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>hbase-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>hbase-common</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>hbase-common</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>hbase-protocol</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>hbase-hadoop-compat</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>hbase-hadoop-compat</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>hbase-client</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>hbase-prefix-tree</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -403,12 +403,12 @@
                 <version>${mockito-all.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>${compat.module}</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>ohmdb</groupId>
+                <groupId>c5db</groupId>
                 <artifactId>${compat.module}</artifactId>
                 <version>${project.version}</version>
                 <type>test-jar</type>

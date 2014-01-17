@@ -19,7 +19,6 @@ package ohmdb.util;
 import com.dyuproject.protostuff.LinkedBuffer;
 import com.dyuproject.protostuff.ProtostuffIOUtil;
 import com.google.protobuf.CodedOutputStream;
-import net.sourceforge.sizeof.SizeOf;
 import ohmdb.discovery.generated.Availability;
 import ohmdb.discovery.generated.Beacon;
 import ohmdb.discovery.generated.ModuleDescriptor;
@@ -41,8 +40,8 @@ public class SizeofTest {
 
     @BeforeClass
     public static void setup() {
-        SizeOf.skipStaticField(true);
-        SizeOf.skipFlyweightObject(true);
+//        SizeOf.skipStaticField(true);
+//        SizeOf.skipFlyweightObject(true);
         //SizeOf.turnOnDebug();
     }
 
@@ -175,7 +174,10 @@ public class SizeofTest {
     }
 
     private void printsizes(String thing, Object obj) {
-        System.out.println("Sizeof '" + thing + "': " +
-        SizeOf.sizeOf(obj) + " deep sizeof: " + SizeOf.deepSizeOf(obj));
+        System.out.println("Size of '"  + thing + "' not available (fix src)");
     }
+//    private void printsizes(String thing, Object obj) {
+//        System.out.println("Sizeof '" + thing + "': " +
+//        SizeOf.sizeOf(obj) + " deep sizeof: " + SizeOf.deepSizeOf(obj));
+//    }
 }

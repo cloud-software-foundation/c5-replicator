@@ -20,11 +20,9 @@ import com.dyuproject.protostuff.LinkedBuffer;
 import com.dyuproject.protostuff.ProtostuffIOUtil;
 import com.dyuproject.protostuff.Schema;
 import com.dyuproject.protostuff.runtime.RuntimeSchema;
-import net.sourceforge.sizeof.SizeOf;
 import ohmdb.generated.OLogData;
 import ohmdb.generated.OLogMetaData;
 import ohmdb.generated.QuorumMapping;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -35,13 +33,6 @@ import java.util.List;
  * Random experiments in protostuff serialization.
  */
 public class ProtostuffTest {
-    @BeforeClass
-    public static void setup() {
-//        SizeOf.skipStaticField(true);
-//        SizeOf.skipFlyweightObject(true);
-        //SizeOf.turnOnDebug();
-    }
-
     @Test
     public void testThing() throws Exception {
 
@@ -81,10 +72,5 @@ public class ProtostuffTest {
         }
     }
 
-
-    private void printsizes(String thing, Object obj) {
-        System.out.println("Sizeof '" + thing + "': " +
-                SizeOf.sizeOf(obj) + " deep sizeof: " + SizeOf.deepSizeOf(obj));
-    }
 
 }
