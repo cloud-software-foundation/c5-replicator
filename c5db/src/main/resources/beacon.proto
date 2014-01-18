@@ -17,9 +17,9 @@
  *  This file incorporates work covered by the following copyright and
  *  permission notice:
  */
-package ohmdb.election;
+package c5db.election;
 
-option java_package = "ohmdb.discovery.generated";
+option java_package = "c5db.discovery.generated";
 option optimize_for = SPEED;
 
 import "control_messages.proto";
@@ -41,6 +41,6 @@ message Availability {
 
 // Module name to module port mapping.
 message ModuleDescriptor {
-    optional ohmdb.messages.ModuleType module = 1;
+    optional c5db.messages.ModuleType module = 1;
     optional uint32 module_port = 2;
 }

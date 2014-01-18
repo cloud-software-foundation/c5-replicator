@@ -17,9 +17,9 @@
  *  This file incorporates work covered by the following copyright and
  *  permission notice:
  */
-package ohmdb.messages;
+package c5db.messages;
 
-option java_package = "ohmdb.messages.generated";
+option java_package = "c5db.messages.generated";
 option optimize_for = SPEED;
 
 enum ModuleType {

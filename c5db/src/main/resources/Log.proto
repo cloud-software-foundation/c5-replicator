@@ -17,12 +17,9 @@
  *  This file incorporates work covered by the following copyright and
  *  permission notice:
  */
-package ohmdb.log;
+package c5db.log;
 
-// The models are hand-built in c5db, and this is the package they are in.
-option java_model_package = "ohmdb.log.";
-
-option java_package = "ohmdb.generated";
+option java_package = "c5db.generated";
 option java_outer_classname = "Log";
 option java_generic_services = true;
 option java_generate_equals_and_hash = true;
