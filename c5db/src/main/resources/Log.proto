@@ -80,8 +80,7 @@ message OLogData {
     // Inline quorum tag mapping, that will apply to this entry.
     optional QuorumMapping quorum_tag_mapping = 2;
 
-    @ByteBuffer
-    repeated bytes kvs = 3;
+    repeated bytes kvs = 3 [ByteBuffer = true];
 }
 
 message QuorumMapping {
@@ -110,6 +109,5 @@ message OLogEntry {
 
     optional int64 term = 4;
 
-    @ByteBuffer
-    optional bytes value = 5;
+    optional bytes value = 5 [ByteBuffer = true];
 }
