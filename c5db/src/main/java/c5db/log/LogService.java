@@ -17,7 +17,7 @@
 package c5db.log;
 
 import c5db.interfaces.LogModule;
-import c5db.interfaces.OhmServer;
+import c5db.interfaces.C5Server;
 import c5db.messages.generated.ControlMessages;
 import com.google.common.util.concurrent.AbstractService;
 
@@ -29,11 +29,11 @@ import java.util.Map;
  * The Log module.
  */
 public class LogService extends AbstractService implements LogModule {
-    private final OhmServer server;
+    private final C5Server server;
     private OLog olog;
     private final Map<String, Mooring> moorings = new HashMap<>();
 
-    public LogService(OhmServer server) {
+    public LogService(C5Server server) {
         this.server = server;
     }
 
@@ -96,12 +96,12 @@ public class LogService extends AbstractService implements LogModule {
 //        for (HRegion region : OnlineRegions.INSTANCE.regions()) {
 //          region.flushcache();
 //          region.getLog().rollWriter();
-//          if (i % OhmConstants.AMOUNT_OF_FLUSH_PER_COMPACT == 0) {
+//          if (i % C5Constants.AMOUNT_OF_FLUSH_PER_COMPACT == 0) {
 //            region.compactStores();
 //          }
-//          if (i % OhmConstants.AMOUNT_OF_FLUSH_PER_OLD_LOG_CLEAR == 0) {
+//          if (i % C5Constants.AMOUNT_OF_FLUSH_PER_OLD_LOG_CLEAR == 0) {
 //            olog.clearOldLogs(System.currentTimeMillis()
-//                    - OhmConstants.OLD_LOG_CLEAR_AGE);
+//                    - C5Constants.OLD_LOG_CLEAR_AGE);
 //          }
 //        }
       }

@@ -24,11 +24,11 @@ import org.jetlang.channels.Channel;
 import java.util.List;
 
 /**
- * The replication module/module.  The API to other modules internal to ohmdb.
+ * The replication module/module.  The API to other modules internal to c5db.
  */
 @DependsOn({DiscoveryModule.class, LogModule.class})
 @ModuleTypeBinding(ControlMessages.ModuleType.Replication)
-public interface ReplicationModule extends OhmModule {
+public interface ReplicationModule extends C5Module {
     ListenableFuture<Replicator> createReplicator(String quorumId,
                                                   List<Long> peers);
 

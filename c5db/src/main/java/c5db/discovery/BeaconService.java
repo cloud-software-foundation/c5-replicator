@@ -20,7 +20,7 @@ import c5db.codec.UdpProtobufDecoder;
 import c5db.codec.UdpProtobufEncoder;
 import c5db.discovery.generated.Beacon;
 import c5db.interfaces.DiscoveryModule;
-import c5db.interfaces.OhmServer;
+import c5db.interfaces.C5Server;
 import c5db.util.FiberOnly;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractService;
@@ -114,7 +114,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     }
 
     // For main system modules/pubsub stuff.
-    private final OhmServer ohmServer;
+    private final C5Server c5Server;
     private final long nodeId;
     private final int discoveryPort;
     private final NioEventLoopGroup eventLoop;
@@ -152,13 +152,13 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                          final Fiber fiber,
                          NioEventLoopGroup eventLoop,
                          Map<ModuleType, Integer> modules,
-                         OhmServer theOhmServer
+                         C5Server theC5Server
                          ) throws InterruptedException, SocketException {
         this.discoveryPort = discoveryPort;
         this.nodeId = nodeId;
         this.fiber = fiber;
         moduleInfo.putAll(modules);
-        this.ohmServer = theOhmServer;
+        this.c5Server = theC5Server;
         this.eventLoop = eventLoop;
     }
 
@@ -229,7 +229,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     }
 
     @FiberOnly
-    private void serviceChange(OhmServer.ModuleStateChange message) {
+    private void serviceChange(C5Server.ModuleStateChange message) {
         if (message.state == State.RUNNING) {
             LOG.debug("BeaconService adding running module {} on port {}", message.module.getModuleType(), message.module.port());
             moduleInfo.put(message.module.getModuleType(), message.module.port());
@@ -299,9 +299,9 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                         }
                     }, 2, 10, TimeUnit.SECONDS);
 
-                    ohmServer.getModuleStateChangeChannel().subscribe(fiber, new Callback<OhmServer.ModuleStateChange>() {
+                    c5Server.getModuleStateChangeChannel().subscribe(fiber, new Callback<C5Server.ModuleStateChange>() {
                         @Override
-                        public void onMessage(OhmServer.ModuleStateChange message) {
+                        public void onMessage(C5Server.ModuleStateChange message) {
                             serviceChange(message);
                         }
                     });

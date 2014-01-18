@@ -24,7 +24,7 @@ import c5db.messages.generated.ControlMessages;
  *
  */
 @ModuleTypeBinding(ControlMessages.ModuleType.Log)
-public interface LogModule extends OhmModule {
+public interface LogModule extends C5Module {
     public OLog getOLogInstance();
 
     public Mooring getMooring(String quorumId);

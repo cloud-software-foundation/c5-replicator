@@ -33,12 +33,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OhmServerHandler extends
+public class C5ServerHandler extends
         SimpleChannelInboundHandler<ClientProtos.Call> {
     ScannerManager scanManager = ScannerManager.INSTANCE;
 
     private final RegionServerService regionServerService;
-    public OhmServerHandler(RegionServerService myService) {
+    public C5ServerHandler(RegionServerService myService) {
         this.regionServerService = myService;
     }
 

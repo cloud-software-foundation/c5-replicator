@@ -29,7 +29,7 @@ import java.util.List;
  * The internal/cross module interface to the discovery module.
  */
 @ModuleTypeBinding(ControlMessages.ModuleType.Discovery)
-public interface DiscoveryModule extends OhmModule {
+public interface DiscoveryModule extends C5Module {
     RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo();
 
     ListenableFuture<ImmutableMap<Long, NodeInfo>> getState();

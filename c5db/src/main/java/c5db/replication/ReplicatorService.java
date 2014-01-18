@@ -16,10 +16,10 @@
  */
 package c5db.replication;
 
+import c5db.interfaces.C5Module;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
-import c5db.interfaces.OhmModule;
-import c5db.interfaces.OhmServer;
+import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
 import c5db.log.Mooring;
 import c5db.replication.rpc.RpcReply;
@@ -81,7 +81,7 @@ import static c5db.replication.generated.Raft.RaftWireMessage;
 public class ReplicatorService extends AbstractService implements ReplicationModule {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorService.class);
 
-    /**************** OhmModule informational methods ************************************/
+    /**************** C5Module informational methods ************************************/
 
     @Override
     public ModuleType getModuleType() {
@@ -175,7 +175,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
 
     private final int port;
-    private final OhmServer server;
+    private final C5Server server;
     private final PoolFiberFactory fiberFactory;
     private final Fiber fiber;
     private final NioEventLoopGroup bossGroup;
@@ -205,7 +205,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     public ReplicatorService(final PoolFiberFactory fiberFactory,
                              NioEventLoopGroup bossGroup,
                              NioEventLoopGroup workerGroup,
-                             int port, OhmServer server) {
+                             int port, C5Server server) {
         this.fiberFactory = fiberFactory;
         this.bossGroup = bossGroup;
         this.workerGroup = workerGroup;
@@ -435,17 +435,17 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 // TODO this is a shitty way to do this, more refactoring is necessary.
                 LOG.warn("ReplicatorService now waiting for module dependency on Log & BeaconService");
 
-                ListenableFuture<OhmModule> logListen = server.getModule(ModuleType.Log);
+                ListenableFuture<C5Module> logListen = server.getModule(ModuleType.Log);
                 try {
                     logModule = (LogModule) logListen.get();
                 } catch (InterruptedException | ExecutionException e) {
                     notifyFailed(e);
                 }
 
-                ListenableFuture<OhmModule> f = server.getModule(ModuleType.Discovery);
-                Futures.addCallback(f, new FutureCallback<OhmModule>() {
+                ListenableFuture<C5Module> f = server.getModule(ModuleType.Discovery);
+                Futures.addCallback(f, new FutureCallback<C5Module>() {
                     @Override
-                    public void onSuccess(OhmModule result) {
+                    public void onSuccess(C5Module result) {
                         discoveryModule = (DiscoveryModule) result;
 
                         // finish init:

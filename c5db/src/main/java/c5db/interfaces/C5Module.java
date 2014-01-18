@@ -27,7 +27,7 @@ import com.google.common.util.concurrent.Service;
  * <p/>
  * TODO module dependencies so if you stop one module, you have to stop the dependencies.
  */
-public interface OhmModule extends Service {
+public interface C5Module extends Service {
 
     public ControlMessages.ModuleType getModuleType();
 
