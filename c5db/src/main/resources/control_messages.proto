@@ -39,7 +39,7 @@ enum ModuleType {
 
 message StartModule {
     optional ModuleType module = 1;
-    optional int32 module_port = 2;
+    optional int32 module_port = 2 [default=0];
     optional string module_argv = 3;
 }
 
@@ -56,7 +56,7 @@ message ModuleSubCommand {
 }
 
 message CommandReply {
-    optional bool command_success = 1;
+    optional bool command_success = 1 [default=false];
     optional string command_stdout = 2;
     optional string command_stderr = 3;
 }

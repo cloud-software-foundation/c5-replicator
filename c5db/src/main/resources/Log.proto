@@ -40,14 +40,14 @@ enum PhysicalEntryTypes {
 }
 
 message Entry {
-    repeated bytes key_values = 10;
+    repeated bytes key_values = 10 [ByteBuffer = true];
 
 
     optional string regionInfo = 1;
-    optional bytes key = 2;
-    optional bytes family = 3;
-    optional bytes column = 4;
-    optional bytes value = 5;
+    optional bytes key = 2 [ByteBuffer = true];
+    optional bytes family = 3 [ByteBuffer = true];
+    optional bytes column = 4 [ByteBuffer = true];
+    optional bytes value = 5 [ByteBuffer = true];
     optional uint64 ts = 6;
 }
 
