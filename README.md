@@ -1,7 +1,12 @@
-ohmdb
+c5
 ================
 
-You need HBase trunk, which currently installs as 0.97-SNAPSHOT.  Just run:
+You need our protostuff, just:
 
-$ cd hbase
-$ mvn -DskipTests install
+$ git clone <protostuff>
+$ mvn install
+
+Also java8, on Mac OSX:
+export JAVA_HOME=`/usr/libexec/java_home -v 1.8`
+
+adjust intellij, etc.
