@@ -16,13 +16,15 @@
  */
 package c5db.log;
 
+import c5db.generated.Log;
 import c5db.generated.OLogData;
 import c5db.generated.OLogMetaData;
 import c5db.generated.QuorumMapping;
+import com.dyuproject.protostuff.ByteBufferInput;
 import com.dyuproject.protostuff.LinkedBuffer;
+import com.dyuproject.protostuff.LowCopyProtostuffOutput;
 import com.dyuproject.protostuff.ProtostuffIOUtil;
-import com.dyuproject.protostuff.Schema;
-import com.dyuproject.protostuff.runtime.RuntimeSchema;
+import com.google.protobuf.ByteString;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -36,26 +38,49 @@ public class ProtostuffTest {
     @Test
     public void testThing() throws Exception {
 
-        List<ByteBuffer> kvs = new ArrayList<ByteBuffer>();
+        List<ByteBuffer> kvs = new ArrayList<>();
         kvs.add(ByteBuffer.wrap("foo".getBytes()));
         kvs.add(ByteBuffer.wrap("bar".getBytes()));
 
-        OLogData datum = new OLogData();
-        datum.setLogData(new OLogMetaData().setIndex(123).setQuorumTag(456).setTerm(789));
-        datum.setQuorumTagMapping(new QuorumMapping().setQuorumTag(1).setQuorumId("foo"));
-        datum.setKvsList(kvs);
+        OLogMetaData oLogMetaData = new OLogMetaData(11, 456, 99999);
+        QuorumMapping qm = new QuorumMapping(1, "foos");
+        OLogData datum = new OLogData(oLogMetaData, qm, kvs);
 
+        Log.OLogMetaData metaData = Log.OLogMetaData.newBuilder()
+                .setIndex(456)
+                .setQuorumTag(11)
+                .setTerm(99999)
+                .build();
+        Log.QuorumMapping qm2 = Log.QuorumMapping.newBuilder()
+                .setQuorumTag(1)
+                .setQuorumId("foo")
+                .build();
+        List<ByteString> kvs2 = new ArrayList<>();
+        kvs2.add(ByteString.copyFrom("foo".getBytes()));
+        kvs2.add(ByteString.copyFrom("bar".getBytes()));
+        Log.OLogData datum2 = Log.OLogData.newBuilder()
+                .setLogData(metaData)
+                .setQuorumTagMapping(qm2)
+                .addAllKvs(kvs2)
+                .build();
 
-        Schema<OLogData> schema = RuntimeSchema.getSchema(OLogData.class);
+        byte[] protobufOutput = datum2.toByteArray();
+
+        ByteBufferInput protoInput = new ByteBufferInput(
+                ByteBuffer.wrap(protobufOutput), false);
+        OLogData readDatum = new OLogData();
+        readDatum.mergeFrom(protoInput, readDatum);
+        System.out.println(readDatum.toString());
+
         LinkedBuffer buffer = LinkedBuffer.allocate(256);
         {
             long sum=0;
             int size=0;
 
-            for (int i = 0 ; i < 100;i++) {
+            for (int i = 0 ; i < 200;i++) {
                 long start = System.nanoTime();
 
-                size = ProtostuffIOUtil.writeTo(buffer, datum, schema);
+                size = ProtostuffIOUtil.writeTo(buffer, datum, datum);
 //                ProtobufIOUtil.writeTo(buffer, datum, schema);
 
                 long tim = System.nanoTime() - start;
@@ -68,8 +93,36 @@ public class ProtostuffTest {
             }
 
 
-            System.out.println("sum = " + sum + " avg: " + (sum / 99) + " siz: " + size);
+            System.out.println("sum = " + sum + " avg: " + (sum / 190) + " siz: " + size);
         }
+
+        {
+            long sum=0;
+            int size=0;
+
+            for (int i = 0 ; i < 200;i++) {
+                long start = System.nanoTime();
+
+                LowCopyProtostuffOutput lcpo = new LowCopyProtostuffOutput();
+                datum.writeTo(lcpo, datum);
+                size = (int) lcpo.buffer.size();
+//                ProtobufIOUtil.writeTo(buffer, datum, schema);
+
+                long tim = System.nanoTime() - start;
+
+                buffer.clear();
+
+                if (i>10) {
+                    sum += tim;
+                }
+            }
+
+
+            System.out.println("sum = " + sum + " avg: " + (sum / 190) + " siz: " + size);
+        }
+
+
+
     }
 
 

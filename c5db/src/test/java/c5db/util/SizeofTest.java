@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -132,17 +133,14 @@ public class SizeofTest {
         double protobuftime = (double)sum/199.0;
 
         // now PROTOSTUFF:
-        Availability beaconMsg2 = new Availability();
-        beaconMsg2.setNodeId(1234L);
-
-        beaconMsg2.addAddresses("127.0.0.1");
-        ((ArrayList)beaconMsg2.getAddressesList()).trimToSize();
         List<ModuleDescriptor> msgModules2 = new ArrayList<>(ModuleType.values().length);
         for (ModuleType type : ModuleType.values()) {
-            msgModules2.add(new ModuleDescriptor()
-            .setModule(type).setModulePort(1111));
+            msgModules2.add(new ModuleDescriptor(type, 1111));
         }
-        beaconMsg2.setModulesList(msgModules2);
+
+        Availability beaconMsg2 = new Availability(1234L, 0,
+                Collections.singletonList("127.0.0.1"),
+                        msgModules2);
 
         LinkedBuffer buf = LinkedBuffer.allocate(256);
         sum = 0;
