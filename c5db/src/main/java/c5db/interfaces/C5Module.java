@@ -16,7 +16,7 @@
  */
 package c5db.interfaces;
 
-import c5db.messages.generated.ControlMessages;
+import c5db.messages.generated.ModuleType;
 import com.google.common.util.concurrent.Service;
 
 /**
@@ -29,7 +29,7 @@ import com.google.common.util.concurrent.Service;
  */
 public interface C5Module extends Service {
 
-    public ControlMessages.ModuleType getModuleType();
+    public ModuleType getModuleType();
 
     public boolean hasPort();
 

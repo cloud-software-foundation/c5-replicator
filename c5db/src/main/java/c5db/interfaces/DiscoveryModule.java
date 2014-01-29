@@ -16,8 +16,10 @@
  */
 package c5db.interfaces;
 
-import c5db.discovery.generated.Beacon;
+import c5db.discovery.generated.Availability;
+import c5db.discovery.generated.ModuleDescriptor;
 import c5db.messages.generated.ControlMessages;
+import c5db.messages.generated.ModuleType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.jetlang.channels.Channel;
@@ -56,9 +58,9 @@ public interface DiscoveryModule extends C5Module {
 
     public static class NodeInfoRequest {
         public final long nodeId;
-        public final ControlMessages.ModuleType moduleType;
+        public final ModuleType moduleType;
 
-        public NodeInfoRequest(long nodeId, ControlMessages.ModuleType moduleType) {
+        public NodeInfoRequest(long nodeId, ModuleType moduleType) {
             this.nodeId = nodeId;
             this.moduleType = moduleType;
         }
@@ -102,21 +104,22 @@ public interface DiscoveryModule extends C5Module {
      * Information about a node.
      */
     public static class NodeInfo {
-        public final Beacon.Availability availability;
+        public final Availability availability;
+        //public final Beacon.Availability availability;
         public final long lastContactTime;
-        public final ImmutableMap<ControlMessages.ModuleType, Integer> modules;
+        public final ImmutableMap<ModuleType, Integer> modules;
 
-        public NodeInfo(Beacon.Availability availability, long lastContactTime) {
+        public NodeInfo(Availability availability, long lastContactTime) {
             this.availability = availability;
             this.lastContactTime = lastContactTime;
-            ImmutableMap.Builder<ControlMessages.ModuleType, Integer> b = ImmutableMap.builder();
-            for (Beacon.ModuleDescriptor moduleDescriptor : availability.getModulesList()) {
+            ImmutableMap.Builder<ModuleType, Integer> b = ImmutableMap.builder();
+            for (ModuleDescriptor moduleDescriptor : availability.getModulesList()) {
                 b.put(moduleDescriptor.getModule(), moduleDescriptor.getModulePort());
             }
             modules = b.build();
         }
 
-        public NodeInfo(Beacon.Availability availability) {
+        public NodeInfo(Availability availability) {
             this(availability, System.currentTimeMillis());
         }
 

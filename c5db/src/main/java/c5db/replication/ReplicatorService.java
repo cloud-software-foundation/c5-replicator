@@ -17,11 +17,12 @@
 package c5db.replication;
 
 import c5db.interfaces.C5Module;
+import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
-import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
 import c5db.log.Mooring;
+import c5db.messages.generated.ModuleType;
 import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
@@ -71,7 +72,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static c5db.messages.generated.ControlMessages.ModuleType;
 import static c5db.replication.generated.Raft.RaftWireMessage;
 
 /**

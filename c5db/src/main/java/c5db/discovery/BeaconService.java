@@ -16,11 +16,13 @@
  */
 package c5db.discovery;
 
-import c5db.codec.UdpProtobufDecoder;
-import c5db.codec.UdpProtobufEncoder;
-import c5db.discovery.generated.Beacon;
-import c5db.interfaces.DiscoveryModule;
+import c5db.codec.UdpProtostuffDecoder;
+import c5db.codec.UdpProtostuffEncoder;
+import c5db.discovery.generated.Availability;
+import c5db.discovery.generated.ModuleDescriptor;
 import c5db.interfaces.C5Server;
+import c5db.interfaces.DiscoveryModule;
+import c5db.messages.generated.ModuleType;
 import c5db.util.FiberOnly;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractService;
@@ -59,8 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static c5db.discovery.generated.Beacon.Availability;
-import static c5db.messages.generated.ControlMessages.ModuleType;
 
 public class BeaconService extends AbstractService implements DiscoveryModule {
     private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
@@ -148,7 +148,8 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
      * @throws InterruptedException
      * @throws SocketException
      */
-    public BeaconService(long nodeId, int discoveryPort,
+    public BeaconService(long nodeId,
+                         int discoveryPort,
                          final Fiber fiber,
                          NioEventLoopGroup eventLoop,
                          Map<ModuleType, Integer> modules,
@@ -194,27 +195,35 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         }
         LOG.debug("Sending beacon broadcast message to {}", sendAddress);
         // Build beacon message:
-        Availability.Builder beaconMessage = Availability.newBuilder()
-                .addAllAddresses(localIPs)
-                .setNodeId(nodeId);
 
-        List<Beacon.ModuleDescriptor> msgModules = new ArrayList<>(moduleInfo.size());
+
+//        Availability.Builder beaconMessage = Availability.newBuilder()
+//                .addAllAddresses(localIPs)
+//                .setNodeId(nodeId);
+
+        List<ModuleDescriptor> msgModules = new ArrayList<>(moduleInfo.size());
         for (ModuleType moduleType : moduleInfo.keySet()) {
-            msgModules.add(Beacon.ModuleDescriptor.newBuilder()
-                    .setModule(moduleType)
-                    .setModulePort(moduleInfo.get(moduleType))
-                    .build());
+            msgModules.add(
+                    new ModuleDescriptor(moduleType,
+                            moduleInfo.get(moduleType)));
+//            msgModules.add(.ModuleDescriptor.newBuilder()
+//                    .setModule(moduleType)
+//                    .setModulePort(moduleInfo.get(moduleType))
+//                    .build());
         }
 
-        beaconMessage.addAllModules(msgModules);
+//        beaconMessage.addAllModules(msgModules);
 
-        broadcastChannel.writeAndFlush(new UdpProtobufEncoder.UdpProtobufMessage(sendAddress, beaconMessage));
+        Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
+
+        broadcastChannel.writeAndFlush(new UdpProtostuffEncoder.UdpProtostuffMessage<>(sendAddress, beaconMessage));
     }
 
     @FiberOnly
     private void processWireMessage(Availability message) {
         LOG.trace("Got incoming message {}", message);
-        if (!message.hasNodeId()) {
+        if (message.getNodeId() == 0) {
+//        if (!message.hasNodeId()) {
             LOG.error("Incoming availability message does not have node id, ignoring!");
             return;
         }
@@ -231,10 +240,14 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     @FiberOnly
     private void serviceChange(C5Server.ModuleStateChange message) {
         if (message.state == State.RUNNING) {
-            LOG.debug("BeaconService adding running module {} on port {}", message.module.getModuleType(), message.module.port());
+            LOG.debug("BeaconService adding running module {} on port {}",
+                    message.module.getModuleType(),
+                    message.module.port());
             moduleInfo.put(message.module.getModuleType(), message.module.port());
         } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
-            LOG.debug("BeaconService removed module {} on port {} with state {}", message.module.getModuleType(), message.module.port(),
+            LOG.debug("BeaconService removed module {} on port {} with state {}",
+                    message.module.getModuleType(),
+                    message.module.port(),
                     message.state);
             moduleInfo.remove(message.module.getModuleType());
         } else {
@@ -258,9 +271,11 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                                 protected void initChannel(DatagramChannel ch) throws Exception {
                                     ChannelPipeline p = ch.pipeline();
 
-                                    p.addLast("protobufDecoder", new UdpProtobufDecoder(Availability.getDefaultInstance()));
+                                    p.addLast("protobufDecoder",
+                                            new UdpProtostuffDecoder<>(Availability.getSchema(), false));
 
-                                    p.addLast("protobufEncoder", new UdpProtobufEncoder());
+                                    p.addLast("protobufEncoder",
+                                            new UdpProtostuffEncoder<>(Availability.getSchema(), false));
 
                                     p.addLast("beaconMessageHandler", new BeaconMessageHandler());
                                 }

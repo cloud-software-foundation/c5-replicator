@@ -16,9 +16,9 @@
  */
 package c5db.log;
 
-import c5db.interfaces.LogModule;
 import c5db.interfaces.C5Server;
-import c5db.messages.generated.ControlMessages;
+import c5db.interfaces.LogModule;
+import c5db.messages.generated.ModuleType;
 import com.google.common.util.concurrent.AbstractService;
 
 import java.io.IOException;
@@ -75,8 +75,8 @@ public class LogService extends AbstractService implements LogModule {
     }
 
     @Override
-    public ControlMessages.ModuleType getModuleType() {
-        return ControlMessages.ModuleType.Log;
+    public ModuleType getModuleType() {
+        return ModuleType.Log;
     }
 
     @Override
