@@ -19,7 +19,7 @@ package c5db.log;
 
 import c5db.client.C5Constants;
 import c5db.generated.Log;
-import c5db.replication.generated.Raft;
+import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
@@ -212,17 +212,12 @@ public class OLog implements AutoCloseable {
         }
     }
 
-    public Raft.LogEntry getLogEntry(long index, String quorumId) {
+    public LogEntry getLogEntry(long index, String quorumId) {
         try {
             Log.OLogEntry ologEntry = getLogDataFromDisk(index, quorumId);
-            return Raft
-                    .LogEntry
-                    .newBuilder()
-                    .setIndex(ologEntry.getIndex())
-                    .setTerm(ologEntry.getTerm())
-                    .setData(ologEntry.getValue())
-                    .build();
-
+            return new LogEntry(ologEntry.getTerm(),
+                    ologEntry.getIndex(),
+                    ologEntry.getValue().asReadOnlyByteBuffer());
         } catch (IOException | InterruptedException | ExecutionException e) {
             throw new RuntimeException("CRASH!", e);
         }

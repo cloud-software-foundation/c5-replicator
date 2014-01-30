@@ -17,7 +17,8 @@
 package c5db.replication.rpc;
 
 
-import c5db.replication.generated.Raft;
+import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.RequestVote;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -29,19 +30,14 @@ import static org.junit.Assert.assertTrue;
 public class RpcWireRequestTest {
     @Test
     public void testGetSubMsg() throws Exception {
-        Raft.RaftWireMessage wireMessage = Raft.RaftWireMessage.newBuilder()
-                .setMessageId(1)
-                .setSenderId(42)
-                .setReceiverId(42)
-                .setRequestVote(Raft.RequestVote.newBuilder()
-                        .setCandidateId(1)
-                        .setLastLogIndex(22)
-                        .setLastLogTerm(33)
-                        .setTerm(33))
-                .build();
+        RaftWireMessage wireMessage = new RaftWireMessage(
+                1, 42, 42, "quorum", false,
+                new RequestVote(33, 1, 22, 33),
+                null, null, null
+        );
 
         RpcWireRequest rpcMsg = new RpcWireRequest(wireMessage);
-        assertTrue(rpcMsg.message instanceof Raft.RequestVote);
+        assertTrue(rpcMsg.message instanceof RequestVote);
         assertEquals(42, rpcMsg.to);
         assertEquals(42, rpcMsg.from);
     }

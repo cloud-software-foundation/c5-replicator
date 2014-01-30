@@ -28,11 +28,9 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- * Prepends a varint32/64 to the front of the serialized form.
+ * Serialized a protostuff object - using 'protobuf' format
  */
 public class ProtostuffEncoder<T extends Message<T>> extends MessageToMessageEncoder<Message<T>> {
-
-
     @Override
     protected void encode(ChannelHandlerContext ctx, Message<T> msg, List<Object> out) throws Exception {
         Schema<T> schema = msg.cachedSchema();
@@ -48,6 +46,5 @@ public class ProtostuffEncoder<T extends Message<T>> extends MessageToMessageEnc
         }
 
         out.add(Unpooled.wrappedBuffer(buffers.toArray(new ByteBuffer[]{})));
-
     }
 }

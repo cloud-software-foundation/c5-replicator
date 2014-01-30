@@ -16,6 +16,8 @@
  */
 package c5db.replication;
 
+import c5db.codec.ProtostuffDecoder;
+import c5db.codec.ProtostuffEncoder;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
@@ -23,6 +25,7 @@ import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
 import c5db.log.Mooring;
 import c5db.messages.generated.ModuleType;
+import c5db.replication.generated.RaftWireMessage;
 import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
@@ -49,8 +52,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.protobuf.ProtobufDecoder;
-import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetlang.channels.AsyncRequest;
@@ -72,7 +73,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static c5db.replication.generated.Raft.RaftWireMessage;
 
 /**
  * TODO we dont have a way to actually START a freaking ReplicatorInstance - YET.
@@ -245,7 +245,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
             return;
         }
 
-        if (msg.hasInReply() && msg.getInReply()) {
+        if (msg.getInReply()) {
             Request<RpcRequest, RpcWireReply> request = outstandingRPCs.get(messageId);
             if (request == null) {
                 LOG.error("Got a reply message_id {} which we don't track", messageId);
@@ -280,15 +280,20 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                     return;
                 }
 
-                RaftWireMessage.Builder b = reply.getWireMessageFragment();
-                b.setSenderId(server.getNodeId())
-                        .setInReply(true)
-                        .setQuorumId(msg.getQuorumId())
-                        .setReceiverId(msg.getSenderId())
-                        .setMessageId(msg.getMessageId());
+                RaftWireMessage b = reply.getWireMessage(
+                        msg.getMessageId(),
+                        server.getNodeId(),
+                        msg.getSenderId(),
+                        true
+                );
+//                RaftWireMessage.Builder b = reply.getWireMessage();
+//                b.setSenderId(server.getNodeId())
+//                        .setInReply(true)
+//                        .setQuorumId(msg.getQuorumId())
+//                        .setReceiverId(msg.getSenderId())
+//                        .setMessageId(msg.getMessageId());
 
-                channel.write(b);
-                channel.flush();
+                channel.writeAndFlush(b);
             }
         });
     }
@@ -385,15 +390,14 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
                 LOG.trace("Sending message id {} to {} / {}", messageId, to, request.quorumId);
 
-                RaftWireMessage.Builder msgBuilder = request.getWireMessageFragment();
+                RaftWireMessage wireMessage = request.getWireMessage(
+                        messageId,
+                        server.getNodeId(),
+                        to,
+                        false
+                );
 
-                msgBuilder.setMessageId(messageId)
-                        .setQuorumId(request.quorumId)
-                        .setSenderId(server.getNodeId())
-                        .setReceiverId(to);
-
-                channel.write(msgBuilder);
-                channel.flush();
+                channel.writeAndFlush(wireMessage);
             }
         });
     }
@@ -455,10 +459,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                                 protected void initChannel(SocketChannel ch) throws Exception {
                                     ChannelPipeline p = ch.pipeline();
                                     p.addLast("frameDecode", new ProtobufVarint32FrameDecoder());
-                                    p.addLast("pbufDecode", new ProtobufDecoder(RaftWireMessage.getDefaultInstance()));
+                                    p.addLast("pbufDecode", new ProtostuffDecoder<>(RaftWireMessage.getSchema()));
 
                                     p.addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender());
-                                    p.addLast("pbufEncoder", new ProtobufEncoder());
+                                    p.addLast("pbufEncoder", new ProtostuffEncoder<RaftWireMessage>());
 
                                     p.addLast(new MessageHandler());
                                 }

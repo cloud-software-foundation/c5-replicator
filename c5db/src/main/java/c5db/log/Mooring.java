@@ -18,8 +18,9 @@ package c5db.log;
 
 import c5db.generated.Log;
 import c5db.replication.RaftLogAbstraction;
-import c5db.replication.generated.Raft;
+import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.protobuf.ByteString;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,9 +39,9 @@ public class Mooring implements RaftLogAbstraction {
     }
 
     @Override
-    public ListenableFuture<Boolean> logEntries(List<Raft.LogEntry> entries) {
+    public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
         List<Log.OLogEntry> oLogEntries = new ArrayList<>();
-        for (Raft.LogEntry entry : entries) {
+        for (LogEntry entry : entries) {
             long idx = getNextIdxGreaterThan(0);
             oLogEntries.add(Log.OLogEntry
                     .newBuilder()
@@ -48,13 +49,13 @@ public class Mooring implements RaftLogAbstraction {
                     .setTerm(entry.getTerm())
                     .setIndex(idx)
                     .setQuorumId(quorumId)
-                    .setValue(entry.getData()).build());
+                    .setValue(ByteString.copyFrom(entry.getData())).build());
         }
         return this.log.logEntry(oLogEntries, quorumId);
     }
 
     @Override
-    public Raft.LogEntry getLogEntry(long index) {
+    public LogEntry getLogEntry(long index) {
         return this.log.getLogEntry(index, quorumId);
     }
 

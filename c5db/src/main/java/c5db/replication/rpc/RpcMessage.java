@@ -16,11 +16,12 @@
  */
 package c5db.replication.rpc;
 
-import c5db.replication.generated.Raft;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.Message;
-
-import java.util.Map;
+import c5db.replication.generated.AppendEntries;
+import c5db.replication.generated.AppendEntriesReply;
+import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.RequestVote;
+import c5db.replication.generated.RequestVoteReply;
+import com.dyuproject.protostuff.Message;
 
 /**
  * Wrap a rpc message, this could/should get serialized to the wire (eg: RaftWireMessage)
@@ -48,18 +49,25 @@ public class RpcMessage {
         this.message = message;
     }
 
-    protected RpcMessage(Raft.RaftWireMessage wireMessage) {
-        this(wireMessage.getReceiverId(), wireMessage.getSenderId(), wireMessage.getQuorumId(), getSubMsg(wireMessage));
+    protected RpcMessage(RaftWireMessage wireMessage) {
+        this(wireMessage.getReceiverId(),
+                wireMessage.getSenderId(),
+                wireMessage.getQuorumId(),
+                getSubMsg(wireMessage));
     }
 
-    static Message getSubMsg(Raft.RaftWireMessage wireMessage) {
-        Map<Descriptors.FieldDescriptor, Object> fields = wireMessage.getAllFields();
+    static Message getSubMsg(RaftWireMessage wireMessage) {
+        if (wireMessage.getAppendEntries() != null)
+            return wireMessage.getAppendEntries();
 
-        for (Descriptors.FieldDescriptor fd : fields.keySet()) {
-            if (fd.getNumber() >= 100 && fd.getType() == Descriptors.FieldDescriptor.Type.MESSAGE) {
-                return (Message) wireMessage.getField(fd);
-            }
-        }
+        if (wireMessage.getAppendEntriesReply() != null)
+            return wireMessage.getAppendEntriesReply();
+
+        if (wireMessage.getRequestVote() != null)
+            return wireMessage.getRequestVote();
+
+        if (wireMessage.getRequestVoteReply() != null)
+            return wireMessage.getRequestVoteReply();
 
         return null;
     }
@@ -69,56 +77,63 @@ public class RpcMessage {
         return String.format("From: %d to: %d message: %s contents: %s", from, to, quorumId, message);
     }
 
-    /**
-     * Returns a builder that has only the 'message' part set.  Since the to/from/quorumId may or may not
-     * be actually set in this class, we can't really rely on it now.
-     *
-     * @return a builder that forms the basis of the rest of the message.
-     */
-    public Raft.RaftWireMessage.Builder getWireMessageFragment() {
-        Raft.RaftWireMessage.Builder builder = Raft.RaftWireMessage.newBuilder();
-
-        Descriptors.Descriptor d = Raft.RaftWireMessage.getDescriptor();
-        // Note, the structure/class name must match the field name.  Kind of ugly but.
-        Descriptors.FieldDescriptor fd = d.findFieldByName(message.getDescriptorForType().getName());
-        builder.setField(fd, message);
-
-        return builder;
+    public RaftWireMessage getWireMessage(
+            long messageId,
+            long from,
+            long to,
+            boolean inReply
+    ) {
+        return new RaftWireMessage(
+                messageId,
+                from,
+                to,
+                quorumId,
+                inReply,
+                getRequestVoteMessage(),
+                getRequestVoteReplyMessage(),
+                getAppendMessage(),
+                getAppendReplyMessage()
+        );
     }
+
 
     public boolean isAppendMessage() {
-        return message instanceof Raft.AppendEntries;
+        return message instanceof AppendEntries;
     }
+
     public boolean isRequestVoteMessage() {
-        return message instanceof Raft.RequestVote;
+        return message instanceof RequestVote;
     }
+
     public boolean isAppendReplyMessage() {
-        return message instanceof Raft.AppendEntriesReply;
+        return message instanceof AppendEntriesReply;
     }
+
     public boolean isRequestVoteReplyMessage() {
-        return message instanceof Raft.RequestVoteReply;
+        return message instanceof RequestVoteReply;
     }
 
-    public Raft.AppendEntries getAppendMessage() {
-        assert isAppendMessage();
-
-        return (Raft.AppendEntries) message;
-    }
-    public Raft.AppendEntriesReply getAppendReplyMessage() {
-        assert isAppendReplyMessage();
-
-        return (Raft.AppendEntriesReply) message;
+    public AppendEntries getAppendMessage() {
+        if (isAppendMessage())
+            return (AppendEntries) message;
+        return null;
     }
 
-    public Raft.RequestVote getRequestVoteMessage() {
-        assert isRequestVoteMessage();
-
-        return (Raft.RequestVote) message;
+    public AppendEntriesReply getAppendReplyMessage() {
+        if (isAppendReplyMessage())
+            return (AppendEntriesReply) message;
+        return null;
     }
 
-    public Raft.RequestVoteReply getRequestVoteReplyMessage() {
-        assert isRequestVoteReplyMessage();
+    public RequestVote getRequestVoteMessage() {
+        if (isRequestVoteMessage())
+            return (RequestVote) message;
+        return null;
+    }
 
-        return (Raft.RequestVoteReply) message;
+    public RequestVoteReply getRequestVoteReplyMessage() {
+        if (isRequestVoteReplyMessage())
+            return (RequestVoteReply) message;
+        return null;
     }
 }

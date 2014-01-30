@@ -17,11 +17,15 @@
 package c5db.replication.rpc;
 
 
-import c5db.replication.generated.Raft;
+import c5db.replication.generated.AppendEntries;
+import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.RequestVote;
 import org.junit.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import java.util.Collections;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
 
@@ -29,36 +33,27 @@ import static org.junit.Assert.assertTrue;
 public class RpcMessageTest {
     @Test
     public void testGetWireMessageFragment() throws Exception {
-        Raft.RequestVote requestVote = Raft.RequestVote.newBuilder()
-                .setCandidateId(1)
-                .setLastLogIndex(22)
-                .setLastLogTerm(42)
-                .setTerm(43)
-                .build();
+        RequestVote requestVote = new RequestVote(22, 1, 42, 43);
 
         RpcMessage msg = new RpcMessage(0, 0, "quorumId", requestVote);
 
-        Raft.RaftWireMessage.Builder wireMessage = msg.getWireMessageFragment();
-        assertTrue(wireMessage.hasRequestVote());
-
-        assertFalse(wireMessage.hasAppendEntries());
-        assertFalse(wireMessage.hasAppendEntriesReply());
+        RaftWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
+        assertNotEquals(null, wireMessage.getRequestVote());
+        assertEquals(null, wireMessage.getAppendEntries());
+        assertEquals(null, wireMessage.getAppendEntriesReply());
     }
 
     @Test
     public void testGetWireMessageFragment2() throws Exception {
 
-        Raft.AppendEntries appendEntries = Raft.AppendEntries.newBuilder()
-                .setCommitIndex(111)
-                .setLeaderId(1)
-                .setPrevLogIndex(2)
-                .build();
-
+        AppendEntries appendEntries = new AppendEntries(111, 1, 200, 201,
+                Collections.emptyList(),
+                111);
         RpcMessage msg = new RpcMessage(0, 0, "quorumId", appendEntries);
-        Raft.RaftWireMessage.Builder wireMessage = msg.getWireMessageFragment();
-        assertTrue(wireMessage.hasAppendEntries());
-        assertFalse(wireMessage.hasAppendEntriesReply());
-        assertFalse(wireMessage.hasRequestVote());
-        assertFalse(wireMessage.hasRequestVoteReply());
+        RaftWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
+        assertNotEquals(null, wireMessage.getAppendEntries());
+        assertEquals(null, wireMessage.getAppendEntriesReply());
+        assertEquals(null, wireMessage.getRequestVote());
+        assertEquals(null, wireMessage.getRequestVoteReply());
     }
 }

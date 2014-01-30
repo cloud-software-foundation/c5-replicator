@@ -16,8 +16,8 @@
  */
 package c5db.replication.rpc;
 
-import c5db.replication.generated.Raft;
-import com.google.protobuf.Message;
+import c5db.replication.generated.RaftWireMessage;
+import com.dyuproject.protostuff.Message;
 
 /**
  * And RPC request from off the wire, from a remote sender.
@@ -28,7 +28,7 @@ public class RpcWireRequest extends RpcMessage {
         super(0, from, quorumId, message);
     }
 
-    public RpcWireRequest(Raft.RaftWireMessage wireMessage) {
+    public RpcWireRequest(RaftWireMessage wireMessage) {
         super(wireMessage);
     }
 }

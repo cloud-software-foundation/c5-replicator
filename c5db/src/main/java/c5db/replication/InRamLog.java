@@ -16,13 +16,12 @@
  */
 package c5db.replication;
 
+import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static c5db.replication.generated.Raft.LogEntry;
 
 /**
 

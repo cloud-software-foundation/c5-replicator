@@ -50,9 +50,9 @@ public class RaftWireMessageTest {
         System.out.println("ByteBuf info = " + b);
         System.out.println("ByteBuf size = " + b.readableBytes());
         assertEquals(lcpo.buffer.size(), b.readableBytes());
+
+        System.out.println("rwm = " + rwm);
     }
-
-
 
     public void logBufsInfos(String desc, List<ByteBuffer> buffs) {
         System.out.println(desc + ": buffer count = " + buffs.size());

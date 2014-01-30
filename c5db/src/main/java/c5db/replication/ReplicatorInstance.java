@@ -17,7 +17,11 @@
 package c5db.replication;
 
 import c5db.interfaces.ReplicationModule;
-import c5db.replication.generated.Raft;
+import c5db.replication.generated.AppendEntries;
+import c5db.replication.generated.AppendEntriesReply;
+import c5db.replication.generated.LogEntry;
+import c5db.replication.generated.RequestVote;
+import c5db.replication.generated.RequestVoteReply;
 import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
@@ -29,7 +33,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
-import com.google.protobuf.ByteString;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryRequestChannel;
@@ -42,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +55,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static c5db.replication.generated.Raft.LogEntry;
 
 /**
  * Single instantation of a raft / log / lease
@@ -241,14 +244,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     @FiberOnly
     private void doRequestVote(Request<RpcWireRequest, RpcReply> message) {
-        Raft.RequestVote msg = message.getRequest().getRequestVoteMessage();
+        RequestVote msg = message.getRequest().getRequestVoteMessage();
 
         // 1. Return if term < currentTerm (sec 5.1)
         if (msg.getTerm() < currentTerm) {
-            Raft.RequestVoteReply m = Raft.RequestVoteReply.newBuilder()
-                    .setTerm(currentTerm)
-                    .setVoteGranted(false)
-                    .build();
+            RequestVoteReply m = new RequestVoteReply(currentTerm, false);
             RpcReply reply = new RpcReply(m);
             message.reply(reply);
             return;
@@ -286,26 +286,19 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         }
 
         LOG.debug("{} sending vote reply to {} vote = {}, voted = {}", myId, message.getRequest().from, votedFor, vote);
-        Raft.RequestVoteReply m = Raft.RequestVoteReply.newBuilder()
-                .setTerm(currentTerm)
-                .setVoteGranted(vote)
-                .build();
+        RequestVoteReply m = new RequestVoteReply(currentTerm, vote);
         RpcReply reply = new RpcReply(m);
         message.reply(reply);
     }
 
     @FiberOnly
     private void doAppendMessage(final Request<RpcWireRequest, RpcReply> request) {
-        final Raft.AppendEntries appendMessage = request.getRequest().getAppendMessage();
+        final AppendEntries appendMessage = request.getRequest().getAppendMessage();
 
         // 1. return if term < currentTerm (sec 5.1)
         if (appendMessage.getTerm() < currentTerm) {
             // TODO is this the correct message reply?
-            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setTerm(currentTerm)
-                    .setSuccess(false)
-                    .build();
-
+            AppendEntriesReply m = new AppendEntriesReply(currentTerm, false, 0);
             RpcReply reply = new RpcReply(m);
             request.reply(reply);
             return;
@@ -330,12 +323,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             whosLeader = theLeader;
         }
 
-        if (appendMessage.getEntriesCount() == 0) {
-            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setTerm(currentTerm)
-                    .setSuccess(true)
-                    .build();
-
+        if (appendMessage.getEntriesList().isEmpty()) {
+            AppendEntriesReply m = new AppendEntriesReply(currentTerm, true, 0);
             RpcReply reply = new RpcReply(m);
             request.reply(reply);
             return;
@@ -347,12 +336,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         long msgPrevLogIndex = appendMessage.getPrevLogIndex();
         long msgPrevLogTerm = appendMessage.getPrevLogTerm();
         if (msgPrevLogIndex != 0 && log.getLogTerm(msgPrevLogIndex) != msgPrevLogTerm) {
-            Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                    .setTerm(currentTerm)
-                    .setSuccess(false)
-                    .setMyLastLogEntry(log.getLastIndex())
-                    .build();
-
+            AppendEntriesReply m = new AppendEntriesReply(currentTerm, false, log.getLastIndex());
             RpcReply reply = new RpcReply(m);
             request.reply(reply);
             return;
@@ -376,11 +360,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                 Futures.addCallback(logCommitNotification, new FutureCallback<Boolean>() {
                     @Override
                     public void onSuccess(Boolean result) {
-                        Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                                .setTerm(currentTerm)
-                                .setSuccess(true)
-                                .build();
-
+                        AppendEntriesReply m = new AppendEntriesReply(currentTerm, true, 0);
                         RpcReply reply = new RpcReply(m);
                         request.reply(reply);
 
@@ -393,10 +373,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                     public void onFailure(Throwable t) {
                         // TODO A log commit failure is probably a fatal error. Quit the instance?
                         // TODO better error reporting. A log commit failure will be a serious issue.
-                        Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                                .setTerm(currentTerm)
-                                .setSuccess(false)
-                                .build();
+                        AppendEntriesReply m = new AppendEntriesReply(currentTerm, false, 0);
 
                         RpcReply reply = new RpcReply(m);
                         request.reply(reply);
@@ -407,11 +384,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
             @Override
             public void onFailure(Throwable t) {
-                Raft.AppendEntriesReply m = Raft.AppendEntriesReply.newBuilder()
-                        .setTerm(currentTerm)
-                        .setSuccess(false)
-                        .build();
-
+                AppendEntriesReply m = new AppendEntriesReply(currentTerm, false, 0);
                 RpcReply reply = new RpcReply(m);
                 request.reply(reply);
             }
@@ -419,7 +392,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     }
 
     private ListenableFuture<ArrayList<LogEntry>> validateAndFixLocalLog(Request<RpcWireRequest, RpcReply> request,
-                                                                         Raft.AppendEntries appendMessage) {
+                                                                         AppendEntries appendMessage) {
         final SettableFuture<ArrayList<LogEntry>> future = SettableFuture.create();
 
         validateAndFixLocalLog0(request, appendMessage, future);
@@ -427,7 +400,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     }
 
     private void validateAndFixLocalLog0(final Request<RpcWireRequest, RpcReply> request,
-                                         final Raft.AppendEntries appendMessage,
+                                         final AppendEntries appendMessage,
                                          final SettableFuture<ArrayList<LogEntry>> future) {
 
         // 6. if existing entries conflict with new entries, delete all
@@ -521,12 +494,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         setCurrentTerm(currentTerm + 1);
         myState = State.CANDIDATE;
 
-        Raft.RequestVote msg = Raft.RequestVote.newBuilder()
-                .setTerm(currentTerm)
-                .setCandidateId(myId)
-                .setLastLogIndex(log.getLastIndex())
-                .setLastLogTerm(log.getLastTerm())
-                .build();
+        RequestVote msg = new RequestVote(currentTerm, myId, log.getLastIndex(), log.getLastTerm());
 
         LOG.debug("{} Starting election for currentTerm: {}", myId, currentTerm);
 
@@ -613,7 +581,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         }
 
         assert message != null;
-        Raft.RequestVoteReply reply = message.getRequestVoteReplyMessage();
+        RequestVoteReply reply = message.getRequestVoteReplyMessage();
 
         if (reply.getTerm() > currentTerm) {
             LOG.warn("{} election reply from {}, but term {} was not my term {}, updating currentTerm", myId,
@@ -707,17 +675,13 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         long idAssigner = firstInList;
 
         // Get these now BEFORE the log append call.
-        long logLastIndex = log.getLastIndex();
-        long logLastTerm = log.getLastTerm();
+        final long logLastIndex = log.getLastIndex();
+        final long logLastTerm = log.getLastTerm();
 
         // Build the log entries:
         ArrayList <LogEntry> newLogEntries = new ArrayList<>(reqs.size());
         for (IntLogRequest logReq : reqs) {
-            LogEntry entry = LogEntry.newBuilder()
-                    .setTerm(currentTerm)
-                    .setIndex(idAssigner)
-                    .setData(ByteString.copyFrom(logReq.datum))
-                    .build();
+            LogEntry entry = new LogEntry(currentTerm, idAssigner, ByteBuffer.wrap(logReq.datum));
             newLogEntries.add(entry);
 
             if (myFirstIndexAsLeader == 0) {
@@ -738,13 +702,6 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         } else {
             localLogFuture = null;
         }
-
-        Raft.AppendEntries.Builder msgProto = Raft.AppendEntries.newBuilder()
-                .setTerm(currentTerm)
-                .setLeaderId(myId)
-                .setPrevLogIndex(logLastIndex)
-                .setPrevLogTerm(logLastTerm)
-                .setCommitIndex(this.lastCommittedIndex);
 
         // TODO remove one of these i think.
         final long largestIndexInBatch = idAssigner - 1;
@@ -801,10 +758,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             // catch them up so the next RPC wont over-send old junk.
             peersNextIndex.put(peer, lastIndexSent + 1);
 
-            Raft.AppendEntries msg = msgProto
-                    .clone()
-                    .addAllEntries(peerEntries)
-                    .build();
+            AppendEntries msg = new AppendEntries(
+                    currentTerm, myId, logLastIndex, logLastTerm,
+                    peerEntries,
+                    lastCommittedIndex
+            );
 
             RpcRequest request = new RpcRequest(peer, myId, quorumId, msg);
             AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
@@ -815,7 +773,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                     boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
                     if (!wasSuccessful) {
                         // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
-                        if (message.getAppendReplyMessage().hasMyLastLogEntry()) {
+                        if (message.getAppendReplyMessage().getMyLastLogEntry() != 0) {
                             peersNextIndex.put(peer, message.getAppendReplyMessage().getMyLastLogEntry());
                         } else {
                             peersNextIndex.put(peer, peerNextIdx - 1);

@@ -16,7 +16,7 @@
  */
 package c5db.replication;
 
-import c5db.replication.generated.Raft;
+import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.List;
@@ -45,10 +45,10 @@ public interface RaftLogAbstraction {
      * @param entries new log entries
      * @return an future that indicates success.
      */
-    public ListenableFuture<Boolean> logEntries(List<Raft.LogEntry> entries);
+    public ListenableFuture<Boolean> logEntries(List<LogEntry> entries);
 
 
-    public Raft.LogEntry getLogEntry(long index);
+    public LogEntry getLogEntry(long index);
 
     /**
      * Get the term for a given log index.  This is expected to be fast, so its an

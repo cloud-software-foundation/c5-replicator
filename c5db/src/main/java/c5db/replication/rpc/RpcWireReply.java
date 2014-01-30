@@ -16,8 +16,8 @@
  */
 package c5db.replication.rpc;
 
-import c5db.replication.generated.Raft;
-import com.google.protobuf.Message;
+import c5db.replication.generated.RaftWireMessage;
+import com.dyuproject.protostuff.Message;
 
 /**
  * A reply from the wire - a remote agent - replying to a request.
@@ -28,7 +28,7 @@ public class RpcWireReply extends RpcMessage {
         super(0, from, quorumId, message);
     }
 
-    public RpcWireReply(Raft.RaftWireMessage msg) {
+    public RpcWireReply(RaftWireMessage msg) {
         super(msg);
     }
 }

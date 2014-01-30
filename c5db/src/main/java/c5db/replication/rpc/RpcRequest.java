@@ -16,7 +16,8 @@
  */
 package c5db.replication.rpc;
 
-import com.google.protobuf.Message;
+
+import com.dyuproject.protostuff.Message;
 
 /**
  * An outbound request for the transport.  Since the transport knows who 'we' are, the only
