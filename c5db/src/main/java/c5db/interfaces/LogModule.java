@@ -18,12 +18,12 @@ package c5db.interfaces;
 
 import c5db.log.Mooring;
 import c5db.log.OLog;
-import c5db.messages.generated.ControlMessages;
+import c5db.messages.generated.ModuleType;
 
 /**
  *
  */
-@ModuleTypeBinding(ControlMessages.ModuleType.Log)
+@ModuleTypeBinding(ModuleType.Log)
 public interface LogModule extends C5Module {
     public OLog getOLogInstance();
 

@@ -18,7 +18,6 @@ package c5db.interfaces;
 
 import c5db.discovery.generated.Availability;
 import c5db.discovery.generated.ModuleDescriptor;
-import c5db.messages.generated.ControlMessages;
 import c5db.messages.generated.ModuleType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,7 +29,7 @@ import java.util.List;
 /**
  * The internal/cross module interface to the discovery module.
  */
-@ModuleTypeBinding(ControlMessages.ModuleType.Discovery)
+@ModuleTypeBinding(ModuleType.Discovery)
 public interface DiscoveryModule extends C5Module {
     RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo();
 

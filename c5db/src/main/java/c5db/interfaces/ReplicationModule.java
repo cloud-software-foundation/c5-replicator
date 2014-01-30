@@ -16,7 +16,7 @@
  */
 package c5db.interfaces;
 
-import c5db.messages.generated.ControlMessages;
+import c5db.messages.generated.ModuleType;
 import c5db.replication.ReplicatorInstance;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.jetlang.channels.Channel;
@@ -27,7 +27,7 @@ import java.util.List;
  * The replication module/module.  The API to other modules internal to c5db.
  */
 @DependsOn({DiscoveryModule.class, LogModule.class})
-@ModuleTypeBinding(ControlMessages.ModuleType.Replication)
+@ModuleTypeBinding(ModuleType.Replication)
 public interface ReplicationModule extends C5Module {
     ListenableFuture<Replicator> createReplicator(String quorumId,
                                                   List<Long> peers);

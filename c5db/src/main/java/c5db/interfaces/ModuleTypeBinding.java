@@ -16,7 +16,7 @@
  */
 package c5db.interfaces;
 
-import c5db.messages.generated.ControlMessages;
+import c5db.messages.generated.ModuleType;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -28,5 +28,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ModuleTypeBinding {
-    ControlMessages.ModuleType value();
+    ModuleType value();
 }
