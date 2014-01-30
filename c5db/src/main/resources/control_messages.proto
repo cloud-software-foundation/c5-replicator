@@ -35,6 +35,8 @@ enum ModuleType {
     Management = 5;
     // Write Ahead Log Module
     Log = 6;
+    // Event logger
+    EventLog = 7;
 }
 
 message StartModule {
