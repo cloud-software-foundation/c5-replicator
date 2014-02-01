@@ -241,14 +241,14 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     private void handleWireInboundMessage(Channel channel, RaftWireMessage msg) {
         long messageId = msg.getMessageId();
         if (msg.getReceiverId() != this.server.getNodeId()) {
-            LOG.error("Got messageId {} for {} but I am {}, ignoring!", messageId, msg.getReceiverId(), server.getNodeId());
+            LOG.debug("Got messageId {} for {} but I am {}, ignoring!", messageId, msg.getReceiverId(), server.getNodeId());
             return;
         }
 
         if (msg.getInReply()) {
             Request<RpcRequest, RpcWireReply> request = outstandingRPCs.get(messageId);
             if (request == null) {
-                LOG.error("Got a reply message_id {} which we don't track", messageId);
+                LOG.debug("Got a reply message_id {} which we don't track", messageId);
                 return;
             }
 
@@ -267,7 +267,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
         ReplicatorInstance replInst = replicatorInstances.get(quorumId);
         if (replInst == null) {
-            LOG.error("Message id {} for instance {} from {} not found", msg.getMessageId(), quorumId, msg.getSenderId());
+            LOG.trace("Instance not found {} for message id {} from {} (normal during region bootstrap)",
+                    quorumId,
+                    msg.getMessageId(),
+                    msg.getSenderId());
             // TODO send RPC failure to the sender?
             return;
         }
@@ -306,7 +309,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         if (messageId == null) {
             return;
         }
-        LOG.debug("Removing cancelled RPC, message ID {}", messageId);
+        LOG.trace("Removing cancelled RPC, message ID {}", messageId);
         outstandingRPCs.remove(messageId);
     }
 
@@ -335,7 +338,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 // what if existing outgoing connection attempt?
                 ChannelFuture channelFuture = connections.get(to);
                 if (channelFuture == null) {
-                    LOG.debug("Connecting to peer {} at address {} port {}", to, nodeInfoReply.addresses.get(0), nodeInfoReply.port);
+                    LOG.trace("Connecting to peer {} at address {} port {}", to, nodeInfoReply.addresses.get(0), nodeInfoReply.port);
                     channelFuture = outgoingBootstrap.connect(nodeInfoReply.addresses.get(0), nodeInfoReply.port);
                     connections.put(to, channelFuture);
                 }
@@ -356,7 +359,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                                         if (cf != null) {
                                             if (cf.isDone()) {
                                                 // we had hit a failure, erase this
-                                                LOG.debug("Removing failed channel for peer {}", to);
+                                                LOG.trace("Removing failed channel for peer {}", to);
                                                 connections.remove(to);
                                             }
                                         }

@@ -193,7 +193,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
             LOG.debug("Channel not available yet, deferring beacon send");
             return;
         }
-        LOG.debug("Sending beacon broadcast message to {}", sendAddress);
+        LOG.trace("Sending beacon broadcast message to {}", sendAddress);
         // Build beacon message:
 
 
