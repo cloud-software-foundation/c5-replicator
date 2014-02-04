@@ -627,7 +627,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     }
 
     private void becomeLeader() {
-        LOG.warn("{} I AM THE LEADER NOW, commece AppendEntries RPCz", myId);
+        LOG.warn("{} I AM THE LEADER NOW, commece AppendEntries RPCz term = {}", myId, currentTerm);
 
         myState = State.LEADER;
 
@@ -654,7 +654,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         queueConsumer = fiber.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                consumeQueue();
+                try {
+                    consumeQueue();
+                } catch (Throwable t) {
+                    failReplicatorInstance(t);
+                }
             }
         }, 0, info.groupCommitDelay(), TimeUnit.MILLISECONDS);
     }
