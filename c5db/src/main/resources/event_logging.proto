@@ -1,0 +1,19 @@
+package c5db;
+
+option java_package = "c5db.eventLogging.generated";
+option optimize_for = SPEED;
+
+import "control_messages.proto";
+
+enum EventType {
+    Misc = 1;
+    RaftLeaderElected = 2;
+    RaftElectionFailed = 3;
+}
+
+message EventLogEntry {
+    optional EventType event_type = 1;
+    optional c5db.messages.ModuleType module = 2;
+    optional int64 reporting_node = 3;
+    optional string description = 4;
+}

@@ -41,6 +41,7 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -181,7 +182,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     private final NioEventLoopGroup bossGroup;
     private final NioEventLoopGroup workerGroup;
 
-    private final Map<Long, ChannelFuture> connections = new HashMap<>();
+    private final Map<Long, Channel> connections = new HashMap<>();
     private final Map<String, ReplicatorInstance> replicatorInstances = new HashMap<>();
     private final ChannelGroup allChannels;
     // map of message_id -> Request
@@ -218,6 +219,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
 
     /****************** Handlers for netty/messages from the wire/TCP ************************/
+    @ChannelHandler.Sharable
     private class MessageHandler extends SimpleChannelInboundHandler<RaftWireMessage> {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -228,11 +230,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
         @Override
         protected void channelRead0(final ChannelHandlerContext ctx, final RaftWireMessage msg) throws Exception {
-            fiber.execute(new Runnable() {
-                @Override
-                public void run() {
-                    handleWireInboundMessage(ctx.channel(), msg);
-                }
+            fiber.execute(() -> {
+                handleWireInboundMessage(ctx.channel(), msg);
             });
         }
     }
@@ -241,14 +240,14 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     private void handleWireInboundMessage(Channel channel, RaftWireMessage msg) {
         long messageId = msg.getMessageId();
         if (msg.getReceiverId() != this.server.getNodeId()) {
-            LOG.error("Got messageId {} for {} but I am {}, ignoring!", messageId, msg.getReceiverId(), server.getNodeId());
+            LOG.debug("Got messageId {} for {} but I am {}, ignoring!", messageId, msg.getReceiverId(), server.getNodeId());
             return;
         }
 
         if (msg.getInReply()) {
             Request<RpcRequest, RpcWireReply> request = outstandingRPCs.get(messageId);
             if (request == null) {
-                LOG.error("Got a reply message_id {} which we don't track", messageId);
+                LOG.debug("Got a reply message_id {} which we don't track", messageId);
                 return;
             }
 
@@ -267,7 +266,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
         ReplicatorInstance replInst = replicatorInstances.get(quorumId);
         if (replInst == null) {
-            LOG.error("Message id {} for instance {} from {} not found", msg.getMessageId(), quorumId, msg.getSenderId());
+            LOG.trace("Instance not found {} for message id {} from {} (normal during region bootstrap)",
+                    quorumId,
+                    msg.getMessageId(),
+                    msg.getSenderId());
             // TODO send RPC failure to the sender?
             return;
         }
@@ -306,7 +308,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         if (messageId == null) {
             return;
         }
-        LOG.debug("Removing cancelled RPC, message ID {}", messageId);
+        LOG.trace("Removing cancelled RPC, message ID {}", messageId);
         outstandingRPCs.remove(messageId);
     }
 
@@ -318,6 +320,17 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         if (to == server.getNodeId()) {
             handleLoopBackMessage(message);
             return;
+        }
+
+        // check to see if we have a connection:
+        Channel channel = connections.get(to);
+        if (channel != null && channel.isOpen()) {
+            sendMessage0(message, channel);
+            return;
+        } else if (channel != null) {
+            // stale?
+            LOG.debug("Removing stale !isOpen channel from connections.get() for peer {}", to);
+            connections.remove(to);
         }
 
         DiscoveryModule.NodeInfoRequest nodeInfoRequest = new DiscoveryModule.NodeInfoRequest(to, ModuleType.Replication);
@@ -333,12 +346,31 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 }
 
                 // what if existing outgoing connection attempt?
-                ChannelFuture channelFuture = connections.get(to);
-                if (channelFuture == null) {
-                    LOG.debug("Connecting to peer {} at address {} port {}", to, nodeInfoReply.addresses.get(0), nodeInfoReply.port);
-                    channelFuture = outgoingBootstrap.connect(nodeInfoReply.addresses.get(0), nodeInfoReply.port);
-                    connections.put(to, channelFuture);
+                Channel channel = connections.get(to);
+                if (channel != null && channel.isOpen()) {
+                    sendMessage0(message, channel);
+                    return;
+                } else if (channel != null) {
+                    LOG.debug("Removing stale2 !isOpen channel from connections.get() for peer {}", to);
+                    connections.remove(to);
                 }
+
+                // ok so we connect now:
+                ChannelFuture channelFuture = outgoingBootstrap.connect(nodeInfoReply.addresses.get(0), nodeInfoReply.port);
+                LOG.trace("Connecting to peer {} at address {} port {}", to, nodeInfoReply.addresses.get(0), nodeInfoReply.port);
+
+                // the channel might not be open, so defer the write.
+                connections.put(to, channelFuture.channel());
+                channelFuture.channel().closeFuture().addListener(new ChannelFutureListener() {
+                    @Override
+                    public void operationComplete(ChannelFuture future) throws Exception {
+                        fiber.execute(() -> {
+                            // remove only THIS channel. It might have been removed prior so.
+                            //LOG.debug("Close future fired for {} so we are removing it as a connection", to);
+                            connections.remove(to, future.channel());
+                        });
+                    }
+                });
 
                 // funny hack, if the channel future is already open, we execute immediately!
                 channelFuture.addListener(new ChannelFutureListener() {
@@ -347,27 +379,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                             if (future.isSuccess()) {
                                 //LOG.debug("Connected to peer {}, sending message!", to);
                                 sendMessage0(message, future.channel());
-                            } else {
-                                fiber.execute(new Runnable() {
-
-                                    @Override
-                                    public void run() {
-                                        ChannelFuture cf = connections.get(to);
-                                        if (cf != null) {
-                                            if (cf.isDone()) {
-                                                // we had hit a failure, erase this
-                                                LOG.debug("Removing failed channel for peer {}", to);
-                                                connections.remove(to);
-                                            }
-                                        }
-                                    }
-                                });
-
-                                // Don't signal failure to the replicator instance, they will time out.
-
-
-                                // TODO this is a bad way to signal failure.
-                                //message.reply(null);
                             }
                         }
                     });

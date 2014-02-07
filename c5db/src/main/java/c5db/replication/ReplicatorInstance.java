@@ -476,7 +476,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         }
 
         if (lastRPC + this.myElectionTimeout < info.currentTimeMillis()) {
-            LOG.debug("{} Timed out checkin on election, try new election", myId);
+            LOG.trace("{} Timed out checkin on election, try new election", myId);
             doElection();
         }
     }
@@ -542,11 +542,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
             // Also if the term goes forward somehow, this is also out of date, and drop it.
             if (currentTerm > termBeingVotedFor) {
-                LOG.debug("{} request vote timeout, current term has moved on, abandoning this request", myId);
+                LOG.trace("{} request vote timeout, current term has moved on, abandoning this request", myId);
                 return;
             }
 
-            LOG.debug("{} request vote timeout to {}, resending RPC", myId, request.to);
+            LOG.trace("{} request vote timeout to {}, resending RPC", myId, request.to);
 
             // Note we are using 'this' as the recursive timeout.
             AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
@@ -627,7 +627,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     }
 
     private void becomeLeader() {
-        LOG.warn("{} I AM THE LEADER NOW, commece AppendEntries RPCz", myId);
+        LOG.warn("{} I AM THE LEADER NOW, commece AppendEntries RPCz term = {}", myId, currentTerm);
 
         myState = State.LEADER;
 
@@ -654,7 +654,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         queueConsumer = fiber.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                consumeQueue();
+                try {
+                    consumeQueue();
+                } catch (Throwable t) {
+                    failReplicatorInstance(t);
+                }
             }
         }, 0, info.groupCommitDelay(), TimeUnit.MILLISECONDS);
     }
@@ -836,7 +840,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         }
         this.lastCommittedIndex = mostAcked;
         notifyLastCommitted();
-        LOG.info("{} discovered new visible entry {}", myId, lastCommittedIndex);
+        LOG.trace("{} discovered new visible entry {}", myId, lastCommittedIndex);
 
         // TODO take action and notify clients (pending new system frameworks)
     }
