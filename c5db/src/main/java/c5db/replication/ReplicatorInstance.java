@@ -291,6 +291,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     @FiberOnly
     private void onIncomingMessage(Request<RpcWireRequest, RpcReply> message) {
         RpcWireRequest req = message.getRequest();
+        if (!peers.contains(req.from)) {
+            LOG.debug("{} Got message from peer {} who I don't recognize, ignoring", myId, req.from);
+            return;
+        }
+
         if (req.isRequestVoteMessage()) {
             doRequestVote(message);
 
