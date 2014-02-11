@@ -287,7 +287,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                             broadcastChannel = future.channel();
                         }
                     });
-                    sendAddress = new InetSocketAddress("255.255.255.255", discoveryPort);
+                    sendAddress = new InetSocketAddress("127.0.0.1", discoveryPort);
                     //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
                     localIPs = getLocalIPs();
                     //msgBuilder.addAllAddresses(getLocalIPs());
