@@ -36,7 +36,6 @@ import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -161,6 +160,10 @@ public class InRamSim {
 
 
         rpcFiber.start();
+    }
+
+    public RequestChannel<RpcRequest, RpcWireReply> getRpcChannel() {
+      return rpcChannel;
     }
 
     private final Meter messages = metrics.meter(name(InRamSim.class, "messageRate"));

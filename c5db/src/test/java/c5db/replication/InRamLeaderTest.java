@@ -1,0 +1,220 @@
+/*
+ * Copyright (C) 2014  Ohm Data
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package c5db.replication;
+
+import c5db.interfaces.ReplicationModule;
+import c5db.replication.generated.AppendEntriesReply;
+import c5db.replication.rpc.RpcRequest;
+import c5db.replication.rpc.RpcWireReply;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.SettableFuture;
+import org.jetlang.channels.Channel;
+import org.jetlang.channels.MemoryChannel;
+import org.jetlang.channels.MemoryRequestChannel;
+import org.jetlang.channels.Request;
+import org.jetlang.channels.RequestChannel;
+import org.jetlang.core.Callback;
+import org.jetlang.fibers.Fiber;
+import org.jetlang.fibers.ThreadFiber;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import static c5db.replication.ReplicatorInstance.State;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+
+public class InRamLeaderTest {
+  private static final long PEER_ID = 1;
+  private static final long CURRENT_TERM = 4;
+  private static final String QUORUM_ID = "quorumId";
+  private static final byte[] TEST_DATUM = new byte[]{1, 2, 3, 4, 5, 6};
+  private static final long TEST_TIMEOUT = 5;
+
+  private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel = new MemoryRequestChannel<>();
+  private final Map<Long, BlockingQueue<Request<RpcRequest, RpcWireReply>>> requests = new HashMap<>();
+  private final Map<Long, Callback<Request<RpcRequest, RpcWireReply>>> ackOrders = new HashMap<>();
+  private final Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
+  private final BlockingQueue<ReplicationModule.IndexCommitNotice> commits = new LinkedBlockingQueue<>();
+
+  ReplicatorLogAbstraction log = new InRamLog();
+  private ReplicatorInstance repl;
+  private Fiber rpcFiber = new ThreadFiber();
+
+  private ReplicatorInstance makeTestInstance() {
+    final List<Long> peerIdList = ImmutableList.of(1L, 2L, 3L);
+    TestableInRamSim.Info info = new TestableInRamSim.Info(0);
+    info.startTimeout();
+
+    return new ReplicatorInstance(new ThreadFiber(),
+        PEER_ID,
+        QUORUM_ID,
+        peerIdList,
+        log,
+        info,
+        new TestableInRamSim.Persister(),
+        sendRpcChannel,
+        new MemoryChannel<>(),
+        commitNotices,
+        CURRENT_TERM,
+        State.LEADER,
+        0,
+        PEER_ID,
+        PEER_ID);
+  }
+
+  /**
+   * Assert that the leader issues commit notices up to and including 'index'
+   */
+  private void verifyCommitUpTo(long index) throws Exception {
+    ReplicationModule.IndexCommitNotice lastCommitNotice;
+    do {
+      lastCommitNotice = commits.poll(5, TimeUnit.SECONDS);
+      assertNotNull(lastCommitNotice);
+    } while (lastCommitNotice.committedIndex < index);
+
+    assertEquals(index, lastCommitNotice.committedIndex);
+    assertTrue(commits.isEmpty());
+  }
+
+  /**
+   * Either route an outbound request to a callback, or queue it, depending on destination peer
+   */
+  private void routeOutboundRequests(Request<RpcRequest, RpcWireReply> request) {
+    long to = request.getRequest().to;
+    if (ackOrders.containsKey(to)) {
+      ackOrders.get(to).onMessage(request);
+    } else {
+      if (!requests.containsKey(to)) {
+        requests.put(to, new LinkedBlockingQueue<>());
+      }
+      requests.get(to).add(request);
+    }
+  }
+
+  /**
+   * Reply true or false to a single AppendEntries request
+   */
+  private void ackRequest(Request<RpcRequest, RpcWireReply> request, boolean success) {
+    RpcRequest message = request.getRequest();
+    long currentTerm = message.getAppendMessage().getTerm();
+    long to = message.to;
+    RpcWireReply reply = new RpcWireReply(to, QUORUM_ID, new AppendEntriesReply(currentTerm, success, 0));
+    request.reply(reply);
+  }
+
+  /**
+   * Execute a callback on all pending requests to a given peer, and any requests hereafter
+   */
+  private void createRequestRule(long peerId, Callback<Request<RpcRequest, RpcWireReply>> handler) throws Exception {
+    ackOrders.put(peerId, handler);
+    if (requests.containsKey(peerId)) {
+      List<Request<RpcRequest, RpcWireReply>> pendingRequests = new LinkedList<>();
+      requests.get(peerId).drainTo(pendingRequests);
+      for (Request<RpcRequest, RpcWireReply> request : pendingRequests) {
+        handler.onMessage(request);
+      }
+    }
+  }
+
+  /**
+   * Reply true to all pending requests to the given follower, and any requests hereafter
+   */
+  private void ackAllRequestsToPeer(long peerId) throws Exception {
+    createRequestRule(peerId, (request) -> ackRequest(request, true));
+  }
+
+  @Before
+  public final void setUp() {
+    commitNotices.subscribe(rpcFiber, commits::add);
+    sendRpcChannel.subscribe(rpcFiber, (request) -> System.out.println(request.getRequest()));
+    sendRpcChannel.subscribe(rpcFiber, this::routeOutboundRequests);
+
+    repl = makeTestInstance();
+    repl.start();
+    rpcFiber.start();
+  }
+
+  @After
+  public final void tearDown() {
+    repl.dispose();
+    repl = null;
+    rpcFiber.dispose();
+    rpcFiber = null;
+  }
+
+  @Test
+  public void testCommit() throws Exception {
+    ackAllRequestsToPeer(2);
+    repl.logData(TEST_DATUM);
+    repl.logData(TEST_DATUM);
+    verifyCommitUpTo(2);
+  }
+
+  @Test
+  public void testFollowerCatchup() throws Exception {
+    long flakyPeer = 2;
+    ackAllRequestsToPeer(3);
+
+    // Peer 3 replies true to all AppendEntries requests; this causes the leader to commit, since
+    // together with peer 3 it has a majority. Flaky peer 2 replies true to acknowledge receiving the
+    // first entry.
+    createRequestRule(flakyPeer, (request) -> {
+      long commitIndex = request.getRequest().getAppendMessage().getCommitIndex();
+      if (commitIndex > 1) {
+        ackOrders.remove(flakyPeer);
+        return;
+      }
+      ackRequest(request, true);
+    });
+    repl.logData(TEST_DATUM);
+    verifyCommitUpTo(1);
+
+    // The next two entries don't reach the flaky peer, but they are acked and committed by the good peer.
+    createRequestRule(flakyPeer, (request) -> {
+    });
+    repl.logData(TEST_DATUM);
+    repl.logData(TEST_DATUM);
+    verifyCommitUpTo(3);
+
+    // The leader must now detect the last entry received by the flaky peer, which is 1; when it does that,
+    // the test succeeds.
+    SettableFuture<Boolean> waitCond = SettableFuture.create();
+    createRequestRule(flakyPeer, (request) -> {
+      long prevLogIndex = request.getRequest().getAppendMessage().getPrevLogIndex();
+      if (prevLogIndex == 1) {
+        waitCond.set(true);
+      } else {
+        ackRequest(request, false);
+      }
+    });
+
+    // Test fails iff this throws TimeoutException
+    waitCond.get(TEST_TIMEOUT, TimeUnit.SECONDS);
+  }
+}
