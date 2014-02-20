@@ -222,6 +222,7 @@
                         <forkedProcessTimeoutInSeconds>${surefire.timeout}</forkedProcessTimeoutInSeconds>
                         <argLine>-enableassertions -Xmx1900m -XX:MaxPermSize=100m -Djava.security.egd=file:/dev/./urandom -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true</argLine>
                         <redirectTestOutputToFile>${test.output.tofile}</redirectTestOutputToFile>
+                        <enableAssertions>true</enableAssertions>
                     </configuration>
                     <executions>
                         <execution>
