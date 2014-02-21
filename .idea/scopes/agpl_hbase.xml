@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="agpl-hbase" pattern="src:org.apache.hadoop.hbase..*||test:org.apache.hadoop.hbase..*" />
+</component>
