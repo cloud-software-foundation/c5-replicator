@@ -39,47 +39,59 @@ public interface ReplicationModule extends C5Module {
      *
      * @return
      */
-    public Channel<ReplicatorInstanceStateChange> getReplicatorStateChanges();
+    public Channel<ReplicatorInstanceEvent> getReplicatorEventChannel();
 
     /**
-     * information about when a replicator instance changes state. replicator instances publish these to indicate
-     * success or failure.
+     * information about when a replicator instance changes state. replicator instances publish
+     * these to indicate a variety of conditions.
+     *
      * <p/>
-     * A previously successful replicator can encounter a fatal error and then send one of these to notify other
-     * components.
-     * <p/>
-     * A replicator can have 2 states:
+     * A variety of events can be published:
      * <ul>
-     * <li>{@link com.google.common.util.concurrent.Service.State.FAILED}</li>
-     * <li>{@link com.google.common.util.concurrent.Service.State.RUNNING}</li>
+     * <li>Quorum started</li>
+     * <li>Leader elected</li>
+     * <li>election timeout, doing new election (became candidate)</li>
+     * <li>quorum failure with Throwable</li>
+     * <li>As a leader, I was deposed by someone else and have unbecome leader</li>
      * </ul>
      */
-    public static class ReplicatorInstanceStateChange {
-        public final Replicator instance;
-        public final State state;
-        public final Throwable optError;
+    public static class ReplicatorInstanceEvent {
+      public static enum EventType {
+        QUORUM_START,
+        LEADER_ELECTED,
+        ELECTION_TIMEOUT,
+        QUORUM_FAILURE,
+        LEADER_DEPOSED
+      }
 
-        /**
-         * @param instance the replicator instance that is affected
-         * @param state    the state we have entered (FAILED|RUNNING)
-         * @param optError the optional error (can be null)
-         */
-        public ReplicatorInstanceStateChange(Replicator instance, State state, Throwable optError) {
-            this.instance = instance;
-            this.state = state;
-            this.optError = optError;
+      public final Replicator instance;
+      public final EventType eventType;
+      public final long eventTime;
+      public final long newLeader;
+      public final Throwable error;
 
-            assert state == State.FAILED || state == State.RUNNING;
-        }
+      public ReplicatorInstanceEvent(EventType eventType,
+                                     Replicator instance,
+                                     long newLeader,
+                                     long eventTime,
+                                     Throwable error) {
+        this.newLeader = newLeader;
+        this.instance = instance;
+        this.eventType = eventType;
+        this.eventTime = eventTime;
+        this.error = error;
+      }
 
-        @Override
-        public String toString() {
-            return "ReplicatorInstanceStateChange{" +
-                    "instance=" + instance +
-                    ", state=" + state +
-                    ", optError=" + optError +
-                    '}';
-        }
+      @Override
+      public String toString() {
+        return "ReplicatorInstanceEvent{" +
+            "instance=" + instance +
+            ", eventType=" + eventType +
+            ", eventTime=" + eventTime +
+            ", newLeader=" + newLeader +
+            ", error=" + error +
+            '}';
+      }
     }
 
     /**

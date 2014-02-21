@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
@@ -54,6 +53,8 @@ import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
 
 
 /**
@@ -81,7 +82,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
     private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
-    private final Channel<ReplicationModule.ReplicatorInstanceStateChange> stateChangeChannel;
+    private final Channel<ReplicatorInstanceEvent> stateChangeChannel;
     private final Channel<ReplicationModule.IndexCommitNotice> commitNoticeChannel;
 
     /********** final fields *************/
@@ -148,7 +149,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                               RaftInformationInterface info,
                               RaftInfoPersistence persister,
                               RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
-                              final Channel<ReplicationModule.ReplicatorInstanceStateChange> stateChangeChannel,
+                              final Channel<ReplicatorInstanceEvent> stateChangeChannel,
                               final Channel<ReplicationModule.IndexCommitNotice> commitNoticeChannel) {
         this.fiber = fiber;
         this.myId = myId;
@@ -173,7 +174,12 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                     readPersistentData();
                     // indicate we are running!
                     stateChangeChannel.publish(
-                            new ReplicationModule.ReplicatorInstanceStateChange(ReplicatorInstance.this, Service.State.RUNNING, null));
+                            new ReplicatorInstanceEvent(
+                                ReplicatorInstanceEvent.EventType.QUORUM_START,
+                                ReplicatorInstance.this,
+                                0,
+                                info.currentTimeMillis(),
+                                null));
                 } catch (IOException e) {
                     LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
                     failReplicatorInstance(e);
@@ -200,7 +206,12 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     private void failReplicatorInstance(Throwable e) {
         stateChangeChannel.publish(
-                new ReplicationModule.ReplicatorInstanceStateChange(this, Service.State.FAILED, e));
+                new ReplicatorInstanceEvent(
+                    ReplicatorInstanceEvent.EventType.QUORUM_FAILURE,
+                    this,
+                    0,
+                    info.currentTimeMillis(),
+                    e));
         fiber.dispose(); // kill us forever.
     }
 
@@ -321,6 +332,14 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         if (whosLeader != theLeader) {
             LOG.debug("{} discovered new leader: {}", myId, theLeader);
             whosLeader = theLeader;
+
+            stateChangeChannel.publish(
+                new ReplicatorInstanceEvent(
+                    ReplicatorInstanceEvent.EventType.LEADER_ELECTED,
+                    this,
+                    whosLeader,
+                    info.currentTimeMillis(),
+                    null));
         }
 
         if (appendMessage.getEntriesList().isEmpty()) {
@@ -487,7 +506,15 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     @FiberOnly
     private void doElection() {
-        final int majority = calculateMajority(peers.size());
+      stateChangeChannel.publish(
+          new ReplicatorInstanceEvent(
+              ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT,
+              this,
+              0,
+              info.currentTimeMillis(),
+              null));
+
+      final int majority = calculateMajority(peers.size());
         // Start new election "timer".
         lastRPC = info.currentTimeMillis();
         // increment term.
@@ -609,13 +636,20 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     //// Leader timer stuff below
     private Disposable queueConsumer;
-    private Disposable appender = null;
 
     @FiberOnly
     private void haltLeader() {
         myState = State.FOLLOWER;
 
-        stopQueueConsumer();
+      stateChangeChannel.publish(
+          new ReplicatorInstanceEvent(
+              ReplicatorInstanceEvent.EventType.LEADER_DEPOSED,
+              this,
+              0,
+              info.currentTimeMillis(),
+              null));
+
+      stopQueueConsumer();
     }
 
     @FiberOnly
@@ -646,7 +680,17 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         myFirstIndexAsLeader = 0;
         lastCommittedIndex = 0; // unknown as of yet
 
-        startQueueConsumer();
+
+      stateChangeChannel.publish(
+          new ReplicatorInstanceEvent(
+              ReplicatorInstanceEvent.EventType.LEADER_ELECTED,
+              this,
+              myId,
+              info.currentTimeMillis(),
+              null));
+
+
+      startQueueConsumer();
     }
 
     @FiberOnly

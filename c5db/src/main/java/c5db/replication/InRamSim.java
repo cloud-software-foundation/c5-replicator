@@ -107,7 +107,7 @@ public class InRamSim {
     final int peerSize;
     final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
     final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
-    final Channel<ReplicationModule.ReplicatorInstanceStateChange> stateChanges = new MemoryChannel<>();
+    final Channel<ReplicationModule.ReplicatorInstanceEvent> stateChanges = new MemoryChannel<>();
     final Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
     final Fiber rpcFiber;
     final List<Long> peerIds = new ArrayList<>();

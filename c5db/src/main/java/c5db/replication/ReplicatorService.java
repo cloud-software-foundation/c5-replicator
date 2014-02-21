@@ -144,10 +144,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         return indexCommitNotices;
     }
 
-    private MemoryChannel<ReplicatorInstanceStateChange> replicatorStateChanges = new MemoryChannel<>();
+    private MemoryChannel<ReplicatorInstanceEvent> replicatorStateChanges = new MemoryChannel<>();
 
     @Override
-    public org.jetlang.channels.Channel<ReplicatorInstanceStateChange> getReplicatorStateChanges() {
+    public org.jetlang.channels.Channel<ReplicatorInstanceEvent> getReplicatorEventChannel() {
         return replicatorStateChanges;
     }
 
@@ -519,12 +519,12 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                                     }
                             );
 
-                            replicatorStateChanges.subscribe(fiber, new Callback<ReplicatorInstanceStateChange>() {
+                            replicatorStateChanges.subscribe(fiber, new Callback<ReplicatorInstanceEvent>() {
                                 @Override
-                                public void onMessage(ReplicatorInstanceStateChange message) {
-                                    if (message.state == State.FAILED) {
+                                public void onMessage(ReplicatorInstanceEvent message) {
+                                    if (message.eventType == ReplicatorInstanceEvent.EventType.QUORUM_FAILURE) {
                                         LOG.error("replicator {} indicates failure, removing. Error {}", message.instance,
-                                                message.optError);
+                                                message.error);
                                         replicatorInstances.remove(message.instance.getQuorumId());
                                     } else {
                                         LOG.debug("replicator indicates state change {}", message);
