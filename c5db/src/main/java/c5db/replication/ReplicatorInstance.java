@@ -389,7 +389,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                         request.reply(reply);
 
                         // Notify and mark the last committed index.
-                        lastCommittedIndex = appendMessage.getCommitIndex();
+                        lastCommittedIndex = Math.min(appendMessage.getCommitIndex(), log.getLastIndex());
                         notifyLastCommitted();
                     }
 
