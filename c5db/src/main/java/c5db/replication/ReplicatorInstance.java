@@ -808,11 +808,19 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                 peerEntries.addAll(newLogEntries);
             }
 
+            final long prevLogIndex = peerNextIdx - 1;
+            final long prevLogTerm;
+            if (prevLogIndex == 0) {
+              prevLogTerm = 0;
+            } else {
+              prevLogTerm = log.getLogTerm(prevLogIndex);
+            }
+
             // catch them up so the next RPC wont over-send old junk.
             peersNextIndex.put(peer, lastIndexSent + 1);
 
             AppendEntries msg = new AppendEntries(
-                    currentTerm, myId, logLastIndex, logLastTerm,
+                    currentTerm, myId, prevLogIndex, prevLogTerm,
                     peerEntries,
                     lastCommittedIndex
             );
