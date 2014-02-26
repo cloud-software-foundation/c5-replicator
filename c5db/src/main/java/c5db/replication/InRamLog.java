@@ -37,7 +37,7 @@ public class InRamLog implements ReplicatorLogAbstraction {
     public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
         // add them, for great justice.
 
-        assert (log.size()+1) == entries.get(0).getIndex();
+        assert (log.size() + 1) == entries.get(0).getIndex();
         // TODO more assertions
 
         log.addAll(entries);
@@ -50,20 +50,26 @@ public class InRamLog implements ReplicatorLogAbstraction {
 
     @Override
     public LogEntry getLogEntry(long index) {
-        return log.get((int) index-1);
+        assert index > 0;
+        if (index - 1 >= log.size()) {
+          return null;
+        }
+        return log.get((int) index - 1);
     }
 
     @Override
     public synchronized long getLogTerm(long index) {
-        assert (index-1) < log.size();
-
-        return log.get((int) index-1).getTerm();
+        assert index > 0;
+        if (index - 1 >= log.size()) {
+          return 0;
+        }
+        return log.get((int) index - 1).getTerm();
     }
 
     @Override
     public synchronized long getLastTerm() {
         if (log.isEmpty()) return 0;
-        return log.get(log.size()-1).getTerm();
+        return log.get(log.size() - 1).getTerm();
     }
 
     @Override
@@ -73,7 +79,7 @@ public class InRamLog implements ReplicatorLogAbstraction {
 
     @Override
     public synchronized ListenableFuture<Boolean> truncateLog(long entryIndex) {
-        log.subList((int) entryIndex-1, log.size()).clear();
+        log.subList((int) entryIndex - 1, log.size()).clear();
         SettableFuture<Boolean> r = SettableFuture.create();
         r.set(true);
         return r;

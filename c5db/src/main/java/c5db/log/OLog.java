@@ -24,7 +24,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -34,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
 
 public class OLog implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(OLog.class);
@@ -179,7 +179,7 @@ public class OLog implements AutoCloseable {
         this.sync(f);
         f.get();
 
-        FileInputStream fileInputStream = new FileInputStream(logOutputStream.getFD());
+        FileInputStream fileInputStream = new FileInputStream(logPath.toFile());
         Log.OLogEntry nextEntry;
 
         do {
@@ -193,7 +193,7 @@ public class OLog implements AutoCloseable {
             if (nextEntry == null) {
                 return null;
             }
-        } while (!nextEntry.getQuorumId().equals(quorumId) && nextEntry.getIndex() != index);
+        } while (!nextEntry.getQuorumId().equals(quorumId) || nextEntry.getIndex() != index);
 
         return nextEntry;
     }
@@ -215,6 +215,9 @@ public class OLog implements AutoCloseable {
     public LogEntry getLogEntry(long index, String quorumId) {
         try {
             Log.OLogEntry ologEntry = getLogDataFromDisk(index, quorumId);
+            if (ologEntry == null) {
+              return null;
+            }
             return new LogEntry(ologEntry.getTerm(),
                     ologEntry.getIndex(),
                     ologEntry.getValue().asReadOnlyByteBuffer());

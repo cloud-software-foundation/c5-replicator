@@ -47,15 +47,22 @@ public interface ReplicatorLogAbstraction {
      */
     public ListenableFuture<Boolean> logEntries(List<LogEntry> entries);
 
-
+    /**
+     * Get the entry for a given log index. If the given index is not present in the log, then this
+     * will return null.
+     *
+     * @param index
+     * @return the entry at 'index', or null if no such entry
+     */
     public LogEntry getLogEntry(long index);
 
     /**
-     * Get the term for a given log index.  This is expected to be fast, so its an
-     * synchronous interface
+     * Get the term for a given log index. If the given index is not present in the log, then this
+     * will return 0. A term value of 0 should be considered invalid. This is expected to be fast,
+     * so it's a synchronous interface.
      *
      * @param index
-     * @return
+     * @return the term value at 'index', or 0 if no such entry
      */
     public long getLogTerm(long index);
 
