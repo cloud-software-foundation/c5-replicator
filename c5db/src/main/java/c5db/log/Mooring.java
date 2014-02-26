@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+
 public class Mooring implements ReplicatorLogAbstraction {
     final OLog log;
     final String quorumId;
@@ -50,6 +51,9 @@ public class Mooring implements ReplicatorLogAbstraction {
                     .setIndex(idx)
                     .setQuorumId(quorumId)
                     .setValue(ByteString.copyFrom(entry.getData())).build());
+        }
+        if (oLogEntries.size() > 0) {
+            currentTerm = oLogEntries.get(oLogEntries.size() - 1).getTerm();
         }
         return this.log.logEntry(oLogEntries, quorumId);
     }
