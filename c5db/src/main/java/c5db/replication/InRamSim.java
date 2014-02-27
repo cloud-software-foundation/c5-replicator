@@ -54,7 +54,7 @@ import static com.codahale.metrics.MetricRegistry.name;
 public class InRamSim {
     private static final Logger LOG = LoggerFactory.getLogger(InRamSim.class);
 
-    public static class Info implements RaftInformationInterface {
+    public static class Info implements ReplicatorInformationInterface {
 
         public final long offset;
 
@@ -83,7 +83,7 @@ public class InRamSim {
         }
     }
 
-    public static class Persister implements RaftInfoPersistence {
+    public static class Persister implements ReplicatorInfoPersistence {
         private long votedFor = 0;
         private long currentTerm = 0;
 

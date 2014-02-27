@@ -25,7 +25,7 @@ option optimize_for = SPEED;
 enum ModuleType {
     // Cluster discovery module
     Discovery = 1;
-    // Replication module (RAFT)
+    // Replication module
     Replication = 2;
     // Tablet module (eg: HRegion)
     Tablet = 3;

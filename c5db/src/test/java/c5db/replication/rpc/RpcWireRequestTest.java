@@ -17,7 +17,7 @@
 package c5db.replication.rpc;
 
 
-import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.generated.RequestVote;
 import org.junit.Test;
 
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 public class RpcWireRequestTest {
     @Test
     public void testGetSubMsg() throws Exception {
-        RaftWireMessage wireMessage = new RaftWireMessage(
+        ReplicationWireMessage wireMessage = new ReplicationWireMessage(
                 1, 42, 42, "quorum", false,
                 new RequestVote(33, 1, 22, 33),
                 null, null, null

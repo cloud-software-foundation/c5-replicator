@@ -22,11 +22,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.List;
 
 /**
- * A log abstraction for the raft replicator.
+ * A log abstraction for the consensus/replication algorithm.
  *
- * As a raft replicator I promise not to call from more than 1 thread.
+ * As a replicator I promise not to call from more than 1 thread.
  */
-public interface RaftLogAbstraction {
+public interface ReplicatorLogAbstraction {
     /**
      * Log entries to the log.  The entries are in order, and should start from getLastIndex() + 1.
      *

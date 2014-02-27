@@ -19,7 +19,7 @@ package c5db.replication;
 /**
  *
  */
-public interface RaftInformationInterface {
+public interface ReplicatorInformationInterface {
     public long currentTimeMillis();
 
     /**

@@ -17,7 +17,7 @@
 package c5db.log;
 
 import c5db.generated.Log;
-import c5db.replication.RaftLogAbstraction;
+import c5db.replication.ReplicatorLogAbstraction;
 import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.ByteString;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class Mooring implements RaftLogAbstraction {
+public class Mooring implements ReplicatorLogAbstraction {
     final OLog log;
     final String quorumId;
     HashMap<String, Long> latestTombstones = new HashMap<>();

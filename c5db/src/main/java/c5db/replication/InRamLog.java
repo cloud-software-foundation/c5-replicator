@@ -26,7 +26,7 @@ import java.util.List;
 /**
 
  */
-public class InRamLog implements RaftLogAbstraction {
+public class InRamLog implements ReplicatorLogAbstraction {
 
     private final ArrayList<LogEntry> log = new ArrayList<>();
 
