@@ -18,13 +18,13 @@ package c5db.replication.rpc;
 
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.AppendEntriesReply;
-import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.generated.RequestVote;
 import c5db.replication.generated.RequestVoteReply;
 import com.dyuproject.protostuff.Message;
 
 /**
- * Wrap a rpc message, this could/should get serialized to the wire (eg: RaftWireMessage)
+ * Wrap a rpc message, this could/should get serialized to the wire (eg: ReplicationWireMessage)
  *
  * The subclasses exist so we can properly type the Jetlang channels and be clear about our intentions.
  *
@@ -49,14 +49,14 @@ public class RpcMessage {
         this.message = message;
     }
 
-    protected RpcMessage(RaftWireMessage wireMessage) {
+    protected RpcMessage(ReplicationWireMessage wireMessage) {
         this(wireMessage.getReceiverId(),
                 wireMessage.getSenderId(),
                 wireMessage.getQuorumId(),
                 getSubMsg(wireMessage));
     }
 
-    static Message getSubMsg(RaftWireMessage wireMessage) {
+    static Message getSubMsg(ReplicationWireMessage wireMessage) {
         if (wireMessage.getAppendEntries() != null)
             return wireMessage.getAppendEntries();
 
@@ -77,13 +77,13 @@ public class RpcMessage {
         return String.format("From: %d to: %d message: %s contents: %s", from, to, quorumId, message);
     }
 
-    public RaftWireMessage getWireMessage(
+    public ReplicationWireMessage getWireMessage(
             long messageId,
             long from,
             long to,
             boolean inReply
     ) {
-        return new RaftWireMessage(
+        return new ReplicationWireMessage(
                 messageId,
                 from,
                 to,

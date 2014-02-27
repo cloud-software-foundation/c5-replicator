@@ -58,7 +58,7 @@ import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
 
 
 /**
- * Single instantation of a raft / log / lease
+ * Single instantation of a replicator / log / lease
  */
 public class ReplicatorInstance implements ReplicationModule.Replicator {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorInstance.class);
@@ -137,17 +137,17 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     private long whosLeader = 0;
     private Disposable electionChecker;
 
-    private final RaftLogAbstraction log;
-    final RaftInformationInterface info;
-    final RaftInfoPersistence persister;
+    private final ReplicatorLogAbstraction log;
+    final ReplicatorInformationInterface info;
+    final ReplicatorInfoPersistence persister;
 
     public ReplicatorInstance(final Fiber fiber,
                               final long myId,
                               final String quorumId,
                               List<Long> peers,
-                              RaftLogAbstraction log,
-                              RaftInformationInterface info,
-                              RaftInfoPersistence persister,
+                              ReplicatorLogAbstraction log,
+                              ReplicatorInformationInterface info,
+                              ReplicatorInfoPersistence persister,
                               RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
                               final Channel<ReplicatorInstanceEvent> stateChangeChannel,
                               final Channel<ReplicationModule.IndexCommitNotice> commitNoticeChannel) {

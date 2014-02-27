@@ -42,7 +42,7 @@ public final class ControlMessages {
      * <code>Replication = 2;</code>
      *
      * <pre>
-     * Replication module (RAFT)
+     * Replication module
      * </pre>
      */
     Replication(1, 2),
@@ -92,7 +92,7 @@ public final class ControlMessages {
      * <code>Replication = 2;</code>
      *
      * <pre>
-     * Replication module (RAFT)
+     * Replication module
      * </pre>
      */
     public static final int Replication_VALUE = 2;

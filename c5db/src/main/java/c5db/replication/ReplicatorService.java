@@ -25,7 +25,7 @@ import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
 import c5db.log.Mooring;
 import c5db.messages.generated.ModuleType;
-import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
@@ -152,7 +152,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
 
     // TODO this should be actually via whatever configuration system we end up using.
-    private static class Info implements RaftInformationInterface {
+    private static class Info implements ReplicatorInformationInterface {
 
         @Override
         public long currentTimeMillis() {
@@ -220,7 +220,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
     /****************** Handlers for netty/messages from the wire/TCP ************************/
     @ChannelHandler.Sharable
-    private class MessageHandler extends SimpleChannelInboundHandler<RaftWireMessage> {
+    private class MessageHandler extends SimpleChannelInboundHandler<ReplicationWireMessage> {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             allChannels.add(ctx.channel());
@@ -229,7 +229,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         }
 
         @Override
-        protected void channelRead0(final ChannelHandlerContext ctx, final RaftWireMessage msg) throws Exception {
+        protected void channelRead0(final ChannelHandlerContext ctx, final ReplicationWireMessage msg) throws Exception {
             fiber.execute(() -> {
                 handleWireInboundMessage(ctx.channel(), msg);
             });
@@ -237,7 +237,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
 
     @FiberOnly
-    private void handleWireInboundMessage(Channel channel, RaftWireMessage msg) {
+    private void handleWireInboundMessage(Channel channel, ReplicationWireMessage msg) {
         long messageId = msg.getMessageId();
         if (msg.getReceiverId() != this.server.getNodeId()) {
             LOG.debug("Got messageId {} for {} but I am {}, ignoring!", messageId, msg.getReceiverId(), server.getNodeId());
@@ -260,7 +260,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
 
     @FiberOnly
-    private void handleWireRequestMessage(final Channel channel, final RaftWireMessage msg) {
+    private void handleWireRequestMessage(final Channel channel, final ReplicationWireMessage msg) {
         RpcWireRequest wireRequest = new RpcWireRequest(msg);
         String quorumId = wireRequest.quorumId;
 
@@ -282,13 +282,13 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                     return;
                 }
 
-                RaftWireMessage b = reply.getWireMessage(
+                ReplicationWireMessage b = reply.getWireMessage(
                         msg.getMessageId(),
                         server.getNodeId(),
                         msg.getSenderId(),
                         true
                 );
-//                RaftWireMessage.Builder b = reply.getWireMessage();
+//                ReplicationWireMessage.Builder b = reply.getWireMessage();
 //                b.setSenderId(server.getNodeId())
 //                        .setInReply(true)
 //                        .setQuorumId(msg.getQuorumId())
@@ -401,7 +401,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
                 LOG.trace("Sending message id {} to {} / {}", messageId, to, request.quorumId);
 
-                RaftWireMessage wireMessage = request.getWireMessage(
+                ReplicationWireMessage wireMessage = request.getWireMessage(
                         messageId,
                         server.getNodeId(),
                         to,
@@ -470,10 +470,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                                 protected void initChannel(SocketChannel ch) throws Exception {
                                     ChannelPipeline p = ch.pipeline();
                                     p.addLast("frameDecode", new ProtobufVarint32FrameDecoder());
-                                    p.addLast("pbufDecode", new ProtostuffDecoder<>(RaftWireMessage.getSchema()));
+                                    p.addLast("pbufDecode", new ProtostuffDecoder<>(ReplicationWireMessage.getSchema()));
 
                                     p.addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender());
-                                    p.addLast("pbufEncoder", new ProtostuffEncoder<RaftWireMessage>());
+                                    p.addLast("pbufEncoder", new ProtostuffEncoder<ReplicationWireMessage>());
 
                                     p.addLast(new MessageHandler());
                                 }

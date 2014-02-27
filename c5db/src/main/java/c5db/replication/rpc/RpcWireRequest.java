@@ -16,7 +16,7 @@
  */
 package c5db.replication.rpc;
 
-import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.ReplicationWireMessage;
 import com.dyuproject.protostuff.Message;
 
 /**
@@ -28,7 +28,7 @@ public class RpcWireRequest extends RpcMessage {
         super(0, from, quorumId, message);
     }
 
-    public RpcWireRequest(RaftWireMessage wireMessage) {
+    public RpcWireRequest(ReplicationWireMessage wireMessage) {
         super(wireMessage);
     }
 }

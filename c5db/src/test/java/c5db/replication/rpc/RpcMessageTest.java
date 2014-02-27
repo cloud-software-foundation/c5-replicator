@@ -18,7 +18,7 @@ package c5db.replication.rpc;
 
 
 import c5db.replication.generated.AppendEntries;
-import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.generated.RequestVote;
 import org.junit.Test;
 
@@ -37,7 +37,7 @@ public class RpcMessageTest {
 
         RpcMessage msg = new RpcMessage(0, 0, "quorumId", requestVote);
 
-        RaftWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
+        ReplicationWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
         assertNotEquals(null, wireMessage.getRequestVote());
         assertEquals(null, wireMessage.getAppendEntries());
         assertEquals(null, wireMessage.getAppendEntriesReply());
@@ -50,7 +50,7 @@ public class RpcMessageTest {
                 Collections.emptyList(),
                 111);
         RpcMessage msg = new RpcMessage(0, 0, "quorumId", appendEntries);
-        RaftWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
+        ReplicationWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
         assertNotEquals(null, wireMessage.getAppendEntries());
         assertEquals(null, wireMessage.getAppendEntriesReply());
         assertEquals(null, wireMessage.getRequestVote());

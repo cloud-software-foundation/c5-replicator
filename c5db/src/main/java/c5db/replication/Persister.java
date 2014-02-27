@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * A small persister that writes files to a directory.
 */
-class Persister implements RaftInfoPersistence {
+class Persister implements ReplicatorInfoPersistence {
 
     private ConfigDirectory configDirectory;
 
@@ -44,7 +44,7 @@ class Persister implements RaftInfoPersistence {
     }
 
     private long getLongofFile(String quorumId, int whichLine) throws IOException {
-        List<String> datas = configDirectory.readFile(quorumId, "raft-data");
+        List<String> datas = configDirectory.readFile(quorumId, "replication-data");
         if (datas.size() != 2)
             return 0; // corrupt file?
 
@@ -60,6 +60,6 @@ class Persister implements RaftInfoPersistence {
         List<String> datas = new ArrayList<>(2);
         datas.add(Long.toString(currentTerm));
         datas.add(Long.toString(votedFor));
-        configDirectory.writeFile(quorumId, "raft-data", datas);
+        configDirectory.writeFile(quorumId, "replication-data", datas);
     }
 }

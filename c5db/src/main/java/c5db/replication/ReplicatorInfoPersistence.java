@@ -19,10 +19,10 @@ package c5db.replication;
 import java.io.IOException;
 
 /**
- * Persist snippets of information for the raft algorithm.  These bits are critical to recover during crash-recovery,
- * so the interface is sync and expected to durably write the data to disk before returning.
+ * Persist snippets of information for the replication algorithm.  These bits are critical to recover during
+ * crash-recovery, so the interface is sync and expected to durably write the data to disk before returning.
  */
-public interface RaftInfoPersistence {
+public interface ReplicatorInfoPersistence {
     public long readCurrentTerm(String quorumId) throws IOException;
 
     public long readVotedFor(String quorumId) throws IOException;

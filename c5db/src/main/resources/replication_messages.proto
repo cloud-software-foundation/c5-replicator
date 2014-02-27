@@ -22,7 +22,7 @@ package c5db.replication;
 option java_package = "c5db.replication.generated";
 option optimize_for = SPEED;
 
-message RaftWireMessage {
+message ReplicationWireMessage {
     // envelope.
 
     optional int64       message_id = 1;

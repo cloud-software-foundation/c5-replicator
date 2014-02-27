@@ -16,7 +16,7 @@
  */
 package c5db.replication;
 
-import c5db.replication.generated.RaftWireMessage;
+import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.generated.RequestVote;
 import com.dyuproject.protostuff.LinkBuffer;
 import com.dyuproject.protostuff.LowCopyProtobufOutput;
@@ -32,19 +32,19 @@ import static org.junit.Assert.assertEquals;
 /**
  * Created by ryan on 1/29/14.
  */
-public class RaftWireMessageTest {
+public class ReplicationWireMessageTest {
 
     @Test
     public void testSimpleSerialization() throws Exception {
         RequestVote rv = new RequestVote(1, 22222, 34, 22);
-        RaftWireMessage rwm = new RaftWireMessage(
+        ReplicationWireMessage rwm = new ReplicationWireMessage(
                 1, 1, 0, "quorumId", false, rv, null, null, null
         );
 
         LowCopyProtobufOutput lcpo = new LowCopyProtobufOutput(new LinkBuffer(24));
         rwm.writeTo(lcpo, rwm);
         List<ByteBuffer> serBufs = lcpo.buffer.finish();
-        logBufsInfos("RaftWireMessage", serBufs);
+        logBufsInfos("ReplicationWireMessage", serBufs);
 
         ByteBuf b = Unpooled.wrappedBuffer(serBufs.toArray(new ByteBuffer[]{}));
         System.out.println("ByteBuf info = " + b);
