@@ -27,7 +27,7 @@ import java.util.List;
 */
 class Persister implements ReplicatorInfoPersistence {
 
-    private ConfigDirectory configDirectory;
+    private final ConfigDirectory configDirectory;
 
     Persister(ConfigDirectory configDirectory) {
         this.configDirectory = configDirectory;
@@ -44,7 +44,8 @@ class Persister implements ReplicatorInfoPersistence {
     }
 
     private long getLongofFile(String quorumId, int whichLine) throws IOException {
-        List<String> datas = configDirectory.readFile(quorumId, "replication-data");
+        List<String> datas = configDirectory.readFile(configDirectory.getQuorumRelPath(quorumId),
+                                                      ConfigDirectory.persisterFile);
         if (datas.size() != 2)
             return 0; // corrupt file?
 
@@ -60,6 +61,6 @@ class Persister implements ReplicatorInfoPersistence {
         List<String> datas = new ArrayList<>(2);
         datas.add(Long.toString(currentTerm));
         datas.add(Long.toString(votedFor));
-        configDirectory.writeFile(quorumId, "replication-data", datas);
+        configDirectory.writeFile(configDirectory.getQuorumRelPath(quorumId), ConfigDirectory.persisterFile, datas);
     }
 }
