@@ -342,13 +342,6 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                     null));
         }
 
-        if (appendMessage.getEntriesList().isEmpty()) {
-            AppendEntriesReply m = new AppendEntriesReply(currentTerm, true, 0);
-            RpcReply reply = new RpcReply(m);
-            request.reply(reply);
-            return;
-        }
-
         // 5. return failure if log doesn't contain an entry at
         // prevLogIndex who's term matches prevLogTerm (sec 5.3)
         // if msgPrevLogIndex == 0 -> special case of starting the log!
@@ -359,6 +352,18 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             RpcReply reply = new RpcReply(m);
             request.reply(reply);
             return;
+        }
+
+        if (appendMessage.getEntriesList().isEmpty()) {
+          AppendEntriesReply m = new AppendEntriesReply(currentTerm, true, 0);
+          RpcReply reply = new RpcReply(m);
+          request.reply(reply);
+          long newCommitIndex = Math.min(appendMessage.getCommitIndex(), log.getLastIndex());
+          if (newCommitIndex > lastCommittedIndex) {
+            lastCommittedIndex = newCommitIndex;
+            notifyLastCommitted();
+          }
+          return;
         }
 
         // 6. if existing entries conflict with new entries, delete all
