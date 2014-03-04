@@ -37,7 +37,7 @@ public class InRamLog implements ReplicatorLogAbstraction {
     public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
         // add them, for great justice.
 
-        assert (log.size() + 1) == entries.get(0).getIndex();
+        assert (entries.isEmpty()) || ((log.size() + 1) == entries.get(0).getIndex());
         // TODO more assertions
 
         log.addAll(entries);
