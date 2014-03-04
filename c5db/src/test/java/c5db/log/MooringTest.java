@@ -64,7 +64,7 @@ public class MooringTest {
   }
 
   @Test
-  public void testGetLastTerm() throws InterruptedException {
+  public void testGetLastTerm() throws Exception {
     // Verify that Mooring correctly gives the term of the most recent entry inserted into the log (which should
     // also be the term with the highest index, though that is not tested here).
     ByteBuffer data = ByteBuffer.wrap("123".getBytes());
@@ -76,5 +76,22 @@ public class MooringTest {
         new LogEntry(3, 5, data));
     log.logEntries(entries);
     assertEquals(3, log.getLastTerm());
+  }
+
+  @Test
+  public void logEmptyEntryList() throws Exception {
+    ByteBuffer data = ByteBuffer.wrap("123".getBytes());
+    List<LogEntry> entries = Lists.newArrayList(
+        new LogEntry(1, 1, data),
+        new LogEntry(2, 2, data),
+        new LogEntry(2, 3, data));
+    log.logEntries(entries);
+    assertEquals(2, log.getLastTerm());
+    assertEquals(3, log.getLastIndex());
+
+    // Make sure it's okay to pass an empty list
+    log.logEntries(Lists.newArrayList());
+    assertEquals(2, log.getLastTerm());
+    assertEquals(3, log.getLastIndex());
   }
 }
