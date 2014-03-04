@@ -18,6 +18,7 @@
 package c5db.replication;
 
 import c5db.interfaces.ReplicationModule;
+import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.AppendEntriesReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
@@ -50,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 import static c5db.replication.ReplicatorInstance.State;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -227,5 +229,52 @@ public class InRamLeaderTest {
 
     // Test fails iff this throws TimeoutException
     waitCond.get(TEST_TIMEOUT, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testFollowerWhoReceivedNothing() throws Exception {
+    long flakyPeer = 2;
+    ackAllRequestsToPeer(3);
+
+    // flaky peer drops all requests:
+    createRequestRule(flakyPeer, (request) -> {
+    });
+    for (int i = 1; i <= 10; i++) {
+      repl.logData(TEST_DATUM);
+    }
+    verifyCommitUpTo(10);
+
+    // At this point, the leader has sent ten requests and has committed them, but has not heard anything
+    // from one of its followers. Now that follower returns false, and the leader starts stepping back
+    // through log entries to find the most recent one it has in common with that follower. (Answer: none).
+    SettableFuture<Boolean> waitCond = SettableFuture.create();
+    createRequestRule(flakyPeer, (request) -> {
+      try {
+        AppendEntries msg = request.getRequest().getAppendMessage();
+
+        // Leader should only be sending AppendEntries
+        assertNotNull(msg);
+
+        // Return false until prevLogIndex = 0
+        if (msg.getPrevLogIndex() > 0) {
+          ackRequest(request, false);
+        } else {
+          // End test; check that the leader is correctly sending the first entry (at very least)
+          int numberEntriesSent = msg.getEntriesList().size();
+
+          assertEquals(0, msg.getPrevLogIndex());
+          assertNotEquals(0, numberEntriesSent);
+          assertEquals(1, msg.getEntriesList().get(0).getIndex());
+          assertEquals(numberEntriesSent, msg.getEntriesList().get(numberEntriesSent - 1).getIndex());
+          ackOrders.remove(flakyPeer);
+          waitCond.set(true);
+        }
+      } catch (Throwable t) {
+        // Catch assertion errors and forward to the test thread.
+        waitCond.setException(t);
+      }
+    });
+
+    assertTrue(waitCond.get(TEST_TIMEOUT, TimeUnit.SECONDS));
   }
 }
