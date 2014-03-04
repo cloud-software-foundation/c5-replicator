@@ -22,15 +22,21 @@ import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.RequestVote;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
+import c5db.util.ExceptionHandlingBatchExecutor;
+import c5db.util.ThrowFiberExceptions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.Request;
+import org.jetlang.core.BatchExecutor;
+import org.jetlang.core.RunnableExecutor;
+import org.jetlang.core.RunnableExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -52,13 +58,19 @@ public class InRamTest {
   private static final long OFFSET_STAGGERING_MILLIS = 250; // offset between different peers' clocks
   private static final byte[] TEST_DATUM = new byte[]{1, 2, 3, 4, 5, 6};
 
-  private final Fiber fiber = new ThreadFiber();
+  @Rule
+  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions(this);
+
+  private BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(fiberExceptionHandler);
+  private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(batchExecutor);
+  private final Fiber fiber = new ThreadFiber(runnableExecutor, null, true);
   private TestableInRamSim sim;
   private final Channel<Long> simStatusChanges = new MemoryChannel<>();
 
   private long currentTerm = 0;
   private long currentLeader = 0;
   private final Map<Long, Long> lastCommit = new HashMap<>();
+
 
   // Observe and record log commits made by peers.
   private void monitorCommits(ReplicationModule.IndexCommitNotice commitNotice) {
@@ -208,7 +220,7 @@ public class InRamTest {
 
   @Before
   public final void setUp() {
-    sim = new TestableInRamSim(NUM_PEERS, OFFSET_STAGGERING_MILLIS);
+    sim = new TestableInRamSim(NUM_PEERS, OFFSET_STAGGERING_MILLIS, batchExecutor);
     sim.getRpcChannel().subscribe(fiber, this::monitorOutboundRequests);
     sim.getCommitNotices().subscribe(fiber, this::monitorCommits);
     sim.start();

@@ -21,15 +21,20 @@ import c5db.interfaces.ReplicationModule;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.LogEntry;
 import c5db.replication.rpc.RpcReply;
+import c5db.util.ExceptionHandlingBatchExecutor;
+import c5db.util.ThrowFiberExceptions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
+import org.jetlang.core.RunnableExecutor;
+import org.jetlang.core.RunnableExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
@@ -71,6 +76,12 @@ public class InRamAppendEntriesTest {
   BlockingQueue<IndexCommitNotice> commits = new LinkedBlockingQueue<>();
   ReplicatorLogAbstraction log = new InRamLog();
 
+  @Rule
+  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions(this);
+
+  private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
+      new ExceptionHandlingBatchExecutor(fiberExceptionHandler));
+
   private ReplicatorInstance makeTestInstance() {
     final List<Long> peerIdList = ImmutableList.of(1L, 2L, 3L);
     ReplicatorInformationInterface info = new TestableInRamSim.Info(0) {
@@ -80,7 +91,7 @@ public class InRamAppendEntriesTest {
       }
     };
 
-    return new ReplicatorInstance(new ThreadFiber(),
+    return new ReplicatorInstance(new ThreadFiber(runnableExecutor, null, true),
         PEER_ID,
         "quorumId",
         peerIdList,
@@ -112,7 +123,7 @@ public class InRamAppendEntriesTest {
   public final void setUp() {
     repl = makeTestInstance();
     repl.start();
-    rpcFiber = new ThreadFiber();
+    rpcFiber = new ThreadFiber(runnableExecutor, null, true);
     rpcFiber.start();
     commitNotices.subscribe(rpcFiber, commits::add);
   }

@@ -30,6 +30,8 @@ import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
+import org.jetlang.core.BatchExecutor;
+import org.jetlang.core.BatchExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
@@ -141,14 +143,20 @@ public class TestableInRamSim {
   final Fiber rpcFiber;
   final List<Long> peerIds = new ArrayList<>();
   private final PoolFiberFactory fiberPool;
+  private final BatchExecutor batchExecutor;
   final Channel<RpcWireReply> replyChannel = new MemoryChannel<>();
 
 
-  // peerSize - the number of nodes in the simulation
-  // electionTimeoutOffset - the time offset, in milliseconds, between different instances' clocks.
-  public TestableInRamSim(final int peerSize, long electionTimeoutOffset) {
+  /** Set up the simulation (but don't actually start it yet).
+   *
+   * @param peerSize The number of nodes in the simulation
+   * @param electionTimeoutOffset the time offset, in milliseconds, between different instances' clocks.
+   * @param batchExecutor The jetlang batch executor for the simulation's fibers to use.
+   */
+  public TestableInRamSim(final int peerSize, long electionTimeoutOffset, BatchExecutor batchExecutor) {
     this.peerSize = peerSize;
     this.fiberPool = new PoolFiberFactory(Executors.newCachedThreadPool());
+    this.batchExecutor = batchExecutor;
     Random r = new Random();
 
     for (int i = 0; i < peerSize; i++) {
@@ -159,7 +167,7 @@ public class TestableInRamSim {
     for (long peerId : peerIds) {
       // make me a ....
       ReplicatorLogAbstraction log = new InRamLog();
-      ReplicatorInstance rep = new ReplicatorInstance(fiberPool.create(),
+      ReplicatorInstance rep = new ReplicatorInstance(fiberPool.create(batchExecutor),
           peerId,
           "foobar",
           peerIds,
@@ -174,7 +182,7 @@ public class TestableInRamSim {
       plusMillis += electionTimeoutOffset;
     }
 
-    rpcFiber = fiberPool.create();
+    rpcFiber = fiberPool.create(batchExecutor);
 
     // subscribe to the rpcChannel:
     rpcChannel.subscribe(rpcFiber, this::messageForwarder);
@@ -194,7 +202,7 @@ public class TestableInRamSim {
     assert replicators.containsKey(peerId);
     ReplicatorInstance oldRepl = replicators.get(peerId);
     ReplicatorLogAbstraction log = new InRamLog();
-    ReplicatorInstance repl = new ReplicatorInstance(fiberPool.create(),
+    ReplicatorInstance repl = new ReplicatorInstance(fiberPool.create(batchExecutor),
         peerId,
         "foobar",
         peerIds,
@@ -319,7 +327,7 @@ public class TestableInRamSim {
   }
 
   public static void main(String[] args) throws InterruptedException {
-    TestableInRamSim sim = new TestableInRamSim(3, 500);
+    TestableInRamSim sim = new TestableInRamSim(3, 500, new BatchExecutorImpl());
     sim.start();
     Thread.sleep(10 * 1000);
     sim.dispose();
