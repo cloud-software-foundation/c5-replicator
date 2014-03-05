@@ -16,7 +16,18 @@
  */
 package c5db.regionserver;
 
-import c5db.client.generated.ClientProtos;
+import c5db.client.generated.Action;
+import c5db.client.generated.Call;
+import c5db.client.generated.Get;
+import c5db.client.generated.GetResponse;
+import c5db.client.generated.MultiRequest;
+import c5db.client.generated.MultiResponse;
+import c5db.client.generated.MutateRequest;
+import c5db.client.generated.MutateResponse;
+import c5db.client.generated.MutationProto;
+import c5db.client.generated.RegionAction;
+import c5db.client.generated.Response;
+import c5db.client.generated.ScanRequest;
 import c5db.regionserver.scanner.ScanRunnable;
 import c5db.regionserver.scanner.ScannerManager;
 import io.netty.channel.ChannelHandlerContext;
@@ -34,174 +45,170 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class C5ServerHandler extends
-        SimpleChannelInboundHandler<ClientProtos.Call> {
-    ScannerManager scanManager = ScannerManager.INSTANCE;
+    SimpleChannelInboundHandler<Call> {
+  private final RegionServerService regionServerService;
+  ScannerManager scanManager = ScannerManager.INSTANCE;
 
-    private final RegionServerService regionServerService;
-    public C5ServerHandler(RegionServerService myService) {
-        this.regionServerService = myService;
+  public C5ServerHandler(RegionServerService myService) {
+    this.regionServerService = myService;
+  }
+
+  @Override
+  public void channelRead0(final ChannelHandlerContext ctx,
+                           final Call call)
+      throws Exception {
+    switch (call.getCommand()) {
+      case GET:
+        get(ctx, call);
+        break;
+      case MUTATE:
+        mutate(ctx, call);
+        break;
+      case SCAN:
+        scan(ctx, call);
+        break;
+      case MULTI:
+        multi(ctx, call);
+        break;
     }
+  }
 
-    @Override
-    public void channelRead0(final ChannelHandlerContext ctx,
-                             final ClientProtos.Call call)
-            throws Exception {
-        switch (call.getCommand()) {
-            case GET:
-                get(ctx, call);
-                break;
-            case MUTATE:
-                mutate(ctx, call);
-                break;
-            case SCAN:
-                scan(ctx, call);
-                break;
-            case MULTI:
-                multi(ctx, call);
-                break;
-        }
-    }
+  private void multi(ChannelHandlerContext ctx, Call call)
+      throws IOException {
+    MultiRequest request = call.getMulti();
+    MultiResponse multiResponse = new MultiResponse();
 
-    private void multi(ChannelHandlerContext ctx, ClientProtos.Call call)
-            throws IOException {
-        ClientProtos.MultiRequest request = call.getMulti();
-        ClientProtos.MultiResponse.Builder multiResponse =
-                ClientProtos.MultiResponse.newBuilder();
+    List<MutationProto> mutations = new ArrayList<>();
 
+    for (RegionAction regionAction : request.getRegionActionList()) {
 
-        List<ClientProtos.MutationProto> mutations = new ArrayList<>();
-        for (int i = 0; i != request.getRegionActionCount(); i++) {
-            ClientProtos.RegionAction regionAction = request.getRegionAction(i);
-            for (ClientProtos.Action actionUnion : regionAction.getActionList()) {
-                if (actionUnion.hasMutation()) {
-                    mutations.add(actionUnion.getMutation());
-                } else {
-                    throw new IOException("Unsupported atomic action type: " + actionUnion);
-                }
-            }
-        }
-        if (!mutations.isEmpty()) {
-            ClientProtos.MutationProto firstMutate = mutations.get(0);
-            byte[] row = firstMutate.getRow().toByteArray();
-            RowMutations rm = new RowMutations(row);
-            for (ClientProtos.MutationProto mutate : mutations) {
-                ClientProtos.MutationProto.MutationType type = mutate.getMutateType();
-                switch (mutate.getMutateType()) {
-                    case PUT:
-                        rm.add(ReverseProtobufUtil.toPut(mutate, null));
-                        break;
-                    case DELETE:
-                        rm.add(ReverseProtobufUtil.toDelete(mutate, null));
-                        break;
-                    default:
-                        throw new RuntimeException(
-                                "mutate supports atomic put and/or delete, not "
-                                        + type.name());
-                }
-            }
-            HRegion region = regionServerService.getOnlineRegion("1");
-            region.mutateRow(rm);
-        }
-        ClientProtos.Response response = ClientProtos
-                .Response
-                .newBuilder()
-                .setCommand(ClientProtos.Response.Command.MULTI)
-                .setCommandId(call.getCommandId())
-                .setMulti(multiResponse.build()).build();
-        ctx.writeAndFlush(response);
-    }
-
-    private void mutate(ChannelHandlerContext ctx, ClientProtos.Call call)
-            throws IOException {
-        ClientProtos.MutateRequest mutateIn = call.getMutate();
-        ClientProtos.MutateResponse.Builder mutateResponse =
-                ClientProtos.MutateResponse.newBuilder();
-        try {
-            HRegion region = regionServerService.getOnlineRegion("1");
-            switch (mutateIn.getMutation().getMutateType()) {
-                case PUT:
-                    region.put(ReverseProtobufUtil.toPut(mutateIn.getMutation(), null));
-                    break;
-                case DELETE:
-                    region.delete(ReverseProtobufUtil.toDelete(mutateIn.getMutation(), null));
-                    break;
-            }
-            mutateResponse.setProcessed(true);
-        } catch (IOException e) {
-            mutateResponse.setProcessed(false);
-            e.printStackTrace();
-        }
-
-        ClientProtos.Response response = ClientProtos
-                .Response
-                .newBuilder()
-                .setCommand(ClientProtos.Response.Command.MUTATE)
-                .setCommandId(call.getCommandId())
-                .setMutate(mutateResponse.build()).build();
-        ctx.writeAndFlush(response);
-    }
-
-    private void scan(ChannelHandlerContext ctx, ClientProtos.Call call)
-            throws IOException {
-
-        ClientProtos.ScanRequest scanIn = call.getScan();
-
-        long scannerId = 0;
-        scannerId = getScannerId(scanIn, scannerId);
-        Integer numberOfRowsToSend = scanIn.getNumberOfRows();
-
-        Channel<Integer> channel = scanManager.getChannel(scannerId);
-        // New Scanner
-        if (null == channel) {
-            Fiber fiber = new ThreadFiber();
-            fiber.start();
-            channel = new MemoryChannel<>();
-
-            ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId,
-                    regionServerService.getOnlineRegion("1"));
-            channel.subscribe(fiber, scanRunnable);
-            scanManager.addChannel(scannerId, channel);
-        }
-        channel.publish(numberOfRowsToSend);
-    }
-
-    private long getScannerId(ClientProtos.ScanRequest scanIn, long scannerId) {
-        if (scanIn.hasScannerId() && scanIn.getScannerId() > 0) {
-            scannerId = scanIn.getScannerId();
+      for (Action actionUnion : regionAction.getActionList()) {
+        if (actionUnion.getMutation() != null) {
+          mutations.add(actionUnion.getMutation());
         } else {
-            // Make a scanner with an Id not 0
-            while (scannerId == 0) {
-                scannerId = System.currentTimeMillis();
-            }
+          throw new IOException("Unsupported atomic action type: " + actionUnion);
         }
-        return scannerId;
+      }
     }
-
-    private void get(ChannelHandlerContext ctx, ClientProtos.Call call)
-            throws IOException {
-        ClientProtos.Get getIn = call.getGet().getGet();
-        ClientProtos.GetResponse.Builder getResponse =
-                ClientProtos.GetResponse.newBuilder();
-        HRegion region = regionServerService.getOnlineRegion("1");
-        Result result = region.get(ReverseProtobufUtil.toGet(getIn));
-        if (! getIn.getExistenceOnly()){
-            getResponse.setResult(ReverseProtobufUtil.toResult(result));
-        } else {
-            getResponse.setResult(ClientProtos.Result.newBuilder().setExists(result.getExists()));
+    if (!mutations.isEmpty()) {
+      MutationProto firstMutate = mutations.get(0);
+      byte[] row = firstMutate.getRow().array();
+      RowMutations rm = new RowMutations(row);
+      for (MutationProto mutate : mutations) {
+        MutationProto.MutationType type = mutate.getMutateType();
+        switch (mutate.getMutateType()) {
+          case PUT:
+            rm.add(ReverseProtobufUtil.toPut(mutate));
+            break;
+          case DELETE:
+            rm.add(ReverseProtobufUtil.toDelete(mutate));
+            break;
+          default:
+            throw new RuntimeException(
+                "mutate supports atomic put and/or delete, not "
+                    + type.name());
         }
-        ClientProtos.Response response = ClientProtos
-                .Response
-                .newBuilder()
-                .setCommand(ClientProtos.Response.Command.GET)
-                .setCommandId(call.getCommandId())
-                .setGet(getResponse.build()).build();
+      }
+      HRegion region = regionServerService.getOnlineRegion("1");
+      region.mutateRow(rm);
+    }
+    Response response = new Response(Response.Command.MULTI,
+        call.getCommandId(),
+        null,
+        null,
+        null,
+        multiResponse);
+    ctx.writeAndFlush(response);
+  }
 
-        ctx.writeAndFlush(response);
+  private void mutate(ChannelHandlerContext ctx, Call call)
+      throws IOException {
+    MutateRequest mutateIn = call.getMutate();
+    MutateResponse mutateResponse;
+    try {
+      HRegion region = regionServerService.getOnlineRegion("1");
+      switch (mutateIn.getMutation().getMutateType()) {
+        case PUT:
+          region.put(ReverseProtobufUtil.toPut(mutateIn.getMutation()));
+          break;
+        case DELETE:
+          region.delete(ReverseProtobufUtil.toDelete(mutateIn.getMutation()));
+          break;
+      }
+      mutateResponse = new MutateResponse(null, true);
+    } catch (IOException e) {
+      mutateResponse = new MutateResponse(null, false);
+      e.printStackTrace();
     }
 
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        ctx.flush();
+    Response response = new Response(Response.Command.MUTATE,
+        call.getCommandId(),
+        null,
+        mutateResponse,
+        null,
+        null);
+    ctx.writeAndFlush(response);
+  }
+
+  private void scan(ChannelHandlerContext ctx, Call call)
+      throws IOException {
+
+    ScanRequest scanIn = call.getScan();
+
+    long scannerId = 0;
+    scannerId = getScannerId(scanIn, scannerId);
+    Integer numberOfRowsToSend = scanIn.getNumberOfRows();
+
+    Channel<Integer> channel = scanManager.getChannel(scannerId);
+    // New Scanner
+    if (null == channel) {
+      Fiber fiber = new ThreadFiber();
+      fiber.start();
+      channel = new MemoryChannel<>();
+
+      ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId,
+          regionServerService.getOnlineRegion("1"));
+      channel.subscribe(fiber, scanRunnable);
+      scanManager.addChannel(scannerId, channel);
     }
+    channel.publish(numberOfRowsToSend);
+  }
+
+  private long getScannerId(ScanRequest scanIn, long scannerId) {
+    if (scanIn.getScannerId() > 0) {
+      scannerId = scanIn.getScannerId();
+    } else {
+      // Make a scanner with an Id not 0
+      do {
+        scannerId = System.currentTimeMillis();
+      } while (scannerId == 0);
+    }
+    return scannerId;
+  }
+
+  private void get(ChannelHandlerContext ctx, Call call)
+      throws IOException {
+    Get getIn = call.getGet().getGet();
+
+    HRegion region = regionServerService.getOnlineRegion("1");
+    Result regionResult = region.get(ReverseProtobufUtil.toGet(getIn));
+    c5db.client.generated.Result result;
+
+    if (getIn.getExistenceOnly()) {
+      result = new c5db.client.generated.Result(new ArrayList<>(), 0, regionResult.getExists());
+    } else {
+      result = ReverseProtobufUtil.toResult(regionResult);
+    }
+
+    GetResponse getResponse = new GetResponse(result);
+
+    Response response = new Response(Response.Command.GET, call.getCommandId(), getResponse, null, null, null);
+    ctx.writeAndFlush(response);
+  }
+
+  @Override
+  public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+    ctx.flush();
+  }
 
 }

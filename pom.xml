@@ -288,6 +288,10 @@
                                         <name>builder_pattern</name>
                                         <value>true</value>
                                     </property>
+                                    <property>
+                                        <name>ByteBuffer</name>
+                                        <value>true</value>
+                                    </property>
                                 </options>
                             </protoModule>
                         </protoModules>

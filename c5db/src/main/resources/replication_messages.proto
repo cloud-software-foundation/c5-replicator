@@ -47,7 +47,7 @@ message LogEntry {
     optional int64 index = 2;
 
 
-    optional bytes data = 3 [ByteBuffer = true];
+    optional bytes data = 3;
 }
 
 message RequestVote {
