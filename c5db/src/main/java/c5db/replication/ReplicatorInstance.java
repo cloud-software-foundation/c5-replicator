@@ -164,6 +164,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         Random r = new Random();
         this.myElectionTimeout = r.nextInt((int) info.electionTimeout()) + info.electionTimeout();
         this.lastRPC = info.currentTimeMillis();
+        this.lastCommittedIndex = 0;
 
         assert this.peers.contains(this.myId);
 
@@ -409,10 +410,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
           RpcReply reply = new RpcReply(m);
           request.reply(reply);
           long newCommitIndex = Math.min(appendMessage.getCommitIndex(), log.getLastIndex());
-          if (newCommitIndex > lastCommittedIndex) {
-            lastCommittedIndex = newCommitIndex;
-            notifyLastCommitted();
-          }
+          setLastCommittedIndex(newCommitIndex);
           return;
         }
 
@@ -439,8 +437,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                         request.reply(reply);
 
                         // Notify and mark the last committed index.
-                        lastCommittedIndex = Math.min(appendMessage.getCommitIndex(), log.getLastIndex());
-                        notifyLastCommitted();
+                        long newCommitIndex = Math.min(appendMessage.getCommitIndex(), log.getLastIndex());
+                        setLastCommittedIndex(newCommitIndex);
                     }
 
                     @Override
@@ -733,7 +731,6 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
         // none so far!
         myFirstIndexAsLeader = 0;
-        lastCommittedIndex = 0; // unknown as of yet
 
 
       stateChangeChannel.publish(
@@ -945,11 +942,19 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         if (mostAcked == lastCommittedIndex) {
             return ;
         }
-        this.lastCommittedIndex = mostAcked;
-        notifyLastCommitted();
+        setLastCommittedIndex(mostAcked);
         LOG.trace("{} discovered new visible entry {}", myId, lastCommittedIndex);
 
         // TODO take action and notify clients (pending new system frameworks)
+    }
+
+    private void setLastCommittedIndex(long newLastCommittedIndex) {
+      if (newLastCommittedIndex < lastCommittedIndex) {
+        LOG.warn("{} New lastCommittedIndex {} is smaller than previous lastCommittedIndex {}", myId, newLastCommittedIndex, lastCommittedIndex);
+      } else if (newLastCommittedIndex > lastCommittedIndex) {
+        lastCommittedIndex = newLastCommittedIndex;
+        notifyLastCommitted();
+      }
     }
 
     private void notifyLastCommitted() {

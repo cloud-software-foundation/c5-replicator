@@ -299,6 +299,40 @@ public class InRamTest {
   }
 
   @Test
+  public void testCommitIndexOnBecomingLeader() throws Exception {
+    // Check case where a node with a certain commit index becomes leader, and maintains that commit index
+    // Have the first leader log data, and have every other follower verify it has committed
+    waitForNewLeader(1);
+    long firstTerm = currentTerm;
+    long firstLeader = currentLeader;
+    logDataAndWait(TEST_DATUM);
+    for (long peerId : sim.getReplicators().keySet()) {
+      waitForCommit(peerId, 1);
+    }
+
+    // Kill the first leader; wait for a second leader to come to power
+    sim.killPeer(currentLeader);
+    waitForNewLeader(firstTerm + 1);
+    long secondLeader = currentLeader;
+    assert secondLeader != firstLeader;
+
+    // Now listen for requests sent from the second leader. Report back the commit index it is sending, after
+    // asserting that it is, in fact, sending AppendEntries messages.
+    SettableFuture<Long> commitIndexFuture = SettableFuture.create();
+    sim.getRpcChannel().subscribe(fiber, (request) -> {
+      RpcRequest msg = request.getRequest();
+      if (msg.from == secondLeader) {
+        AppendEntries appendMessage = msg.getAppendMessage();
+        if (appendMessage == null) {
+          commitIndexFuture.setException(new AssertionError());
+        }
+        commitIndexFuture.set(appendMessage.getCommitIndex());
+      }
+    });
+    assertEquals(1, (long) commitIndexFuture.get(TEST_TIMEOUT, TimeUnit.SECONDS));
+  }
+
+  @Test
   public void testSimpleReplication() throws Exception {
     // Replication "happy path": a leader broadcasts data successfully to all other nodes.
 
