@@ -63,6 +63,7 @@ import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.channels.Session;
 import org.jetlang.channels.SessionClosed;
+import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
@@ -122,8 +123,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 }
                 LOG.debug("Creating replicator instance for {} peers {}", quorumId, peers);
                 Mooring logMooring = logModule.getMooring(quorumId);
+                MemoryChannel<Throwable> throwableChannel = new MemoryChannel<>();
+                BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(throwableChannel::publish);
                 ReplicatorInstance instance =
-                        new ReplicatorInstance(fiberFactory.create(),
+                        new ReplicatorInstance(fiberFactory.create(batchExecutor),
                                 server.getNodeId(),
                                 quorumId,
                                 peers,
@@ -134,6 +137,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                                 replicatorStateChanges,
                                 indexCommitNotices
                                 );
+                throwableChannel.subscribe(fiber, instance::failReplicatorInstance);
                 replicatorInstances.put(quorumId, instance);
                 future.set(instance);
             }

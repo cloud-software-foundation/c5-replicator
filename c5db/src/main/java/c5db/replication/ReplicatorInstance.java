@@ -254,7 +254,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
       }
     }
 
-    private void failReplicatorInstance(Throwable e) {
+    void failReplicatorInstance(Throwable e) {
         stateChangeChannel.publish(
                 new ReplicatorInstanceEvent(
                     ReplicatorInstanceEvent.EventType.QUORUM_FAILURE,
