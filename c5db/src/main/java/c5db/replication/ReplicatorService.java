@@ -30,6 +30,7 @@ import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
+import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberOnly;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
@@ -213,7 +214,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         this.workerGroup = workerGroup;
         this.port = port;
         this.server = server;
-        this.fiber = fiberFactory.create();
+        this.fiber = fiberFactory.create(new ExceptionHandlingBatchExecutor(this::failModule));
         this.allChannels = new DefaultChannelGroup(workerGroup.next());
 
         this.persister = new Persister(server.getConfigDirectory());
@@ -547,6 +548,20 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 }, fiber);
             }
         });
+    }
+
+    protected void failModule(Throwable t) {
+      LOG.error("ReplicatorService failure, shutting down all ReplicatorInstances");
+      try {
+        replicatorInstances.values().forEach(ReplicatorInstance::dispose);
+        fiber.dispose();
+        if (listenChannel != null) {
+          listenChannel.close();
+        }
+        allChannels.close();
+      } finally {
+        notifyFailed(t);
+      }
     }
 
     @Override
