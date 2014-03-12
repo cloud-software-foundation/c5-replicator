@@ -20,16 +20,13 @@
 package c5db.client;
 
 import c5db.MiniClusterBase;
-import com.google.protobuf.ByteString;
+import com.dyuproject.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Get;
-
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -109,7 +106,7 @@ public class TestingUtil extends MiniClusterBase {
     table.put(new Put(Bytes.add(row, new byte[]{0x00})).add(cf, cq, value));
     table.put(new Put(Bytes.add(row, new byte[]{0x00, 0x01})).add(cf, cq, value));
     Scan scan = new Scan(row);
-    scan.setStopRow(Bytes.add(row, new byte[] { 0x02}));
+    scan.setStopRow(Bytes.add(row, new byte[]{0x02}));
 
     scan.addColumn(cf, cq);
     ResultScanner resultScanner = table.getScanner(scan);

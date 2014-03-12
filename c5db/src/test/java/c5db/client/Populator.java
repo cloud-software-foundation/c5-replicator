@@ -17,7 +17,7 @@
 package c5db.client;
 
 import c5db.MiniClusterBase;
-import com.google.protobuf.ByteString;
+import com.dyuproject.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;

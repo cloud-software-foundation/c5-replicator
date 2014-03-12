@@ -38,14 +38,14 @@ enum PhysicalEntryTypes {
 }
 
 message Entry {
-    repeated bytes key_values = 10 [ByteBuffer = true];
+    repeated bytes key_values = 10;
 
 
     optional string regionInfo = 1;
-    optional bytes key = 2 [ByteBuffer = true];
-    optional bytes family = 3 [ByteBuffer = true];
-    optional bytes column = 4 [ByteBuffer = true];
-    optional bytes value = 5 [ByteBuffer = true];
+    optional bytes key = 2;
+    optional bytes family = 3;
+    optional bytes column = 4;
+    optional bytes value = 5;
     optional uint64 ts = 6;
 }
 
@@ -75,7 +75,7 @@ message OLogData {
     // Inline quorum tag mapping, that will apply to this entry.
     optional QuorumMapping quorum_tag_mapping = 2;
 
-    repeated bytes kvs = 3 [ByteBuffer = true];
+    repeated bytes kvs = 3;
 }
 
 message QuorumMapping {
@@ -104,5 +104,5 @@ message OLogEntry {
 
     optional int64 term = 4;
 
-    optional bytes value = 5 [ByteBuffer = true];
+    optional bytes value = 5;
 }
