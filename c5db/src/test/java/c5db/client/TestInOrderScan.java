@@ -13,9 +13,6 @@
  *
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- *  This file incorporates work covered by the following copyright and
- *  permission notice:
  */
 package c5db.client;
 
@@ -24,7 +21,6 @@ import com.google.protobuf.ByteString;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
