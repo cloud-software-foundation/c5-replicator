@@ -20,6 +20,7 @@ import c5db.generated.Log;
 import c5db.replication.ReplicatorLogAbstraction;
 import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.protobuf.ByteString;
 
 import java.util.ArrayList;
@@ -58,10 +59,26 @@ public class Mooring implements ReplicatorLogAbstraction {
         return this.log.logEntry(oLogEntries, quorumId);
     }
 
-    @Override
-    public LogEntry getLogEntry(long index) {
-        return this.log.getLogEntry(index, quorumId);
+  @Override
+  public ListenableFuture<LogEntry> getLogEntry(long index) {
+    // TODO replace with an async implementation
+    SettableFuture<LogEntry> future = SettableFuture.create();
+    future.set(this.log.getLogEntry(index, quorumId));
+    return future;
+  }
+
+  @Override
+  public ListenableFuture<List<LogEntry>> getLogEntries(long start, long end) {
+    // TODO replace with an async implementation and retrieve entries in a batch
+    SettableFuture<List<LogEntry>> future = SettableFuture.create();
+    ArrayList<LogEntry> entries = new ArrayList<>();
+    for (long i = start; i < end; i++) {
+      LogEntry entry = log.getLogEntry(i, quorumId);
+      entries.add(entry);
     }
+    future.set(entries);
+    return future;
+  }
 
     @Override
     public long getLogTerm(long index) {

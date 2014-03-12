@@ -337,7 +337,7 @@ public class InRamTest {
     // Replication "happy path": a leader broadcasts data successfully to all other nodes.
 
     waitForNewLeader(1);
-    logDataAndWait(new byte[]{1, 2, 3, 4, 5, 6});
+    logDataAndWait(TEST_DATUM);
 
     for (long peerId : sim.peerIds) {
       if (peerId != currentLeader) {
@@ -361,12 +361,10 @@ public class InRamTest {
 
     // Future used to wait until follower times out. When it times out it will send out a RequestVote with
     // currentTerm == 2, at which point this.currentTerm will increment.
-    ListenableFuture<Boolean> future = sim.dropIncomingRequests(followerId,
+    sim.dropIncomingRequests(followerId,
         (request) -> true,
-        (request) -> this.currentTerm > 1);
+        (request) -> false);
     sim.startTimeout(followerId);
-    future.get(TEST_TIMEOUT, TimeUnit.SECONDS);
-    sim.stopTimeout(followerId);
 
     waitForNewLeader(termOfFirstLeader + 1);
     assertNotEquals(0, currentLeader);
@@ -385,8 +383,6 @@ public class InRamTest {
     // A follower falls out of sync with logged and committed entries, then is elected leader.
 
     waitForNewLeader(1);
-    byte[] datum = new byte[]{1, 2, 3, 4, 5, 6};
-
     long followerId = pickFollower();
     assert followerId != 0;
 
@@ -395,15 +391,15 @@ public class InRamTest {
         (request) -> request.getAppendMessage().getEntriesList().size() > 0,
         (request) -> request.getAppendMessage().getCommitIndex() >= 2);
 
-    logDataAndWait(datum);
-    logDataAndWait(datum);
+    logDataAndWait(TEST_DATUM);
+    logDataAndWait(TEST_DATUM);
     waitForCommit(currentLeader, 2);
     future.get(TEST_TIMEOUT, TimeUnit.SECONDS);
     waitForCommit(followerId, 2);
 
     ReplicatorLogAbstraction log = sim.getLog(followerId);
     assertEquals(2, log.getLastIndex());
-    assertEquals(datum, log.getLogEntry(1).getData().array());
-    assertEquals(datum, log.getLogEntry(2).getData().array());
+    assertEquals(TEST_DATUM, log.getLogEntry(1).get().getData().array());
+    assertEquals(TEST_DATUM, log.getLogEntry(2).get().getData().array());
   }
 }

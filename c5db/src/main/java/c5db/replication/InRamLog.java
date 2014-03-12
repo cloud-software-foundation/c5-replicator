@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.replication;
 
 import c5db.replication.generated.LogEntry;
@@ -28,60 +29,77 @@ import java.util.List;
  */
 public class InRamLog implements ReplicatorLogAbstraction {
 
-    private final ArrayList<LogEntry> log = new ArrayList<>();
+  private final ArrayList<LogEntry> log = new ArrayList<>();
 
-    public InRamLog() {
+  public InRamLog() {
+  }
+
+  @Override
+  public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
+    // add them, for great justice.
+
+    assert (entries.isEmpty()) || ((log.size() + 1) == entries.get(0).getIndex());
+    // TODO more assertions
+
+    log.addAll(entries);
+
+
+    SettableFuture<Boolean> r = SettableFuture.create();
+    r.set(true);
+    return r;
+  }
+
+  @Override
+  public ListenableFuture<LogEntry> getLogEntry(long index) {
+    assert index > 0;
+
+    SettableFuture<LogEntry> future = SettableFuture.create();
+    if (index - 1 >= log.size()) {
+      future.set(null);
+    } else {
+      future.set(log.get((int) index - 1));
     }
+    return future;
+  }
 
-    @Override
-    public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
-        // add them, for great justice.
+  @Override
+  public ListenableFuture<List<LogEntry>> getLogEntries(long start, long end) {
+    assert start > 0;
+    assert end >= start;
 
-        assert (entries.isEmpty()) || ((log.size() + 1) == entries.get(0).getIndex());
-        // TODO more assertions
+    SettableFuture<List<LogEntry>> future = SettableFuture.create();
+    future.set(log.subList((int) start - 1, (int) end - 1));
+    return future;
+  }
 
-        log.addAll(entries);
+  @Override
+  public synchronized long getLogTerm(long index) {
+    assert index > 0;
 
-
-        SettableFuture<Boolean> r = SettableFuture.create();
-        r.set(true);
-        return r;
+    if (index - 1 >= log.size()) {
+      return 0;
     }
+    return log.get((int) index - 1).getTerm();
+  }
 
-    @Override
-    public LogEntry getLogEntry(long index) {
-        assert index > 0;
-        if (index - 1 >= log.size()) {
-          return null;
-        }
-        return log.get((int) index - 1);
+  @Override
+  public synchronized long getLastTerm() {
+    if (log.isEmpty()) {
+      return 0;
     }
+    return log.get(log.size() - 1).getTerm();
+  }
 
-    @Override
-    public synchronized long getLogTerm(long index) {
-        assert index > 0;
-        if (index - 1 >= log.size()) {
-          return 0;
-        }
-        return log.get((int) index - 1).getTerm();
-    }
+  @Override
+  public synchronized long getLastIndex() {
+    return log.size();
+  }
 
-    @Override
-    public synchronized long getLastTerm() {
-        if (log.isEmpty()) return 0;
-        return log.get(log.size() - 1).getTerm();
-    }
-
-    @Override
-    public synchronized long getLastIndex() {
-        return log.size();
-    }
-
-    @Override
-    public synchronized ListenableFuture<Boolean> truncateLog(long entryIndex) {
-        log.subList((int) entryIndex - 1, log.size()).clear();
-        SettableFuture<Boolean> r = SettableFuture.create();
-        r.set(true);
-        return r;
-    }
+  @Override
+  public synchronized ListenableFuture<Boolean> truncateLog(long entryIndex) {
+    log.subList((int) entryIndex - 1, log.size()).clear();
+    SettableFuture<Boolean> r = SettableFuture.create();
+    r.set(true);
+    return r;
+  }
 }

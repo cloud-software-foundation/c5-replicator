@@ -834,9 +834,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             // for each peer, figure out how many "back messages" should I send:
             final long peerNextIdx = this.peersNextIndex.get(peer);
 
-            ArrayList<LogEntry> peerEntries = newLogEntries;
             if (peerNextIdx < firstInList) {
-                long moreCount = firstInList - peerNextIdx;
+                final long moreCount = firstInList - peerNextIdx;
                 LOG.debug("{} sending {} more log entires to peer {}", myId, moreCount, peer);
 
                 // TODO check moreCount is reasonable, and available in log. Otherwise do alternative peer catch up
@@ -845,65 +844,95 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                 // TODO allow for smaller 'catch up' messages so we dont try to create a 400GB sized message.
 
                 // TODO cache these extra LogEntry objects so we dont recreate too many of them.
-                peerEntries = new ArrayList<>((int) (newLogEntries.size() + moreCount));
-                for (long i = peerNextIdx; i < firstInList; i++) {
-                    LogEntry entry = log.getLogEntry(i);
-                    peerEntries.add(entry);
-                }
-                // TODO make sure the lists splice neatly together. The check below fails when newLogEntries is empty
-                //assert (peerEntries.get(peerEntries.size()-1).getIndex()+1) == newLogEntries.get(0).getIndex();
-                peerEntries.addAll(newLogEntries);
-            }
 
-            final long prevLogIndex = peerNextIdx - 1;
-            final long prevLogTerm;
-            if (prevLogIndex == 0) {
-              prevLogTerm = 0;
+                ListenableFuture<List<LogEntry>> peerEntriesFuture = log.getLogEntries(peerNextIdx, firstInList);
+
+                Futures.addCallback(peerEntriesFuture, new FutureCallback<List<LogEntry>>() {
+                  @Override
+                  public void onSuccess(List<LogEntry> entriesFromLog) {
+                    // TODO make sure the lists splice neatly together.
+                    assert entriesFromLog.size() == moreCount;
+                    if (peerNextIdx != peersNextIndex.get(peer) ||
+                        myState != State.LEADER) {
+                      // These were the same when we started checking the log, but they're not now -- that means
+                      // things happened while the log was retrieving, so discard this result. This is safe because
+                      // the next (or concurrent) run of consumeQueue has better information.
+                      return;
+                    }
+
+                    List<LogEntry> entriesToAppend = new ArrayList<>((int) (newLogEntries.size() + moreCount));
+                    entriesToAppend.addAll(entriesFromLog);
+                    entriesToAppend.addAll(newLogEntries);
+                    sendAppendEntries(peer, peerNextIdx, lastIndexSent, majority, entriesToAppend);
+                  }
+
+                  @Override
+                  public void onFailure(Throwable throwable) {
+                    // Failed to retrieve from local log
+                    // TODO is this situation ever recoverable?
+                    failReplicatorInstance(throwable);
+                  }
+                }, fiber);
             } else {
-              prevLogTerm = log.getLogTerm(prevLogIndex);
+              sendAppendEntries(peer, peerNextIdx, lastIndexSent, majority, newLogEntries);
             }
-
-            // catch them up so the next RPC wont over-send old junk.
-            peersNextIndex.put(peer, lastIndexSent + 1);
-
-            AppendEntries msg = new AppendEntries(
-                    currentTerm, myId, prevLogIndex, prevLogTerm,
-                    peerEntries,
-                    lastCommittedIndex
-            );
-
-            RpcRequest request = new RpcRequest(peer, myId, quorumId, msg);
-            AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
-                @Override
-                public void onMessage(RpcWireReply message) {
-                    LOG.trace("{} got a reply {}", myId, message);
-
-                    boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
-                    if (!wasSuccessful) {
-                        // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
-                        if (message.getAppendReplyMessage().getMyLastLogEntry() != 0) {
-                            peersNextIndex.put(peer, message.getAppendReplyMessage().getMyLastLogEntry());
-                        } else {
-                            peersNextIndex.put(peer, peerNextIdx - 1);
-                        }
-                    } else {
-                        // we have been successfully acked up to this point.
-                        LOG.trace("{} peer {} acked for {}", myId, peer, lastIndexSent);
-                        peersLastAckedIndex.put(peer, lastIndexSent);
-
-                        calculateLastVisible(majority, lastIndexSent);
-                    }
-                }
-            }, 5, TimeUnit.SECONDS, new Runnable() {
-                        @Override
-                        public void run() {
-                            LOG.trace("{} peer {} timed out", myId, peer);
-                            // Do nothing -> let next timeout handle things.
-                            // This timeout exists just so that we can cancel and clean up stuff in jetlang.
-                        }
-                    }
-            );
         }
+    }
+
+    @FiberOnly
+    private void sendAppendEntries(long peer, long peerNextIdx, long lastIndexSent, long majority,
+                                   final List<LogEntry> entries) {
+      assert (entries.size() == 0) || (entries.get(0).getIndex() == peerNextIdx);
+      assert (entries.size() == 0) || (entries.get(entries.size() - 1).getIndex() == lastIndexSent);
+
+      final long prevLogIndex = peerNextIdx - 1;
+      final long prevLogTerm;
+      if (prevLogIndex == 0) {
+        prevLogTerm = 0;
+      } else {
+        prevLogTerm = log.getLogTerm(prevLogIndex);
+      }
+
+      // catch them up so the next RPC wont over-send old junk.
+      peersNextIndex.put(peer, lastIndexSent + 1);
+
+      AppendEntries msg = new AppendEntries(
+              currentTerm, myId, prevLogIndex, prevLogTerm,
+              entries,
+              lastCommittedIndex
+      );
+
+      RpcRequest request = new RpcRequest(peer, myId, quorumId, msg);
+      AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
+          @Override
+          public void onMessage(RpcWireReply message) {
+              LOG.trace("{} got a reply {}", myId, message);
+
+              boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
+              if (!wasSuccessful) {
+                  // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
+                  if (message.getAppendReplyMessage().getMyLastLogEntry() != 0) {
+                      peersNextIndex.put(peer, message.getAppendReplyMessage().getMyLastLogEntry());
+                  } else {
+                      peersNextIndex.put(peer, peerNextIdx - 1);
+                  }
+              } else {
+                  // we have been successfully acked up to this point.
+                  LOG.trace("{} peer {} acked for {}", myId, peer, lastIndexSent);
+                  peersLastAckedIndex.put(peer, lastIndexSent);
+
+                  calculateLastVisible(majority, lastIndexSent);
+              }
+          }
+      }, 5, TimeUnit.SECONDS, new Runnable() {
+                  @Override
+                  public void run() {
+                      LOG.trace("{} peer {} timed out", myId, peer);
+                      // Do nothing -> let next timeout handle things.
+                      // This timeout exists just so that we can cancel and clean up stuff in jetlang.
+                  }
+              }
+      );
     }
 
     private void calculateLastVisible(long majority, long lastIndexSent) {

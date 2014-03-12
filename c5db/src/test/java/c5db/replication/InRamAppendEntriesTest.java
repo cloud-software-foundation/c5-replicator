@@ -233,7 +233,7 @@ public class InRamAppendEntriesTest {
   }
 
   @Test
-  public void testTermConflictAtMostRecentLogEntry() throws InterruptedException {
+  public void testTermConflictAtMostRecentLogEntry() throws Exception {
     // "If an existing entry conflicts with a new one (same index but different terms),
     // delete the existing entry and all that follow it (§5.3)"
     // This tests the case where the conflict is the most recent entry.
@@ -247,14 +247,14 @@ public class InRamAppendEntriesTest {
     syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, Lists.newArrayList(entry), 0));
 
-    assertNotEquals(3, log.getLogEntry(5).getTerm());
-    assertEquals(4, log.getLogEntry(5).getTerm());
+    assertNotEquals(3, log.getLogEntry(5).get().getTerm());
+    assertEquals(4, log.getLogEntry(5).get().getTerm());
     assertEquals(5, log.getLastIndex());
     assertEquals(4, log.getLastTerm());
   }
 
   @Test
-  public void testTermConflictAtPreviousEntry() throws InterruptedException {
+  public void testTermConflictAtPreviousEntry() throws Exception {
     // "If an existing entry conflicts with a new one (same index but different terms),
     // delete the existing entry and all that follow it (§5.3)"
     // This tests the case where the conflict is not the most recent entry.
@@ -268,10 +268,10 @@ public class InRamAppendEntriesTest {
     syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, Lists.newArrayList(entry), 0));
 
-    assertNotEquals(2, log.getLogEntry(3).getTerm());
-    assertEquals(4, log.getLogEntry(3).getTerm());
-    assertNull(log.getLogEntry(4));
-    assertNull(log.getLogEntry(5));
+    assertNotEquals(2, log.getLogEntry(3).get().getTerm());
+    assertEquals(4, log.getLogEntry(3).get().getTerm());
+    assertNull(log.getLogEntry(4).get());
+    assertNull(log.getLogEntry(5).get());
     assertEquals(3, log.getLastIndex());
     assertEquals(4, log.getLastTerm());
   }
