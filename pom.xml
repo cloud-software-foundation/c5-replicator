@@ -9,6 +9,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>c5-client-tests</module>
         <module>c5db</module>
         <module>c5db-client</module>
         <module>hbase-common</module>
@@ -17,6 +18,7 @@
         <module>hbase-server</module>
         <module>hbase-client</module>
         <module>hbase-prefix-tree</module>
+        <module>c5-proto</module>
     </modules>
 
     <properties>

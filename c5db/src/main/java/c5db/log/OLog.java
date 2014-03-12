@@ -17,7 +17,7 @@
 
 package c5db.log;
 
-import c5db.client.C5Constants;
+import c5db.C5ServerConstants;
 import c5db.generated.Log;
 import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,9 +46,9 @@ public class OLog implements AutoCloseable {
 
   public OLog(Path basePath) throws IOException {
       this.fileNum = System.currentTimeMillis();
-      this.walDir = basePath.resolve(C5Constants.WAL_DIR);
-      this.archiveLogPath = basePath.resolve(C5Constants.ARCHIVE_DIR);
-      this.logPath = walDir.resolve(C5Constants.LOG_NAME + fileNum);
+      this.walDir = basePath.resolve(C5ServerConstants.WAL_DIR);
+      this.archiveLogPath = basePath.resolve(C5ServerConstants.ARCHIVE_DIR);
+      this.logPath = walDir.resolve(C5ServerConstants.LOG_NAME + fileNum);
 
 
       if (!logPath.getParent().toFile().exists()) {
@@ -69,8 +69,8 @@ public class OLog implements AutoCloseable {
 
     public static void moveAwayOldLogs(final Path basePath)
             throws IOException {
-        Path walPath = basePath.resolve(C5Constants.WAL_DIR);
-        Path archiveLogPath = basePath.resolve(C5Constants.ARCHIVE_DIR);
+        Path walPath = basePath.resolve(C5ServerConstants.WAL_DIR);
+        Path archiveLogPath = basePath.resolve(C5ServerConstants.ARCHIVE_DIR);
         File[] files = walPath.toFile().listFiles();
 
         if (files == null) {
@@ -137,7 +137,7 @@ public class OLog implements AutoCloseable {
         }
 
         this.fileNum = System.currentTimeMillis();
-        this.logPath = Paths.get(this.walDir.toString(), C5Constants.LOG_NAME + fileNum);
+        this.logPath = Paths.get(this.walDir.toString(), C5ServerConstants.LOG_NAME + fileNum);
 
         logOutputStream = new FileOutputStream(this.logPath.toFile(),
                 true);
