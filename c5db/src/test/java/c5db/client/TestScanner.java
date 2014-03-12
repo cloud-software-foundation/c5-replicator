@@ -13,9 +13,6 @@
  *
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- *  This file incorporates work covered by the following copyright and
- *  permission notice:
  */
 package c5db.client;
 
