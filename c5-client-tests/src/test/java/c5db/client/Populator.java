@@ -60,9 +60,7 @@ public class Populator extends MiniClusterBase {
       long end = System.currentTimeMillis();
       System.out.println("time:" + (end - start));
 
-    } catch (ExecutionException e) {
-      e.printStackTrace();
-    } catch (TimeoutException e) {
+    } catch (ExecutionException | TimeoutException e) {
       e.printStackTrace();
     }
   }

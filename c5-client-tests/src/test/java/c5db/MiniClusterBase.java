@@ -21,16 +21,24 @@ import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
 import c5db.messages.generated.ModuleType;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import org.jetlang.channels.Channel;
 import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.mortbay.log.Log;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class MiniClusterBase {
   static boolean initialized = false;
@@ -39,6 +47,29 @@ public class MiniClusterBase {
 
   public static int getRegionServerPort() throws InterruptedException {
     return regionServerPort;
+  }
+  static C5Server server;
+
+  @AfterClass
+  public static void afterClass() throws InterruptedException, ExecutionException, TimeoutException {
+
+    ImmutableMap<ModuleType, C5Module> modules = server.getModules();
+
+    List<ListenableFuture<Service.State>> states = new ArrayList<>();
+    for (C5Module module: modules.values()){
+      ListenableFuture<Service.State> future = module.stop();
+      states.add(future);
+    }
+
+    for (ListenableFuture<Service.State> state: states){
+     try {
+       state.get(10000, TimeUnit.MILLISECONDS);
+     } catch (Exception e){
+       e.printStackTrace();
+     }
+    }
+
+    server.stopAndWait();
   }
 
   @BeforeClass
@@ -51,7 +82,7 @@ public class MiniClusterBase {
     System.setProperty("regionServerPort", String.valueOf(regionServerPort));
 
     C5DB.main(new String[]{});
-    C5Server server = C5DB.getServer();
+    server = C5DB.getServer();
 
     ListenableFuture<C5Module> regionServerFuture = server.getModule(ModuleType.RegionServer);
     C5Module regionServer = regionServerFuture.get();
@@ -76,13 +107,11 @@ public class MiniClusterBase {
     // create java.util.concurrent.CountDownLatch to notify when message arrives
     final CountDownLatch latch = new CountDownLatch(1);
 
-    Callback<TabletModule.TabletStateChange> onMsg = new Callback<TabletModule.TabletStateChange>() {
-      public void onMessage(TabletModule.TabletStateChange message) {
-        //open latch
-        System.out.println(message);
-        initialized = true;
-        latch.countDown();
-      }
+    Callback<TabletModule.TabletStateChange> onMsg = message -> {
+      //open latch
+      System.out.println(message);
+      initialized = true;
+      latch.countDown();
     };
     stateChanges.subscribe(receiver, onMsg);
     latch.await();

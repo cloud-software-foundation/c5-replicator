@@ -16,28 +16,31 @@
  */
 package c5db.client;
 
-import c5db.MiniClusterBase;
 import com.dyuproject.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public class TestInOrderScan extends MiniClusterBase {
+public class TestInOrderScan extends Populator {
   private static ByteString tableName =
       ByteString.copyFrom(Bytes.toBytes("tableName"));
 
   byte[] cf = Bytes.toBytes("cf");
 
-  public static void main(String[] args) throws IOException, InterruptedException, TimeoutException, ExecutionException {
-    TestInOrderScan testingUtil = new TestInOrderScan();
-    testingUtil.compareToHBaseScan();
-  }
+  public TestInOrderScan() throws IOException, InterruptedException {
+    super();
+    }
 
-  public void compareToHBaseScan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  @Test
+  public void testInOrderScan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+    String[] args = {Integer.toString(getRegionServerPort())};
+    main(args);
+
     C5Table table = new C5Table(tableName, getRegionServerPort());
 
     Result result = null;
@@ -52,16 +55,16 @@ public class TestInOrderScan extends MiniClusterBase {
       }
       result = scanner.next();
 
-      if (Bytes.compareTo(result.getRow(), previousRow) < 1) {
-        System.out.println(counter);
-        System.exit(1);
+      try {
+        if (Bytes.compareTo(result.getRow(), previousRow) < 1) {
+          System.out.println(counter);
+          System.exit(1);
+        }
+      } catch (NullPointerException e){
+        e.toString();
       }
 
     } while (result != null);
     table.close();
-  }
-
-  public void testInOrderScan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
-    compareToHBaseScan();
   }
 }
