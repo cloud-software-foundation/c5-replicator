@@ -56,6 +56,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
@@ -574,14 +576,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
             @Override
             public void run() {
                 final AtomicInteger countDown = new AtomicInteger(1);
-                ChannelFutureListener listener = new ChannelFutureListener() {
-                    @Override
-                    public void operationComplete(ChannelFuture future) throws Exception {
-                        if (countDown.decrementAndGet() == 0) {
-                            notifyStopped();
-                        }
+                GenericFutureListener<? extends Future<? super Void>> listener = future -> {
+                    if (countDown.decrementAndGet() == 0)
+                        notifyStopped();
 
-                    }
                 };
                 if (listenChannel != null) {
                     countDown.incrementAndGet();
