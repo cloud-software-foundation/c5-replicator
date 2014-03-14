@@ -194,29 +194,21 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
             return;
         }
         LOG.trace("Sending beacon broadcast message to {}", sendAddress);
-        // Build beacon message:
-
-
-//        Availability.Builder beaconMessage = Availability.newBuilder()
-//                .addAllAddresses(localIPs)
-//                .setNodeId(nodeId);
 
         List<ModuleDescriptor> msgModules = new ArrayList<>(moduleInfo.size());
         for (ModuleType moduleType : moduleInfo.keySet()) {
             msgModules.add(
                     new ModuleDescriptor(moduleType,
                             moduleInfo.get(moduleType)));
-//            msgModules.add(.ModuleDescriptor.newBuilder()
-//                    .setModule(moduleType)
-//                    .setModulePort(moduleInfo.get(moduleType))
-//                    .build());
         }
-
-//        beaconMessage.addAllModules(msgModules);
 
         Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
 
-        broadcastChannel.writeAndFlush(new UdpProtostuffEncoder.UdpProtostuffMessage<>(sendAddress, beaconMessage));
+        broadcastChannel.writeAndFlush(new
+            UdpProtostuffEncoder.UdpProtostuffMessage<>(sendAddress, beaconMessage));
+
+        // Fix issue #76, feed back the beacon Message to our own database:
+        processWireMessage(beaconMessage);
     }
 
     @FiberOnly
