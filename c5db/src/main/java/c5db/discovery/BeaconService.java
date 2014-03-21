@@ -63,9 +63,11 @@ import java.util.concurrent.TimeUnit;
 
 
 public class BeaconService extends AbstractService implements DiscoveryModule {
-    private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
+  public static final String LOOPBACK_ADDRESS = "127.0.0.1";
+  public static final String BROADCAST_ADDRESS = "255.255.255.255";
 
-    @Override
+  @Override
     public ModuleType getModuleType() {
         return ModuleType.Discovery;
     }
@@ -280,9 +282,9 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                         }
                     });
                     if (System.getProperties().containsKey("singleNode")){
-                      sendAddress = new InetSocketAddress("127.0.0.1", discoveryPort);
+                      sendAddress = new InetSocketAddress(LOOPBACK_ADDRESS, discoveryPort);
                     } else {
-                      sendAddress = new InetSocketAddress("255.255.255.255", discoveryPort);
+                      sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
                     }
                     //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
                     localIPs = getLocalIPs();
