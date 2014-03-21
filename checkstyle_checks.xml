@@ -60,16 +60,7 @@
     <module name="IllegalThrows"/>
     <module name="InnerAssignment"/>
     <module name="JavadocType">
-      <property name="authorFormat" value="\S"/>
-    </module>
-    <module name="JavadocMethod">
-      <property name="allowUndeclaredRTE" value="true"/>
-      <property name="allowThrowsTagsForSubclasses" value="true"/>
-      <property name="allowMissingPropertyJavadoc" value="true"/>
-    </module>
-    <module name="JavadocVariable"/>
-    <module name="JavadocStyle">
-      <property name="scope" value="public"/>
+      <property name="allowMissingParamTags" value="true"/>
     </module>
 
     <module name="OuterTypeNumber"/>
@@ -83,9 +74,6 @@
 
     <module name="LocalFinalVariableName"/>
     <module name="LocalVariableName"/>
-    <module name="MemberName">
-      <property name="format" value="^m[A-Z][a-zA-Z0-9]*$"/>
-    </module>
     <module name="MethodLength"/>
     <module name="MethodName"/>
     <module name="MethodParamPad"/>
@@ -124,9 +112,7 @@
       <property name="tokens" value="BAND_ASSIGN"/>
       <property name="option" value="eol"/>
     </module>
-    <module name="PackageName"/>
     <module name="ParameterName">
-      <property name="format" value="^a[A-Z][a-zA-Z0-9]*$"/>
     </module>
     <module name="ParameterNumber">
       <property name="id" value="paramNum"/>
