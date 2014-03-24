@@ -84,7 +84,7 @@ public class MiniClusterBase {
 
 
     regionServerPort = 8080 + rnd.nextInt(1000);
-    System.setProperty("singleNode", "true");
+
     System.setProperty("regionServerPort", String.valueOf(regionServerPort));
 
     C5DB.main(new String[]{});

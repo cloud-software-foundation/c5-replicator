@@ -16,6 +16,8 @@
  */
 package c5db.discovery;
 
+import c5db.C5DB;
+import c5db.C5ServerConstants;
 import c5db.codec.UdpProtostuffDecoder;
 import c5db.codec.UdpProtostuffEncoder;
 import c5db.discovery.generated.Availability;
@@ -302,7 +304,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                             broadcastChannel = future.channel();
                         }
                     });
-                    if (System.getProperties().containsKey("singleNode")){
+                    if (c5Server.getClusterName().equals(C5ServerConstants.LOCALHOST)){
                       sendAddress = new InetSocketAddress(LOOPBACK_ADDRESS, discoveryPort);
                     } else {
                       sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);

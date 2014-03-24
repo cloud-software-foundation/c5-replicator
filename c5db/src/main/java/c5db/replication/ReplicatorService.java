@@ -16,6 +16,8 @@
  */
 package c5db.replication;
 
+import c5db.C5DB;
+import c5db.C5ServerConstants;
 import c5db.codec.ProtostuffDecoder;
 import c5db.codec.ProtostuffEncoder;
 import c5db.interfaces.C5Module;
@@ -119,7 +121,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 }
 
               // We need to make sure that it's not coming from another singlemode daemon.
-                if (!peers.contains(server.getNodeId()) && ! System.getProperties().containsKey("singleNode")){
+                if (!peers.contains(server.getNodeId())
+                    && !server.getClusterName().equals(C5ServerConstants.LOCALHOST)){
                     LOG.error("Creating replicator for {}, peer list didnt contain myself", quorumId, peers);
                     peers.add(server.getNodeId());
                 }
