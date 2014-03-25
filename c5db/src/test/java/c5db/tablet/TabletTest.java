@@ -55,9 +55,9 @@ public class TabletTest {
   IRegion region = context.mock(IRegion.class);
   HLog log = context.mock(HLog.class);
 
-  final String regionName = "foobar1234";
   final List<Long> peerList = ImmutableList.of(1L, 2L, 3L);
   final HRegionInfo regionInfo = new HRegionInfo(TableName.valueOf("tablename"));
+  final String regionName = regionInfo.getRegionNameAsString();
   final HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf("tablename"));
   // TODO real path.
   final Path path = Paths.get("/");
@@ -81,7 +81,11 @@ public class TabletTest {
     }});
 
     Fiber f = new ThreadFiber();
-    Tablet tablet = new Tablet(f, replicationModule, regionCreator);
+    Tablet tablet = new Tablet(
+        regionInfo,
+        tableDescriptor,
+        peerList,
+        f, replicationModule, regionCreator);
 
     // TODO never ever call sleep
     Thread.sleep(1000);
