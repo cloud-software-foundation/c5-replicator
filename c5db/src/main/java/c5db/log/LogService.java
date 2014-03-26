@@ -41,7 +41,7 @@ public class LogService extends AbstractService implements LogModule {
     protected void doStart() {
         try {
             // TODO the log should have it's own dedicated sync threads.
-            this.olog = new OLog(server.getConfigDirectory().baseConfigPath);
+            this.olog = new OLog(server.getConfigDirectory().getBaseConfigPath());
 
             // TODO start the flush threads as necessary
             // TODO log maintenance threads can go here too.
