@@ -29,6 +29,7 @@ import org.jetlang.fibers.ThreadFiber;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.jmock.lib.concurrent.Synchroniser;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -38,9 +39,8 @@ import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
-
 /**
- *
+ * TDD/unit test for tablet.
  */
 public class TabletTest {
   @Rule
@@ -48,36 +48,45 @@ public class TabletTest {
     setThreadingPolicy(new Synchroniser());
   }};
 
-  ReplicationModule replicationModule = context.mock(ReplicationModule.class);
-  //HRegion region = context.mock(HRegion.class);
-  ReplicationModule.Replicator replicator = context.mock(ReplicationModule.Replicator.class);
-  IRegion.Creator regionCreator = context.mock(IRegion.Creator.class);
-  IRegion region = context.mock(IRegion.class);
-  HLog log = context.mock(HLog.class);
+  final ReplicationModule replicationModule = context.mock(ReplicationModule.class);
+  final ReplicationModule.Replicator replicator = context.mock(ReplicationModule.Replicator.class);
+  final Region.Creator regionCreator = context.mock(Region.Creator.class);
+  final Region region = context.mock(Region.class);
+  final HLog log = context.mock(HLog.class);
 
+  final SettableFuture<ReplicationModule.Replicator> future = SettableFuture.create();
+
+  // Value objects for the test.
   final List<Long> peerList = ImmutableList.of(1L, 2L, 3L);
   final HRegionInfo regionInfo = new HRegionInfo(TableName.valueOf("tablename"));
   final String regionName = regionInfo.getRegionNameAsString();
   final HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf("tablename"));
+
   // TODO real path.
   final Path path = Paths.get("/");
   final Configuration conf = new Configuration();
 
 
+  @Before
+  public void setup() throws Exception {
+    future.set(replicator);
+  }
+
   @Test
   public void basicTest() throws Exception {
-    SettableFuture<ReplicationModule.Replicator> future = SettableFuture.create();
-    future.set(replicator);
-
     context.checking(new Expectations() {{
-
+      // First create the replicator.
       oneOf(replicationModule).createReplicator(regionName, peerList);
       will(returnValue(future));
 
+      // Then start it!
       oneOf(replicator).start();
 
+      // Once it is started, we need to get a HRegion
       oneOf(regionCreator).getHRegion(path, regionInfo, tableDescriptor, log, conf);
       will(returnValue(region));
+
+
     }});
 
     Fiber f = new ThreadFiber();
