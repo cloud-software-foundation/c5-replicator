@@ -16,6 +16,7 @@
  */
 package c5db.tablet;
 
+import c5db.ConfigDirectory;
 import c5db.interfaces.ReplicationModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.SettableFuture;
@@ -53,6 +54,7 @@ public class TabletTest {
   final Region.Creator regionCreator = context.mock(Region.Creator.class);
   final Region region = context.mock(Region.class);
   final HLog log = context.mock(HLog.class);
+  final ConfigDirectory configDirectory = context.mock(ConfigDirectory.class);
 
   final SettableFuture<ReplicationModule.Replicator> future = SettableFuture.create();
 
@@ -86,7 +88,9 @@ public class TabletTest {
       oneOf(regionCreator).getHRegion(path, regionInfo, tableDescriptor, log, conf);
       will(returnValue(region));
 
-
+      // then, write to the disk:
+      oneOf(configDirectory).writeBinaryData(regionName, regionInfo.toDelimitedByteArray());
+      oneOf(configDirectory).writePeersToFile(regionName, peerList);
     }});
 
     Fiber f = new ThreadFiber();
