@@ -97,11 +97,6 @@ public class TabletTest {
           with(any(HLog.class)),
           with(same(conf)));
       will(returnValue(region)); then(state.is("opened"));
-
-      allowing(configDirectory).writeBinaryData(regionName, regionInfo.toDelimitedByteArray());
-      when(state.is("opened"));
-      allowing(configDirectory).writePeersToFile(regionName, peerList);
-      when(state.is("opened"));
     }});
 
     Fiber tabletFiber = new ThreadFiber();
