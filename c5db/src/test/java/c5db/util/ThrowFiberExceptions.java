@@ -33,11 +33,10 @@ import java.util.function.Consumer;
  * in which the test runs.
  */
 public class ThrowFiberExceptions implements TestRule, Consumer<Throwable> {
-  private final Object target;
   private final List<Throwable> throwables = new ArrayList<>();
 
-  public ThrowFiberExceptions(Object target) {
-    this.target = target;
+  public ThrowFiberExceptions() {
+
   }
 
   @Override

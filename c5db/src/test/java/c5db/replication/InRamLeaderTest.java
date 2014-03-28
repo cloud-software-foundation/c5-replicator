@@ -70,7 +70,7 @@ public class InRamLeaderTest {
   private final BlockingQueue<ReplicationModule.IndexCommitNotice> commits = new LinkedBlockingQueue<>();
 
   @Rule
-  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions(this);
+  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
 
   private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
       new ExceptionHandlingBatchExecutor(fiberExceptionHandler));

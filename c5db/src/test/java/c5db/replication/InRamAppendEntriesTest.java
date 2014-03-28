@@ -77,7 +77,7 @@ public class InRamAppendEntriesTest {
   ReplicatorLogAbstraction log = new InRamLog();
 
   @Rule
-  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions(this);
+  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
 
   private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
       new ExceptionHandlingBatchExecutor(fiberExceptionHandler));

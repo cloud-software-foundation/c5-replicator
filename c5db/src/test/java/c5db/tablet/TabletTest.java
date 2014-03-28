@@ -18,6 +18,7 @@ package c5db.tablet;
 
 import c5db.ConfigDirectory;
 import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.TabletModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.conf.Configuration;
@@ -28,6 +29,7 @@ import org.apache.hadoop.hbase.regionserver.wal.HLog;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
 import org.jmock.Expectations;
+import org.jmock.States;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.jmock.lib.concurrent.Synchroniser;
 import org.junit.Before;
@@ -38,7 +40,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static c5db.AsyncChannelAsserts.Listening;
+import static c5db.AsyncChannelAsserts.assertEventually;
+import static c5db.AsyncChannelAsserts.listenTo;
+import static c5db.TabletMatchers.hasStateEqualTo;
 
 /**
  * TDD/unit test for tablet.
@@ -53,7 +58,7 @@ public class TabletTest {
   final ReplicationModule.Replicator replicator = context.mock(ReplicationModule.Replicator.class);
   final Region.Creator regionCreator = context.mock(Region.Creator.class);
   final Region region = context.mock(Region.class);
-  final HLog log = context.mock(HLog.class);
+  //final HLog log = context.mock(HLog.class);
   final ConfigDirectory configDirectory = context.mock(ConfigDirectory.class);
 
   final SettableFuture<ReplicationModule.Replicator> future = SettableFuture.create();
@@ -64,7 +69,6 @@ public class TabletTest {
   final String regionName = regionInfo.getRegionNameAsString();
   final HTableDescriptor tableDescriptor = new HTableDescriptor(TableName.valueOf("tablename"));
 
-  // TODO real path.
   final Path path = Paths.get("/");
   final Configuration conf = new Configuration();
 
@@ -75,34 +79,47 @@ public class TabletTest {
   }
 
   @Test
-  public void basicTest() throws Exception {
+  public void basicTest() throws Throwable {
     context.checking(new Expectations() {{
-      // First create the replicator.
+      States state = context.states("start");
+
+      allowing(replicator).getQuorumId(); will(returnValue(regionName));
+
       oneOf(replicationModule).createReplicator(regionName, peerList);
-      will(returnValue(future));
+      will(returnValue(future)); then(state.is("opening"));
 
-      // Then start it!
-      oneOf(replicator).start();
+      oneOf(replicator).start(); when(state.is("opening"));
 
-      // Once it is started, we need to get a HRegion
-      oneOf(regionCreator).getHRegion(path, regionInfo, tableDescriptor, log, conf);
-      will(returnValue(region));
+      oneOf(regionCreator).getHRegion(
+          with(any(Path.class)),
+          with(equal(regionInfo)),
+          with(equal(tableDescriptor)),
+          with(any(HLog.class)),
+          with(same(conf)));
+      will(returnValue(region)); then(state.is("opened"));
 
-      // then, write to the disk:
-      oneOf(configDirectory).writeBinaryData(regionName, regionInfo.toDelimitedByteArray());
-      oneOf(configDirectory).writePeersToFile(regionName, peerList);
+      allowing(configDirectory).writeBinaryData(regionName, regionInfo.toDelimitedByteArray());
+      when(state.is("opened"));
+      allowing(configDirectory).writePeersToFile(regionName, peerList);
+      when(state.is("opened"));
     }});
 
-    Fiber f = new ThreadFiber();
+    Fiber tabletFiber = new ThreadFiber();
     Tablet tablet = new Tablet(
         regionInfo,
         tableDescriptor,
         peerList,
-        f, replicationModule, regionCreator);
+        path,
+        conf,
+        tabletFiber,
+        replicationModule,
+        regionCreator);
 
-    // TODO never ever call sleep
-    Thread.sleep(1000);
 
-    assertTrue(tablet.isOpen());
+    Listening<TabletModule.TabletStateChange> listener = listenTo(tablet.getStateChangeChannel());
+
+    tablet.start();
+
+    assertEventually(listener, hasStateEqualTo(TabletModule.Tablet.State.Open));
   }
 }

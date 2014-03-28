@@ -59,7 +59,7 @@ public class InRamTest {
   private static final byte[] TEST_DATUM = new byte[]{1, 2, 3, 4, 5, 6};
 
   @Rule
-  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions(this);
+  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
 
   private BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(fiberExceptionHandler);
   private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(batchExecutor);

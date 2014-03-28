@@ -42,7 +42,7 @@ public class ExceptionHandlingBatchExecutorTest {
   private final SettableFuture<Boolean> testFuture = SettableFuture.create();
 
   @Rule
-  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions(this);
+  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
 
   /**
    * One-off implementation of ThrowableRecipient which delegates to fiberExceptionHandler, then
