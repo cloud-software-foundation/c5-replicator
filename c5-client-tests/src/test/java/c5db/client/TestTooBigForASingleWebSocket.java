@@ -18,10 +18,9 @@ package c5db.client;
 
 import c5db.MiniClusterBase;
 import com.dyuproject.protostuff.ByteString;
-import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -29,59 +28,65 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.Assert.assertArrayEquals;
+import static c5db.client.DataHelper.valueReadFromDatabase;
+import static c5db.testing.BytesMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TestTooBigForASingleWebSocket extends MiniClusterBase {
   private static final byte[] randomBytes = new byte[65535 * 4];
   private static final Random random = new Random();
 
+
   static {
     random.nextBytes(randomBytes);
   }
 
-  @Test
-  public void testSendSmallOne() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    C5Table c5Table = new C5Table(ByteString.copyFromUtf8("test"), getRegionServerPort());
-    byte[] row = Bytes.toBytes("cf");
-    Put put = new Put(row);
-    put.add(row, row, row);
-    c5Table.put(put);
+  byte[] row = Bytes.toBytes("cf");
+  C5Table c5Table;
+
+
+  @Before
+  public void setUp() throws Exception {
+    c5Table = new C5Table(ByteString.copyFromUtf8("test"), getRegionServerPort());
   }
 
   @Test
-  public void testSendAndRecieveSmallOne() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    C5Table c5Table = new C5Table(ByteString.copyFromUtf8("test"), getRegionServerPort());
-    byte[] row = Bytes.toBytes("cf");
-    Put put = new Put(row);
-    put.add(row, row, row);
-    c5Table.put(put);
-    Get get = new Get(row);
-    get.addColumn(row, row);
-    Result result = c5Table.get(get);
-    byte[] value = result.getValue(row, row);
-    assertArrayEquals(value, row);
+  public void shouldSuccesfullyAcceptSmallPut() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    putRowAndValueIntoDatabase(row, row);
   }
+
+  @Test
+  public void shouldSuccesfullyAcceptSmallPutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    byte[] valuePutIntoDatabase = row;
+
+    putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
+
+    assertThat(valueReadFromDatabase(row, c5Table), is(equalTo(valuePutIntoDatabase)));
+  }
+
 
   @Test
   public void testSendBigOne() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    C5Table c5Table = new C5Table(ByteString.copyFromUtf8("test"), getRegionServerPort());
-    byte[] row = Bytes.toBytes("cf");
-    Put put = new Put(row);
-    put.add(row, row, randomBytes);
-    c5Table.put(put);
+    byte[] valuePutIntoDatabase = randomBytes;
+
+    putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
   }
 
   @Test
-  public void testSendAndRecieveBigOne() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    C5Table c5Table = new C5Table(ByteString.copyFromUtf8("test"), getRegionServerPort());
-    byte[] row = Bytes.toBytes("cf");
-    Put put = new Put(row);
-    put.add(row, row, randomBytes);
-    c5Table.put(put);
-    Get get = new Get(row);
-    get.addColumn(row, row);
-    Result result = c5Table.get(get);
-    byte[] value = result.getValue(row, row);
-    assertArrayEquals(value, randomBytes);
+  public void shouldSuccesfullyAcceptLargePutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    byte[] valuePutIntoDatabase = randomBytes;
+
+    putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
+
+    assertThat(valueReadFromDatabase(row, c5Table), is(equalTo(valuePutIntoDatabase)));
   }
+
+  private void putRowAndValueIntoDatabase(byte[] row,
+                                          byte[] valuePutIntoDatabase) throws IOException {
+    Put put = new Put(row);
+    put.add(row, row, valuePutIntoDatabase);
+    c5Table.put(put);
+  }
+
 }
