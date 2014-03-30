@@ -29,6 +29,7 @@ import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.mortbay.log.Log;
 
@@ -49,6 +50,11 @@ public class MiniClusterBase {
     return regionServerPort;
   }
   static C5Server server;
+
+  @Before
+  public void resetDatabaseStateBeforeTest() {
+    // TODO please implement me!
+  }
 
   @AfterClass
   public static void afterClass() throws InterruptedException, ExecutionException, TimeoutException {

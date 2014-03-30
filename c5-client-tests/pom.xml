@@ -75,5 +75,12 @@
             <artifactId>c5db</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>c5db</groupId>
+            <artifactId>c5db</artifactId>
+            <version>0.1-SNAPSHOT</version>
+            <scope>test</scope>
+            <type>test-jar</type>
+        </dependency>
     </dependencies>
 </project>
