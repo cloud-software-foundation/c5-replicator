@@ -27,7 +27,9 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.List;
 
 /**
- * Created by ryan on 1/22/14.
+ * A specialized Protostuff decoder used to de-serialize Protostuff DatagramPackets and map them to an arbitrary
+ * protostuff Message
+ * @param <T> The type of message to decode.
  */
 public class UdpProtostuffDecoder<T extends Message<T>> extends MessageToMessageDecoder<DatagramPacket> {
     final Schema<T> schema;
