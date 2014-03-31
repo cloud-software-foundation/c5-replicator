@@ -32,21 +32,23 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- * Created by ryan on 1/22/14.
+ * A specialized Protostuff decoder used to serialize Protostuff into a  DatagramPackets and map them to an arbitrary
+ * protostuff Message
+ * @param <T> The type of message to encode.
  */
 public class UdpProtostuffEncoder<T extends Message<T>> extends MessageToMessageEncoder<UdpProtostuffEncoder.UdpProtostuffMessage<T>> {
-    final Schema<T> schema;
-    final boolean protostuffOutput;
-    final int bufferAllocSize;
+    private final Schema<T> schema;
+    private final boolean protostuffOutput;
+    private final int bufferAllocSize;
 
     public UdpProtostuffEncoder(Schema<T> schema, boolean protostuffOutput) {
         this(schema, protostuffOutput, 512);
     }
 
-    public UdpProtostuffEncoder(Schema<T> schema, boolean protostuffOutput, int bufferAllocSize) {
+    private UdpProtostuffEncoder(Schema<T> schema, boolean protostuffOutput, int bufferAllocSize) {
         this.schema = schema;
         this.protostuffOutput = protostuffOutput;
-        this.bufferAllocSize = bufferAllocSize;
+        this.bufferAllocSize = 512;
     }
     @Override
     protected void encode(ChannelHandlerContext ctx, UdpProtostuffMessage<T> msg, List<Object> out) throws Exception {
@@ -60,7 +62,7 @@ public class UdpProtostuffEncoder<T extends Message<T>> extends MessageToMessage
         }
 
         List<ByteBuffer> buffers = buffer.finish();
-        ByteBuf data = Unpooled.wrappedBuffer(buffers.toArray(new ByteBuffer[]{}));
+        ByteBuf data = Unpooled.wrappedBuffer(buffers.toArray(new ByteBuffer[buffers.size()]));
         data.retain();
 
         DatagramPacket dg = new DatagramPacket(data, msg.remoteAddress);

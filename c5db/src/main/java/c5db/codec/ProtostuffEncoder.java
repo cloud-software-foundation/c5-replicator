@@ -28,7 +28,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
- * Serialized a protostuff object - using 'protobuf' format
+ * Serialized a protostuff object - using 'protobuf' format.
+ * The replication library uses this class to decode replication messages over the wire.
  */
 public class ProtostuffEncoder<T extends Message<T>> extends MessageToMessageEncoder<Message<T>> {
     @Override

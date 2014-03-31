@@ -26,7 +26,8 @@ import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.List;
 
 /**
- * Decode a protobuf object using the "protostuff" library
+ * Decode a protobuf object using the "protostuff" library.
+ * The replication library uses this class to decode replication messages over the wire.
  */
 public class ProtostuffDecoder<T extends Message<T>> extends MessageToMessageDecoder<ByteBuf> {
     final Schema<T> schema;
