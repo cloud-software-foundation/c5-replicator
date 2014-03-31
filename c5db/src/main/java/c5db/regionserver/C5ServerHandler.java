@@ -28,8 +28,6 @@ import c5db.client.generated.MutationProto;
 import c5db.client.generated.RegionAction;
 import c5db.client.generated.Response;
 import c5db.client.generated.ScanRequest;
-import c5db.regionserver.scanner.ScanRunnable;
-import c5db.regionserver.scanner.ScannerManager;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.apache.hadoop.hbase.client.Result;
@@ -44,6 +42,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The main netty handler for the RegionServer functionality. Maps protocol buffer calls to an action against a HRegion
+ * and then provides a response to the caller.
+ */
 public class C5ServerHandler extends
     SimpleChannelInboundHandler<Call> {
   private final RegionServerService regionServerService;
