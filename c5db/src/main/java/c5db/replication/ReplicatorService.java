@@ -32,7 +32,6 @@ import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
-import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberOnly;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.FutureCallback;
@@ -67,10 +66,8 @@ import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.channels.Session;
 import org.jetlang.channels.SessionClosed;
-import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
-import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,9 +127,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 LOG.info("Creating replicator instance for {} peers {}", quorumId, peers);
                 Mooring logMooring = logModule.getMooring(quorumId);
                 MemoryChannel<Throwable> throwableChannel = new MemoryChannel<>();
-                BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(throwableChannel::publish);
+                Fiber instanceFiber = server.getFiberFactory(throwableChannel::publish).create();
                 ReplicatorInstance instance =
-                        new ReplicatorInstance(fiberFactory.create(batchExecutor),
+                        new ReplicatorInstance(
+                                instanceFiber,
                                 server.getNodeId(),
                                 quorumId,
                                 peers,
@@ -189,7 +187,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
     private final int port;
     private final C5Server server;
-    private final PoolFiberFactory fiberFactory;
     private final Fiber fiber;
     private final NioEventLoopGroup bossGroup;
     private final NioEventLoopGroup workerGroup;
@@ -215,16 +212,14 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
     private long messageIdGen = 1;
 
-    public ReplicatorService(final PoolFiberFactory fiberFactory,
-                             NioEventLoopGroup bossGroup,
+    public ReplicatorService(NioEventLoopGroup bossGroup,
                              NioEventLoopGroup workerGroup,
                              int port, C5Server server) {
-        this.fiberFactory = fiberFactory;
         this.bossGroup = bossGroup;
         this.workerGroup = workerGroup;
         this.port = port;
         this.server = server;
-        this.fiber = fiberFactory.create(new ExceptionHandlingBatchExecutor(this::failModule));
+        this.fiber = server.getFiberFactory(this::failModule).create();
         this.allChannels = new DefaultChannelGroup(workerGroup.next());
 
         this.persister = new Persister(server.getConfigDirectory());
