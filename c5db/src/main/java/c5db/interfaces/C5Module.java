@@ -20,7 +20,7 @@ import c5db.messages.generated.ModuleType;
 import com.google.common.util.concurrent.Service;
 
 /**
- * An internal module. Is a guava module.
+ * An internal module. Is a guava service.
  * <p/>
  * An internal module is a component that can be started/stopped, and is the official
  * internal interface between different modules.
