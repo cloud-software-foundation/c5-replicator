@@ -52,12 +52,12 @@ public class TestTooBigForASingleWebSocket extends MiniClusterBase {
   }
 
   @Test
-  public void shouldSuccesfullyAcceptSmallPut() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void shouldSuccessfullyAcceptSmallPut() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     putRowAndValueIntoDatabase(row, row);
   }
 
   @Test
-  public void shouldSuccesfullyAcceptSmallPutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void shouldSuccessfullyAcceptSmallPutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     byte[] valuePutIntoDatabase = row;
 
     putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
@@ -74,7 +74,7 @@ public class TestTooBigForASingleWebSocket extends MiniClusterBase {
   }
 
   @Test
-  public void shouldSuccesfullyAcceptLargePutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void shouldSuccessfullyAcceptLargePutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     byte[] valuePutIntoDatabase = randomBytes;
 
     putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
