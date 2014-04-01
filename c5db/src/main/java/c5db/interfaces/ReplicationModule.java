@@ -24,7 +24,11 @@ import org.jetlang.channels.Channel;
 import java.util.List;
 
 /**
- * The replication module/module.  The API to other modules internal to c5db.
+ * Replication is the method by which we get multiple copies of the write-ahead-log to multiple
+ * machines. It forms the core of C5's ability to survive machine failures.
+ * <p>
+ * The replication module manages multiple replicator instances, each one responsible for a
+ * small chunk of the data-space, also known as a tablet (or region).
  */
 @DependsOn({DiscoveryModule.class, LogModule.class})
 @ModuleTypeBinding(ModuleType.Replication)

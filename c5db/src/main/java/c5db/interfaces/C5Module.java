@@ -20,18 +20,29 @@ import c5db.messages.generated.ModuleType;
 import com.google.common.util.concurrent.Service;
 
 /**
- * An internal module. Is a guava service.
- * <p/>
- * An internal module is a component that can be started/stopped, and is the official
- * internal interface between different modules.
- * <p/>
- * TODO module dependencies so if you stop one module, you have to stop the dependencies.
+ * A C5Module is the common interface for all modules in a C5 server.
+ * A server consists of a number of {@link c5db.interfaces.C5Module}s running within
+ * a JVM.  Each module has a lifecycle (eg: starting, started, failed, etc).  The only
+ * way in which modules may interact with each other is via the public module interface
+ * which must be inside the {@link c5db.interfaces} package.
+ * <p>
+ * To handle the module's lifecycle, it implements the guava {@link com.google.common.util.concurrent.Service}
+ * interface.  Individual implementations would be encouraged to use guava's
+ * {@link com.google.common.util.concurrent.AbstractService}.
+ * <p>
+ * Other features that we need to support in the future (that arent explicit here right now)
+ * <ul>
+ *   <li>Module startup-dependencies (eg: module A needs module B to be running)</li>
+ *   <li>Module startup configuration (eg: what port should this module bind to?)</li>
+ * </ul>
+ * </p>
  */
 public interface C5Module extends Service {
+  // TODO module dependencies so if you stop one module, you have to stop the dependencies.
 
-    public ModuleType getModuleType();
+  public ModuleType getModuleType();
 
-    public boolean hasPort();
+  public boolean hasPort();
 
-    public int port();
+  public int port();
 }

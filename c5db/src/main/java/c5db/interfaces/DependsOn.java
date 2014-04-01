@@ -22,7 +22,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *
+ * DependsOn allows us to decorate Module interfaces with a dependency list, so that
+ * automated topological sort can determine the proper order to start modules in.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

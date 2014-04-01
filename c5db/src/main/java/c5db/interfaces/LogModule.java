@@ -21,7 +21,10 @@ import c5db.log.OLog;
 import c5db.messages.generated.ModuleType;
 
 /**
- *
+ * The log module is responsible for running all the threads and IO for write-ahead-logging.
+ * <p>
+ * The write-ahead-log is responsible for maintaining persistence in the face of node or machine
+ * failure.
  */
 @ModuleTypeBinding(ModuleType.Log)
 public interface LogModule extends C5Module {

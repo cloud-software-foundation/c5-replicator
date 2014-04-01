@@ -24,6 +24,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Provides a mapping between the {@link ElementType} enum and whatever type this decorates with.
+ * Since the module type to interface binding is fixed at compile time, it makes sense to
+ * formalize this with an annotation.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

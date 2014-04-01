@@ -61,7 +61,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-
+/**
+ * Uses broadcast UDP packets to discover 'adjacent' nodes in the cluster. Maintains
+ * a state table for them, and provides information to other modules as they request it.
+ * <p>
+ * Currently UDP broadcast has some issues on Mac OSX vs Linux.  The big question,
+ * specifically, is what happens when multiple processes bind to 255.255.255.255:PORT
+ * and send packets?  Which processes receive such packets?
+ * <ul>
+ *   <li>On Mac OSX 10.8/9, all processes reliably recieve all packets including
+ *   the originating process</li>
+ *   <li>On Linux (Ubuntu, modern) a variety of things appear to occur:
+ *   <ul>
+ *     <li>First to bind receives all packets</li>
+ *     <li>All processes receives all packets</li>
+ *     <li>No one receives any packets</li>
+ *     <li>Please fill this doc in!</li>
+ *   </ul></li>
+ * </ul>
+ * <p>
+ * The beacon service needs to be refactored and different discovery methods need to be
+ * pluggable but all behind the discovery module interface.
+ */
 public class BeaconService extends AbstractService implements DiscoveryModule {
   private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
   public static final String LOOPBACK_ADDRESS = "127.0.0.1";
