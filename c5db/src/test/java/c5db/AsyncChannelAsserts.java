@@ -44,7 +44,7 @@ public class AsyncChannelAsserts {
   public static class Listening<T> {
     final Fiber f;
     final ArrayBlockingQueue<T> messages;
-    List<Throwable> throwables;
+    final List<Throwable> throwables;
 
     public Listening(Fiber f, ArrayBlockingQueue<T> messages,
                      List<Throwable> throwables) {
@@ -62,7 +62,7 @@ public class AsyncChannelAsserts {
     ArrayBlockingQueue<T> messages = new ArrayBlockingQueue<>(1);
     channel.subscribe(f, (m) -> {
       try {
-        System.out.println("Message recv: " + m);
+        System.out.println("Message received: " + m);
         messages.put(m);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
