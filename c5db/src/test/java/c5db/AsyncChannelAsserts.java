@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Helpers that allow us to assert or wait for channel messages from jetlang.
- *
+ * <p>
  * TODO currently we create a fiber thread for every instance we run, maybe
  * consider using a fiber pool.
  */
@@ -79,8 +79,9 @@ public class AsyncChannelAsserts {
   /**
    * Waits for a message that matches the matcher, if it doesn't happen within a reasonable
    * and short time frame, it will throw an assertion failure.
+   *
    * @param matcher the matcher which might match a message
-   * @param <T> type
+   * @param <T>     type
    * @throws Throwable
    */
   public static <T> void assertEventually(Listening<T> listener,
@@ -94,8 +95,8 @@ public class AsyncChannelAsserts {
    * assumption is mock expectations will illuminate the error.
    *
    * @param listener the listener you want
-   * @param matcher the matcher which might match a message
-   * @param <T> type
+   * @param matcher  the matcher which might match a message
+   * @param <T>      type
    * @throws Throwable
    */
   public static <T> void waitUntil(Listening<T> listener,
