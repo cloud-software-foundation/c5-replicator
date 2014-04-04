@@ -121,8 +121,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 }
 
               // We need to make sure that it's not coming from another singlemode daemon.
-                if (!peers.contains(server.getNodeId())
-                    && !server.getClusterName().equals(C5ServerConstants.LOCALHOST)){
+                if (!peers.contains(server.getNodeId()) && !server.isSingleNodeMode()) {
                     LOG.error("Creating replicator for {}, peer list didnt contain myself", quorumId, peers);
                     peers.add(server.getNodeId());
                 }

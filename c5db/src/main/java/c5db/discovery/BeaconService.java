@@ -304,7 +304,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                             broadcastChannel = future.channel();
                         }
                     });
-                    if (c5Server.getClusterName().equals(C5ServerConstants.LOCALHOST)){
+                    if (c5Server.isSingleNodeMode()) {
                       sendAddress = new InetSocketAddress(LOOPBACK_ADDRESS, discoveryPort);
                     } else {
                       sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
