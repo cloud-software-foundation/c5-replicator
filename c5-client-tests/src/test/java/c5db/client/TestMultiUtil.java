@@ -16,61 +16,49 @@
  */
 package c5db.client;
 
-
 import c5db.MiniClusterBase;
-import com.dyuproject.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
+
+import static c5db.testing.BytesMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 public class TestMultiUtil extends MiniClusterBase {
-
-  ByteString tableName = ByteString.copyFrom(Bytes.toBytes("tableName"));
-  C5Table table;
-  byte[] row = Bytes.toBytes("multiRow");
-  byte[] cf = Bytes.toBytes("cf");
-  byte[] cq = Bytes.toBytes("cq");
-  byte[] value = Bytes.toBytes("value");
-
-  @Before
-  public void before() throws InterruptedException, IOException, TimeoutException, ExecutionException {
-    table = new C5Table(tableName, getRegionServerPort());
-  }
+  private final byte[] row1 = Bytes.toBytes("row1");
+  private final byte[] row2 = Bytes.toBytes("row2");
 
   @Test
   public void testMultiPut() throws IOException {
-    List<Put> puts = new ArrayList<>();
-    puts.add(new Put(row).add(cf, cq, value));
-    puts.add(new Put(Bytes.add(row, row)).add(cf, cq, value));
-    table.put(puts);
+    DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
+    assertThat(DataHelper.valueReadFromDB(table, row), is(not(equalTo(value))));
+    assertThat(DataHelper.valueReadFromDB(table, row1), is(equalTo(value)));
+    assertThat(DataHelper.valueReadFromDB(table, row2), is(equalTo(value)));
   }
 
   @Test
   public void testScan() throws IOException {
-    Scan scan = new Scan(row);
-    scan.addColumn(cf, cq);
-    ResultScanner resultScanner = table.getScanner(scan);
-    Result r = resultScanner.next();
-    r = resultScanner.next();
+    DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
+    ResultScanner resultScanner = DataHelper.getScanner(table, new byte[]{});
+    assertThat(DataHelper.nextResult(resultScanner), is(equalTo(value)));
+    assertThat(DataHelper.nextResult(resultScanner), is(equalTo(value)));
   }
 
   @Test
   public void testMultiDelete() throws IOException {
+    DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     List<Delete> deletes = new ArrayList<>();
-    deletes.add(new Delete(row));
-    deletes.add(new Delete(Bytes.add(row, row)));
+    deletes.add(new Delete(row1));
+    deletes.add(new Delete(row2));
     table.delete(deletes);
+    assertThat(DataHelper.valueReadFromDB(table, row1), is(not(equalTo(value))));
+    assertThat(DataHelper.valueReadFromDB(table, row2), is(not(equalTo(value))));
   }
-
 }

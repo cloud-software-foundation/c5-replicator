@@ -18,6 +18,7 @@ package c5db.regionserver;
 
 import c5db.client.generated.Action;
 import c5db.client.generated.Call;
+import c5db.client.generated.Condition;
 import c5db.client.generated.Get;
 import c5db.client.generated.GetResponse;
 import c5db.client.generated.MultiRequest;
@@ -32,11 +33,15 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.RowMutations;
+import org.apache.hadoop.hbase.filter.ByteArrayComparable;
+import org.apache.hadoop.hbase.filter.CompareFilter;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,10 +51,10 @@ import java.util.List;
  * The main netty handler for the RegionServer functionality. Maps protocol buffer calls to an action against a HRegion
  * and then provides a response to the caller.
  */
-public class C5ServerHandler extends
-    SimpleChannelInboundHandler<Call> {
+public class C5ServerHandler extends SimpleChannelInboundHandler<Call> {
+  private static final Logger LOG = LoggerFactory.getLogger(C5ServerHandler.class);
   private final RegionServerService regionServerService;
-  ScannerManager scanManager = ScannerManager.INSTANCE;
+  private final ScannerManager scanManager = ScannerManager.INSTANCE;
 
   public C5ServerHandler(RegionServerService myService) {
     this.regionServerService = myService;
@@ -72,18 +77,20 @@ public class C5ServerHandler extends
       case MULTI:
         multi(ctx, call);
         break;
+      default:
+        LOG.error("Unsupported command:" + call.getCommand());
+        LOG.error("Call:" + call);
+        break;
     }
   }
 
   private void multi(ChannelHandlerContext ctx, Call call)
       throws IOException {
-    MultiRequest request = call.getMulti();
-    MultiResponse multiResponse = new MultiResponse();
-
-    List<MutationProto> mutations = new ArrayList<>();
+    final MultiRequest request = call.getMulti();
+    final MultiResponse multiResponse = new MultiResponse();
+    final List<MutationProto> mutations = new ArrayList<>();
 
     for (RegionAction regionAction : request.getRegionActionList()) {
-
       for (Action actionUnion : regionAction.getActionList()) {
         if (actionUnion.getMutation() != null) {
           mutations.add(actionUnion.getMutation());
@@ -93,11 +100,11 @@ public class C5ServerHandler extends
       }
     }
     if (!mutations.isEmpty()) {
-      MutationProto firstMutate = mutations.get(0);
-      byte[] row = firstMutate.getRow().array();
-      RowMutations rm = new RowMutations(row);
+      final MutationProto firstMutate = mutations.get(0);
+      final byte[] row = firstMutate.getRow().array();
+      final RowMutations rm = new RowMutations(row);
       for (MutationProto mutate : mutations) {
-        MutationProto.MutationType type = mutate.getMutateType();
+        final MutationProto.MutationType type = mutate.getMutateType();
         switch (mutate.getMutateType()) {
           case PUT:
             rm.add(ReverseProtobufUtil.toPut(mutate));
@@ -108,13 +115,14 @@ public class C5ServerHandler extends
           default:
             throw new RuntimeException(
                 "mutate supports atomic put and/or delete, not "
-                    + type.name());
+                    + type.name()
+            );
         }
       }
-      HRegion region = regionServerService.getOnlineRegion("1");
+      final HRegion region = regionServerService.getOnlineRegion("1");
       region.mutateRow(rm);
     }
-    Response response = new Response(Response.Command.MULTI,
+    final Response response = new Response(Response.Command.MULTI,
         call.getCommandId(),
         null,
         null,
@@ -123,27 +131,41 @@ public class C5ServerHandler extends
     ctx.writeAndFlush(response);
   }
 
-  private void mutate(ChannelHandlerContext ctx, Call call)
-      throws IOException {
-    MutateRequest mutateIn = call.getMutate();
+  private void mutate(ChannelHandlerContext ctx, Call call) {
+    boolean success;
+    final MutateRequest mutateIn = call.getMutate();
     MutateResponse mutateResponse;
     try {
-      HRegion region = regionServerService.getOnlineRegion("1");
-      switch (mutateIn.getMutation().getMutateType()) {
+      final HRegion region = regionServerService.getOnlineRegion("1");
+      final MutationProto.MutationType type = mutateIn.getMutation().getMutateType();
+      switch (type) {
         case PUT:
-          region.put(ReverseProtobufUtil.toPut(mutateIn.getMutation()));
+          if (mutateIn.getCondition().getRow() == null) {
+            success = simplePut(mutateIn, region);
+          } else {
+            success = checkAndPut(mutateIn, region);
+          }
           break;
         case DELETE:
-          region.delete(ReverseProtobufUtil.toDelete(mutateIn.getMutation()));
+          if (mutateIn.getCondition().getRow() == null) {
+            success = simpleDelete(mutateIn, region);
+          } else {
+            success = checkAndDelete(mutateIn, region);
+          }
           break;
+        default:
+          throw new RuntimeException(
+              "mutate supports atomic put and/or delete, not "
+                  + type.name()
+          );
       }
-      mutateResponse = new MutateResponse(null, true);
+      mutateResponse = new MutateResponse(null, success);
     } catch (IOException e) {
       mutateResponse = new MutateResponse(null, false);
-      e.printStackTrace();
+      LOG.error(e.getLocalizedMessage());
     }
 
-    Response response = new Response(Response.Command.MUTATE,
+    final Response response = new Response(Response.Command.MUTATE,
         call.getCommandId(),
         null,
         mutateResponse,
@@ -152,23 +174,79 @@ public class C5ServerHandler extends
     ctx.writeAndFlush(response);
   }
 
-  private void scan(ChannelHandlerContext ctx, Call call)
-      throws IOException {
+  private boolean checkAndDelete(MutateRequest mutateIn, HRegion region) throws IOException {
+    boolean success;
+    final Condition condition = mutateIn.getCondition();
+    final byte[] row = condition.getRow().array();
+    final byte[] cf = condition.getFamily().array();
+    final byte[] cq = condition.getQualifier().array();
 
-    ScanRequest scanIn = call.getScan();
+    final CompareFilter.CompareOp compareOp = CompareFilter.CompareOp.valueOf(condition.getCompareType().name());
+    final ByteArrayComparable comparator = ReverseProtobufUtil.toComparator(condition.getComparator());
 
-    long scannerId = 0;
-    scannerId = getScannerId(scanIn, scannerId);
-    Integer numberOfRowsToSend = scanIn.getNumberOfRows();
+    success = region.checkAndMutate(row,
+        cf,
+        cq,
+        compareOp,
+        comparator,
+        ReverseProtobufUtil.toDelete(mutateIn.getMutation()),
+        true);
+    return success;
+  }
 
+  private boolean simpleDelete(MutateRequest mutateIn, HRegion region) {
+    try {
+      region.delete(ReverseProtobufUtil.toDelete(mutateIn.getMutation()));
+    } catch (IOException e) {
+      LOG.error(e.getLocalizedMessage());
+      return false;
+    }
+    return true;
+  }
+
+  private boolean checkAndPut(MutateRequest mutateIn, HRegion region) throws IOException {
+    boolean success;
+    final Condition condition = mutateIn.getCondition();
+    final byte[] row = condition.getRow().array();
+    final byte[] cf = condition.getFamily().array();
+    final byte[] cq = condition.getQualifier().array();
+
+    final CompareFilter.CompareOp compareOp = CompareFilter.CompareOp.valueOf(condition.getCompareType().name());
+    final ByteArrayComparable comparator = ReverseProtobufUtil.toComparator(condition.getComparator());
+
+    success = region.checkAndMutate(row,
+        cf,
+        cq,
+        compareOp,
+        comparator,
+        ReverseProtobufUtil.toPut(mutateIn.getMutation()),
+        true);
+    return success;
+  }
+
+  private boolean simplePut(MutateRequest mutateIn, HRegion region) {
+    try {
+      region.put(ReverseProtobufUtil.toPut(mutateIn.getMutation()));
+    } catch (IOException e) {
+      LOG.error(e.getLocalizedMessage());
+      return false;
+    }
+    return true;
+  }
+
+  private void scan(ChannelHandlerContext ctx, Call call) throws IOException {
+    final ScanRequest scanIn = call.getScan();
+    final long scannerId;
+    scannerId = getScannerId(scanIn);
+    final Integer numberOfRowsToSend = scanIn.getNumberOfRows();
     Channel<Integer> channel = scanManager.getChannel(scannerId);
     // New Scanner
     if (null == channel) {
-      Fiber fiber = new ThreadFiber();
+      final Fiber fiber = new ThreadFiber();
       fiber.start();
       channel = new MemoryChannel<>();
 
-      ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId,
+      final ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId,
           regionServerService.getOnlineRegion("1"));
       channel.subscribe(fiber, scanRunnable);
       scanManager.addChannel(scannerId, channel);
@@ -176,7 +254,8 @@ public class C5ServerHandler extends
     channel.publish(numberOfRowsToSend);
   }
 
-  private long getScannerId(ScanRequest scanIn, long scannerId) {
+  private long getScannerId(ScanRequest scanIn) {
+    long scannerId;
     if (scanIn.getScannerId() > 0) {
       scannerId = scanIn.getScannerId();
     } else {
@@ -188,23 +267,21 @@ public class C5ServerHandler extends
     return scannerId;
   }
 
-  private void get(ChannelHandlerContext ctx, Call call)
-      throws IOException {
-    Get getIn = call.getGet().getGet();
+  private void get(ChannelHandlerContext ctx, Call call) throws IOException {
+    final Get getIn = call.getGet().getGet();
 
-    HRegion region = regionServerService.getOnlineRegion("1");
-    Result regionResult = region.get(ReverseProtobufUtil.toGet(getIn));
-    c5db.client.generated.Result result;
+    final HRegion region = regionServerService.getOnlineRegion("1");
+    final org.apache.hadoop.hbase.client.Get serverGet = ReverseProtobufUtil.toGet(getIn);
+    final Result regionResult = region.get(serverGet);
+    final c5db.client.generated.Result result;
 
     if (getIn.getExistenceOnly()) {
       result = new c5db.client.generated.Result(new ArrayList<>(), 0, regionResult.getExists());
     } else {
       result = ReverseProtobufUtil.toResult(regionResult);
     }
-
-    GetResponse getResponse = new GetResponse(result);
-
-    Response response = new Response(Response.Command.GET, call.getCommandId(), getResponse, null, null, null);
+    final GetResponse getResponse = new GetResponse(result);
+    final Response response = new Response(Response.Command.GET, call.getCommandId(), getResponse, null, null, null);
     ctx.writeAndFlush(response);
   }
 
@@ -212,5 +289,4 @@ public class C5ServerHandler extends
   public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
     ctx.flush();
   }
-
 }

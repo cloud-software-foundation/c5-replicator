@@ -28,7 +28,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import static c5db.client.DataHelper.valueReadFromDatabase;
 import static c5db.testing.BytesMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -37,14 +36,13 @@ public class TestTooBigForASingleWebSocket extends MiniClusterBase {
   private static final byte[] randomBytes = new byte[65535 * 4];
   private static final Random random = new Random();
 
-
   static {
     random.nextBytes(randomBytes);
   }
 
-  byte[] row = Bytes.toBytes("cf");
-  C5Table c5Table;
-
+  private C5Table c5Table;
+  private byte[] cf = Bytes.toBytes("cf");
+  private byte[] cq = Bytes.toBytes("cq");
 
   @Before
   public void setUp() throws Exception {
@@ -53,39 +51,33 @@ public class TestTooBigForASingleWebSocket extends MiniClusterBase {
 
   @Test
   public void shouldSuccessfullyAcceptSmallPut() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    putRowAndValueIntoDatabase(row, row);
+    DataHelper.putRowInDB(c5Table, row);
   }
 
   @Test
   public void shouldSuccessfullyAcceptSmallPutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     byte[] valuePutIntoDatabase = row;
-
     putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
-
-    assertThat(valueReadFromDatabase(row, c5Table), is(equalTo(valuePutIntoDatabase)));
+    assertThat(DataHelper.valueReadFromDB(c5Table, row), is(equalTo(valuePutIntoDatabase)));
   }
-
 
   @Test
   public void testSendBigOne() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     byte[] valuePutIntoDatabase = randomBytes;
-
     putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
   }
 
   @Test
   public void shouldSuccessfullyAcceptLargePutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     byte[] valuePutIntoDatabase = randomBytes;
-
     putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
-
-    assertThat(valueReadFromDatabase(row, c5Table), is(equalTo(valuePutIntoDatabase)));
+    assertThat(DataHelper.valueReadFromDB(c5Table, row), is(equalTo(valuePutIntoDatabase)));
   }
 
   private void putRowAndValueIntoDatabase(byte[] row,
                                           byte[] valuePutIntoDatabase) throws IOException {
     Put put = new Put(row);
-    put.add(row, row, valuePutIntoDatabase);
+    put.add(cf, cq, valuePutIntoDatabase);
     c5Table.put(put);
   }
 

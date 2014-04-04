@@ -16,23 +16,30 @@
  */
 package c5db;
 
+import c5db.client.C5Table;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
 import c5db.messages.generated.ModuleType;
+import com.dyuproject.protostuff.ByteString;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.jetlang.channels.Channel;
 import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import org.mortbay.log.Log;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -44,7 +51,14 @@ import java.util.concurrent.TimeoutException;
 public class MiniClusterBase {
   static boolean initialized = false;
   private static int regionServerPort;
-  private static Random rnd = new Random();
+  public static final byte[] value = Bytes.toBytes("value");
+  public static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
+  private static final Random rnd = new Random();
+
+  @Rule
+  public TestName name = new TestName();
+  public C5Table table;
+  public byte[] row;
 
   public static int getRegionServerPort() throws InterruptedException {
     return regionServerPort;
@@ -52,8 +66,15 @@ public class MiniClusterBase {
   static C5Server server;
 
   @Before
-  public void resetDatabaseStateBeforeTest() {
-    // TODO please implement me!
+  public void before() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    final ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
+    table = new C5Table(tableName, getRegionServerPort());
+    row = Bytes.toBytes(name.getMethodName());
+  }
+
+  @After
+  public void after() {
+    table.close();
   }
 
   @AfterClass

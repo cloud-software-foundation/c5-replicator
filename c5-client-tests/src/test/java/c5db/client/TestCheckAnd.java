@@ -17,22 +17,16 @@
 package c5db.client;
 
 import c5db.MiniClusterBase;
-import com.dyuproject.protostuff.ByteString;
-import org.apache.hadoop.hbase.client.Delete;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static c5db.client.DataHelper.checkAndDeleteRowAndValueIntoDatabase;
+import static c5db.client.DataHelper.checkAndPutRowAndValueIntoDatabase;
+import static c5db.client.DataHelper.putRowAndValueIntoDatabase;
+import static c5db.client.DataHelper.valueReadFromDB;
 import static c5db.testing.BytesMatchers.equalTo;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
@@ -41,26 +35,6 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TestCheckAnd extends MiniClusterBase {
-  private final byte[] cf = Bytes.toBytes("cf");
-  private final byte[] cq = Bytes.toBytes("cq");
-  private final byte[] value = Bytes.toBytes("value");
-  private final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
-  @Rule
-  public TestName name = new TestName();
-  private C5Table table;
-  private byte[] row;
-
-  @Before
-  public void before() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    final ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
-    table = new C5Table(tableName, getRegionServerPort());
-    row = Bytes.toBytes(name.getMethodName());
-  }
-
-  @After
-  public void after() {
-    table.close();
-  }
 
   @Test
   public void shouldFailCheckAndPutNullRow()
@@ -73,7 +47,7 @@ public class TestCheckAnd extends MiniClusterBase {
       throws IOException, InterruptedException, TimeoutException, ExecutionException {
     putRowAndValueIntoDatabase(table, row, notEqualToValue);
     assertFalse(checkAndPutRowAndValueIntoDatabase(table, row, value, value));
-    assertThat(valueReadFromDatabase(row, table), is(equalTo(notEqualToValue)));
+    assertThat(valueReadFromDB(table, row), is(equalTo(notEqualToValue)));
   }
 
   @Test
@@ -81,7 +55,7 @@ public class TestCheckAnd extends MiniClusterBase {
       throws IOException, InterruptedException, TimeoutException, ExecutionException {
     putRowAndValueIntoDatabase(table, row, value);
     assertTrue(checkAndPutRowAndValueIntoDatabase(table, row, value, notEqualToValue));
-    assertThat(valueReadFromDatabase(row, table), is(equalTo(notEqualToValue)));
+    assertThat(valueReadFromDB(table, row), is(equalTo(notEqualToValue)));
   }
 
   @Test
@@ -95,7 +69,7 @@ public class TestCheckAnd extends MiniClusterBase {
       throws IOException, InterruptedException, TimeoutException, ExecutionException {
     putRowAndValueIntoDatabase(table, row, notEqualToValue);
     assertFalse(checkAndDeleteRowAndValueIntoDatabase(table, row, value));
-    assertThat(valueReadFromDatabase(row, table), is(equalTo(notEqualToValue)));
+    assertThat(valueReadFromDB(table, row), is(equalTo(notEqualToValue)));
   }
 
   @Test
@@ -103,37 +77,7 @@ public class TestCheckAnd extends MiniClusterBase {
       throws IOException, InterruptedException, TimeoutException, ExecutionException {
     putRowAndValueIntoDatabase(table, row, value);
     assertTrue(checkAndDeleteRowAndValueIntoDatabase(table, row, value));
-    assertThat(valueReadFromDatabase(row, table), not(equalTo(value)));
+    assertThat(valueReadFromDB(table, row), not(equalTo(value)));
   }
 
-  private void putRowAndValueIntoDatabase(C5Table c5Table,
-                                          byte[] row,
-                                          byte[] valuePutIntoDatabase) throws IOException {
-    Put put = new Put(row);
-    put.add(cf, cq, valuePutIntoDatabase);
-    c5Table.put(put);
-  }
-
-  private boolean checkAndPutRowAndValueIntoDatabase(C5Table c5Table,
-                                                     byte[] row,
-                                                     byte[] valueToCheck,
-                                                     byte[] valuePutIntoDatabase) throws IOException {
-    Put put = new Put(row);
-    put.add(cf, cq, valuePutIntoDatabase);
-    return c5Table.checkAndPut(row, cf, cq, valueToCheck, put);
-  }
-
-  private boolean checkAndDeleteRowAndValueIntoDatabase(C5Table c5Table,
-                                                        byte[] row,
-                                                        byte[] valueToCheck) throws IOException {
-    Delete delete = new Delete(row);
-    return c5Table.checkAndDelete(row, cf, cq, valueToCheck, delete);
-  }
-
-  byte[] valueReadFromDatabase(byte[] row, C5Table c5Table) throws IOException {
-    Get get = new Get(row);
-    get.addColumn(cf, cq);
-    Result result = c5Table.get(get);
-    return result.getValue(cf, cq);
-  }
 }
