@@ -58,7 +58,7 @@ import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
 
 
 /**
- * Single instantation of a replicator / log / lease
+ * Single instantiation of a replicator / log / lease
  */
 public class ReplicatorInstance implements ReplicationModule.Replicator {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorInstance.class);
@@ -95,7 +95,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     /****** These next few fields are used when we are a leader *******/
     // this is the next index from our log we need to send to each peer, kept track of on a per-peer basis.
     private HashMap<Long, Long> peersNextIndex;
-    // The last succesfully acked message from our peers.  I also keep track of my own acked log messages in here.
+    // The last successfully acked message from our peers.  I also keep track of my own acked log messages in here.
     private HashMap<Long, Long> peersLastAckedIndex;
     private long myFirstIndexAsLeader;
     private long lastCommittedIndex;
@@ -107,11 +107,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     private static class IntLogRequest {
         public final byte[] datum;
-        public final SettableFuture<Long> logNumberNotifation;
+        public final SettableFuture<Long> logNumberNotification;
 
         private IntLogRequest(byte[] datum) {
             this.datum = datum;
-            this.logNumberNotifation = SettableFuture.create();
+            this.logNumberNotification = SettableFuture.create();
         }
     }
     private final BlockingQueue<IntLogRequest> logRequests = new ArrayBlockingQueue<>(100);
@@ -279,7 +279,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         logRequests.put(req);
 
         // TODO return the durable notification future?
-        return req.logNumberNotifation;
+        return req.logNumberNotification;
     }
 
     @FiberOnly
@@ -795,7 +795,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             }
 
             // let the client know what our id is
-            logReq.logNumberNotifation.set(idAssigner);
+            logReq.logNumberNotification.set(idAssigner);
 
             idAssigner ++;
         }
