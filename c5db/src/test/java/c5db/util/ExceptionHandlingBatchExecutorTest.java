@@ -38,7 +38,7 @@ import static org.junit.Assert.fail;
 
 public class ExceptionHandlingBatchExecutorTest {
 
-  private MemoryChannel<Long> channel = new MemoryChannel<>();
+  private final MemoryChannel<Long> channel = new MemoryChannel<>();
   private final SettableFuture<Boolean> testFuture = SettableFuture.create();
 
   @Rule
@@ -54,7 +54,7 @@ public class ExceptionHandlingBatchExecutorTest {
     testFuture.set(true);
   };
 
-  private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
+  private final RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
       new ExceptionHandlingBatchExecutor(throwableHandler));
   private Fiber fiber;
 
