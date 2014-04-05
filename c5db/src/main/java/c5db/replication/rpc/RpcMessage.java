@@ -21,7 +21,7 @@ import c5db.replication.generated.AppendEntriesReply;
 import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.generated.RequestVote;
 import c5db.replication.generated.RequestVoteReply;
-import com.dyuproject.protostuff.Message;
+import io.protostuff.Message;
 
 /**
  * Wrap a rpc message, this could/should get serialized to the wire (eg: ReplicationWireMessage)

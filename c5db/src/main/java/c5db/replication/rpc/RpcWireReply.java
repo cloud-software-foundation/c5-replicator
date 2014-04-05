@@ -17,7 +17,7 @@
 package c5db.replication.rpc;
 
 import c5db.replication.generated.ReplicationWireMessage;
-import com.dyuproject.protostuff.Message;
+import io.protostuff.Message;
 
 /**
  * A reply from the wire - a remote agent - replying to a request.

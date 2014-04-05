@@ -16,9 +16,9 @@
  */
 package c5db.codec;
 
-import com.dyuproject.protostuff.ByteBufferInput;
-import com.dyuproject.protostuff.Message;
-import com.dyuproject.protostuff.Schema;
+import io.protostuff.ByteBufferInput;
+import io.protostuff.Message;
+import io.protostuff.Schema;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;

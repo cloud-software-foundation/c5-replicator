@@ -20,10 +20,10 @@ import c5db.generated.Log;
 import c5db.generated.OLogData;
 import c5db.generated.OLogMetaData;
 import c5db.generated.QuorumMapping;
-import com.dyuproject.protostuff.ByteBufferInput;
-import com.dyuproject.protostuff.LinkedBuffer;
-import com.dyuproject.protostuff.LowCopyProtostuffOutput;
-import com.dyuproject.protostuff.ProtostuffIOUtil;
+import io.protostuff.ByteBufferInput;
+import io.protostuff.LinkedBuffer;
+import io.protostuff.LowCopyProtostuffOutput;
+import io.protostuff.ProtostuffIOUtil;
 import com.google.protobuf.ByteString;
 import org.junit.Test;
 
