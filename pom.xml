@@ -7,6 +7,11 @@
     <artifactId>parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
 
     <modules>
         <module>c5-client-tests</module>
@@ -790,4 +795,12 @@
             </dependencyManagement>
         </profile>
     </profiles>
+
+    <distributionManagement>
+        <site>
+            <id>github</id>
+            <url>https://github.com/OhmData/c5.git</url>
+        </site>
+    </distributionManagement>
+
 </project>

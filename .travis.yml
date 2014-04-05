@@ -1,0 +1,5 @@
+language: java
+jdk:
+  - oraclejdk8
+notifications:
+  slack: ohmdata:8cuaYc5WD0CrJ5Ktks7QC1Z0
