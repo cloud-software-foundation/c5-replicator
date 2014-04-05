@@ -132,7 +132,7 @@ public class MiniClusterBase {
     receiver.start();
 
     // create java.util.concurrent.CountDownLatch to notify when message arrives
-    final CountDownLatch latch = new CountDownLatch(1);
+    final CountDownLatch latch = new CountDownLatch(2);
 
     Callback<TabletModule.TabletStateChange> onMsg = message -> {
       //open latch
