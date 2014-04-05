@@ -16,10 +16,10 @@
  */
 package c5db.codec;
 
-import com.dyuproject.protostuff.Input;
-import com.dyuproject.protostuff.Message;
-import com.dyuproject.protostuff.Output;
-import com.dyuproject.protostuff.Schema;
+import io.protostuff.Input;
+import io.protostuff.Message;
+import io.protostuff.Output;
+import io.protostuff.Schema;
 import io.netty.buffer.ByteBuf;
 import org.junit.Test;
 

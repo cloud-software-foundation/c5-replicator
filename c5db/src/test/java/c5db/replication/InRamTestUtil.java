@@ -19,7 +19,7 @@ package c5db.replication;
 
 import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcWireRequest;
-import com.dyuproject.protostuff.Message;
+import io.protostuff.Message;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.fibers.Fiber;
 

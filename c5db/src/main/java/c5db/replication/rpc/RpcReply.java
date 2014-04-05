@@ -16,7 +16,7 @@
  */
 package c5db.replication.rpc;
 
-import com.dyuproject.protostuff.Message;
+import io.protostuff.Message;
 
 /**
  * An rpc reply in response to a 'wire request'.

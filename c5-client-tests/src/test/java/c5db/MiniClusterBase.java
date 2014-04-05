@@ -22,7 +22,7 @@ import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
 import c5db.messages.generated.ModuleType;
-import com.dyuproject.protostuff.ByteString;
+import io.protostuff.ByteString;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;

@@ -7,6 +7,11 @@
     <artifactId>parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
 
     <modules>
         <module>c5-client-tests</module>
@@ -97,6 +102,17 @@
     </properties>
 
     <pluginRepositories>
+        <pluginRepository>
+            <id>sonatypesnapshots</id>
+            <name>sonatypesnapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </pluginRepository>
         <pluginRepository>
             <id>ghelmling.testing</id>
             <name>Gary Helmling test repo</name>
@@ -288,7 +304,7 @@
                     <version>${maven.assembly.version}</version>
                 </plugin>
                 <plugin>
-                    <groupId>com.dyuproject.protostuff</groupId>
+                    <groupId>io.protostuff</groupId>
                     <artifactId>protostuff-maven-plugin</artifactId>
                     <version>${protostuff.version}</version>
                     <configuration>
@@ -790,4 +806,12 @@
             </dependencyManagement>
         </profile>
     </profiles>
+
+    <distributionManagement>
+        <site>
+            <id>github</id>
+            <url>https://github.com/OhmData/c5.git</url>
+        </site>
+    </distributionManagement>
+
 </project>

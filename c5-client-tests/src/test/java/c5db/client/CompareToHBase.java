@@ -16,7 +16,7 @@
  */
 package c5db.client;
 
-import com.dyuproject.protostuff.ByteString;
+import io.protostuff.ByteString;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HTable;

@@ -18,8 +18,8 @@ package c5db.replication;
 
 import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.generated.RequestVote;
-import com.dyuproject.protostuff.LinkBuffer;
-import com.dyuproject.protostuff.LowCopyProtobufOutput;
+import io.protostuff.LinkBuffer;
+import io.protostuff.LowCopyProtobufOutput;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Test;

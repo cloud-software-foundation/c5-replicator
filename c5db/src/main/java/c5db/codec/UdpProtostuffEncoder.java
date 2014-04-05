@@ -16,11 +16,11 @@
  */
 package c5db.codec;
 
-import com.dyuproject.protostuff.LinkBuffer;
-import com.dyuproject.protostuff.LowCopyProtobufOutput;
-import com.dyuproject.protostuff.LowCopyProtostuffOutput;
-import com.dyuproject.protostuff.Message;
-import com.dyuproject.protostuff.Schema;
+import io.protostuff.LinkBuffer;
+import io.protostuff.LowCopyProtobufOutput;
+import io.protostuff.LowCopyProtostuffOutput;
+import io.protostuff.Message;
+import io.protostuff.Schema;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;

@@ -17,7 +17,7 @@
 package c5db.replication.rpc;
 
 import c5db.replication.generated.ReplicationWireMessage;
-import com.dyuproject.protostuff.Message;
+import io.protostuff.Message;
 
 /**
  * And RPC request from off the wire, from a remote sender.
