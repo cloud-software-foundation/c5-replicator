@@ -41,35 +41,38 @@ import java.util.concurrent.TimeUnit;
  */
 public class AsyncChannelAsserts {
 
-  public static class Listening<T> {
-    final Fiber f;
+  public static class ChannelListener<T> {
+    final Fiber subscribedFiber;
     final ArrayBlockingQueue<T> messages;
     final List<Throwable> throwables;
 
-    public Listening(Fiber f, ArrayBlockingQueue<T> messages,
-                     List<Throwable> throwables) {
-      this.f = f;
+    public ChannelListener(Fiber subscribedFiber, ArrayBlockingQueue<T> messages,
+                           List<Throwable> throwables) {
+      this.subscribedFiber = subscribedFiber;
       this.messages = messages;
       this.throwables = throwables;
     }
+
+    public void dispose() {
+      subscribedFiber.dispose();
+    }
   }
 
-  public static <T> Listening<T> listenTo(Channel<T> channel) {
+  public static <T> ChannelListener<T> listenTo(Channel<T> channel) {
     List<Throwable> throwables = new ArrayList<>();
-    BatchExecutor be = new ExceptionHandlingBatchExecutor(throwables::add);
-    RunnableExecutor re = new RunnableExecutorImpl(be);
-    Fiber f = new ThreadFiber(re, null, true);
+    BatchExecutor exceptionHandlingBatchExecutor = new ExceptionHandlingBatchExecutor(throwables::add);
+    RunnableExecutor runnableExecutor = new RunnableExecutorImpl(exceptionHandlingBatchExecutor);
+    Fiber channelSubscriberFiber = new ThreadFiber(runnableExecutor, null, true);
     ArrayBlockingQueue<T> messages = new ArrayBlockingQueue<>(1);
-    channel.subscribe(f, (m) -> {
+    channel.subscribe(channelSubscriberFiber, m -> {
       try {
-        System.out.println("Message received: " + m);
         messages.put(m);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
     });
-    f.start();
-    return new Listening<>(f, messages, throwables);
+    channelSubscriberFiber.start();
+    return new ChannelListener<>(channelSubscriberFiber, messages, throwables);
   }
 
   public static <T> Matcher<T> publishesMessage(Matcher<T> m) {
@@ -84,7 +87,7 @@ public class AsyncChannelAsserts {
    * @param <T>     type
    * @throws Throwable
    */
-  public static <T> void assertEventually(Listening<T> listener,
+  public static <T> void assertEventually(ChannelListener<T> listener,
                                           Matcher<? super T> matcher) throws Throwable {
     helper(listener, matcher, true);
   }
@@ -99,12 +102,12 @@ public class AsyncChannelAsserts {
    * @param <T>      type
    * @throws Throwable
    */
-  public static <T> void waitUntil(Listening<T> listener,
+  public static <T> void waitUntil(ChannelListener<T> listener,
                                    Matcher<? super T> matcher) throws Throwable {
     helper(listener, matcher, false);
   }
 
-  private static <T> void helper(Listening<T> listener,
+  private static <T> void helper(ChannelListener<T> listener,
                                  Matcher<? super T> matcher,
                                  boolean assertFail) throws Throwable {
 
@@ -124,8 +127,6 @@ public class AsyncChannelAsserts {
           matcher.describeMismatch(m, d);
         }
 
-        listener.f.dispose();
-
         if (assertFail) {
           listener.throwables.add(new AssertionError("Failing waiting for " + d.toString()));
           MultipleFailureException.assertEmpty(listener.throwables);
@@ -135,8 +136,6 @@ public class AsyncChannelAsserts {
       }
 
       if (matcher.matches(msg)) {
-        listener.f.dispose();
-
         if (!listener.throwables.isEmpty()) {
           MultipleFailureException.assertEmpty(listener.throwables);
         }

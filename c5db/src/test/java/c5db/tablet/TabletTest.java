@@ -16,6 +16,7 @@
  */
 package c5db.tablet;
 
+import c5db.AsyncChannelAsserts;
 import c5db.ConfigDirectory;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
@@ -32,6 +33,7 @@ import org.jmock.Expectations;
 import org.jmock.States;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.jmock.lib.concurrent.Synchroniser;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,7 +42,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import static c5db.AsyncChannelAsserts.Listening;
 import static c5db.AsyncChannelAsserts.assertEventually;
 import static c5db.AsyncChannelAsserts.listenTo;
 import static c5db.TabletMatchers.hasStateEqualTo;
@@ -72,10 +73,30 @@ public class TabletTest {
   final Path path = Paths.get("/");
   final Configuration conf = new Configuration();
 
+  final Fiber tabletFiber = new ThreadFiber();
+  Tablet tablet = new Tablet(
+      regionInfo,
+      tableDescriptor,
+      peerList,
+      path,
+      conf,
+      tabletFiber,
+      replicationModule,
+      regionCreator);
+
+  AsyncChannelAsserts.ChannelListener<TabletModule.TabletStateChange> listener;
+
 
   @Before
   public void setup() throws Exception {
     future.set(replicator);
+    listener = listenTo(tablet.getStateChangeChannel());
+  }
+
+  @After
+  public void after() {
+    tabletFiber.dispose();
+    listener.dispose();
   }
 
   @Test
@@ -98,20 +119,6 @@ public class TabletTest {
           with(same(conf)));
       will(returnValue(region)); then(state.is("opened"));
     }});
-
-    Fiber tabletFiber = new ThreadFiber();
-    Tablet tablet = new Tablet(
-        regionInfo,
-        tableDescriptor,
-        peerList,
-        path,
-        conf,
-        tabletFiber,
-        replicationModule,
-        regionCreator);
-
-
-    Listening<TabletModule.TabletStateChange> listener = listenTo(tablet.getStateChangeChannel());
 
     tablet.start();
 
