@@ -17,240 +17,96 @@
 
 package c5db.log;
 
-import c5db.C5ServerConstants;
-import c5db.generated.Log;
-import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+
 import java.io.IOException;
-import java.nio.channels.ClosedChannelException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * A write-ahead log for several quorums.
+ */
+public interface OLog extends AutoCloseable {
 
-public class OLog implements AutoCloseable {
-  private static final Logger LOG = LoggerFactory.getLogger(OLog.class);
-  private static final long RETRY_WAIT_TIME = 100;
-  private final Path walDir;
-  private final Path archiveLogPath;
-  long fileNum;
-  Path logPath;
-  private FileOutputStream logOutputStream;
+  /**
+   * Append the passed entries to the log. All calls to this method for a given quorum must be
+   * serializable: in other words, if this method is called twice with the same quorumId, then
+   * the caller must know that one method call "happens before" the other. Also, the passed
+   * list must be non-null and non-empty.
+   *
+   * @param entries  Non-null list of zero or more entries.
+   * @param quorumId Quorum id these entries should be logged under
+   * @return Future indicating completion. Failure will be indicated by exception.
+   * @throws c5db.log.EncodedSequentialLog.LogEntryNotInSequence when attempting to log an
+   * entry not in the correct sequence (for any given quorum, the sequence numbers must be
+   * strictly ascending with no gaps).
+   */
+  ListenableFuture<Boolean> logEntry(List<OLogEntry> entries, String quorumId);
 
-  public OLog(Path basePath) throws IOException {
-      this.fileNum = System.currentTimeMillis();
-      this.walDir = basePath.resolve(C5ServerConstants.WAL_DIR);
-      this.archiveLogPath = basePath.resolve(C5ServerConstants.ARCHIVE_DIR);
-      this.logPath = walDir.resolve(C5ServerConstants.LOG_NAME + fileNum);
+  /**
+   * Asynchronously retrieve the entry at the given index in the given quorum.
+   *
+   * @param index    Index of entry to retrieve
+   * @param quorumId Quorum id of entry to retrieve
+   * @return Future containing the log entry upon completion, or null if not found.
+   */
+  ListenableFuture<OLogEntry> getLogEntry(long index, String quorumId);
 
+  /**
+   * Asynchronously retrieve a range of entries from index start, inclusive, to index end, exclusive. Returns every
+   * entry in the specified range. Any entries retrieved are guaranteed to have consecutive indices.
+   *
+   * @param start    First index in range
+   * @param end      One beyond the last index in the desired range; must be greater than or equal to start. If this
+   *                 equals start, a list of length zero will be retrieved.
+   * @param quorumId Quorum id of entries to retrieve
+   * @return Future containing a list of log entries upon completion.
+   */
+  ListenableFuture<List<OLogEntry>> getLogEntries(long start, long end, String quorumId);
 
-      if (!logPath.getParent().toFile().exists()) {
-          boolean success = logPath.getParent().toFile().mkdirs();
-          if (!success) {
-              throw new IOException("Unable to setup logPath");
-          }
-      }
+  /**
+   * Logically delete entries from the tail of the log.
+   *
+   * @param entryIndex Delete entries back to, and including, this index,
+   * @param quorumId   Quorum id within which to delete entries
+   * @return Future indicating completion.
+   */
+  ListenableFuture<Boolean> truncateLog(long entryIndex, String quorumId);
 
-      if (!archiveLogPath.toFile().exists()) {
-          boolean success = archiveLogPath.toFile().mkdirs();
-          if (!success) {
-              throw new IOException("Unable to setup archive Log Path");
-          }
-      }
-      logOutputStream = new FileOutputStream(logPath.toFile(), true);
-  }
+  /**
+   * Flush all pending writes to the physical medium.
+   * TODO should this also be specified to sync with any indexing provider?
+   *
+   * @return Future indicating completion or exception.
+   */
+  ListenableFuture<Boolean> sync();
 
-    public static void moveAwayOldLogs(final Path basePath)
-            throws IOException {
-        Path walPath = basePath.resolve(C5ServerConstants.WAL_DIR);
-        Path archiveLogPath = basePath.resolve(C5ServerConstants.ARCHIVE_DIR);
-        File[] files = walPath.toFile().listFiles();
+  /**
+   * Retrieve the "term" (i.e., leader or election term) corresponding to the given pair (index, quorum)
+   *
+   * @param index    Log entry index
+   * @param quorumId Log entry quorum
+   * @return The term for this entry, or zero if not found.
+   */
+  long getLogTerm(long index, String quorumId);
 
-        if (files == null) {
-            return;
-        }
+  /**
+   * Save off and close log file, and begin a new log file.
+   *
+   * @throws IOException
+   * @throws ExecutionException
+   * @throws InterruptedException
+   */
+  @SuppressWarnings("UnusedDeclaration")
+  void roll() throws IOException, ExecutionException, InterruptedException;
 
-        if (!archiveLogPath.toFile().exists()) {
-            boolean success = archiveLogPath.toFile().mkdirs();
-            if (!success) {
-                throw new IOException("Unable to setup archive Log Path");
-            }
-        }
-
-        for (File file : files) {
-            boolean success = file.renameTo(archiveLogPath
-                    .resolve(file.getName())
-                    .toFile());
-            if (!success) {
-                String err = "Unable to move: " + file + " to " + archiveLogPath;
-                throw new IOException(err);
-            }
-        }
-    }
-
-    public void sync(SettableFuture<Boolean> syncComplete) throws IOException {
-        boolean success = false;
-        do {
-            try {
-                // TODO this needs to be processed on a background thread, not while the caller is waiting. Async notification.
-                this.logOutputStream.flush();
-                this.logOutputStream.getChannel().force(false);
-                success = true;
-                syncComplete.set(true);
-            } catch (ClosedChannelException e) {
-                try {
-                    Thread.sleep(RETRY_WAIT_TIME);
-                } catch (InterruptedException e1) {
-                    throw new IOException(e1);
-                }
-            }
-        } while (!success);
-    }
-
-    @Override
-    public void close() throws IOException {
-        SettableFuture<Boolean> syncComplete = SettableFuture.create();
-        this.sync(syncComplete);
-        try {
-            syncComplete.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new IOException(e);
-        }
-        this.logOutputStream.close();
-    }
-
-    public void roll() throws IOException, ExecutionException, InterruptedException {
-        this.close();
-        boolean success = logPath.toFile().renameTo(archiveLogPath
-                .resolve(logPath.toFile().getName())
-                .toFile());
-        if (!success) {
-            String err = "Unable to move: " + logPath + " to " + archiveLogPath;
-            throw new IOException(err);
-        }
-
-        this.fileNum = System.currentTimeMillis();
-        this.logPath = Paths.get(this.walDir.toString(), C5ServerConstants.LOG_NAME + fileNum);
-
-        logOutputStream = new FileOutputStream(this.logPath.toFile(),
-                true);
-    }
-
-    /**
-     * Clean out old logs
-     *
-     * @param timestamp Only clear logs older than timestamp. Or if 0 then always
-     *                  remove.
-     * @throws IOException
-     */
-    public void clearOldLogs(long timestamp) throws IOException {
-        File[] files = this.archiveLogPath.toFile().listFiles();
-        if (files == null) {
-            return;
-        }
-
-        for (File file : files) {
-            LOG.debug("Removing old log file" + file);
-            if (timestamp == 0 || file.lastModified() > timestamp) {
-                boolean success = file.delete();
-                if (!success) {
-                    throw new IOException("Unable to delete file:" + file);
-                }
-            }
-        }
-    }
-
-    /**
-     * @param index
-     * @param quorumId
-     * @return The log data for a node at an index or null if not found.
-     */
-
-    private Log.OLogEntry getLogDataFromDisk(long index, String quorumId)
-            throws IOException, ExecutionException, InterruptedException {
-        SettableFuture<Boolean> f = SettableFuture.create();
-        this.sync(f);
-        f.get();
-
-        FileInputStream fileInputStream = new FileInputStream(logPath.toFile());
-        Log.OLogEntry nextEntry;
-
-        do {
-            // TODO Handle tombestones
-            try {
-            nextEntry = Log.OLogEntry.parseDelimitedFrom(fileInputStream);
-            } catch (IOException e) {
-                return null;
-            }
-            // EOF
-            if (nextEntry == null) {
-                return null;
-            }
-        } while (!nextEntry.getQuorumId().equals(quorumId) || nextEntry.getIndex() != index);
-
-        return nextEntry;
-    }
-
-    public ListenableFuture<Boolean> logEntry(List<Log.OLogEntry> entries, String quorumId) {
-        SettableFuture<Boolean> completionNotification = SettableFuture.create();
-        try {
-            for (Log.OLogEntry entry : entries) {
-                entry.writeDelimitedTo(this.logOutputStream);
-            }
-            completionNotification.set(true);
-            return completionNotification;
-        } catch (IOException e) {
-            completionNotification.setException(e);
-            return completionNotification;
-        }
-    }
-
-    public LogEntry getLogEntry(long index, String quorumId) {
-        try {
-            Log.OLogEntry ologEntry = getLogDataFromDisk(index, quorumId);
-            if (ologEntry == null) {
-              return null;
-            }
-            return new LogEntry(ologEntry.getTerm(),
-                    ologEntry.getIndex(),
-                    ologEntry.getValue().asReadOnlyByteBuffer());
-        } catch (IOException | InterruptedException | ExecutionException e) {
-            throw new RuntimeException("CRASH!", e);
-        }
-    }
-
-    public long getLogTerm(long index, String quorumId) {
-        try {
-            Log.OLogEntry logEntry = getLogDataFromDisk(index, quorumId);
-            if (logEntry == null) return 0;
-            return logEntry.getTerm();
-        } catch (IOException | ExecutionException | InterruptedException e) {
-
-            throw new RuntimeException("CRASH!", e);
-        }
-    }
-
-    public ListenableFuture<Boolean> truncateLog(long entryIndex, String quorumId) {
-        try {
-            SettableFuture<Boolean> truncateComplete = SettableFuture.create();
-            Log.OLogEntry entry = Log.OLogEntry.newBuilder()
-                    .setTombStone(true)
-                    .setIndex(entryIndex)
-                    .setQuorumId(quorumId).build();
-
-            entry.writeDelimitedTo(this.logOutputStream);
-            this.sync(truncateComplete);
-            return truncateComplete;
-        } catch (Exception e) {
-            throw new RuntimeException("CRASH!");
-        }
-    }
+  /**
+   * Dispose of held resources. This method does not perform a sync() first -- the caller should sync if necessary.
+   * The rationale for not performing a sync is to give the caller flexibility with whether or not to close
+   * immediately, or asynchronously.
+   *
+   * @throws IOException If an error occurs closing a file stream.
+   */
+  void close() throws IOException;
 
 }

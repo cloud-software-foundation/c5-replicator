@@ -111,11 +111,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     }
 
     private static class IntLogRequest {
-        public final byte[] datum;
+        public final List<ByteBuffer> data;
         public final SettableFuture<Long> logNumberNotifation;
 
-        private IntLogRequest(byte[] datum) {
-            this.datum = datum;
+        private IntLogRequest(List<ByteBuffer> data) {
+            this.data = data;
             this.logNumberNotifation = SettableFuture.create();
         }
     }
@@ -274,13 +274,13 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     // public API:
 
     @Override
-    public ListenableFuture<Long> logData(byte[] datum) throws InterruptedException {
+    public ListenableFuture<Long> logData(List<ByteBuffer> data) throws InterruptedException {
         if (!isLeader()) {
             LOG.debug("{} attempted to logData on a non-leader", myId);
             return null;
         }
 
-        IntLogRequest req = new IntLogRequest(datum);
+        IntLogRequest req = new IntLogRequest(data);
         logRequests.put(req);
 
         // TODO return the durable notification future?
@@ -786,7 +786,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         // Build the log entries:
         ArrayList <LogEntry> newLogEntries = new ArrayList<>(reqs.size());
         for (IntLogRequest logReq : reqs) {
-            LogEntry entry = new LogEntry(currentTerm, idAssigner, ByteBuffer.wrap(logReq.datum));
+            LogEntry entry = new LogEntry(currentTerm, idAssigner, logReq.data);
             newLogEntries.add(entry);
 
             if (myFirstIndexAsLeader == 0) {

@@ -37,10 +37,7 @@ enum PhysicalEntryTypes {
     TruncationMarker = 6;
 }
 
-message Entry {
-    repeated bytes key_values = 10;
-
-
+message RegionWalEntry {
     optional string regionInfo = 1;
     optional bytes key = 2;
     optional bytes family = 3;
@@ -95,14 +92,34 @@ message TruncationMarker {
     optional int64 file_byte_offset = 4;
 }
 
-
-message OLogEntry {
+message OLogImmutableHeader {
     optional string quorumId = 1;
-    optional int64 index = 2;
+    optional int64 seqNum = 2; // same as the "index" in the terminology of the replication algorithm
+    optional int64 term = 3; // election term
+    optional int32 remainingLength = 4; // length of remainder of the log entry after the CRC of this header.
+}
 
-    optional bool tombStone = 3;
+message OLogMutableHeader {
+    enum Type {
+        DATA = 1;
+        TRUNCATION = 2;
+    }
 
-    optional int64 term = 4;
+    required Type type = 1;
+    optional int32 contentLength = 2; // Length of entry content (payload), not including CRCs
+    optional int64 skipForward = 3; // File position of the end of the truncation; used only for TRUNCATION messages
+}
 
-    optional bytes value = 5;
+message OLogEntryHeader {
+    optional int64 seqNum = 1; // same as the "index" in the terminology of the replication algorithm
+    optional int64 term = 2; // election term
+    optional int32 contentLength = 3; // length of content (raw bytes) after the CRC of this header
+}
+
+message WrittenEntry {
+    optional string quorumId = 1;
+    optional int64 seqNum = 2;
+    optional int64 startFilePos = 3;
+    optional int64 endFilePos = 4;
+    optional bool truncation = 5;
 }

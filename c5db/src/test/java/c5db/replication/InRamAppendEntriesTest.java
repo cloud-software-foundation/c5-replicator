@@ -45,6 +45,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static c5db.interfaces.ReplicationModule.IndexCommitNotice;
+import static c5db.log.LogTestUtil.makeProtostuffEntry;
 import static c5db.replication.InRamTestUtil.syncSendMessage;
 import static c5db.replication.ReplicatorInstance.State;
 import static org.junit.Assert.assertEquals;
@@ -67,11 +68,11 @@ public class InRamAppendEntriesTest {
   private static final long LEADER_ID = 2;
   private static final long CURRENT_TERM = 4;
   private static final List<LogEntry> TEST_ENTRIES = ImmutableList.of(
-      new LogEntry(2, 1, null),
-      new LogEntry(2, 2, null),
-      new LogEntry(2, 3, null),
-      new LogEntry(3, 4, null),
-      new LogEntry(3, 5, null));
+      makeProtostuffEntry(1, 2, "a"),
+      makeProtostuffEntry(2, 2, "a"),
+      makeProtostuffEntry(3, 3, "a"),
+      makeProtostuffEntry(4, 3, "a"),
+      makeProtostuffEntry(5, 3, "a"));
   private static final List<LogEntry> EMPTY_ENTRY_LIST = ImmutableList.of();
 
   Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
@@ -143,7 +144,7 @@ public class InRamAppendEntriesTest {
     // "Reply false if term < currentTerm (§5.1)"
 
     long messageTerm = CURRENT_TERM - 1;
-    LogEntry entry = new LogEntry(CURRENT_TERM, 1, null);
+    LogEntry entry = makeProtostuffEntry(1, CURRENT_TERM, "x");
 
     // Case with a nonempty entry list
     RpcReply reply = syncSendMessage(rpcFiber, LEADER_ID, repl,
@@ -168,7 +169,7 @@ public class InRamAppendEntriesTest {
     long messageTerm = CURRENT_TERM;
     long prevLogIndex = 4;
     long prevLogTerm = 2; // This term conflicts with what's in the log.
-    LogEntry entry = new LogEntry(CURRENT_TERM, 6, null);
+    LogEntry entry = makeProtostuffEntry(6, CURRENT_TERM, "x");
 
     // Case with a nonempty entry list
     RpcReply reply = syncSendMessage(rpcFiber, LEADER_ID, repl,
@@ -192,7 +193,7 @@ public class InRamAppendEntriesTest {
     long messageTerm = CURRENT_TERM;
     long prevLogIndex = 1; // Log is empty, so this index isn't in it.
     long prevLogTerm = 1;
-    LogEntry entry = new LogEntry(1, 1, null);
+    LogEntry entry = makeProtostuffEntry(1, 1, "x");
 
     RpcReply reply = syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, Lists.newArrayList(entry), 0));
@@ -214,14 +215,14 @@ public class InRamAppendEntriesTest {
     long prevLogTerm = 4;
 
     // Case where the prevLogIndex is in the entry being sent, but not in the existing log
-    LogEntry entry = new LogEntry(CURRENT_TERM, 6, null);
+    LogEntry entry = makeProtostuffEntry(6, CURRENT_TERM, "x");
     RpcReply reply = syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, Lists.newArrayList(entry), 0));
     assertFalse(reply.getAppendReplyMessage().getSuccess());
     assertEquals(5, log.getLastIndex());
 
     // Case where the prevLogIndex isn't anywhere
-    entry = new LogEntry(CURRENT_TERM, 7, null);
+    entry = makeProtostuffEntry(7, CURRENT_TERM, "x");
     reply = syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, Lists.newArrayList(entry), 0));
     assertFalse(reply.getAppendReplyMessage().getSuccess());
@@ -244,7 +245,7 @@ public class InRamAppendEntriesTest {
     long messageTerm = CURRENT_TERM;
     long prevLogTerm = 3;
     long prevLogIndex = 4; // Note -- the prevLogTerm and prevLogIndex match with what's in the log.
-    LogEntry entry = new LogEntry(CURRENT_TERM, 5, null); // conflict
+    LogEntry entry = makeProtostuffEntry(5, CURRENT_TERM, "x"); // conflict
 
     syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, Lists.newArrayList(entry), 0));
@@ -265,7 +266,7 @@ public class InRamAppendEntriesTest {
     long messageTerm = CURRENT_TERM;
     long prevLogTerm = 3;
     long prevLogIndex = 4; // Note -- the prevLogTerm and prevLogIndex match with what's in the log.
-    LogEntry entry = new LogEntry(CURRENT_TERM, 3, null); // conflict
+    LogEntry entry = makeProtostuffEntry(3, CURRENT_TERM, "x"); // conflict
 
     syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, Lists.newArrayList(entry), 0));
@@ -298,8 +299,8 @@ public class InRamAppendEntriesTest {
 
     // Send two more entries and advance commit index to 3
     List<LogEntry> entries = ImmutableList.of(
-        new LogEntry(CURRENT_TERM, 5, null),
-        new LogEntry(CURRENT_TERM, 6, null));
+        makeProtostuffEntry(5, CURRENT_TERM, "x"),
+        makeProtostuffEntry(6, CURRENT_TERM, "x"));
     reply = syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, entries, 3));
     assertTrue(reply.getAppendReplyMessage().getSuccess());
@@ -316,8 +317,8 @@ public class InRamAppendEntriesTest {
 
     // Send a commit index within current entries being sent
     entries = ImmutableList.of(
-        new LogEntry(CURRENT_TERM, 7, null),
-        new LogEntry(CURRENT_TERM, 8, null));
+        makeProtostuffEntry(7, CURRENT_TERM, "x"),
+        makeProtostuffEntry(8, CURRENT_TERM, "x"));
     reply = syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, entries, 7));
     assertTrue(reply.getAppendReplyMessage().getSuccess());
@@ -325,8 +326,8 @@ public class InRamAppendEntriesTest {
 
     // Send a commit index beyond current entries being sent
     entries = ImmutableList.of(
-        new LogEntry(CURRENT_TERM + 1, 8, null),
-        new LogEntry(CURRENT_TERM + 1, 9, null));
+        makeProtostuffEntry(8, CURRENT_TERM + 1, "x"),
+        makeProtostuffEntry(9, CURRENT_TERM + 1, "x"));
     reply = syncSendMessage(rpcFiber, LEADER_ID, repl,
         new AppendEntries(messageTerm, LEADER_ID, prevLogIndex, prevLogTerm, entries, 11));
     assertTrue(reply.getAppendReplyMessage().getSuccess());

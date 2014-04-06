@@ -27,7 +27,9 @@ import c5db.replication.rpc.RpcWireReply;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.ThrowFiberExceptions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
+import io.netty.util.CharsetUtil;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
@@ -43,6 +45,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,7 +72,8 @@ public class InRamLeaderTest {
   private static final long PEER_ID = 1;
   private static final long CURRENT_TERM = 4;
   private static final String QUORUM_ID = "quorumId";
-  private static final byte[] TEST_DATUM = new byte[]{1, 2, 3, 4, 5, 6};
+  private static final List<ByteBuffer> TEST_DATUM = Lists.newArrayList(
+      ByteBuffer.wrap("test".getBytes(CharsetUtil.UTF_8)));
   private static final long TEST_TIMEOUT = 5;
 
   private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel = new MemoryRequestChannel<>();

@@ -16,21 +16,24 @@
  */
 package c5db.log;
 
+import c5db.C5ServerConstants;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.LogModule;
 import c5db.messages.generated.ModuleType;
+import c5db.util.KeySerializingExecutor;
 import com.google.common.util.concurrent.AbstractService;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 /**
  * The Log module.
  */
 public class LogService extends AbstractService implements LogModule {
     private final C5Server server;
-    private OLog olog;
+    private OLog oLog;
     private final Map<String, Mooring> moorings = new HashMap<>();
 
     public LogService(C5Server server) {
@@ -40,12 +43,14 @@ public class LogService extends AbstractService implements LogModule {
     @Override
     protected void doStart() {
         try {
-            // TODO the log should have it's own dedicated sync threads.
-            this.olog = new OLog(server.getConfigDirectory().getBaseConfigPath());
+            LogFileService logFileService = new LogFileService(server.getConfigDirectory().getBaseConfigPath());
+            KeySerializingExecutor executor = new KeySerializingExecutor(
+                Executors.newFixedThreadPool(C5ServerConstants.WAL_THREAD_POOL_SIZE));
+            this.oLog = new QuorumDelegatingLog(logFileService, executor);
 
-            // TODO start the flush threads as necessary
-            // TODO log maintenance threads can go here too.
-            notifyStarted();
+          // TODO start the flush threads as necessary
+          // TODO log maintenance threads can go here too.
+          notifyStarted();
         } catch (IOException e) {
             notifyFailed(e);
         }
@@ -53,12 +58,18 @@ public class LogService extends AbstractService implements LogModule {
 
     @Override
     protected void doStop() {
+      try {
+        oLog.close();
+        oLog = null;
+      } catch (IOException ignored) {
+      } finally {
         notifyStopped();
+      }
     }
 
     @Override
     public OLog getOLogInstance() {
-        return olog;
+        return oLog;
     }
 
     @Override
@@ -68,7 +79,7 @@ public class LogService extends AbstractService implements LogModule {
             if (moorings.containsKey(quorumId)) {
                 return moorings.get(quorumId);
             }
-            Mooring m = new Mooring(olog, quorumId);
+            Mooring m = new Mooring(oLog, quorumId);
             moorings.put(quorumId, m);
             return m;
         }
@@ -111,7 +122,7 @@ public class LogService extends AbstractService implements LogModule {
         try {
           flushAndCompact(i++);
         } catch (IOException e) {
-          throw new RuntimeException("CRASH");
+          throw new RuntimeException(e);
         }
       }
     }

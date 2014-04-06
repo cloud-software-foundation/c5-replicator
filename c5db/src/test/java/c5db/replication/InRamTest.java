@@ -25,8 +25,10 @@ import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.ThrowFiberExceptions;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import io.netty.util.CharsetUtil;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.Request;
@@ -40,7 +42,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -57,7 +61,8 @@ public class InRamTest {
   private static final int TEST_TIMEOUT = 10; // maximum timeout allowed for any election (seconds)
   private static final int NUM_PEERS = 7; // number of nodes in simulations
   private static final long OFFSET_STAGGERING_MILLIS = 250; // offset between different peers' clocks
-  private static final byte[] TEST_DATUM = new byte[]{1, 2, 3, 4, 5, 6};
+  private static final List<ByteBuffer> TEST_DATUM = Lists.newArrayList(
+      ByteBuffer.wrap("test".getBytes(CharsetUtil.UTF_8)));
 
   @Rule
   public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
@@ -214,9 +219,9 @@ public class InRamTest {
 
   // Request that the leader log datum, then block until the leader notifies that it has processed the request.
   // Throws TimeoutException if the request isn't processed within the time limit.
-  private void logDataAndWait(byte[] datum) throws Exception {
+  private void logDataAndWait(List<ByteBuffer> data) throws Exception {
     assert currentLeader != 0;
-    sim.getReplicators().get(currentLeader).logData(datum).get(TEST_TIMEOUT, TimeUnit.SECONDS);
+    sim.getReplicators().get(currentLeader).logData(data).get(TEST_TIMEOUT, TimeUnit.SECONDS);
   }
 
   @Before
@@ -400,7 +405,7 @@ public class InRamTest {
 
     ReplicatorLog log = sim.getLog(followerId);
     assertEquals(2, log.getLastIndex());
-    assertEquals(TEST_DATUM, log.getLogEntry(1).get().getData().array());
-    assertEquals(TEST_DATUM, log.getLogEntry(2).get().getData().array());
+    assertEquals(TEST_DATUM, log.getLogEntry(1).get().getDataList());
+    assertEquals(TEST_DATUM, log.getLogEntry(2).get().getDataList());
   }
 }

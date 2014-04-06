@@ -17,7 +17,6 @@
 
 package c5db.log;
 
-import c5db.generated.Log;
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
@@ -28,6 +27,7 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static c5db.log.LogTestUtil.makeProtostuffEntry;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
@@ -38,18 +38,18 @@ import static org.mockito.Mockito.when;
 public class MooringTest {
   ReplicatorLog log;
 
-  private static OLog makeMockAsyncOLog() {
+  private static OLog makeMockLog() {
     // Create a mock OLog, to be used by Mooring, whose logEntry method simulates a logging operation that does
     // not "complete" synchronously. It simulates this by returning an "unset" future.
     OLog mock = mock(OLog.class);
-    when(mock.logEntry(anyListOf(Log.OLogEntry.class), anyString()))
+    when(mock.logEntry(anyListOf(OLogEntry.class), anyString()))
         .thenReturn(SettableFuture.create());
     return mock;
   }
 
   @Before
   public final void setUp() {
-    log = new Mooring(makeMockAsyncOLog(), "quorumId");
+    log = new Mooring(makeMockLog(), "quorumId");
   }
 
   @After
@@ -68,11 +68,11 @@ public class MooringTest {
     // also be the term with the highest index, though that is not tested here).
     ByteBuffer data = ByteBuffer.wrap("123".getBytes());
     List<LogEntry> entries = Lists.newArrayList(
-        new LogEntry(1, 1, data),
-        new LogEntry(2, 2, data),
-        new LogEntry(2, 3, data),
-        new LogEntry(2, 4, data),
-        new LogEntry(3, 5, data));
+        makeProtostuffEntry(1, 1, data),
+        makeProtostuffEntry(2, 2, data),
+        makeProtostuffEntry(3, 2, data),
+        makeProtostuffEntry(4, 2, data),
+        makeProtostuffEntry(5, 3, data));
     log.logEntries(entries);
     assertEquals(3, log.getLastTerm());
   }
@@ -81,9 +81,9 @@ public class MooringTest {
   public void logEmptyEntryList() throws Exception {
     ByteBuffer data = ByteBuffer.wrap("123".getBytes());
     List<LogEntry> entries = Lists.newArrayList(
-        new LogEntry(1, 1, data),
-        new LogEntry(2, 2, data),
-        new LogEntry(2, 3, data));
+        makeProtostuffEntry(1, 1, data),
+        makeProtostuffEntry(2, 2, data),
+        makeProtostuffEntry(3, 2, data));
     log.logEntries(entries);
     assertEquals(2, log.getLastTerm());
     assertEquals(3, log.getLastIndex());

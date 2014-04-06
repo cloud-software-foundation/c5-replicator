@@ -43,9 +43,7 @@ message ReplicationWireMessage {
 message LogEntry {
     optional int64 term = 1;
     optional int64 index = 2;
-
-
-    optional bytes data = 3;
+    repeated bytes data = 3;
 }
 
 message RequestVote {

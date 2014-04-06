@@ -21,6 +21,7 @@ import c5db.replication.ReplicatorInstance;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.jetlang.channels.Channel;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -130,10 +131,10 @@ public interface ReplicationModule extends C5Module {
          * <p/>
          * Log a datum
          *
-         * @param datum some data to log.
+         * @param data Some data to log.
          * @return a listenable for the index number OR null if we aren't the leader.
          */
-        ListenableFuture<Long> logData(byte[] datum) throws InterruptedException;
+        ListenableFuture<Long> logData(List<ByteBuffer> data) throws InterruptedException;
 
         long getId();
 
