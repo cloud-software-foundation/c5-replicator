@@ -39,7 +39,7 @@ public class CrcInputStreamTest {
     final CrcInputStream crcInputStream = createCrcInputStreamReadingFromByteArray(data);
     readEntireInputStream(crcInputStream);
 
-    assertThat("CRC computed while reading", crcInputStream.getValue(), is(equalTo(expectedCrc)));
+    assertThat(crcInputStream.getValue(), is(equalTo(expectedCrc)));
   }
 
 

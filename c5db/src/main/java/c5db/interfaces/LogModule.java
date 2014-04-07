@@ -21,6 +21,8 @@ import c5db.log.Mooring;
 import c5db.log.OLog;
 import c5db.messages.generated.ModuleType;
 
+import java.io.IOException;
+
 /**
  * The log module is responsible for running all the threads and IO for write-ahead-logging.
  * <p>
@@ -31,6 +33,6 @@ import c5db.messages.generated.ModuleType;
 public interface LogModule extends C5Module {
   public OLog getOLogInstance();
 
-  public Mooring getMooring(String quorumId);
+  public Mooring getMooring(String quorumId) throws IOException;
 
 }

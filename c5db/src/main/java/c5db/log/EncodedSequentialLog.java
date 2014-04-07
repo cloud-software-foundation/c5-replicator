@@ -62,15 +62,14 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
     E decode(InputStream inputStream) throws IOException, CrcError;
 
     /**
-     * Skip over an entry in the input stream, returning the sequence number of the entry
-     * encountered.
+     * Skip over an entry in the input stream, returning the entry encountered as a SequentialEntry.
      *
      * @param inputStream An open input stream, positioned at the start of an entry.
      * @return The sequence number of the entry encountered.
      * @throws CrcError
      * @throws IOException
      */
-    long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException, CrcError;
+    SequentialEntry skipEntryAndReturnSequence(InputStream inputStream) throws IOException, CrcError;
   }
 
   public EncodedSequentialLog(LogPersistenceService.BytePersistence persistence,
@@ -93,27 +92,24 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
   public List<E> subSequence(long start, long end) throws IOException {
     final List<E> readEntries = Lists.newArrayList();
 
-    if (end < start) {
-      throw new IllegalArgumentException("subSequence: end < start");
-    } else if (end == start) {
-      return readEntries;
-    }
-
     try (InputStream reader = persistenceNavigator.getStream(start)) {
-      while (true) {
+      long seqNum;
+      do {
         E entry = codec.decode(reader);
-
-        if (entry.getSeqNum() < end) {
-          ensureAscendingWithNoGaps(readEntries, entry);
-          readEntries.add(entry);
-        } else {
-          break;
-        }
-      }
-    } catch (EOFException ignore) {
+        ensureAscendingWithNoGaps(readEntries, entry);
+        readEntries.add(entry);
+        seqNum = entry.getSeqNum();
+      } while (seqNum < end - 1);
+    } catch (EOFException e) {
+      throw new LogEntryNotFound(e);
     }
 
     return readEntries;
+  }
+
+  @Override
+  public SequentialEntry getLastEntry() throws IOException {
+    return persistenceNavigator.getLastEntry();
   }
 
   @Override
@@ -130,6 +126,15 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
   @Override
   public void close() throws IOException {
     persistence.close();
+  }
+
+  /**
+   * Exception indicating a requested log entry was not found
+   */
+  public static class LogEntryNotFound extends RuntimeException {
+    public LogEntryNotFound(Throwable cause) {
+      super(cause);
+    }
   }
 
   /**

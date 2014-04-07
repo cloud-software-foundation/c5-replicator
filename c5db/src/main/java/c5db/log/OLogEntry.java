@@ -71,6 +71,10 @@ public class OLogEntry implements SequentialEntry {
     return new LogEntry(electionTerm, seqNum, buffers);
   }
 
+  public static OLogEntry fromProtostuffMessage(LogEntry entry) {
+    return new OLogEntry(entry.getIndex(), entry.getTerm(), entry.getDataList());
+  }
+
   @Override
   public boolean equals(Object o) {
     if (o == null || (o.getClass() != this.getClass())) {
@@ -132,10 +136,10 @@ public class OLogEntry implements SequentialEntry {
     }
 
     @Override
-    public long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException {
+    public SequentialEntry skipEntryAndReturnSequence(InputStream inputStream) throws IOException {
       final OLogEntryHeader header = decodeAndCheckCrc(inputStream, SCHEMA);
       skipContent(inputStream, header.getContentLength());
-      return header.getSeqNum();
+      return new OLogEntry(header.getSeqNum(), header.getTerm(), Lists.newArrayList());
     }
 
     private void skipContent(InputStream inputStream, int contentLength) throws IOException {

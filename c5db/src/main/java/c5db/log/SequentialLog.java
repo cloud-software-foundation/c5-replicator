@@ -55,6 +55,14 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
   List<E> subSequence(long start, long end) throws IOException;
 
   /**
+   * Retrieve the last entry in the log.
+   *
+   * @return The last entry.
+   * @throws IOException
+   */
+  SequentialEntry getLastEntry() throws IOException;
+
+  /**
    * Remove entries from the tail of the log.
    *
    * @param seqNum Remove every entry with sequence number greater than or equal to seqNum.

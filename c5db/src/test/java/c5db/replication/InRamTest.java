@@ -387,6 +387,7 @@ public class InRamTest {
   @Test
   public void testFollowerCatchup() throws Exception {
     // A follower falls out of sync with logged and committed entries, then is elected leader.
+    // TODO observed to flicker -- this test is flaky.
 
     waitForNewLeader(1);
     long followerId = pickFollower();
