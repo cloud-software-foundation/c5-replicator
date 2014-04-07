@@ -18,6 +18,8 @@
 package c5db.replication;
 
 import c5db.interfaces.ReplicationModule;
+import c5db.log.InRamLog;
+import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.LogEntry;
 import c5db.replication.rpc.RpcReply;
@@ -74,7 +76,7 @@ public class InRamAppendEntriesTest {
 
   Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
   BlockingQueue<IndexCommitNotice> commits = new LinkedBlockingQueue<>();
-  ReplicatorLogAbstraction log = new InRamLog();
+  ReplicatorLog log = new InRamLog();
 
   @Rule
   public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
@@ -84,7 +86,7 @@ public class InRamAppendEntriesTest {
 
   private ReplicatorInstance makeTestInstance() {
     final List<Long> peerIdList = ImmutableList.of(1L, 2L, 3L);
-    ReplicatorInformationInterface info = new TestableInRamSim.Info(0) {
+    ReplicatorInformationInterface info = new InRamSim.Info(0) {
       @Override
       public long electionTimeout() {
         return Long.MAX_VALUE / 2L; // Prevent election timeouts.
@@ -97,7 +99,7 @@ public class InRamAppendEntriesTest {
         peerIdList,
         log,
         info,
-        new TestableInRamSim.Persister(),
+        new InRamSim.Persister(),
         new MemoryRequestChannel<>(),
         new MemoryChannel<>(),
         commitNotices,

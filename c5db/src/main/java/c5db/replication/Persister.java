@@ -23,7 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A small persister that writes files to a directory.
+ * A small persister that writes files to a directory. Persisting this information is needed to
+ * provide crash recovery for {@link c5db.replication.ReplicatorInstance}.
 */
 class Persister implements ReplicatorInfoPersistence {
 

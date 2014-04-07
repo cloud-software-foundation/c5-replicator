@@ -18,7 +18,6 @@
 package c5db.log;
 
 import c5db.generated.Log;
-import c5db.replication.ReplicatorLogAbstraction;
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
@@ -37,7 +36,7 @@ import static org.mockito.Mockito.when;
 
 
 public class MooringTest {
-  ReplicatorLogAbstraction log;
+  ReplicatorLog log;
 
   private static OLog makeMockAsyncOLog() {
     // Create a mock OLog, to be used by Mooring, whose logEntry method simulates a logging operation that does

@@ -17,7 +17,6 @@
 package c5db.log;
 
 import c5db.generated.Log;
-import c5db.replication.ReplicatorLogAbstraction;
 import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -27,8 +26,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-
-public class Mooring implements ReplicatorLogAbstraction {
+/**
+ * Implementation of ReplicatorLog which delegates to an OLog. Each replicator instance has
+ * a ReplicatorLog associated with it. The Mooring implementation allows each of these to
+ * communicate to the same OLog behind the scenes. For instance, since the OLog API requires specifying
+ * quorumId for most operations, whereas the ReplicatorLog does not "know about" quorumId,
+ * Mooring bridges the gap by explicitly tracking quorumId and providing it on delegated calls.
+ */
+public class Mooring implements ReplicatorLog {
     final OLog log;
     final String quorumId;
     HashMap<String, Long> latestTombstones = new HashMap<>();

@@ -17,6 +17,7 @@
 package c5db.replication;
 
 import c5db.interfaces.ReplicationModule;
+import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.AppendEntriesReply;
 import c5db.replication.generated.LogEntry;
@@ -58,7 +59,11 @@ import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
 
 
 /**
- * Single instantiation of a replicator / log / lease
+ * Single instantiation of a replicator / log / lease. This implementation's logic is based on the
+ * RAFT algorithm (see <a href="http://raftconsensus.github.io/">http://raftconsensus.github.io/</a>.
+ * <p>
+ * A ReplicatorInstance handles the consensus and replication for a single quorum, and communicates
+ * with the log package via {@link c5db.log.ReplicatorLog}.
  */
 public class ReplicatorInstance implements ReplicationModule.Replicator {
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatorInstance.class);
@@ -95,7 +100,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     /****** These next few fields are used when we are a leader *******/
     // this is the next index from our log we need to send to each peer, kept track of on a per-peer basis.
     private HashMap<Long, Long> peersNextIndex;
-    // The last successfully acked message from our peers.  I also keep track of my own acked log messages in here.
+    // The last succesfully acked message from our peers.  I also keep track of my own acked log messages in here.
     private HashMap<Long, Long> peersLastAckedIndex;
     private long myFirstIndexAsLeader;
     private long lastCommittedIndex;
@@ -107,11 +112,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     private static class IntLogRequest {
         public final byte[] datum;
-        public final SettableFuture<Long> logNumberNotification;
+        public final SettableFuture<Long> logNumberNotifation;
 
         private IntLogRequest(byte[] datum) {
             this.datum = datum;
-            this.logNumberNotification = SettableFuture.create();
+            this.logNumberNotifation = SettableFuture.create();
         }
     }
     private final BlockingQueue<IntLogRequest> logRequests = new ArrayBlockingQueue<>(100);
@@ -137,7 +142,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     private long whosLeader = 0;
     private Disposable electionChecker;
 
-    private final ReplicatorLogAbstraction log;
+    private final ReplicatorLog log;
     final ReplicatorInformationInterface info;
     final ReplicatorInfoPersistence persister;
 
@@ -145,7 +150,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                               final long myId,
                               final String quorumId,
                               List<Long> peers,
-                              ReplicatorLogAbstraction log,
+                              ReplicatorLog log,
                               ReplicatorInformationInterface info,
                               ReplicatorInfoPersistence persister,
                               RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
@@ -210,7 +215,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                        final long myId,
                        final String quorumId,
                        List<Long> peers,
-                       ReplicatorLogAbstraction log,
+                       ReplicatorLog log,
                        ReplicatorInformationInterface info,
                        ReplicatorInfoPersistence persister,
                        RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
@@ -279,7 +284,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         logRequests.put(req);
 
         // TODO return the durable notification future?
-        return req.logNumberNotification;
+        return req.logNumberNotifation;
     }
 
     @FiberOnly
@@ -291,11 +296,6 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     @FiberOnly
     private void onIncomingMessage(Request<RpcWireRequest, RpcReply> message) {
         RpcWireRequest req = message.getRequest();
-        if (!peers.contains(req.from)) {
-            LOG.debug("{} Got message from peer {} who I don't recognize, ignoring", myId, req.from);
-            return;
-        }
-
         if (req.isRequestVoteMessage()) {
             doRequestVote(message);
 
@@ -795,7 +795,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             }
 
             // let the client know what our id is
-            logReq.logNumberNotification.set(idAssigner);
+            logReq.logNumberNotifation.set(idAssigner);
 
             idAssigner ++;
         }

@@ -14,53 +14,76 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.replication;
 
 import c5db.interfaces.ReplicationModule;
-import c5db.replication.rpc.RpcReply;
+import c5db.log.InRamLog;
+import c5db.log.ReplicatorLog;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
-import com.codahale.metrics.ConsoleReporter;
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import org.apache.commons.lang.time.StopWatch;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
-import org.jetlang.core.Callback;
+import org.jetlang.core.BatchExecutor;
+import org.jetlang.core.BatchExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
-import static com.codahale.metrics.MetricRegistry.name;
+import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
 
+/**
+ * A class to simulate a group of ReplicatorInstance nodes interacting via in-RAM channels, for testing purposes.
+ */
 public class InRamSim {
   private static final Logger LOG = LoggerFactory.getLogger(InRamSim.class);
 
   public static class Info implements ReplicatorInformationInterface {
 
     public final long offset;
+    StopWatch stopWatch = new StopWatch();
+    private boolean suspended = true; // field needed because StopWatch doesn't have a way to check its state
 
     public Info(long offset) {
       this.offset = offset;
+      stopWatch.start();
+      stopWatch.suspend();
+    }
+
+    public void startTimeout() {
+      if (suspended) {
+        suspended = false;
+        stopWatch.resume();
+      }
+    }
+
+    public void stopTimeout() {
+      if (!suspended) {
+        suspended = true;
+        stopWatch.suspend();
+      }
     }
 
     @Override
     public long currentTimeMillis() {
-      return System.currentTimeMillis() + offset;
+      return stopWatch.getTime() + offset;
     }
 
     @Override
@@ -100,77 +123,179 @@ public class InRamSim {
     }
   }
 
+  private class WireObstruction {
+    public SettableFuture<Boolean> future;
+    public Predicate<RpcRequest> dropIf;
+    public Predicate<RpcRequest> dropUntil;
+
+    public WireObstruction(SettableFuture<Boolean> future, Predicate<RpcRequest> dropIf, Predicate<RpcRequest> dropUntil) {
+      this.future = future;
+      this.dropIf = dropIf;
+      this.dropUntil = dropUntil;
+    }
+  }
+
   final int peerSize;
-  final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
-  final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
-  final Channel<ReplicationModule.ReplicatorInstanceEvent> stateChanges = new MemoryChannel<>();
+  private final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
+  private final Map<Long, ReplicatorLog> replicatorLogs = new HashMap<>();
+  private final Map<Long, WireObstruction> wireObstructions = new HashMap<>();
+  private final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
+  final Channel<ReplicatorInstanceEvent> stateChanges = new MemoryChannel<>();
   final Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
   final Fiber rpcFiber;
   final List<Long> peerIds = new ArrayList<>();
   private final PoolFiberFactory fiberPool;
-  private final MetricRegistry metrics = new MetricRegistry();
+  private final BatchExecutor batchExecutor;
+  final Channel<RpcWireReply> replyChannel = new MemoryChannel<>();
 
 
-  public InRamSim(final int peerSize) {
+  /** Set up the simulation (but don't actually start it yet).
+   *
+   * @param peerSize The number of nodes in the simulation
+   * @param electionTimeoutOffset the time offset, in milliseconds, between different instances' clocks.
+   * @param batchExecutor The jetlang batch executor for the simulation's fibers to use.
+   */
+  public InRamSim(final int peerSize, long electionTimeoutOffset, BatchExecutor batchExecutor) {
     this.peerSize = peerSize;
     this.fiberPool = new PoolFiberFactory(Executors.newCachedThreadPool());
+    this.batchExecutor = batchExecutor;
     Random r = new Random();
 
     for (int i = 0; i < peerSize; i++) {
-      peerIds.add((long)r.nextInt());
+      peerIds.add((long) r.nextInt());
     }
 
     long plusMillis = 0;
-    for( long peerId : peerIds) {
+    for (long peerId : peerIds) {
       // make me a ....
-      ReplicatorInstance rep = new ReplicatorInstance(fiberPool.create(),
+      ReplicatorLog log = new InRamLog();
+      ReplicatorInstance rep = new ReplicatorInstance(fiberPool.create(batchExecutor),
           peerId,
           "foobar",
           peerIds,
-          new InRamLog(),
+          log,
           new Info(plusMillis),
           new Persister(),
           rpcChannel,
           stateChanges,
           commitNotices);
-      rep.start();
       replicators.put(peerId, rep);
-      plusMillis += 500;
+      replicatorLogs.put(peerId, log);
+      plusMillis += electionTimeoutOffset;
     }
 
-    rpcFiber = fiberPool.create();
-
+    rpcFiber = fiberPool.create(batchExecutor);
 
     // subscribe to the rpcChannel:
-    rpcChannel.subscribe(rpcFiber, new Callback<Request<RpcRequest, RpcWireReply>>() {
-      @Override
-      public void onMessage(Request<RpcRequest, RpcWireReply> message) {
-        messageForwarder(message);
-      }
-    });
-    commitNotices.subscribe(rpcFiber, new Callback<ReplicationModule.IndexCommitNotice>() {
-      @Override
-      public void onMessage(ReplicationModule.IndexCommitNotice message) {
-        LOG.debug("Commit notice {}", message);
-      }
-    });
+    rpcChannel.subscribe(rpcFiber, this::messageForwarder);
+    commitNotices.subscribe(rpcFiber, message -> LOG.debug("Commit notice {}", message));
+  }
 
+  // Stop and dispose of the requested peer; but leave its object in the replicators map so that e.g.
+  // its persistent storage can be read later.
+  public void killPeer(long peerId) {
+    assert replicators.containsKey(peerId);
+    ReplicatorInstance repl = replicators.get(peerId);
+    repl.dispose();
+    replicatorLogs.remove(peerId);
+  }
 
-    rpcFiber.start();
+  public void restartPeer(long peerId) {
+    assert replicators.containsKey(peerId);
+    ReplicatorInstance oldRepl = replicators.get(peerId);
+    ReplicatorLog log = new InRamLog();
+    ReplicatorInstance repl = new ReplicatorInstance(fiberPool.create(batchExecutor),
+        peerId,
+        "foobar",
+        peerIds,
+        log,
+        oldRepl.info,
+        oldRepl.persister,
+        rpcChannel,
+        stateChanges,
+        commitNotices);
+    replicators.put(peerId, repl);
+    replicatorLogs.put(peerId, log);
+    repl.start();
+  }
+
+  // This method initiates a period of time during which requests attempting to reach peerId
+  // will be selectively dropped. It returns a future to let the client of this method know when
+  // the obstruction is removed. This method simply stores the information it's passed. The
+  // shouldDropRequest method is responsible for applying it.
+  public ListenableFuture<Boolean> dropIncomingRequests(long peerId,
+                                                        Predicate<RpcRequest> dropIf,
+                                                        Predicate<RpcRequest> dropUntil) {
+    SettableFuture<Boolean> future = SettableFuture.create();
+    if (wireObstructions.containsKey(peerId)) {
+      wireObstructions.get(peerId).future.set(true);
+    }
+    wireObstructions.put(peerId, new WireObstruction(future, dropIf, dropUntil));
+    return future;
+  }
+
+  private boolean shouldDropRequest(RpcRequest request) {
+    long peerId = request.to;
+
+    if (!wireObstructions.containsKey(peerId)) {
+      return false;
+    } else {
+      WireObstruction drop = wireObstructions.get(peerId);
+      if (drop.dropUntil.test(request)) {
+        drop.future.set(true);
+        wireObstructions.remove(peerId);
+        return false;
+      } else {
+        return drop.dropIf.test(request);
+      }
+    }
   }
 
   public RequestChannel<RpcRequest, RpcWireReply> getRpcChannel() {
     return rpcChannel;
   }
 
-  private final Meter messages = metrics.meter(name(InRamSim.class, "messageRate"));
-  private final Counter messageTxn = metrics.counter(name(InRamSim.class, "messageTxn"));
+  public Channel<RpcWireReply> getReplyChannel() {
+    return replyChannel;
+  }
+
+  public Channel<ReplicationModule.IndexCommitNotice> getCommitNotices() {
+    return commitNotices;
+  }
+
+  public Map<Long, ReplicatorInstance> getReplicators() {
+    return replicators;
+  }
+
+  public ReplicatorLog getLog(long peerId) {
+    assert replicatorLogs.containsKey(peerId);
+    return replicatorLogs.get(peerId);
+  }
+
+  public void stopAllTimeouts() {
+    for (ReplicatorInstance repl : replicators.values()) {
+      ((Info) repl.info).stopTimeout();
+    }
+  }
+
+  public void startAllTimeouts() {
+    for (ReplicatorInstance repl : replicators.values()) {
+      ((Info) repl.info).startTimeout();
+    }
+  }
+
+  public void stopTimeout(long peerId) {
+    assert replicators.containsKey(peerId);
+    ((Info) replicators.get(peerId).info).stopTimeout();
+  }
+
+  public void startTimeout(long peerId) {
+    ((Info) replicators.get(peerId).info).startTimeout();
+  }
 
   private void messageForwarder(final Request<RpcRequest, RpcWireReply> origMsg) {
 
     final RpcRequest request = origMsg.getRequest();
-//        final OutgoingRpcRequest request = origMsg.getRequest();
-//        msgSize.update(request.message.getSerializedSize());
     final long dest = request.to;
     final ReplicatorInstance repl = replicators.get(dest);
     if (repl == null) {
@@ -180,94 +305,41 @@ public class InRamSim {
       return;
     }
 
-    messages.mark();
-    messageTxn.inc();
+    LOG.info("Request {}", request);
+    if (shouldDropRequest(request)) {
+      LOG.warn("Incoming request dropped: Request {}", request);
+      return;
+    }
 
     final RpcWireRequest newRequest = new RpcWireRequest(request.from, request.quorumId, request.message);
-    AsyncRequest.withOneReply(rpcFiber, repl.getIncomingChannel(), newRequest, new Callback<RpcReply>() {
-      @Override
-      public void onMessage(RpcReply msg) {
-        messages.mark();
-        messageTxn.dec();
-//                msgSize.update(msg.message.getSerializedSize());
-        // Note that 'RpcReply' has an empty from/to/messageId.  We must know from our context (and so we do)
-        RpcWireReply newReply = new RpcWireReply(request.to, request.quorumId, msg.message);
-        origMsg.reply(newReply);
-      }
+    AsyncRequest.withOneReply(rpcFiber, repl.getIncomingChannel(), newRequest, msg -> {
+      // Note that 'RpcReply' has an empty from/to/messageId.  We must know from our context (and so we do)
+      RpcWireReply newReply = new RpcWireReply(request.to, request.quorumId, msg.message);
+      LOG.info("Reply {}", newReply);
+      replyChannel.publish(newReply);
+      origMsg.reply(newReply);
     });
   }
 
-  public void run() throws ExecutionException, InterruptedException {
-    ReplicatorInstance theOneIKilled = null;
-
-    for(int i = 0 ; i < 15 ; i++) {
-
-      Thread.sleep(3 * 1000);
-
-      for (ReplicatorInstance repl : replicators.values()) {
-//                if (theOneIKilled != null && theOneIKilled.getId() == repl.getId()) {
-//                    if (i > 10)
-//                        System.out.print("BACK_TO_LIFE: ");
-//                    else if (i > 5)
-//                        System.out.print("DEAD: ");
-//                }
-        if (repl.isLeader()) {
-          System.out.print("LEADER: ");
-          repl.logData(new byte[]{1,2,3,4,5,6});
-        }
-        System.out.print(repl.getId() + " currentTerm: " + repl.currentTerm);
-        System.out.println(" votedFor: " + repl.votedFor);
-      }
-
-      // TODO kill leader after we have keep-alive.
-//            if (i == 5) {
-//                for (Replicator repl : replicators.values()) {
-//                    if (repl.isLeader()) {
-//                        repl.dispose();
-//                        theOneIKilled = repl;
-//                    }
-//
-//                }
-//            }
-      // TODO crash recover after persister does persistence.
-//            if (i == 10) {
-//                // crash recovery with same UUID:
-//                Replicator repl = new Replicator(fiberPool.create(),
-//                        theOneIKilled.getId(),
-//                        "foobar",
-//                        peerIds,
-//                        new Log(),
-//                        theOneIKilled.info,
-//                        new Persister(),
-//                        rpcChannel);
-//                replicators.put(theOneIKilled.getId(), repl);
-//            }
+  public void start() {
+    for (ReplicatorInstance repl : replicators.values()) {
+      repl.start();
     }
+    rpcFiber.start();
   }
 
-  public static void main(String []args) throws ExecutionException, InterruptedException {
-    InRamSim sim = new InRamSim(3);
-    ConsoleReporter reporter = ConsoleReporter.forRegistry(sim.metrics)
-        .convertDurationsTo(TimeUnit.SECONDS)
-        .convertDurationsTo(TimeUnit.MILLISECONDS)
-        .build();
-
-    reporter.start(5, TimeUnit.SECONDS);
-    sim.run();
-    System.out.println("All done baby");
+  public static void main(String[] args) throws InterruptedException {
+    InRamSim sim = new InRamSim(3, 500, new BatchExecutorImpl());
+    sim.start();
+    Thread.sleep(10 * 1000);
     sim.dispose();
-    reporter.report();
-    reporter.stop();
   }
 
-  private void dispose() {
+  public void dispose() {
     rpcFiber.dispose();
-    for(ReplicatorInstance repl : replicators.values()) {
+    for (ReplicatorInstance repl : replicators.values()) {
       repl.dispose();
     }
     fiberPool.dispose();
-
-
   }
-
 }

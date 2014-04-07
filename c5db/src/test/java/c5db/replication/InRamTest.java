@@ -18,6 +18,7 @@
 package c5db.replication;
 
 import c5db.interfaces.ReplicationModule;
+import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.RequestVote;
 import c5db.replication.rpc.RpcRequest;
@@ -64,7 +65,7 @@ public class InRamTest {
   private BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(fiberExceptionHandler);
   private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(batchExecutor);
   private final Fiber fiber = new ThreadFiber(runnableExecutor, null, true);
-  private TestableInRamSim sim;
+  private InRamSim sim;
   private final Channel<Long> simStatusChanges = new MemoryChannel<>();
 
   private long currentTerm = 0;
@@ -220,7 +221,7 @@ public class InRamTest {
 
   @Before
   public final void setUp() {
-    sim = new TestableInRamSim(NUM_PEERS, OFFSET_STAGGERING_MILLIS, batchExecutor);
+    sim = new InRamSim(NUM_PEERS, OFFSET_STAGGERING_MILLIS, batchExecutor);
     sim.getRpcChannel().subscribe(fiber, this::monitorOutboundRequests);
     sim.getCommitNotices().subscribe(fiber, this::monitorCommits);
     sim.start();
@@ -345,7 +346,7 @@ public class InRamTest {
         //
         waitForCommit(peerId, 1);
       }
-      ReplicatorLogAbstraction log = sim.getLog(peerId);
+      ReplicatorLog log = sim.getLog(peerId);
       assertEquals(1, log.getLastIndex());
     }
   }
@@ -397,7 +398,7 @@ public class InRamTest {
     future.get(TEST_TIMEOUT, TimeUnit.SECONDS);
     waitForCommit(followerId, 2);
 
-    ReplicatorLogAbstraction log = sim.getLog(followerId);
+    ReplicatorLog log = sim.getLog(followerId);
     assertEquals(2, log.getLastIndex());
     assertEquals(TEST_DATUM, log.getLogEntry(1).get().getData().array());
     assertEquals(TEST_DATUM, log.getLogEntry(2).get().getData().array());

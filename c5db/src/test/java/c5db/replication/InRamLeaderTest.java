@@ -18,6 +18,8 @@
 package c5db.replication;
 
 import c5db.interfaces.ReplicationModule;
+import c5db.log.InRamLog;
+import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.AppendEntriesReply;
 import c5db.replication.rpc.RpcRequest;
@@ -60,7 +62,6 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 
@@ -84,7 +85,7 @@ public class InRamLeaderTest {
   private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
       new ExceptionHandlingBatchExecutor(fiberExceptionHandler));
 
-  private final ReplicatorLogAbstraction log = new InRamLog();
+  private final ReplicatorLog log = new InRamLog();
   private Fiber rpcFiber = new ThreadFiber(runnableExecutor, null, true);
   private ChannelListener<ReplicationModule.IndexCommitNotice> commitListener;
 
@@ -99,7 +100,7 @@ public class InRamLeaderTest {
     sendRpcChannel.subscribe(rpcFiber, (request) -> System.out.println(request.getRequest()));
     sendRpcChannel.subscribe(rpcFiber, this::routeOutboundRequests);
 
-    TestableInRamSim.Info info = new TestableInRamSim.Info(0);
+    InRamSim.Info info = new InRamSim.Info(0);
     info.startTimeout();
 
     replicatorInstance = new ReplicatorInstance(new ThreadFiber(runnableExecutor, null, true),
@@ -108,7 +109,7 @@ public class InRamLeaderTest {
         peerIdList,
         log,
         info,
-        new TestableInRamSim.Persister(),
+        new InRamSim.Persister(),
         sendRpcChannel,
         new MemoryChannel<>(),
         commitNotices,

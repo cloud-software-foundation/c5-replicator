@@ -17,7 +17,8 @@
 package c5db.replication;
 
 /**
- *
+ * Information used by a {@link c5db.replication.ReplicatorInstance} to configure itself; for instance,
+ * tunable timing-related parameters.
  */
 public interface ReplicatorInformationInterface {
     public long currentTimeMillis();
@@ -31,7 +32,7 @@ public interface ReplicatorInformationInterface {
     public long electionCheckRate();
 
     /**
-     * The election timeout (straight from the paper).
+     * The election timeout.
      * @return
      */
     public long electionTimeout();
