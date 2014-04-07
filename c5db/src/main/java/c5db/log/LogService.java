@@ -105,6 +105,11 @@ public class LogService extends AbstractService implements LogModule {
     return 0;
   }
 
+  @Override
+  public String acceptCommand(String commandString) {
+    return null;
+  }
+
   public class FlushThread implements Runnable {
     int i = 0;
 

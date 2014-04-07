@@ -104,6 +104,11 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     return discoveryPort;
   }
 
+  @Override
+  public String acceptCommand(String commandString) {
+    return null;
+  }
+
   private final RequestChannel<NodeInfoRequest, NodeInfoReply> nodeInfoRequests = new MemoryRequestChannel<>();
 
   @Override

@@ -106,6 +106,11 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     return this.port;
   }
 
+  @Override
+  public String acceptCommand(String commandString) {
+    return null;
+  }
+
   private MemoryChannel<IndexCommitNotice> indexCommitNotices = new MemoryChannel<>();
 
   @Override

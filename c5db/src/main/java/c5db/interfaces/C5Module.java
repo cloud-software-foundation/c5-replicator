@@ -39,11 +39,11 @@ import com.google.common.util.concurrent.Service;
  * </p>
  */
 public interface C5Module extends Service {
-  // TODO module dependencies so if you stop one module, you have to stop the dependencies.
+  ModuleType getModuleType();
 
-  public ModuleType getModuleType();
+  boolean hasPort();
 
-  public boolean hasPort();
+  int port();
 
-  public int port();
+  String acceptCommand(String commandString);
 }
