@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.regionserver.wal.HLog;
+import org.jetlang.channels.MemoryChannel;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
 import org.jmock.Expectations;
@@ -55,6 +56,8 @@ public class TabletTest {
   public final JUnitRuleMockery context = new JUnitRuleMockery() {{
     setThreadingPolicy(new Synchroniser());
   }};
+
+  private MemoryChannel channel;
 
   final ReplicationModule replicationModule = context.mock(ReplicationModule.class);
   final ReplicationModule.Replicator replicator = context.mock(ReplicationModule.Replicator.class);
@@ -90,8 +93,51 @@ public class TabletTest {
 
   @Before
   public void setup() throws Exception {
+    Fiber tabletFiber = new ThreadFiber();
+    this.tablet = new Tablet(regionInfo,
+        tableDescriptor,
+        peerList,
+        path,
+        conf,
+        tabletFiber,
+        replicationModule,
+        regionCreator);
+    listener = listenTo(tablet.getStateChangeChannel());
+
     future.set(replicator);
     listener = listenTo(tablet.getStateChangeChannel());
+    channel = new MemoryChannel();
+
+    context.checking(new Expectations() {
+      {
+        States state = context.states("start");
+
+        allowing(replicator).getQuorumId();
+        will(returnValue(regionName));
+
+        oneOf(replicationModule).createReplicator(regionName, peerList);
+        will(returnValue(future));
+        then(state.is("opening"));
+
+        oneOf(replicator).start();
+        when(state.is("opening"));
+
+        oneOf(regionCreator).getHRegion(
+            with(any(Path.class)),
+            with(equal(regionInfo)),
+            with(equal(tableDescriptor)),
+            with(any(HLog.class)),
+            with(same(conf)));
+        will(returnValue(region));
+        then(state.is("opened"));
+        channel = new MemoryChannel();
+      }
+    });
+
+    context.checking(new Expectations() {{
+      allowing(replicator).getStateChannel();
+      will(returnValue(channel));
+    }});
   }
 
   @After
@@ -102,31 +148,15 @@ public class TabletTest {
 
   @Test
   public void basicTest() throws Throwable {
-    context.checking(new Expectations() {{
-      States state = context.states("start");
-
-      allowing(replicator).getQuorumId();
-      will(returnValue(regionName));
-
-      oneOf(replicationModule).createReplicator(regionName, peerList);
-      will(returnValue(future));
-      then(state.is("opening"));
-
-      oneOf(replicator).start();
-      when(state.is("opening"));
-
-      oneOf(regionCreator).getHRegion(
-          with(any(Path.class)),
-          with(equal(regionInfo)),
-          with(equal(tableDescriptor)),
-          with(any(HLog.class)),
-          with(same(conf)));
-      will(returnValue(region));
-      then(state.is("opened"));
-    }});
-
     tablet.start();
-
     assertEventually(listener, hasStateEqualTo(TabletModule.Tablet.State.Open));
+  }
+
+  @Test
+  public void shouldRunCallCallbackWhenTabletBecomesTheLeader() throws Throwable {
+    tablet.start();
+    assertEventually(listener, hasStateEqualTo(TabletModule.Tablet.State.Open));
+    channel.publish(ReplicationModule.Replicator.State.LEADER);
+    assertEventually(listener, hasStateEqualTo(TabletModule.Tablet.State.Leader));
   }
 }

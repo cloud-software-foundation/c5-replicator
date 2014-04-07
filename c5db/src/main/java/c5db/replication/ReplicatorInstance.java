@@ -36,6 +36,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
+import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
@@ -82,6 +83,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         '}';
   }
 
+  private final MemoryChannel<State> stateMemoryChannel = new MemoryChannel<>();
+
   public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
     return incomingChannel;
   }
@@ -127,15 +130,6 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
   private final BlockingQueue<IntLogRequest> logRequests = new ArrayBlockingQueue<>(100);
 
-  // What state is this instance in?
-  public enum State {
-    INIT,
-    FOLLOWER,
-    CANDIDATE,
-    LEADER,
-  }
-
-  // Initial state == CANDIDATE
   State myState = State.FOLLOWER;
 
   // In theory these are persistent:
@@ -731,6 +725,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     LOG.warn("{} I AM THE LEADER NOW, commece AppendEntries RPCz term = {}", myId, currentTerm);
 
     myState = State.LEADER;
+    stateMemoryChannel.publish(State.LEADER);
 
     // Page 7, para 5
     long myNextLog = log.getLastIndex() + 1;
@@ -1056,5 +1051,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     LOG.debug("{} started {} with election timeout {}", myId, this.quorumId, this.myElectionTimeout);
     fiber.start();
   }
+
+  @Override
+  public Channel<State> getStateChannel() {
+    return stateMemoryChannel;
+  }
+
 
 }

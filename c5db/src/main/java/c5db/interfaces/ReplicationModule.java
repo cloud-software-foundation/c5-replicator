@@ -143,6 +143,17 @@ public interface ReplicationModule extends C5Module {
 
     void start();
 
+    Channel<State> getStateChannel();
+
+    // What state is this instance in?
+    public enum State {
+      INIT,
+      FOLLOWER,
+      CANDIDATE,
+      LEADER,
+    }
+
+
     // TODO add these maybe in the future
     // public ImmutableList<Long> getQuorum();
   }
