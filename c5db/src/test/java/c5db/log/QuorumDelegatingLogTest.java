@@ -87,6 +87,7 @@ public class QuorumDelegatingLogTest {
   }
 
   private long testSequenceNumber;
+
   private long nextSeqNum() {
     testSequenceNumber++;
     return testSequenceNumber;

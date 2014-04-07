@@ -14,15 +14,16 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.util;
 
 /**
  * Interface to permit the use of a lambda that throws a checked exception.
  *
- * @param <T>   Type accepted by the consumer; analogous to {@code Consumer<T>}
- * @param <E>   Type of the exception thrown
+ * @param <T> Type accepted by the consumer; analogous to {@code Consumer<T>}
+ * @param <E> Type of the exception thrown
  */
-public interface CheckedConsumer<T, E extends Throwable>  {
+public interface CheckedConsumer<T, E extends Throwable> {
 
   void accept(T t) throws E;
 }

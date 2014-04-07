@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.replication.rpc;
 
 
@@ -22,16 +23,16 @@ import io.protostuff.Message;
 /**
  * An outbound request for the transport.  Since the transport knows who 'we' are, the only
  * params required is a 'to' and which quorumId is being involved.  Oh yes and the actual message.
- *
+ * <p>
  * Actually scratch that, apparently certain types of transports (e.g. in-ram simulations) don't know
  * who 'we' are.  So include that.
  */
 public class RpcRequest extends RpcMessage {
 
-    public RpcRequest(long to, long from, String quorumId, Message message) {
-        // Note that the RPC system should sub in a message id, that is an implementation detail
-        // since not all transports (eg: in RAM only transport) need message IDs to keep request/replies in line.
-        super(to, from, quorumId, message);
-    }
+  public RpcRequest(long to, long from, String quorumId, Message message) {
+    // Note that the RPC system should sub in a message id, that is an implementation detail
+    // since not all transports (eg: in RAM only transport) need message IDs to keep request/replies in line.
+    super(to, from, quorumId, message);
+  }
 }
 

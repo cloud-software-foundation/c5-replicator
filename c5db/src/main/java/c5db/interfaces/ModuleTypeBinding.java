@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.interfaces;
 
 import c5db.messages.generated.ModuleType;
@@ -31,5 +32,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ModuleTypeBinding {
-    ModuleType value();
+  ModuleType value();
 }

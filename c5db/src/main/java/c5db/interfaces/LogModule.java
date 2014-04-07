@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.interfaces;
 
 import c5db.log.Mooring;
@@ -28,8 +29,8 @@ import c5db.messages.generated.ModuleType;
  */
 @ModuleTypeBinding(ModuleType.Log)
 public interface LogModule extends C5Module {
-    public OLog getOLogInstance();
+  public OLog getOLogInstance();
 
-    public Mooring getMooring(String quorumId);
+  public Mooring getMooring(String quorumId);
 
 }

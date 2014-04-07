@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.util;
 
 import com.google.common.collect.Lists;
@@ -45,7 +46,8 @@ public class KeySerializingExecutorTest {
     context.checking(new Expectations() {{
       try {
         oneOf(task).get();
-      } catch (Throwable ignore) { }
+      } catch (Throwable ignore) {
+      }
     }});
 
     //noinspection unchecked
@@ -64,15 +66,23 @@ public class KeySerializingExecutorTest {
     context.checking(new Expectations() {{
       try {
         // Allow one of the variants of submit or execute, exactly once.
-        allowing(executorService).submit((Callable) anything());              then(submitted.is("yes"));
-        allowing(executorService).submit((Runnable) anything(), anything());  then(submitted.is("yes"));
-        allowing(executorService).submit((Runnable) anything());              then(submitted.is("yes"));
-        allowing(executorService).execute((Runnable) anything());             then(submitted.is("yes"));
+        allowing(executorService).submit((Callable) anything());
+        then(submitted.is("yes"));
+        allowing(executorService).submit((Runnable) anything(), anything());
+        then(submitted.is("yes"));
+        allowing(executorService).submit((Runnable) anything());
+        then(submitted.is("yes"));
+        allowing(executorService).execute((Runnable) anything());
+        then(submitted.is("yes"));
 
-        never(executorService).submit((Callable) anything());                 when(submitted.is("yes"));
-        never(executorService).submit((Runnable) anything(), anything());     when(submitted.is("yes"));
-        never(executorService).submit((Runnable) anything());                 when(submitted.is("yes"));
-        never(executorService).execute((Runnable) anything());                when(submitted.is("yes"));
+        never(executorService).submit((Callable) anything());
+        when(submitted.is("yes"));
+        never(executorService).submit((Runnable) anything(), anything());
+        when(submitted.is("yes"));
+        never(executorService).submit((Runnable) anything());
+        when(submitted.is("yes"));
+        never(executorService).execute((Runnable) anything());
+        when(submitted.is("yes"));
       } catch (Throwable ignore) {
       }
     }});

@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.replication.rpc;
 
 
@@ -31,29 +32,29 @@ import static org.junit.Assert.assertNotEquals;
 
  */
 public class RpcMessageTest {
-    @Test
-    public void testGetWireMessageFragment() throws Exception {
-        RequestVote requestVote = new RequestVote(22, 1, 42, 43);
+  @Test
+  public void testGetWireMessageFragment() throws Exception {
+    RequestVote requestVote = new RequestVote(22, 1, 42, 43);
 
-        RpcMessage msg = new RpcMessage(0, 0, "quorumId", requestVote);
+    RpcMessage msg = new RpcMessage(0, 0, "quorumId", requestVote);
 
-        ReplicationWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
-        assertNotEquals(null, wireMessage.getRequestVote());
-        assertEquals(null, wireMessage.getAppendEntries());
-        assertEquals(null, wireMessage.getAppendEntriesReply());
-    }
+    ReplicationWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
+    assertNotEquals(null, wireMessage.getRequestVote());
+    assertEquals(null, wireMessage.getAppendEntries());
+    assertEquals(null, wireMessage.getAppendEntriesReply());
+  }
 
-    @Test
-    public void testGetWireMessageFragment2() throws Exception {
+  @Test
+  public void testGetWireMessageFragment2() throws Exception {
 
-        AppendEntries appendEntries = new AppendEntries(111, 1, 200, 201,
-                Collections.emptyList(),
-                111);
-        RpcMessage msg = new RpcMessage(0, 0, "quorumId", appendEntries);
-        ReplicationWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
-        assertNotEquals(null, wireMessage.getAppendEntries());
-        assertEquals(null, wireMessage.getAppendEntriesReply());
-        assertEquals(null, wireMessage.getRequestVote());
-        assertEquals(null, wireMessage.getRequestVoteReply());
-    }
+    AppendEntries appendEntries = new AppendEntries(111, 1, 200, 201,
+        Collections.emptyList(),
+        111);
+    RpcMessage msg = new RpcMessage(0, 0, "quorumId", appendEntries);
+    ReplicationWireMessage wireMessage = msg.getWireMessage(1, 1, 1, false);
+    assertNotEquals(null, wireMessage.getAppendEntries());
+    assertEquals(null, wireMessage.getAppendEntriesReply());
+    assertEquals(null, wireMessage.getRequestVote());
+    assertEquals(null, wireMessage.getRequestVoteReply());
+  }
 }

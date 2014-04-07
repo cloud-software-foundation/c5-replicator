@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.log;
 
 import c5db.C5ServerConstants;
@@ -32,78 +33,78 @@ import java.util.concurrent.Executors;
  * The Log module.
  */
 public class LogService extends AbstractService implements LogModule {
-    private final C5Server server;
-    private OLog oLog;
-    private final Map<String, Mooring> moorings = new HashMap<>();
+  private final C5Server server;
+  private OLog oLog;
+  private final Map<String, Mooring> moorings = new HashMap<>();
 
-    public LogService(C5Server server) {
-        this.server = server;
+  public LogService(C5Server server) {
+    this.server = server;
+  }
+
+  @Override
+  protected void doStart() {
+    try {
+      LogFileService logFileService = new LogFileService(server.getConfigDirectory().getBaseConfigPath());
+      KeySerializingExecutor executor = new KeySerializingExecutor(
+          Executors.newFixedThreadPool(C5ServerConstants.WAL_THREAD_POOL_SIZE));
+      this.oLog = new QuorumDelegatingLog(logFileService, executor);
+
+      // TODO start the flush threads as necessary
+      // TODO log maintenance threads can go here too.
+      notifyStarted();
+    } catch (IOException e) {
+      notifyFailed(e);
     }
+  }
 
-    @Override
-    protected void doStart() {
-        try {
-            LogFileService logFileService = new LogFileService(server.getConfigDirectory().getBaseConfigPath());
-            KeySerializingExecutor executor = new KeySerializingExecutor(
-                Executors.newFixedThreadPool(C5ServerConstants.WAL_THREAD_POOL_SIZE));
-            this.oLog = new QuorumDelegatingLog(logFileService, executor);
-
-          // TODO start the flush threads as necessary
-          // TODO log maintenance threads can go here too.
-          notifyStarted();
-        } catch (IOException e) {
-            notifyFailed(e);
-        }
+  @Override
+  protected void doStop() {
+    try {
+      oLog.close();
+      oLog = null;
+    } catch (IOException ignored) {
+    } finally {
+      notifyStopped();
     }
+  }
 
-    @Override
-    protected void doStop() {
-      try {
-        oLog.close();
-        oLog = null;
-      } catch (IOException ignored) {
-      } finally {
-        notifyStopped();
+  @Override
+  public OLog getOLogInstance() {
+    return oLog;
+  }
+
+  @Override
+  public Mooring getMooring(String quorumId) {
+    // TODO change this to use futures and fibers to manage the concurrency?
+    synchronized (moorings) {
+      if (moorings.containsKey(quorumId)) {
+        return moorings.get(quorumId);
       }
+      Mooring m = new Mooring(oLog, quorumId);
+      moorings.put(quorumId, m);
+      return m;
     }
+  }
 
-    @Override
-    public OLog getOLogInstance() {
-        return oLog;
-    }
+  @Override
+  public ModuleType getModuleType() {
+    return ModuleType.Log;
+  }
 
-    @Override
-    public Mooring getMooring(String quorumId) {
-        // TODO change this to use futures and fibers to manage the concurrency?
-        synchronized (moorings) {
-            if (moorings.containsKey(quorumId)) {
-                return moorings.get(quorumId);
-            }
-            Mooring m = new Mooring(oLog, quorumId);
-            moorings.put(quorumId, m);
-            return m;
-        }
-    }
+  @Override
+  public boolean hasPort() {
+    return false;
+  }
 
-    @Override
-    public ModuleType getModuleType() {
-        return ModuleType.Log;
-    }
+  @Override
+  public int port() {
+    return 0;
+  }
 
-    @Override
-    public boolean hasPort() {
-        return false;
-    }
+  public class FlushThread implements Runnable {
+    int i = 0;
 
-    @Override
-    public int port() {
-        return 0;
-    }
-
-    public class FlushThread implements Runnable {
-      int i = 0;
-
-      private void flushAndCompact(int i) throws IOException {
+    private void flushAndCompact(int i) throws IOException {
 //        for (HRegion region : OnlineRegions.INSTANCE.regions()) {
 //          region.flushcache();
 //          region.getLog().rollWriter();
@@ -115,15 +116,15 @@ public class LogService extends AbstractService implements LogModule {
 //                    - C5Constants.OLD_LOG_CLEAR_AGE);
 //          }
 //        }
-      }
+    }
 
-      @Override
-      public void run() {
-        try {
-          flushAndCompact(i++);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    @Override
+    public void run() {
+      try {
+        flushAndCompact(i++);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
     }
+  }
 }

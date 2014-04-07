@@ -189,7 +189,8 @@ public class InRamLeaderTest {
     ackAllRequestsToPeer(3);
 
     // flaky peer drops all requests:
-    createRequestRule(flakyPeer, (request) -> {});
+    createRequestRule(flakyPeer, (request) -> {
+    });
     for (int i = 1; i <= 10; i++) {
       replicatorInstance.logData(TEST_DATUM);
     }
@@ -265,7 +266,6 @@ public class InRamLeaderTest {
   private void sendAppendEntriesReply_Failure(Request<RpcRequest, RpcWireReply> request) {
     sendAppendEntriesReply(request, false);
   }
-
 
 
   /**

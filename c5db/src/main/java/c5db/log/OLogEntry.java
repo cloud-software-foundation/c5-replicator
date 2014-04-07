@@ -19,10 +19,10 @@ package c5db.log;
 
 import c5db.generated.OLogEntryHeader;
 import c5db.replication.generated.LogEntry;
-import io.protostuff.Schema;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.math.IntMath;
+import io.protostuff.Schema;
 
 import java.io.IOException;
 import java.io.InputStream;

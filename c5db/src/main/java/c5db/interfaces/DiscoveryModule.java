@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.interfaces;
 
 import c5db.discovery.generated.Availability;
@@ -34,100 +35,100 @@ import java.util.List;
  */
 @ModuleTypeBinding(ModuleType.Discovery)
 public interface DiscoveryModule extends C5Module {
-    RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo();
+  RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo();
 
-    ListenableFuture<ImmutableMap<Long, NodeInfo>> getState();
+  ListenableFuture<ImmutableMap<Long, NodeInfo>> getState();
 
-    Channel<NewNodeVisible> getNewNodeNotifications();
+  Channel<NewNodeVisible> getNewNodeNotifications();
 
-    public static class NewNodeVisible {
-        public final long newNodeId;
-        public final NodeInfo nodeInfo;
+  public static class NewNodeVisible {
+    public final long newNodeId;
+    public final NodeInfo nodeInfo;
 
-        @Override
-        public String toString() {
-            return "NewNodeVisible{" +
-                    "newNodeId=" + newNodeId +
-                    ", nodeInfo=" + nodeInfo +
-                    '}';
-        }
-
-        public NewNodeVisible(long newNodeId, NodeInfo nodeInfo) {
-            this.newNodeId = newNodeId;
-            this.nodeInfo = nodeInfo;
-        }
+    @Override
+    public String toString() {
+      return "NewNodeVisible{" +
+          "newNodeId=" + newNodeId +
+          ", nodeInfo=" + nodeInfo +
+          '}';
     }
 
-    public static class NodeInfoRequest {
-        public final long nodeId;
-        public final ModuleType moduleType;
+    public NewNodeVisible(long newNodeId, NodeInfo nodeInfo) {
+      this.newNodeId = newNodeId;
+      this.nodeInfo = nodeInfo;
+    }
+  }
 
-        public NodeInfoRequest(long nodeId, ModuleType moduleType) {
-            this.nodeId = nodeId;
-            this.moduleType = moduleType;
-        }
+  public static class NodeInfoRequest {
+    public final long nodeId;
+    public final ModuleType moduleType;
 
-        @Override
-        public String toString() {
-            return "NodeInfoRequest{" +
-                    "nodeId=" + nodeId +
-                    ", moduleType=" + moduleType +
-                    '}';
-        }
+    public NodeInfoRequest(long nodeId, ModuleType moduleType) {
+      this.nodeId = nodeId;
+      this.moduleType = moduleType;
     }
 
-    public static class NodeInfoReply {
-        /**
-         * Was the node/module information found?
-         */
-        public final boolean found;
-        public final List<String> addresses;
-        public final int port;
-
-        public NodeInfoReply(boolean found, List<String> addresses, int port) {
-            this.found = found;
-            this.addresses = addresses;
-            this.port = port;
-        }
-
-        @Override
-        public String toString() {
-            return "NodeInfoReply{" +
-                    "found=" + found +
-                    ", addresses=" + addresses +
-                    ", port=" + port +
-                    '}';
-        }
-
-        public final static NodeInfoReply NO_REPLY = new NodeInfoReply(false, null, 0);
+    @Override
+    public String toString() {
+      return "NodeInfoRequest{" +
+          "nodeId=" + nodeId +
+          ", moduleType=" + moduleType +
+          '}';
     }
+  }
 
+  public static class NodeInfoReply {
     /**
-     * Information about a node.
+     * Was the node/module information found?
      */
-    public static class NodeInfo {
-        public final Availability availability;
-        //public final Beacon.Availability availability;
-        public final long lastContactTime;
-        public final ImmutableMap<ModuleType, Integer> modules;
+    public final boolean found;
+    public final List<String> addresses;
+    public final int port;
 
-        public NodeInfo(Availability availability, long lastContactTime) {
-            this.availability = availability;
-            this.lastContactTime = lastContactTime;
-            ImmutableMap.Builder<ModuleType, Integer> b = ImmutableMap.builder();
-            for (ModuleDescriptor moduleDescriptor : availability.getModulesList()) {
-                b.put(moduleDescriptor.getModule(), moduleDescriptor.getModulePort());
-            }
-            modules = b.build();
-        }
-
-        public NodeInfo(Availability availability) {
-            this(availability, System.currentTimeMillis());
-        }
-
-        @Override
-        public String toString() {
-            return availability + " last contact: " + lastContactTime;
-        }
+    public NodeInfoReply(boolean found, List<String> addresses, int port) {
+      this.found = found;
+      this.addresses = addresses;
+      this.port = port;
     }
+
+    @Override
+    public String toString() {
+      return "NodeInfoReply{" +
+          "found=" + found +
+          ", addresses=" + addresses +
+          ", port=" + port +
+          '}';
+    }
+
+    public final static NodeInfoReply NO_REPLY = new NodeInfoReply(false, null, 0);
+  }
+
+  /**
+   * Information about a node.
+   */
+  public static class NodeInfo {
+    public final Availability availability;
+    //public final Beacon.Availability availability;
+    public final long lastContactTime;
+    public final ImmutableMap<ModuleType, Integer> modules;
+
+    public NodeInfo(Availability availability, long lastContactTime) {
+      this.availability = availability;
+      this.lastContactTime = lastContactTime;
+      ImmutableMap.Builder<ModuleType, Integer> b = ImmutableMap.builder();
+      for (ModuleDescriptor moduleDescriptor : availability.getModulesList()) {
+        b.put(moduleDescriptor.getModule(), moduleDescriptor.getModulePort());
+      }
+      modules = b.build();
+    }
+
+    public NodeInfo(Availability availability) {
+      this(availability, System.currentTimeMillis());
+    }
+
+    @Override
+    public String toString() {
+      return availability + " last contact: " + lastContactTime;
+    }
+  }
 }

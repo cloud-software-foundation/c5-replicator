@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.replication;
 
 /**
@@ -21,25 +22,28 @@ package c5db.replication;
  * tunable timing-related parameters.
  */
 public interface ReplicatorInformationInterface {
-    public long currentTimeMillis();
+  public long currentTimeMillis();
 
-    /**
-     * How often to check if the election needs to be rerun.
-     *
-     * TODO revisit this to see if necessary or can be set to another derivative value.
-     * @return
-     */
-    public long electionCheckRate();
+  /**
+   * How often to check if the election needs to be rerun.
+   * <p>
+   * TODO revisit this to see if necessary or can be set to another derivative value.
+   *
+   * @return
+   */
+  public long electionCheckRate();
 
-    /**
-     * The election timeout.
-     * @return
-     */
-    public long electionTimeout();
+  /**
+   * The election timeout.
+   *
+   * @return
+   */
+  public long electionTimeout();
 
-    /**
-     * How frequently we should check the append queue, and send RPCs to the clients.
-     * @return
-     */
-    public long groupCommitDelay();
+  /**
+   * How frequently we should check the append queue, and send RPCs to the clients.
+   *
+   * @return
+   */
+  public long groupCommitDelay();
 }

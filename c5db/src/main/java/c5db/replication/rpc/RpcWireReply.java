@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.replication.rpc;
 
 import c5db.replication.generated.ReplicationWireMessage;
@@ -24,11 +25,11 @@ import io.protostuff.Message;
  */
 public class RpcWireReply extends RpcMessage {
 
-    public RpcWireReply(long from, String quorumId, Message message) {
-        super(0, from, quorumId, message);
-    }
+  public RpcWireReply(long from, String quorumId, Message message) {
+    super(0, from, quorumId, message);
+  }
 
-    public RpcWireReply(ReplicationWireMessage msg) {
-        super(msg);
-    }
+  public RpcWireReply(ReplicationWireMessage msg) {
+    super(msg);
+  }
 }

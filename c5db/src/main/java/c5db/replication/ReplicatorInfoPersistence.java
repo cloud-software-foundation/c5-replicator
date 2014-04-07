@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.replication;
 
 import java.io.IOException;
@@ -23,9 +24,9 @@ import java.io.IOException;
  * crash-recovery, so the interface is sync and expected to durably write the data to disk before returning.
  */
 public interface ReplicatorInfoPersistence {
-    public long readCurrentTerm(String quorumId) throws IOException;
+  public long readCurrentTerm(String quorumId) throws IOException;
 
-    public long readVotedFor(String quorumId) throws IOException;
+  public long readVotedFor(String quorumId) throws IOException;
 
-    public void writeCurrentTermAndVotedFor(String quorumId, long currentTerm, long votedFor) throws IOException;
+  public void writeCurrentTermAndVotedFor(String quorumId, long currentTerm, long votedFor) throws IOException;
 }

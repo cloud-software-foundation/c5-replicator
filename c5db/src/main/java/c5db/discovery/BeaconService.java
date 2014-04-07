@@ -14,10 +14,9 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.discovery;
 
-import c5db.C5DB;
-import c5db.C5ServerConstants;
 import c5db.codec.UdpProtostuffDecoder;
 import c5db.codec.UdpProtostuffEncoder;
 import c5db.discovery.generated.Availability;
@@ -71,15 +70,15 @@ import java.util.concurrent.TimeUnit;
  * specifically, is what happens when multiple processes bind to 255.255.255.255:PORT
  * and send packets?  Which processes receive such packets?
  * <ul>
- *   <li>On Mac OSX 10.8/9, all processes reliably recieve all packets including
- *   the originating process</li>
- *   <li>On Linux (Ubuntu, modern) a variety of things appear to occur:
- *   <ul>
- *     <li>First to bind receives all packets</li>
- *     <li>All processes receives all packets</li>
- *     <li>No one receives any packets</li>
- *     <li>Please fill this doc in!</li>
- *   </ul></li>
+ * <li>On Mac OSX 10.8/9, all processes reliably recieve all packets including
+ * the originating process</li>
+ * <li>On Linux (Ubuntu, modern) a variety of things appear to occur:
+ * <ul>
+ * <li>First to bind receives all packets</li>
+ * <li>All processes receives all packets</li>
+ * <li>No one receives any packets</li>
+ * <li>Please fill this doc in!</li>
+ * </ul></li>
  * </ul>
  * <p>
  * The beacon service needs to be refactored and different discovery methods need to be
@@ -91,296 +90,300 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   public static final String BROADCAST_ADDRESS = "255.255.255.255";
 
   @Override
-    public ModuleType getModuleType() {
-        return ModuleType.Discovery;
+  public ModuleType getModuleType() {
+    return ModuleType.Discovery;
+  }
+
+  @Override
+  public boolean hasPort() {
+    return true;
+  }
+
+  @Override
+  public int port() {
+    return discoveryPort;
+  }
+
+  private final RequestChannel<NodeInfoRequest, NodeInfoReply> nodeInfoRequests = new MemoryRequestChannel<>();
+
+  @Override
+  public RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo() {
+    return nodeInfoRequests;
+  }
+
+  @FiberOnly
+  private void handleNodeInfoRequest(Request<NodeInfoRequest, NodeInfoReply> message) {
+    NodeInfoRequest req = message.getRequest();
+    NodeInfo peer = peers.get(req.nodeId);
+    if (peer == null) {
+      message.reply(NodeInfoReply.NO_REPLY);
+      return;
+    }
+
+    Integer servicePort = peer.modules.get(req.moduleType);
+    if (servicePort == null) {
+      message.reply(NodeInfoReply.NO_REPLY);
+      return;
+    }
+
+    List<String> peerAddrs = peer.availability.getAddressesList();
+    // does this module run on that peer?
+    message.reply(new NodeInfoReply(true, peerAddrs, servicePort));
+  }
+
+  @Override
+  public String toString() {
+    return "BeaconService{" +
+        "discoveryPort=" + discoveryPort +
+        ", nodeId=" + nodeId +
+        '}';
+  }
+
+  // For main system modules/pubsub stuff.
+  private final C5Server c5Server;
+  private final long nodeId;
+  private final int discoveryPort;
+  private final NioEventLoopGroup eventLoop;
+  private final Map<ModuleType, Integer> moduleInfo = new HashMap<>();
+  private final Map<Long, NodeInfo> peers = new HashMap<>();
+  private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
+  private final Fiber fiber;
+
+  // These should be final, but they are initialized in doStart().
+  private Channel broadcastChannel = null;
+  private InetSocketAddress sendAddress = null;
+  private Bootstrap bootstrap = null;
+  private List<String> localIPs;
+
+  public class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+      LOG.warn("Exception, ignoring datagram", cause);
     }
 
     @Override
-    public boolean hasPort() {
-        return true;
+    protected void channelRead0(ChannelHandlerContext ctx, Availability msg) throws Exception {
+      incomingMessages.publish(msg);
+    }
+  }
+
+  /**
+   * @param nodeId        the id of this node.
+   * @param discoveryPort the port to send discovery beacons on and to listen to
+   * @throws InterruptedException
+   * @throws SocketException
+   */
+  public BeaconService(long nodeId,
+                       int discoveryPort,
+                       final Fiber fiber,
+                       NioEventLoopGroup eventLoop,
+                       Map<ModuleType, Integer> modules,
+                       C5Server theC5Server
+  ) throws InterruptedException, SocketException {
+    this.discoveryPort = discoveryPort;
+    this.nodeId = nodeId;
+    this.fiber = fiber;
+    moduleInfo.putAll(modules);
+    this.c5Server = theC5Server;
+    this.eventLoop = eventLoop;
+  }
+
+  @Override
+  public ListenableFuture<ImmutableMap<Long, NodeInfo>> getState() {
+    final SettableFuture<ImmutableMap<Long, NodeInfo>> future = SettableFuture.create();
+
+    fiber.execute(new Runnable() {
+      @Override
+      public void run() {
+        future.set(getCopyOfState());
+      }
+    });
+
+    return future;
+  }
+
+  org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
+
+  @Override
+  public org.jetlang.channels.Channel<NewNodeVisible> getNewNodeNotifications() {
+    return newNodeVisibleChannel;
+  }
+
+  private ImmutableMap<Long, NodeInfo> getCopyOfState() {
+    return ImmutableMap.copyOf(peers);
+  }
+
+  @FiberOnly
+  private void sendBeacon() {
+    if (broadcastChannel == null) {
+      LOG.debug("Channel not available yet, deferring beacon send");
+      return;
+    }
+    LOG.trace("Sending beacon broadcast message to {}", sendAddress);
+
+    List<ModuleDescriptor> msgModules = new ArrayList<>(moduleInfo.size());
+    for (ModuleType moduleType : moduleInfo.keySet()) {
+      msgModules.add(
+          new ModuleDescriptor(moduleType,
+              moduleInfo.get(moduleType)));
     }
 
-    @Override
-    public int port() {
-        return discoveryPort;
-    }
+    Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
 
-    private final RequestChannel<NodeInfoRequest, NodeInfoReply> nodeInfoRequests = new MemoryRequestChannel<>();
-    @Override
-    public RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo() {
-        return nodeInfoRequests;
-    }
-    @FiberOnly
-    private void handleNodeInfoRequest(Request<NodeInfoRequest, NodeInfoReply> message) {
-        NodeInfoRequest req = message.getRequest();
-        NodeInfo peer = peers.get(req.nodeId);
-        if (peer == null) {
-            message.reply(NodeInfoReply.NO_REPLY);
-            return;
-        }
+    broadcastChannel.writeAndFlush(new
+        UdpProtostuffEncoder.UdpProtostuffMessage<>(sendAddress, beaconMessage));
 
-        Integer servicePort = peer.modules.get(req.moduleType);
-        if (servicePort == null) {
-            message.reply(NodeInfoReply.NO_REPLY);
-            return;
-        }
+    // Fix issue #76, feed back the beacon Message to our own database:
+    processWireMessage(beaconMessage);
+  }
 
-        List<String> peerAddrs = peer.availability.getAddressesList();
-        // does this module run on that peer?
-        message.reply(new NodeInfoReply(true, peerAddrs, servicePort));
-    }
-
-    @Override
-    public String toString() {
-        return "BeaconService{" +
-                "discoveryPort=" + discoveryPort +
-                ", nodeId=" + nodeId +
-                '}';
-    }
-
-    // For main system modules/pubsub stuff.
-    private final C5Server c5Server;
-    private final long nodeId;
-    private final int discoveryPort;
-    private final NioEventLoopGroup eventLoop;
-    private final Map<ModuleType, Integer> moduleInfo = new HashMap<>();
-    private final Map<Long, NodeInfo> peers = new HashMap<>();
-    private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
-    private final Fiber fiber;
-
-    // These should be final, but they are initialized in doStart().
-    private Channel broadcastChannel = null;
-    private InetSocketAddress sendAddress = null;
-    private Bootstrap bootstrap = null;
-    private List<String> localIPs;
-
-    public class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
-        @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-            LOG.warn("Exception, ignoring datagram", cause);
-        }
-
-        @Override
-        protected void channelRead0(ChannelHandlerContext ctx, Availability msg) throws Exception {
-            incomingMessages.publish(msg);
-        }
-    }
-
-    /**
-     *
-     * @param nodeId the id of this node.
-     * @param discoveryPort the port to send discovery beacons on and to listen to
-     * @throws InterruptedException
-     * @throws SocketException
-     */
-    public BeaconService(long nodeId,
-                         int discoveryPort,
-                         final Fiber fiber,
-                         NioEventLoopGroup eventLoop,
-                         Map<ModuleType, Integer> modules,
-                         C5Server theC5Server
-                         ) throws InterruptedException, SocketException {
-        this.discoveryPort = discoveryPort;
-        this.nodeId = nodeId;
-        this.fiber = fiber;
-        moduleInfo.putAll(modules);
-        this.c5Server = theC5Server;
-        this.eventLoop = eventLoop;
-    }
-
-    @Override
-    public ListenableFuture<ImmutableMap<Long, NodeInfo>> getState() {
-        final SettableFuture<ImmutableMap<Long,NodeInfo>> future = SettableFuture.create();
-
-        fiber.execute(new Runnable() {
-            @Override
-            public void run() {
-                future.set(getCopyOfState());
-            }
-        });
-
-        return future;
-    }
-
-    org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
-    @Override
-    public org.jetlang.channels.Channel<NewNodeVisible> getNewNodeNotifications() {
-        return newNodeVisibleChannel;
-    }
-
-    private ImmutableMap<Long, NodeInfo> getCopyOfState() {
-        return ImmutableMap.copyOf(peers);
-    }
-
-    @FiberOnly
-    private void sendBeacon() {
-        if (broadcastChannel == null) {
-            LOG.debug("Channel not available yet, deferring beacon send");
-            return;
-        }
-        LOG.trace("Sending beacon broadcast message to {}", sendAddress);
-
-        List<ModuleDescriptor> msgModules = new ArrayList<>(moduleInfo.size());
-        for (ModuleType moduleType : moduleInfo.keySet()) {
-            msgModules.add(
-                    new ModuleDescriptor(moduleType,
-                            moduleInfo.get(moduleType)));
-        }
-
-        Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
-
-        broadcastChannel.writeAndFlush(new
-            UdpProtostuffEncoder.UdpProtostuffMessage<>(sendAddress, beaconMessage));
-
-        // Fix issue #76, feed back the beacon Message to our own database:
-        processWireMessage(beaconMessage);
-    }
-
-    @FiberOnly
-    private void processWireMessage(Availability message) {
-        LOG.trace("Got incoming message {}", message);
-        if (message.getNodeId() == 0) {
+  @FiberOnly
+  private void processWireMessage(Availability message) {
+    LOG.trace("Got incoming message {}", message);
+    if (message.getNodeId() == 0) {
 //        if (!message.hasNodeId()) {
-            LOG.error("Incoming availability message does not have node id, ignoring!");
-            return;
-        }
-        // Always just overwrite what was already there for now.
-        // TODO consider a more sophisticated merge strategy?
-        NodeInfo nodeInfo = new NodeInfo(message);
-        if (!peers.containsKey(message.getNodeId())) {
-            getNewNodeNotifications().publish(new NewNodeVisible(message.getNodeId(), nodeInfo));
-        }
-
-        peers.put(message.getNodeId(), nodeInfo);
+      LOG.error("Incoming availability message does not have node id, ignoring!");
+      return;
+    }
+    // Always just overwrite what was already there for now.
+    // TODO consider a more sophisticated merge strategy?
+    NodeInfo nodeInfo = new NodeInfo(message);
+    if (!peers.containsKey(message.getNodeId())) {
+      getNewNodeNotifications().publish(new NewNodeVisible(message.getNodeId(), nodeInfo));
     }
 
-    @FiberOnly
-    private void serviceChange(C5Server.ModuleStateChange message) {
-        if (message.state == State.RUNNING) {
-            LOG.debug("BeaconService adding running module {} on port {}",
-                    message.module.getModuleType(),
-                    message.module.port());
-            moduleInfo.put(message.module.getModuleType(), message.module.port());
-        } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
-            LOG.debug("BeaconService removed module {} on port {} with state {}",
-                    message.module.getModuleType(),
-                    message.module.port(),
-                    message.state);
-            moduleInfo.remove(message.module.getModuleType());
-        } else {
-            LOG.debug("BeaconService got unknown state module change {}", message);
-        }
-    }
+    peers.put(message.getNodeId(), nodeInfo);
+  }
 
-    @Override
-    protected void doStart() {
-        eventLoop.next().execute(new Runnable() {
+  @FiberOnly
+  private void serviceChange(C5Server.ModuleStateChange message) {
+    if (message.state == State.RUNNING) {
+      LOG.debug("BeaconService adding running module {} on port {}",
+          message.module.getModuleType(),
+          message.module.port());
+      moduleInfo.put(message.module.getModuleType(), message.module.port());
+    } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
+      LOG.debug("BeaconService removed module {} on port {} with state {}",
+          message.module.getModuleType(),
+          message.module.port(),
+          message.state);
+      moduleInfo.remove(message.module.getModuleType());
+    } else {
+      LOG.debug("BeaconService got unknown state module change {}", message);
+    }
+  }
+
+  @Override
+  protected void doStart() {
+    eventLoop.next().execute(new Runnable() {
+      @Override
+      public void run() {
+        bootstrap = new Bootstrap();
+        try {
+          bootstrap.group(eventLoop)
+              .channel(NioDatagramChannel.class)
+              .option(ChannelOption.SO_BROADCAST, true)
+              .option(ChannelOption.SO_REUSEADDR, true)
+              .handler(new ChannelInitializer<DatagramChannel>() {
+                @Override
+                protected void initChannel(DatagramChannel ch) throws Exception {
+                  ChannelPipeline p = ch.pipeline();
+
+                  p.addLast("protobufDecoder",
+                      new UdpProtostuffDecoder<>(Availability.getSchema(), false));
+
+                  p.addLast("protobufEncoder",
+                      new UdpProtostuffEncoder<>(Availability.getSchema(), false));
+
+                  p.addLast("beaconMessageHandler", new BeaconMessageHandler());
+                }
+              });
+          // Wait, this is why we are in a new executor...
+          bootstrap.bind(discoveryPort).addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+              broadcastChannel = future.channel();
+            }
+          });
+          if (c5Server.isSingleNodeMode()) {
+            sendAddress = new InetSocketAddress(LOOPBACK_ADDRESS, discoveryPort);
+          } else {
+            sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
+          }
+          //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
+          localIPs = getLocalIPs();
+          //msgBuilder.addAllAddresses(getLocalIPs());
+          //beaconMessage = msgBuilder.build();
+
+          // Schedule fiber tasks and subscriptions.
+          incomingMessages.subscribe(fiber, new Callback<Availability>() {
+            @Override
+            public void onMessage(Availability message) {
+              processWireMessage(message);
+            }
+          });
+          nodeInfoRequests.subscribe(fiber, new Callback<Request<NodeInfoRequest, NodeInfoReply>>() {
+            @Override
+            public void onMessage(Request<NodeInfoRequest, NodeInfoReply> message) {
+              handleNodeInfoRequest(message);
+            }
+          });
+
+          fiber.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                bootstrap = new Bootstrap();
-                try {
-                    bootstrap.group(eventLoop)
-                            .channel(NioDatagramChannel.class)
-                            .option(ChannelOption.SO_BROADCAST, true)
-                            .option(ChannelOption.SO_REUSEADDR, true)
-                            .handler(new ChannelInitializer<DatagramChannel>() {
-                                @Override
-                                protected void initChannel(DatagramChannel ch) throws Exception {
-                                    ChannelPipeline p = ch.pipeline();
-
-                                    p.addLast("protobufDecoder",
-                                            new UdpProtostuffDecoder<>(Availability.getSchema(), false));
-
-                                    p.addLast("protobufEncoder",
-                                            new UdpProtostuffEncoder<>(Availability.getSchema(), false));
-
-                                    p.addLast("beaconMessageHandler", new BeaconMessageHandler());
-                                }
-                            });
-                    // Wait, this is why we are in a new executor...
-                    bootstrap.bind(discoveryPort).addListener(new ChannelFutureListener() {
-                        @Override
-                        public void operationComplete(ChannelFuture future) throws Exception {
-                            broadcastChannel = future.channel();
-                        }
-                    });
-                    if (c5Server.isSingleNodeMode()) {
-                      sendAddress = new InetSocketAddress(LOOPBACK_ADDRESS, discoveryPort);
-                    } else {
-                      sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
-                    }
-                    //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
-                    localIPs = getLocalIPs();
-                    //msgBuilder.addAllAddresses(getLocalIPs());
-                    //beaconMessage = msgBuilder.build();
-
-                    // Schedule fiber tasks and subscriptions.
-                    incomingMessages.subscribe(fiber, new Callback<Availability>() {
-                        @Override
-                        public void onMessage(Availability message) {
-                            processWireMessage(message);
-                        }
-                    });
-                    nodeInfoRequests.subscribe(fiber, new Callback<Request<NodeInfoRequest, NodeInfoReply>>() {
-                        @Override
-                        public void onMessage(Request<NodeInfoRequest, NodeInfoReply> message) {
-                            handleNodeInfoRequest(message);
-                        }
-                    });
-
-                    fiber.scheduleAtFixedRate(new Runnable() {
-                        @Override
-                        public void run() {
-                            sendBeacon();
-                        }
-                    }, 2, 10, TimeUnit.SECONDS);
-
-                    c5Server.getModuleStateChangeChannel().subscribe(fiber, new Callback<C5Server.ModuleStateChange>() {
-                        @Override
-                        public void onMessage(C5Server.ModuleStateChange message) {
-                            serviceChange(message);
-                        }
-                    });
-
-                    fiber.start();
-
-                    notifyStarted();
-                } catch (Throwable t) {
-                    if (fiber != null)
-                        fiber.dispose();
-
-                    notifyFailed(t);
-                }
+              sendBeacon();
             }
-        });
-    }
+          }, 2, 10, TimeUnit.SECONDS);
 
-    @Override
-    protected void doStop() {
-        eventLoop.next().execute(new Runnable() {
+          c5Server.getModuleStateChangeChannel().subscribe(fiber, new Callback<C5Server.ModuleStateChange>() {
             @Override
-            public void run() {
-                fiber.dispose();
-
-                notifyStopped();
+            public void onMessage(C5Server.ModuleStateChange message) {
+              serviceChange(message);
             }
-        });
-    }
+          });
 
-    private List<String> getLocalIPs() throws SocketException {
-        List<String> ips = new LinkedList<>();
-        for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
-            NetworkInterface iface = interfaces.nextElement();
-            if (iface.isPointToPoint())
-                continue; //ignore tunnel type interfaces
-            for (Enumeration<InetAddress> addrs = iface.getInetAddresses(); addrs.hasMoreElements(); ) {
-                InetAddress addr = addrs.nextElement();
-                if (addr.isLoopbackAddress() || addr.isLinkLocalAddress() || addr.isAnyLocalAddress()) {
-                    continue;
-                }
-                ips.add(addr.getHostAddress());
-            }
+          fiber.start();
+
+          notifyStarted();
+        } catch (Throwable t) {
+          if (fiber != null) {
+            fiber.dispose();
+          }
+
+          notifyFailed(t);
         }
-        return ips;
+      }
+    });
+  }
+
+  @Override
+  protected void doStop() {
+    eventLoop.next().execute(new Runnable() {
+      @Override
+      public void run() {
+        fiber.dispose();
+
+        notifyStopped();
+      }
+    });
+  }
+
+  private List<String> getLocalIPs() throws SocketException {
+    List<String> ips = new LinkedList<>();
+    for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
+      NetworkInterface iface = interfaces.nextElement();
+      if (iface.isPointToPoint()) {
+        continue; //ignore tunnel type interfaces
+      }
+      for (Enumeration<InetAddress> addrs = iface.getInetAddresses(); addrs.hasMoreElements(); ) {
+        InetAddress addr = addrs.nextElement();
+        if (addr.isLoopbackAddress() || addr.isLinkLocalAddress() || addr.isAnyLocalAddress()) {
+          continue;
+        }
+        ips.add(addr.getHostAddress());
+      }
     }
+    return ips;
+  }
 }

@@ -14,44 +14,47 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.codec;
 
-import io.protostuff.ByteBufferInput;
-import io.protostuff.Message;
-import io.protostuff.Schema;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import io.protostuff.ByteBufferInput;
+import io.protostuff.Message;
+import io.protostuff.Schema;
 
 import java.util.List;
 
 /**
  * A specialized Protostuff decoder used to de-serialize Protostuff DatagramPackets and map them to an arbitrary
  * protostuff Message
+ *
  * @param <T> The type of message to decode.
  */
 public class UdpProtostuffDecoder<T extends Message<T>> extends MessageToMessageDecoder<DatagramPacket> {
-    final Schema<T> schema;
-    final boolean protostuffEncoded;
+  final Schema<T> schema;
+  final boolean protostuffEncoded;
 
-    /**
-     * Netty decoder for protostuff/protobuf messages.
-     * @param schema the schema we are to decode based on
-     * @param protostuffEncoded if we are expecting a protostuff object (vs protobuf = false)
-     */
-    public UdpProtostuffDecoder(Schema<T> schema, boolean protostuffEncoded) {
-        this.schema = schema;
-        this.protostuffEncoded = protostuffEncoded;
-    }
+  /**
+   * Netty decoder for protostuff/protobuf messages.
+   *
+   * @param schema            the schema we are to decode based on
+   * @param protostuffEncoded if we are expecting a protostuff object (vs protobuf = false)
+   */
+  public UdpProtostuffDecoder(Schema<T> schema, boolean protostuffEncoded) {
+    this.schema = schema;
+    this.protostuffEncoded = protostuffEncoded;
+  }
 
-    @Override
-    protected void decode(ChannelHandlerContext ctx, DatagramPacket dgram, List<Object> out) throws Exception {
-        ByteBuf msg = dgram.content();
+  @Override
+  protected void decode(ChannelHandlerContext ctx, DatagramPacket dgram, List<Object> out) throws Exception {
+    ByteBuf msg = dgram.content();
 
-        ByteBufferInput input = new ByteBufferInput(msg.nioBuffer(), protostuffEncoded);
-        T newMsg = schema.newMessage();
-        schema.mergeFrom(input, newMsg);
-        out.add(newMsg);
-    }
+    ByteBufferInput input = new ByteBufferInput(msg.nioBuffer(), protostuffEncoded);
+    T newMsg = schema.newMessage();
+    schema.mergeFrom(input, newMsg);
+    out.add(newMsg);
+  }
 }

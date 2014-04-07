@@ -14,6 +14,7 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.interfaces;
 
 import java.lang.annotation.ElementType;
@@ -28,5 +29,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DependsOn {
-    Class<? extends C5Module>[] value();
+  Class<? extends C5Module>[] value();
 }

@@ -14,14 +14,15 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package c5db.replication;
 
 import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.generated.RequestVote;
-import io.protostuff.LinkBuffer;
-import io.protostuff.LowCopyProtobufOutput;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.protostuff.LinkBuffer;
+import io.protostuff.LowCopyProtobufOutput;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -34,33 +35,33 @@ import static org.junit.Assert.assertEquals;
  */
 public class ReplicationWireMessageTest {
 
-    @Test
-    public void testSimpleSerialization() throws Exception {
-        RequestVote rv = new RequestVote(1, 22222, 34, 22);
-        ReplicationWireMessage rwm = new ReplicationWireMessage(
-                1, 1, 0, "quorumId", false, rv, null, null, null
-        );
+  @Test
+  public void testSimpleSerialization() throws Exception {
+    RequestVote rv = new RequestVote(1, 22222, 34, 22);
+    ReplicationWireMessage rwm = new ReplicationWireMessage(
+        1, 1, 0, "quorumId", false, rv, null, null, null
+    );
 
-        LowCopyProtobufOutput lcpo = new LowCopyProtobufOutput(new LinkBuffer(24));
-        rwm.writeTo(lcpo, rwm);
-        List<ByteBuffer> serBufs = lcpo.buffer.finish();
-        logBufsInfos("ReplicationWireMessage", serBufs);
+    LowCopyProtobufOutput lcpo = new LowCopyProtobufOutput(new LinkBuffer(24));
+    rwm.writeTo(lcpo, rwm);
+    List<ByteBuffer> serBufs = lcpo.buffer.finish();
+    logBufsInfos("ReplicationWireMessage", serBufs);
 
-        ByteBuf b = Unpooled.wrappedBuffer(serBufs.toArray(new ByteBuffer[]{}));
-        System.out.println("ByteBuf info = " + b);
-        System.out.println("ByteBuf size = " + b.readableBytes());
-        assertEquals(lcpo.buffer.size(), b.readableBytes());
+    ByteBuf b = Unpooled.wrappedBuffer(serBufs.toArray(new ByteBuffer[]{}));
+    System.out.println("ByteBuf info = " + b);
+    System.out.println("ByteBuf size = " + b.readableBytes());
+    assertEquals(lcpo.buffer.size(), b.readableBytes());
 
-        System.out.println("rwm = " + rwm);
+    System.out.println("rwm = " + rwm);
+  }
+
+  public void logBufsInfos(String desc, List<ByteBuffer> buffs) {
+    System.out.println(desc + ": buffer count = " + buffs.size());
+    long size = 0;
+    for (ByteBuffer b : buffs) {
+      System.out.println(desc + ": buff=" + b);
+      size += b.remaining();
     }
-
-    public void logBufsInfos(String desc, List<ByteBuffer> buffs) {
-        System.out.println(desc + ": buffer count = " + buffs.size());
-        long size = 0;
-        for (ByteBuffer b : buffs) {
-            System.out.println(desc + ": buff=" + b);
-            size+=b.remaining();
-        }
-        System.out.println(desc + ": totalSize = " + size);
-    }
+    System.out.println(desc + ": totalSize = " + size);
+  }
 }
