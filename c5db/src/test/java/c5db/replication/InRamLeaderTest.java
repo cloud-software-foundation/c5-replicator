@@ -104,7 +104,7 @@ public class InRamLeaderTest {
     sendRpcChannel.subscribe(rpcFiber, (request) -> System.out.println(request.getRequest()));
     sendRpcChannel.subscribe(rpcFiber, this::routeOutboundRequests);
 
-    InRamSim.Info info = new InRamSim.Info(0);
+    InRamSim.Info info = new InRamSim.Info(0, 1000);
     info.startTimeout();
 
     replicatorInstance = new ReplicatorInstance(new ThreadFiber(runnableExecutor, null, true),

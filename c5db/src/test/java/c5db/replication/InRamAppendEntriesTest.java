@@ -87,12 +87,7 @@ public class InRamAppendEntriesTest {
 
   private ReplicatorInstance makeTestInstance() {
     final List<Long> peerIdList = ImmutableList.of(1L, 2L, 3L);
-    ReplicatorInformationInterface info = new InRamSim.Info(0) {
-      @Override
-      public long electionTimeout() {
-        return Long.MAX_VALUE / 2L; // Prevent election timeouts.
-      }
-    };
+    ReplicatorInformationInterface info = new InRamSim.Info(0, Long.MAX_VALUE / 2L);
 
     return new ReplicatorInstance(new ThreadFiber(runnableExecutor, null, true),
         PEER_ID,
