@@ -37,8 +37,8 @@ public interface ReplicatorLog {
    * <p>
    * After this call returns, the log implementation should mark these entries as "to be committed"
    * and calls to 'getLastIndex()' should return the last entry in "entries".  The implementation will
-   * then return a future that will be set with either a 'new Object()' during success, or a Throwable
-   * indicating the error after the log has been synced to disk.
+   * then return a future that will be set true upon successful sync to durable storage, or else
+   * set with an exception.
    * <p>
    * Note that over time, multiple calls to logEntries() may be issued before the prior call has signaled
    * full sync to the client.  This also implies that once this call returns, calls to the other methods
@@ -55,7 +55,7 @@ public interface ReplicatorLog {
    * present in the log, then this future will return null.
    *
    * @param index the index to retrieve
-   * @return a future which will yield the entry at 'index', or null if no such entry
+   * @return a future which will yield the entry at 'index', or an exception if an error occurs.
    */
   ListenableFuture<LogEntry> getLogEntry(long index);
 
@@ -65,7 +65,7 @@ public interface ReplicatorLog {
    *
    * @param start the index of the low endpoint of the range (inclusive)
    * @param end   the index of the high endpoint of the range (exclusive)
-   * @return a future which will yield the specified entries, or an empty list if there are none
+   * @return a future which will yield the requested entries, or an exception if an error occurs.
    */
   ListenableFuture<List<LogEntry>> getLogEntries(long start, long end);
 
@@ -79,10 +79,8 @@ public interface ReplicatorLog {
    */
   long getLogTerm(long index);
 
-  // get the last term from the log
-
   /**
-   * gets the term value for the last entry in the log. if the log is empty, then this will return
+   * Gets the term value for the last entry in the log. if the log is empty, then this will return
    * 0. A term value of 0 should never be valid.
    *
    * @return the last term or 0 if no such entry
@@ -103,7 +101,7 @@ public interface ReplicatorLog {
    * To persist the deletion, this might take a few so use a future.
    *
    * @param entryIndex the index entry to truncate log from.
-   * @return a true or false depending if successful or not.
+   * @return A future set to true upon completion, or set with an exception upon failure.
    */
   ListenableFuture<Boolean> truncateLog(long entryIndex);
 }

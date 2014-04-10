@@ -70,6 +70,7 @@ import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -126,7 +127,16 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
           peers.add(server.getNodeId());
         }
         LOG.info("Creating replicator instance for {} peers {}", quorumId, peers);
-        Mooring logMooring = logModule.getMooring(quorumId);
+
+        Mooring logMooring;
+        try {
+          logMooring = logModule.getMooring(quorumId);
+        } catch (IOException e) {
+          LOG.error("Unable to start Mooring for {} peers {}", quorumId, peers);
+          future.setException(e);
+          return;
+        }
+
         MemoryChannel<Throwable> throwableChannel = new MemoryChannel<>();
         Fiber instanceFiber = server.getFiberFactory(throwableChannel::publish).create();
         ReplicatorInstance instance =

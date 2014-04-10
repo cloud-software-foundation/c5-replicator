@@ -46,10 +46,9 @@ public class EntryEncodingUtilTest {
   private final PipedOutputStream pipedOutputStream = new PipedOutputStream();
 
   @Test
-  public void decodesMessagesItEncodes() throws IOException {
+  public void decodesProtostuffMessagesItEncodes() throws IOException {
     final InputStream readFromMe = new PipedInputStream(pipedOutputStream);
     final WritableByteChannel writeToMe = Channels.newChannel(pipedOutputStream);
-
 
     final List<ByteBuffer> serialized = encodeWithLengthAndCrc(SCHEMA, TEST_ENTRY);
     writeAllToChannel(serialized, writeToMe);

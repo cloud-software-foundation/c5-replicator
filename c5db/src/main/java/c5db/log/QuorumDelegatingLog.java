@@ -30,11 +30,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.EncodedSequentialLog.LogEntryNotInSequence;
 import static c5db.log.LogPersistenceService.BytePersistence;
+import static c5db.log.LogPersistenceService.PersistenceNavigator;
 
 /**
  * OLog that delegates each quorum's logging tasks to a separate SequentialLog for that quorum,
@@ -44,21 +46,27 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(QuorumDelegatingLog.class);
 
   private final LogPersistenceService persistenceService;
-  private final Supplier<TermOracle> termOracleFactory;
   private final KeySerializingExecutor taskExecutor;
-  private final Codec<OLogEntry> entryCodec = new OLogEntry.Codec();
   private final Map<String, PerQuorum> quorumMap = new HashMap<>();
 
+  private final Supplier<TermOracle> termOracleFactory;
+  private final BiFunction<BytePersistence, Codec, PersistenceNavigator> persistenceNavigatorFactory;
+
   public QuorumDelegatingLog(LogPersistenceService persistenceService,
-                             KeySerializingExecutor taskExecutor) {
+                             KeySerializingExecutor taskExecutor,
+                             Supplier<TermOracle> termOracleFactory,
+                             BiFunction<BytePersistence, Codec, PersistenceNavigator> persistenceNavigatorFactory
+  ) {
     this.persistenceService = persistenceService;
-    this.termOracleFactory = NavigableMapTermOracle::new;
     this.taskExecutor = taskExecutor;
+    this.termOracleFactory = termOracleFactory;
+    this.persistenceNavigatorFactory = persistenceNavigatorFactory;
   }
 
   private class PerQuorum {
     public final SequentialLog<OLogEntry> quorumLog;
     public final TermOracle termOracle;
+    public final Codec<OLogEntry> entryCodec = new OLogEntry.Codec();
 
     private long expectedNextSequenceNumber;
 
@@ -68,7 +76,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
         quorumLog = new EncodedSequentialLog<>(
             persistence,
             entryCodec,
-            new InMemoryPersistenceNavigator<>(persistence, entryCodec));
+            persistenceNavigatorFactory.apply(persistence, entryCodec));
         termOracle = termOracleFactory.get();
       } catch (IOException e) {
         LOG.error("Unable to create quorum info object for quorum {}", quorumId);
@@ -87,8 +95,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       }
     }
 
-    public void setExpectedNextSequenceNumber(long expectedNextSequenceNumber) {
-      this.expectedNextSequenceNumber = expectedNextSequenceNumber;
+    public void setExpectedNextSequenceNumber(long seqNum) {
+      this.expectedNextSequenceNumber = seqNum;
     }
   }
 
@@ -99,7 +107,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     getOrCreateQuorumStructure(quorumId).validateConsecutiveEntries(entries);
     updateTermInformationWithNewEntries(entries, quorumId);
 
-    // TODO group commit
+    // TODO group commit / sync
 
     return taskExecutor.submit(quorumId, () -> {
       quorumLog(quorumId).append(entries);
@@ -121,6 +129,12 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   @Override
   public ListenableFuture<List<OLogEntry>> getLogEntries(long start, long end, String quorumId) {
+    if (end < start) {
+      throw new IllegalArgumentException("getLogEntries: end < start");
+    } else if (end == start) {
+      return Futures.immediateFuture(Lists.newArrayList());
+    }
+
     return taskExecutor.submit(quorumId, () -> quorumLog(quorumId).subSequence(start, end));
   }
 
@@ -135,27 +149,27 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
-  public ListenableFuture<Boolean> sync() {
-
-    List<ListenableFuture<Boolean>> quorumSync = Lists.newArrayList();
-    for (String quorumId : quorumMap.keySet()) {
-      quorumSync.add(taskExecutor.submit(quorumId, () -> {
-        quorumLog(quorumId).sync();
-        return true;
-      }));
-    }
-    ListenableFuture<List<Boolean>> allSync = Futures.allAsList(quorumSync);
-    return Futures.transform(allSync, (List<Boolean> result) -> true);
-  }
-
-  @Override
   public long getLogTerm(long seqNum, String quorumId) {
     return termOracle(quorumId).getTermAtSeqNum(seqNum);
   }
 
   @Override
+  public ListenableFuture<Long> getLastSeqNum(String quorumId) {
+    return taskExecutor.submit(quorumId, () -> {
+      return quorumLog(quorumId).getLastEntry().getSeqNum();
+    });
+  }
+
+  @Override
+  public ListenableFuture<Long> getLastTerm(String quorumId) {
+    return taskExecutor.submit(quorumId, () -> {
+      return quorumLog(quorumId).getLastEntry().getElectionTerm();
+    });
+  }
+
+  @Override
   public void roll() throws IOException, ExecutionException, InterruptedException {
-    // TODO
+    // TODO implement roll()
   }
 
   @Override

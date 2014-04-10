@@ -33,27 +33,35 @@ public class LogTestUtil {
     return Lists.newArrayList();
   }
 
-  public static OLogEntry makeEntry(long index, long term, String stringData) {
-    return makeEntry(index, term, ByteBuffer.wrap(stringData.getBytes(CharsetUtil.UTF_8)));
+  public static OLogEntry makeEntry(long seqNum, long term, String stringData) {
+    return makeEntry(seqNum, term, ByteBuffer.wrap(stringData.getBytes(CharsetUtil.UTF_8)));
   }
 
-  public static OLogEntry makeEntry(long index, long term, ByteBuffer data) {
-    return new OLogEntry(index, term, Lists.newArrayList(data.duplicate()));
+  public static OLogEntry makeEntry(long seqNum, long term, ByteBuffer data) {
+    return new OLogEntry(seqNum, term, Lists.newArrayList(data.duplicate()));
   }
 
-  public static List<OLogEntry> makeSingleEntryList(long index, long term, String stringData) {
-    return Lists.newArrayList(makeEntry(index, term, stringData));
+  public static List<OLogEntry> makeSingleEntryList(long seqNum, long term, String stringData) {
+    return Lists.newArrayList(makeEntry(seqNum, term, stringData));
   }
 
-  public static List<OLogEntry> makeSingleEntryList(long index, long term, ByteBuffer data) {
-    return Lists.newArrayList(makeEntry(index, term, data));
+  public static List<OLogEntry> makeSingleEntryList(long seqNum, long term, ByteBuffer data) {
+    return Lists.newArrayList(makeEntry(seqNum, term, data));
   }
 
-  public static LogEntry makeProtostuffEntry(long index, long term, String stringData) {
-    return makeEntry(index, term, stringData).toProtostuffMessage();
+  public static LogEntry makeProtostuffEntry(long seqNum, long term, String stringData) {
+    return makeEntry(seqNum, term, stringData).toProtostuffMessage();
   }
 
-  public static LogEntry makeProtostuffEntry(long index, long term, ByteBuffer data) {
-    return makeEntry(index, term, data).toProtostuffMessage();
+  public static LogEntry makeProtostuffEntry(long seqNum, long term, ByteBuffer data) {
+    return makeEntry(seqNum, term, data).toProtostuffMessage();
+  }
+
+  public static long seqNum(long seqNum) {
+    return seqNum;
+  }
+
+  public static long term(long term) {
+    return term;
   }
 }

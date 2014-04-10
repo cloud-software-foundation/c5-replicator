@@ -22,9 +22,11 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.Math.max;
 
 /**
  * Implementation of ReplicatorLog which delegates to an OLog. Each replicator instance has
@@ -32,32 +34,38 @@ import java.util.List;
  * communicate to the same OLog behind the scenes. For instance, since the OLog API requires specifying
  * quorumId for most operations, whereas the ReplicatorLog does not "know about" quorumId,
  * Mooring bridges the gap by explicitly tracking quorumId and providing it on delegated calls.
+ *
+ * Mooring also caches the current term and the last index (log sequence number) so that in
+ * most cases these never need to access OLog.
  */
 public class Mooring implements ReplicatorLog {
+  private static final int LOG_TIMEOUT = 10; // seconds
   final OLog log;
   final String quorumId;
-  HashMap<String, Long> latestTombstones = new HashMap<>();
-  long currentTerm = 0;
-  long lastIndex = 0;
+  long currentTerm;
+  long lastIndex;
 
-  Mooring(OLog log, String quorumId) {
+  Mooring(OLog log, String quorumId) throws IOException {
     this.quorumId = quorumId;
     this.log = log;
+    try {
+      this.currentTerm = log.getLastTerm(quorumId).get(LOG_TIMEOUT, TimeUnit.SECONDS);
+      this.lastIndex = log.getLastSeqNum(quorumId).get(LOG_TIMEOUT, TimeUnit.SECONDS);
+    } catch (Exception e) {
+      throw new IOException(e);
+    }
   }
 
   @Override
   public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
-    List<OLogEntry> logEntries = new ArrayList<>();
-    for (LogEntry entry : entries) {
-      long idx = getNextIdxGreaterThan(0);
-      logEntries.add(new OLogEntry(
-          idx,
-          entry.getTerm(),
-          entry.getDataList()));
+    if (entries.isEmpty()) {
+      throw new IllegalArgumentException("Mooring#logEntries: empty entry list");
     }
-    if (logEntries.size() > 0) {
-      currentTerm = logEntries.get(logEntries.size() - 1).getElectionTerm();
-    }
+
+    List<OLogEntry> logEntries = Lists.transform(entries, OLogEntry::fromProtostuffMessage);
+
+    updateCachedTermAndIndex(logEntries);
+
     return log.logEntry(logEntries, quorumId);
   }
 
@@ -68,7 +76,7 @@ public class Mooring implements ReplicatorLog {
 
   @Override
   public ListenableFuture<List<LogEntry>> getLogEntries(long start, long end) {
-    return Futures.transform(log.getLogEntries(start, end, quorumId), Mooring::toWireMessages);
+    return Futures.transform(log.getLogEntries(start, end, quorumId), Mooring::toProtostuffMessages);
   }
 
   @Override
@@ -88,31 +96,21 @@ public class Mooring implements ReplicatorLog {
 
   @Override
   public ListenableFuture<Boolean> truncateLog(long entryIndex) {
-    updateInMemoryTombstone(quorumId, entryIndex);
+    lastIndex = max(entryIndex - 1, 0);
+    currentTerm = log.getLogTerm(lastIndex, quorumId);
     return log.truncateLog(entryIndex, quorumId);
   }
 
-  private void updateInMemoryTombstone(String quorumId, long entryIndex) {
-    if (!this.latestTombstones.containsKey(quorumId)) {
-      this.latestTombstones.put(quorumId, entryIndex);
-    } else {
-      long latestIndex = this.latestTombstones.get(quorumId);
-      if (latestIndex < entryIndex) {
-        this.latestTombstones.put(quorumId, entryIndex);
-      }
-    }
-  }
-
-  public long getNextIdxGreaterThan(long min) {
-    if (lastIndex < min) {
-      lastIndex = min;
-    } else {
-      lastIndex++;
-    }
-    return lastIndex;
-  }
-
-  private static List<LogEntry> toWireMessages(List<OLogEntry> entries) {
+  private static List<LogEntry> toProtostuffMessages(List<OLogEntry> entries) {
     return Lists.transform(entries, OLogEntry::toProtostuffMessage);
+  }
+
+  private void updateCachedTermAndIndex(List<OLogEntry> entriesToLog) {
+    long size = entriesToLog.size();
+    if (size > 0) {
+      final OLogEntry lastEntry = entriesToLog.get(entriesToLog.size() - 1);
+      currentTerm = lastEntry.getElectionTerm();
+      lastIndex = lastEntry.getSeqNum();
+    }
   }
 }

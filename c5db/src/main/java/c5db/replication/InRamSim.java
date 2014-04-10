@@ -41,13 +41,17 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
 import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
+import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * A class to simulate a group of ReplicatorInstance nodes interacting via in-RAM channels, for testing purposes.
@@ -58,11 +62,13 @@ public class InRamSim {
   public static class Info implements ReplicatorInformationInterface {
 
     public final long offset;
+    public final long electionTimeout;
     StopWatch stopWatch = new StopWatch();
     private boolean suspended = true; // field needed because StopWatch doesn't have a way to check its state
 
-    public Info(long offset) {
+    public Info(long offset, long electionTimeout) {
       this.offset = offset;
+      this.electionTimeout = electionTimeout;
       stopWatch.start();
       stopWatch.suspend();
     }
@@ -93,7 +99,7 @@ public class InRamSim {
 
     @Override
     public long electionTimeout() {
-      return 1000;
+      return electionTimeout;
     }
 
     @Override
@@ -136,6 +142,7 @@ public class InRamSim {
   }
 
   final int peerSize;
+  private final Set<Long> offlinePeers = new HashSet<>();
   private final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
   private final Map<Long, ReplicatorLog> replicatorLogs = new HashMap<>();
   private final Map<Long, WireObstruction> wireObstructions = new HashMap<>();
@@ -153,10 +160,11 @@ public class InRamSim {
    * Set up the simulation (but don't actually start it yet).
    *
    * @param peerSize              The number of nodes in the simulation
+   * @param electionTimeout       The timeout in milliseconds before an instance holds a new election
    * @param electionTimeoutOffset the time offset, in milliseconds, between different instances' clocks.
    * @param batchExecutor         The jetlang batch executor for the simulation's fibers to use.
    */
-  public InRamSim(final int peerSize, long electionTimeoutOffset, BatchExecutor batchExecutor) {
+  public InRamSim(final int peerSize, long electionTimeout, long electionTimeoutOffset, BatchExecutor batchExecutor) {
     this.peerSize = peerSize;
     this.fiberPool = new PoolFiberFactory(Executors.newCachedThreadPool());
     this.batchExecutor = batchExecutor;
@@ -175,7 +183,7 @@ public class InRamSim {
           "foobar",
           peerIds,
           log,
-          new Info(plusMillis),
+          new Info(plusMillis, electionTimeout),
           new Persister(),
           rpcChannel,
           stateChanges,
@@ -198,7 +206,7 @@ public class InRamSim {
     assert replicators.containsKey(peerId);
     ReplicatorInstance repl = replicators.get(peerId);
     repl.dispose();
-    replicatorLogs.remove(peerId);
+    offlinePeers.add(peerId);
   }
 
   public void restartPeer(long peerId) {
@@ -217,7 +225,12 @@ public class InRamSim {
         commitNotices);
     replicators.put(peerId, repl);
     replicatorLogs.put(peerId, log);
+    offlinePeers.remove(peerId);
     repl.start();
+  }
+
+  public Set<Long> getOfflinePeers() {
+    return offlinePeers;
   }
 
   // This method initiates a period of time during which requests attempting to reach peerId
@@ -269,7 +282,7 @@ public class InRamSim {
   }
 
   public ReplicatorLog getLog(long peerId) {
-    assert replicatorLogs.containsKey(peerId);
+    assertThat(replicatorLogs.keySet(), hasItem(peerId));
     return replicatorLogs.get(peerId);
   }
 
@@ -285,6 +298,7 @@ public class InRamSim {
     }
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public void stopTimeout(long peerId) {
     assert replicators.containsKey(peerId);
     ((Info) replicators.get(peerId).info).stopTimeout();
@@ -330,7 +344,7 @@ public class InRamSim {
   }
 
   public static void main(String[] args) throws InterruptedException {
-    InRamSim sim = new InRamSim(3, 500, new BatchExecutorImpl());
+    InRamSim sim = new InRamSim(3, 500, 500, new BatchExecutorImpl());
     sim.start();
     Thread.sleep(10 * 1000);
     sim.dispose();

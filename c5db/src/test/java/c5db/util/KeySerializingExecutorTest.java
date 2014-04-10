@@ -21,7 +21,8 @@ import com.google.common.collect.Lists;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.States;
-import org.jmock.integration.junit4.JUnit4Mockery;
+import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
@@ -35,8 +36,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 
 public class KeySerializingExecutorTest {
+  @Rule
+  public JUnitRuleMockery context = new JUnitRuleMockery();
   private static final int NUM_TASKS = 20;
-  private Mockery context = new JUnit4Mockery();
 
   @Test
   public void runsTasksSubmittedToIt() throws Exception {
@@ -61,30 +63,9 @@ public class KeySerializingExecutorTest {
     ExecutorService executorService = context.mock(ExecutorService.class);
     KeySerializingExecutor keySerializingExecutor = new KeySerializingExecutor(executorService);
 
-    final States submitted = context.states("submitted").startsAs("no");
 
     context.checking(new Expectations() {{
-      try {
-        // Allow one of the variants of submit or execute, exactly once.
-        allowing(executorService).submit((Callable) anything());
-        then(submitted.is("yes"));
-        allowing(executorService).submit((Runnable) anything(), anything());
-        then(submitted.is("yes"));
-        allowing(executorService).submit((Runnable) anything());
-        then(submitted.is("yes"));
-        allowing(executorService).execute((Runnable) anything());
-        then(submitted.is("yes"));
-
-        never(executorService).submit((Callable) anything());
-        when(submitted.is("yes"));
-        never(executorService).submit((Runnable) anything(), anything());
-        when(submitted.is("yes"));
-        never(executorService).submit((Runnable) anything());
-        when(submitted.is("yes"));
-        never(executorService).execute((Runnable) anything());
-        when(submitted.is("yes"));
-      } catch (Throwable ignore) {
-      }
+      allowSubmitOrExecuteOnce(context, executorService);
     }});
 
     keySerializingExecutor.submit("key", task);
@@ -148,4 +129,46 @@ public class KeySerializingExecutorTest {
       throws Exception {
     keySerializingExecutor.submit(key, () -> 0).get();
   }
+
+  public static void allowSubmitOrExecuteOnce(Mockery context, ExecutorService executorService) {
+    final States submitted = context.states("submitted").startsAs("no");
+
+    context.checking(new Expectations() {{
+      allowSubmitAndThen(context, executorService, submitted.is("yes"));
+      doNowAllowSubmitOnce(context, executorService, submitted.is("yes"));
+    }});
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void allowSubmitAndThen(Mockery context,
+                                         ExecutorService executorService,
+                                         org.jmock.internal.State state) {
+    context.checking(new Expectations() {{
+      allowing(executorService).submit(with.<Callable>is(any(Callable.class)));
+      then(state);
+      allowing(executorService).submit(with.is(any(Runnable.class)), with.is(any(Object.class)));
+      then(state);
+      allowing(executorService).submit(with.<Runnable>is(any(Runnable.class)));
+      then(state);
+      allowing(executorService).execute(with.is(any(Runnable.class)));
+      then(state);
+    }});
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void doNowAllowSubmitOnce(Mockery context,
+                                           ExecutorService executorService,
+                                           org.jmock.internal.State state) {
+    context.checking(new Expectations() {{
+      never(executorService).submit(with.<Callable>is(any(Callable.class)));
+      when(state);
+      never(executorService).submit(with.is(any(Runnable.class)), with.is(any(Object.class)));
+      when(state);
+      never(executorService).submit(with.<Runnable>is(any(Runnable.class)));
+      when(state);
+      never(executorService).execute(with.is(any(Runnable.class)));
+      when(state);
+    }});
+  }
+
 }

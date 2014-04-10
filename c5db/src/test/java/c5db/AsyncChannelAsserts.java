@@ -18,10 +18,13 @@
 package c5db;
 
 import c5db.util.ExceptionHandlingBatchExecutor;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
 import org.jetlang.channels.Channel;
+import org.jetlang.channels.Subscriber;
 import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.RunnableExecutor;
 import org.jetlang.core.RunnableExecutorImpl;
@@ -30,7 +33,10 @@ import org.jetlang.fibers.ThreadFiber;
 import org.junit.runners.model.MultipleFailureException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -145,6 +151,74 @@ public class AsyncChannelAsserts {
       }
 
       received.add(msg);
+    }
+  }
+
+  /**
+   * Keeps track of all objects that have ever been produced by a channel (or any Subscriber) and provides
+   * the capability to wait until a future object matches an arbitrary Matcher; or to return from the wait
+   * immediately if any object already produced matches.
+   *
+   * @param <T> Type of channel object
+   */
+  public static class ChannelHistoryMonitor<T> {
+    private final List<T> messageLog = new ArrayList<>();
+    private final Map<Matcher<? super T>, SettableFuture<T>> waitingToMatch = new HashMap<>();
+    private final Fiber fiber;
+    private static final int WAIT_TIMEOUT = 5; // seconds
+
+    public ChannelHistoryMonitor(Subscriber<T> subscriber, Fiber fiber) {
+      this.fiber = fiber;
+      subscriber.subscribe(fiber, this::onMessage);
+    }
+
+    private void onMessage(T message) {
+      messageLog.add(message);
+      Iterator<Matcher<? super T>> it = waitingToMatch.keySet().iterator();
+      while (it.hasNext()) {
+        Matcher<? super T> matcher = it.next();
+        if (matcher.matches(message)) {
+          waitingToMatch.get(matcher).set(message);
+          it.remove();
+        }
+      }
+    }
+
+    public boolean hasAny(Matcher<? super T> matcher) {
+      for (T element : messageLog) {
+        if (matcher.matches(element)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public T waitFor(Matcher<? super T> matcher) {
+      ListenableFuture<T> finished = future(matcher);
+
+      try {
+        return finished.get(WAIT_TIMEOUT, TimeUnit.SECONDS);
+      } catch (Exception e) {
+        Description d = new StringDescription();
+        matcher.describeTo(d);
+        throw new AssertionError("Failed waiting for " + d.toString(), e);
+      }
+    }
+
+    private ListenableFuture<T> future(Matcher<? super T> matcher) {
+      SettableFuture<T> finished = SettableFuture.create();
+
+      fiber.execute(() -> {
+        for (T element : messageLog) {
+          if (matcher.matches(element)) {
+            finished.set(element);
+            return;
+          }
+        }
+        waitingToMatch.put(matcher, finished);
+      });
+
+      return finished;
     }
   }
 }

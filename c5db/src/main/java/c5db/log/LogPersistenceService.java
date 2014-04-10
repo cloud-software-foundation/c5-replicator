@@ -133,5 +133,14 @@ public interface LogPersistenceService {
      * @throws IOException
      */
     InputStream getStream(long fromSeqNum) throws IOException;
+
+    /**
+     * Return the last entry within the persistence, or returns an entry with zero seqNum
+     * and zero electionTerm if there is no entry within the persistence.
+     *
+     * @return The last entry persisted.
+     * @throws IOException
+     */
+    SequentialEntry getLastEntry() throws IOException;
   }
 }

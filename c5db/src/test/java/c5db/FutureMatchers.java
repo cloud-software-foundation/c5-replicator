@@ -25,7 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class FutureMatchers {
-  private static final int TIMEOUT = 40000; // seconds
+  private static final int TIMEOUT = 4; // seconds
 
   public static <T> Matcher<Future<T>> resultsIn(Matcher<T> resultMatcher) {
     return returnsAFutureWhoseResult(resultMatcher);
