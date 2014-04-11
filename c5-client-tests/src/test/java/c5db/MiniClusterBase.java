@@ -108,8 +108,7 @@ public class MiniClusterBase {
 
     System.setProperty("regionServerPort", String.valueOf(regionServerPort));
 
-    C5DB.main(new String[]{});
-    server = C5DB.getServer();
+    server = Main.startC5Server(new String[]{});
 
     ListenableFuture<C5Module> regionServerFuture = server.getModule(ModuleType.RegionServer);
     C5Module regionServer = regionServerFuture.get();
