@@ -17,13 +17,12 @@
 
 package c5db.log;
 
-import com.google.common.collect.Lists;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -92,7 +91,7 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
 
   @Override
   public List<E> subSequence(long start, long end) throws IOException, LogEntryNotFound, LogEntryNotInSequence {
-    final List<E> readEntries = Lists.newArrayList();
+    final List<E> readEntries = new ArrayList<>();
 
     try (InputStream reader = persistenceNavigator.getStream(start)) {
       long seqNum;

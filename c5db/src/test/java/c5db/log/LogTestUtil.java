@@ -24,6 +24,7 @@ import io.netty.util.CharsetUtil;
 
 import java.math.RoundingMode;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -34,7 +35,7 @@ public class LogTestUtil {
   private static final Random deterministicDataSequence = new Random(112233);
 
   public static List<OLogEntry> emptyEntryList() {
-    return Lists.newArrayList();
+    return new ArrayList<>();
   }
 
   public static OLogEntry makeEntry(long seqNum, long term, String stringData) {
@@ -42,7 +43,7 @@ public class LogTestUtil {
   }
 
   public static OLogEntry makeEntry(long seqNum, long term, ByteBuffer data) {
-    return new OLogEntry(seqNum, term, Lists.newArrayList(data.duplicate()));
+    return new OLogEntry(seqNum, term, Lists.newArrayList(data));
   }
 
   public static List<OLogEntry> makeSingleEntryList(long seqNum, long term, String stringData) {
@@ -80,7 +81,7 @@ public class LogTestUtil {
    * to end exclusive.
    */
   public static List<OLogEntry> someConsecutiveEntries(int start, int end) {
-    List<OLogEntry> entries = Lists.newArrayList();
+    List<OLogEntry> entries = new ArrayList<>();
     for (int i = start; i < end; i++) {
       entries.add(makeEntry(i, IntMath.divide(i + 1, 2, RoundingMode.CEILING), someData()));
     }

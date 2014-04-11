@@ -17,7 +17,6 @@
 
 package c5db.util;
 
-import com.google.common.collect.Lists;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.States;
@@ -25,6 +24,7 @@ import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -107,7 +107,7 @@ public class KeySerializingExecutorTest {
   private static List<Integer> submitSeveralTasksAndBeginLoggingTheirInvocations(
       KeySerializingExecutor keySerializingExecutor, String key, int howMany) throws Exception {
 
-    List<Integer> log = Lists.newArrayList();
+    List<Integer> log = new ArrayList<>();
     for (int i = 0; i < howMany; i++) {
       keySerializingExecutor.submit(key, getSupplierWhichLogsItsNumberTwice(i, log));
     }

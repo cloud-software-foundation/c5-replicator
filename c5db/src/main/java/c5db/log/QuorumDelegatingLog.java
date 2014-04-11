@@ -19,13 +19,13 @@ package c5db.log;
 
 import c5db.util.KeySerializingExecutor;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,7 +132,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     if (end < start) {
       throw new IllegalArgumentException("getLogEntries: end < start");
     } else if (end == start) {
-      return Futures.immediateFuture(Lists.newArrayList());
+      return Futures.immediateFuture(new ArrayList<>());
     }
 
     return taskExecutor.submit(quorumId, () -> quorumLog(quorumId).subSequence(start, end));
