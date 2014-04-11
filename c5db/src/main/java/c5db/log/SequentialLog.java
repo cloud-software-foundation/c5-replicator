@@ -19,6 +19,7 @@ package c5db.log;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Abstraction representing a sequence of log entries, persisted to some medium. Entries can
@@ -52,7 +53,15 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
    * @return A list of the requested entries.
    * @throws IOException
    */
-  List<E> subSequence(long start, long end) throws IOException;
+  List<E> subSequence(long start, long end) throws IOException, LogEntryNotFound, LogEntryNotInSequence;
+
+  /**
+   * Return true if the log contains no entries.
+   *
+   * @return True if the log is empty, else false.
+   * @throws IOException
+   */
+  boolean isEmpty() throws IOException;
 
   /**
    * Retrieve the last entry in the log.
@@ -60,7 +69,14 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
    * @return The last entry.
    * @throws IOException
    */
-  SequentialEntry getLastEntry() throws IOException;
+  E getLastEntry() throws IOException, LogEntryNotFound;
+
+  /**
+   * Iterate over every entry in the log, executing a callback for each one.
+   *
+   * @param doForEach Consumer that accepts a log entry.
+   */
+  void forEach(Consumer<? super E> doForEach) throws IOException;
 
   /**
    * Remove entries from the tail of the log.
@@ -68,13 +84,15 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
    * @param seqNum Remove every entry with sequence number greater than or equal to seqNum.
    * @throws IOException
    */
-  void truncate(long seqNum) throws IOException;
+  void truncate(long seqNum) throws IOException, LogEntryNotFound;
 
   /**
    * Synchronously persist all previously written changes to the underlying medium.
+   * TODO remove from this interface?
    *
    * @throws IOException
    */
+  @SuppressWarnings("UnusedDeclaration")
   void sync() throws IOException;
 
   /**
@@ -83,4 +101,22 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
    * @throws IOException
    */
   void close() throws IOException;
+
+  /**
+   * Exception indicating a requested log entry was not found
+   */
+  class LogEntryNotFound extends RuntimeException {
+    public LogEntryNotFound(Throwable cause) {
+      super(cause);
+    }
+  }
+
+  /**
+   * Exception indicating a log entry has been read with an incorrect sequence number.
+   */
+  class LogEntryNotInSequence extends RuntimeException {
+    public LogEntryNotInSequence() {
+      super();
+    }
+  }
 }

@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
+import static c5db.log.SequentialLog.LogEntryNotFound;
+
 /**
  * Service to handle persistence for different quorums' logs.
  */
@@ -123,7 +125,7 @@ public interface LogPersistenceService {
      * @return Byte position or address.
      * @throws IOException
      */
-    long getAddressOfEntry(long seqNum) throws IOException;
+    long getAddressOfEntry(long seqNum) throws IOException, LogEntryNotFound;
 
     /**
      * Return an input stream ready to read from the persistence from a specified sequence number.
@@ -132,15 +134,15 @@ public interface LogPersistenceService {
      * @return A new input stream; the caller takes responsibility for closing it.
      * @throws IOException
      */
-    InputStream getStream(long fromSeqNum) throws IOException;
+    InputStream getStream(long fromSeqNum) throws IOException, LogEntryNotFound;
 
     /**
-     * Return the last entry within the persistence, or returns an entry with zero seqNum
-     * and zero electionTerm if there is no entry within the persistence.
+     * Return an input stream ready to read from the persistence at the beginning address of the
+     * last entry.
      *
-     * @return The last entry persisted.
+     * @return A new input stream; the caller takes responsibility for closing it.
      * @throws IOException
      */
-    SequentialEntry getLastEntry() throws IOException;
+    InputStream getStreamAtLastEntry() throws IOException;
   }
 }

@@ -83,18 +83,18 @@ public interface OLog extends AutoCloseable {
   long getLogTerm(long index, String quorumId);
 
   /**
-   * Get the last sequence number written to the log for this quorum.
+   * Get the last sequence number written to the log for this quorum, or zero if there is none.
    *
    * @param quorumId Quorum id
-   * @return Sequence number of the last entry logged.
+   * @return (A future which will result in) the sequence number of the last entry logged.
    */
   ListenableFuture<Long> getLastSeqNum(String quorumId);
 
   /**
-   * Get the last election term written to the log for this quorum.
+   * Get the last election term written to the log for this quorum, or zero if there is none.
    *
-   * @param quorumId
-   * @return Election term of the last entry logged.
+   * @param quorumId Quorum id
+   * @return (A future which will result in) the election term of the last entry logged.
    */
   ListenableFuture<Long> getLastTerm(String quorumId);
 

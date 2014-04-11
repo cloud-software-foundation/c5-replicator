@@ -20,26 +20,25 @@ package c5db.log;
 import c5db.C5CommonTestUtil;
 import c5db.util.KeySerializingExecutor;
 import com.google.common.collect.Lists;
-import com.google.common.math.IntMath;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.math.RoundingMode;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Random;
 
 import static c5db.FutureMatchers.resultsIn;
-import static c5db.log.EncodedSequentialLog.LogEntryNotInSequence;
+import static c5db.log.LogTestUtil.aSeqNum;
+import static c5db.log.LogTestUtil.anOLogEntry;
 import static c5db.log.LogTestUtil.emptyEntryList;
-import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
+import static c5db.log.LogTestUtil.someConsecutiveEntries;
+import static c5db.log.LogTestUtil.someData;
 import static c5db.log.LogTestUtil.term;
+import static c5db.log.SequentialLog.LogEntryNotInSequence;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -48,7 +47,6 @@ public class QuorumDelegatingLogTest {
   private static Path testDirectory;
   private LogFileService logPersistenceService;
   private OLog log;
-  private Random deterministicDataSequence = null; // Used as a pre-seeded data source for at least one test
   private final String quorumId = "quorumId";
 
   @BeforeClass
@@ -60,8 +58,6 @@ public class QuorumDelegatingLogTest {
 
   @Before
   public final void setUp() throws Exception {
-    deterministicDataSequence = new Random(2231983);
-    testSequenceNumber = aSeqNum();
     logPersistenceService = new LogFileService(testDirectory);
     logPersistenceService.moveLogsToArchive();
 
@@ -76,7 +72,6 @@ public class QuorumDelegatingLogTest {
   public final void tearDown() throws Exception {
     log.close();
     logPersistenceService.moveLogsToArchive();
-    deterministicDataSequence = null;
   }
 
   @Test(expected = Exception.class, timeout = 1000)
@@ -247,15 +242,7 @@ public class QuorumDelegatingLogTest {
    * Private methods
    */
 
-  private long anElectionTerm() {
-    return Math.abs(deterministicDataSequence.nextLong());
-  }
-
-  private long aSeqNum() {
-    return Math.abs(deterministicDataSequence.nextLong());
-  }
-
-  private long testSequenceNumber;
+  private long testSequenceNumber = aSeqNum();
 
   private long nextSeqNum() {
     testSequenceNumber++;
@@ -266,25 +253,4 @@ public class QuorumDelegatingLogTest {
     return testSequenceNumber;
   }
 
-  private ByteBuffer someData() {
-    byte[] bytes = new byte[10];
-    deterministicDataSequence.nextBytes(bytes);
-    return ByteBuffer.wrap(bytes);
-  }
-
-  private OLogEntry anOLogEntry() {
-    return makeEntry(aSeqNum(), anElectionTerm(), someData());
-  }
-
-  /**
-   * Create and return (end - start) entries, in ascending sequence number order, from start inclusive,
-   * to end exclusive.
-   */
-  private List<OLogEntry> someConsecutiveEntries(int start, int end) {
-    List<OLogEntry> entries = Lists.newArrayList();
-    for (int i = start; i < end; i++) {
-      entries.add(makeEntry(i, IntMath.divide(i + 1, 2, RoundingMode.CEILING), someData()));
-    }
-    return entries;
-  }
 }

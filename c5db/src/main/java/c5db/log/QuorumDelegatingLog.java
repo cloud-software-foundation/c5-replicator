@@ -34,9 +34,9 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import static c5db.log.EncodedSequentialLog.Codec;
-import static c5db.log.EncodedSequentialLog.LogEntryNotInSequence;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
+import static c5db.log.SequentialLog.LogEntryNotInSequence;
 
 /**
  * OLog that delegates each quorum's logging tasks to a separate SequentialLog for that quorum,
@@ -50,12 +50,12 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   private final Map<String, PerQuorum> quorumMap = new HashMap<>();
 
   private final Supplier<TermOracle> termOracleFactory;
-  private final BiFunction<BytePersistence, Codec, PersistenceNavigator> persistenceNavigatorFactory;
+  private final BiFunction<BytePersistence, Codec<?>, PersistenceNavigator> persistenceNavigatorFactory;
 
   public QuorumDelegatingLog(LogPersistenceService persistenceService,
                              KeySerializingExecutor taskExecutor,
                              Supplier<TermOracle> termOracleFactory,
-                             BiFunction<BytePersistence, Codec, PersistenceNavigator> persistenceNavigatorFactory
+                             BiFunction<BytePersistence, Codec<?>, PersistenceNavigator> persistenceNavigatorFactory
   ) {
     this.persistenceService = persistenceService;
     this.taskExecutor = taskExecutor;
@@ -156,14 +156,24 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   @Override
   public ListenableFuture<Long> getLastSeqNum(String quorumId) {
     return taskExecutor.submit(quorumId, () -> {
-      return quorumLog(quorumId).getLastEntry().getSeqNum();
+      SequentialLog<OLogEntry> log = quorumLog(quorumId);
+      if (log.isEmpty()) {
+        return 0L;
+      } else {
+        return log.getLastEntry().getSeqNum();
+      }
     });
   }
 
   @Override
   public ListenableFuture<Long> getLastTerm(String quorumId) {
     return taskExecutor.submit(quorumId, () -> {
-      return quorumLog(quorumId).getLastEntry().getElectionTerm();
+      SequentialLog<OLogEntry> log = quorumLog(quorumId);
+      if (log.isEmpty()) {
+        return 0L;
+      } else {
+        return log.getLastEntry().getElectionTerm();
+      }
     });
   }
 
@@ -208,7 +218,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   private void updateTermInformationWithNewEntries(List<OLogEntry> entries, String quorumId) {
     TermOracle termOracle = termOracle(quorumId);
-    for (SequentialEntry e : entries) {
+    for (OLogEntry e : entries) {
       termOracle.notifyLogging(e.getSeqNum(), e.getElectionTerm());
     }
   }

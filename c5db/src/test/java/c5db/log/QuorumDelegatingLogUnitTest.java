@@ -46,7 +46,7 @@ public class QuorumDelegatingLogUnitTest {
   ExecutorService executorService = context.mock(ExecutorService.class);
   KeySerializingExecutor serializingExecutor = new KeySerializingExecutor(executorService); // not a mock!
   Supplier<TermOracle> termOracleFactory = context.mock(Supplier.class);
-  BiFunction<BytePersistence, Codec, PersistenceNavigator> navigatorFactory = context.mock(BiFunction.class);
+  BiFunction<BytePersistence, Codec<?>, PersistenceNavigator> navigatorFactory = context.mock(BiFunction.class);
   TermOracle termOracle = context.mock(TermOracle.class);
   PersistenceNavigator persistenceNavigator = context.mock(PersistenceNavigator.class);
 
@@ -59,7 +59,7 @@ public class QuorumDelegatingLogUnitTest {
   @Before
   public void setUpMockedFactories() {
     context.checking(new Expectations() {{
-      allowing(navigatorFactory).apply(with(any(BytePersistence.class)), with(any(Codec.class)));
+      allowing(navigatorFactory).apply(with(any(BytePersistence.class)), with.<Codec<?>>is(any(Codec.class)));
       will(returnValue(persistenceNavigator));
 
       allowing(termOracleFactory).get();

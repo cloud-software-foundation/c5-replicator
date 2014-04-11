@@ -17,7 +17,6 @@
 
 package c5db.log;
 
-import com.google.common.collect.Lists;
 import io.protostuff.ProtobufException;
 
 import java.io.EOFException;
@@ -26,11 +25,11 @@ import java.io.InputStream;
 import java.nio.channels.Channels;
 
 import static c5db.log.EncodedSequentialLog.Codec;
-import static c5db.log.EncodedSequentialLog.LogEntryNotFound;
 import static c5db.log.EntryEncodingUtil.CrcError;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceReader;
+import static c5db.log.SequentialLog.LogEntryNotFound;
 
 /**
  * PersistenceNavigator using only in-memory structures, not persisting any data it has been notify()'d.
@@ -51,26 +50,50 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
   }
 
   @Override
-  public long getAddressOfEntry(long seqNum) throws IOException {
+  public long getAddressOfEntry(long seqNum) throws IOException, LogEntryNotFound {
     try (PersistenceReader reader = getReaderAtSeqNum(seqNum)) {
       return reader.position();
     }
   }
 
   @Override
-  public InputStream getStream(long seqNum) throws IOException {
+  public InputStream getStream(long seqNum) throws IOException, LogEntryNotFound {
     return Channels.newInputStream(getReaderAtSeqNum(seqNum));
   }
 
-  private PersistenceReader getReaderAtSeqNum(long toSeqNum) throws IOException {
+  @Override
+  public InputStream getStreamAtLastEntry() throws IOException {
+    PersistenceReader reader = persistence.getReader();
+    InputStream inputStream = Channels.newInputStream(reader);
+    long lastEntryAddress = 0;
+
+    // TODO: This is a naive algorithm; apply indexing strategy
+
+    try {
+      //noinspection InfiniteLoopStatement
+      while (true) {
+        long entryStartAddress = reader.position();
+        codec.skipEntryAndReturnSeqNum(inputStream);
+        lastEntryAddress = entryStartAddress;
+      }
+    } catch (CrcError | ProtobufException | EOFException ignore) {
+      // TODO CrcError or ProtobufException, here as elsewhere, should probably result in a truncation.
+      // EOFException -> break loop as intended
+    }
+
+    reader.position(lastEntryAddress);
+    return inputStream;
+  }
+
+  private PersistenceReader getReaderAtSeqNum(long toSeqNum) throws IOException, LogEntryNotFound {
     PersistenceReader reader = persistence.getReader();
     InputStream inputStream = Channels.newInputStream(reader);
 
-    // TODO apply indexing information
+    // TODO: This is a naive algorithm; apply indexing strategy
     try {
       while (true) {
         long address = reader.position();
-        long seqNum = codec.skipEntryAndReturnSequence(inputStream).getSeqNum();
+        long seqNum = codec.skipEntryAndReturnSeqNum(inputStream);
         if (toSeqNum == seqNum) {
           reader.position(address);
           return reader;
@@ -79,24 +102,5 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
     } catch (EOFException e) {
       throw new LogEntryNotFound(e);
     }
-  }
-
-  @Override
-  public SequentialEntry getLastEntry() throws IOException {
-    PersistenceReader reader = persistence.getReader();
-    InputStream inputStream = Channels.newInputStream(reader);
-
-    // TODO apply indexing information
-    SequentialEntry entry = new OLogEntry(0, 0, Lists.newArrayList());
-    try {
-      //noinspection InfiniteLoopStatement
-      while (true) {
-        entry = codec.skipEntryAndReturnSequence(inputStream);
-      }
-    } catch (EOFException | CrcError | ProtobufException ignore) {
-      // TODO CrcError or ProtobufException, here as elsewhere should probably result in a truncation.
-    }
-
-    return entry;
   }
 }

@@ -34,6 +34,7 @@ import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.seqNum;
+import static c5db.log.LogTestUtil.someConsecutiveEntries;
 import static c5db.log.LogTestUtil.term;
 import static org.hamcrest.CoreMatchers.equalTo;
 
@@ -96,20 +97,15 @@ public class EncodedSequentialLogTest {
   }
 
   @Test
-  public void canReturnTheLastEntryInTheLog() throws Exception {
+  public void delegatesToItsNavigatorToReturnTheLastEntryInTheLog() throws Exception {
     context.checking(new Expectations() {{
-      oneOf(navigator).getLastEntry();
+      ignoring(codec);
+
+      oneOf(navigator).getStreamAtLastEntry();
+      will(returnValue(aMockInputStream()));
     }});
 
     log.getLastEntry();
-  }
-
-  private List<OLogEntry> someConsecutiveEntries(int start, int end) {
-    List<OLogEntry> entries = Lists.newArrayList();
-    for (int i = start; i < end; i++) {
-      entries.add(makeEntry(seqNum(i), term(7), "data"));
-    }
-    return entries;
   }
 
   private InputStream aMockInputStream() {

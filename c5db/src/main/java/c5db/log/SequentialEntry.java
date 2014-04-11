@@ -18,10 +18,16 @@
 package c5db.log;
 
 /**
- * A log entry with a sequence and an associated election term.
+ * A log entry (immutable value type) with a sequence number.
  */
-public interface SequentialEntry {
-  long getSeqNum();
+public class SequentialEntry {
+  protected final long seqNum;
 
-  long getElectionTerm();
+  public SequentialEntry(long seqNum) {
+    this.seqNum = seqNum;
+  }
+
+  public long getSeqNum() {
+    return seqNum;
+  }
 }
