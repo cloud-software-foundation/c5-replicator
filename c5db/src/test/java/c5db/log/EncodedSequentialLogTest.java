@@ -54,9 +54,11 @@ public class EncodedSequentialLogTest {
     OLogEntry entry = makeEntry(seqNum(1), term(2), "data");
 
     context.checking(new Expectations() {{
+      ignoring(navigator);
+      allowing(persistence).size();
+
       oneOf(codec).encode(with(equalTo(entry)));
       atLeast(1).of(persistence).append(with(any(ByteBuffer[].class)));
-      ignoring(navigator);
     }});
 
     log.append(Lists.newArrayList(entry));
@@ -67,30 +69,52 @@ public class EncodedSequentialLogTest {
     context.checking(new Expectations() {{
       ignoring(codec);
       ignoring(persistence);
-      exactly(5).of(navigator).notify(with(any(Long.class)));
+      exactly(5).of(navigator).notifyLogging(with(any(Long.class)), with(any(Long.class)));
     }});
 
     log.append(someConsecutiveEntries(1, 6));
   }
 
   @Test
-  public void readsEntriesFromTheSuppliedPersistenceObjectUsingTheSuppliedCodec() throws Exception {
+  public void notifiesTheNavigatorWhenTruncating() throws Exception {
+    long truncationSeqNum = 33;
+
     context.checking(new Expectations() {{
-      codecWillReturnEntrySequence(codec, someConsecutiveEntries(1, 6));
+      ignoring(codec);
+      ignoring(persistence);
+      allowing(navigator).getAddressOfEntry(with(any(Long.class)));
+
+      oneOf(navigator).notifyTruncation(truncationSeqNum);
+    }});
+
+    log.truncate(truncationSeqNum);
+  }
+
+  @Test
+  public void readsEntriesFromTheSuppliedPersistenceObjectUsingTheSuppliedCodec() throws Exception {
+    long startSeqNum = 77;
+    long endSeqNum = 100;
+
+    context.checking(new Expectations() {{
+      codecWillReturnEntrySequence(codec, someConsecutiveEntries(startSeqNum, endSeqNum));
       allowing(persistence).getReader();
-      allowing(navigator).getStream(1);
+      allowing(navigator).getStreamAtSeqNum(startSeqNum);
       will(returnValue(aMockInputStream()));
     }});
 
-    log.subSequence(1, 6);
+    log.subSequence(startSeqNum, endSeqNum);
   }
 
   @Test
   public void processesTruncationRequestsByDelegatingThemToTheSuppliedPersistence() throws Exception {
+    long entryAddress = 100;
+
     context.checking(new Expectations() {{
+      allowing(navigator).notifyTruncation(with(any(Long.class)));
+
       oneOf(navigator).getAddressOfEntry(seqNum(7));
-      will(returnValue(100L));
-      oneOf(persistence).truncate(100);
+      will(returnValue(entryAddress));
+      oneOf(persistence).truncate(entryAddress);
     }});
 
     log.truncate(seqNum(7));
@@ -107,6 +131,7 @@ public class EncodedSequentialLogTest {
 
     log.getLastEntry();
   }
+
 
   private InputStream aMockInputStream() {
     return new InputStream() {

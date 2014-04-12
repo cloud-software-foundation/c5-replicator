@@ -219,7 +219,7 @@ public class QuorumDelegatingLogTest {
     assertThat(log.getLastSeqNum(quorumId), resultsIn(equalTo(10L)));
   }
 
-  @Test(timeout = 1000)
+  @Test(timeout = 1000000)
   public void correctlyReturnsLastSequenceNumberAndTermAfterATruncation() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 5), quorumId);
     long term = log.getLastTerm(quorumId).get() + 1;

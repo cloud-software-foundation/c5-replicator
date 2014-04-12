@@ -19,7 +19,7 @@ package c5db.log;
 
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Lists;
-import com.google.common.math.IntMath;
+import com.google.common.math.LongMath;
 import io.netty.util.CharsetUtil;
 
 import java.math.RoundingMode;
@@ -80,10 +80,10 @@ public class LogTestUtil {
    * Create and return (end - start) entries, in ascending sequence number order, from start inclusive,
    * to end exclusive.
    */
-  public static List<OLogEntry> someConsecutiveEntries(int start, int end) {
+  public static List<OLogEntry> someConsecutiveEntries(long start, long end) {
     List<OLogEntry> entries = new ArrayList<>();
-    for (int i = start; i < end; i++) {
-      entries.add(makeEntry(i, IntMath.divide(i + 1, 2, RoundingMode.CEILING), someData()));
+    for (long i = start; i < end; i++) {
+      entries.add(makeEntry(i, LongMath.divide(i + 1, 2, RoundingMode.CEILING), someData()));
     }
     return entries;
   }
