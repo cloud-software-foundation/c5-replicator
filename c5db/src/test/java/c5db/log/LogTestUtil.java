@@ -19,18 +19,23 @@ package c5db.log;
 
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Lists;
+import com.google.common.math.LongMath;
 import io.netty.util.CharsetUtil;
 
+import java.math.RoundingMode;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Helper methods to create and manipulate OLogEntry instances.
  */
 public class LogTestUtil {
+  private static final Random deterministicDataSequence = new Random(112233);
 
   public static List<OLogEntry> emptyEntryList() {
-    return Lists.newArrayList();
+    return new ArrayList<>();
   }
 
   public static OLogEntry makeEntry(long seqNum, long term, String stringData) {
@@ -38,7 +43,7 @@ public class LogTestUtil {
   }
 
   public static OLogEntry makeEntry(long seqNum, long term, ByteBuffer data) {
-    return new OLogEntry(seqNum, term, Lists.newArrayList(data.duplicate()));
+    return new OLogEntry(seqNum, term, Lists.newArrayList(data));
   }
 
   public static List<OLogEntry> makeSingleEntryList(long seqNum, long term, String stringData) {
@@ -63,5 +68,35 @@ public class LogTestUtil {
 
   public static long term(long term) {
     return term;
+  }
+
+  public static ByteBuffer someData() {
+    byte[] bytes = new byte[10];
+    deterministicDataSequence.nextBytes(bytes);
+    return ByteBuffer.wrap(bytes);
+  }
+
+  /**
+   * Create and return (end - start) entries, in ascending sequence number order, from start inclusive,
+   * to end exclusive.
+   */
+  public static List<OLogEntry> someConsecutiveEntries(long start, long end) {
+    List<OLogEntry> entries = new ArrayList<>();
+    for (long i = start; i < end; i++) {
+      entries.add(makeEntry(i, LongMath.divide(i + 1, 2, RoundingMode.CEILING), someData()));
+    }
+    return entries;
+  }
+
+  public static long anElectionTerm() {
+    return Math.abs(deterministicDataSequence.nextLong());
+  }
+
+  public static long aSeqNum() {
+    return Math.abs(deterministicDataSequence.nextLong());
+  }
+
+  public static OLogEntry anOLogEntry() {
+    return makeEntry(aSeqNum(), anElectionTerm(), someData());
   }
 }

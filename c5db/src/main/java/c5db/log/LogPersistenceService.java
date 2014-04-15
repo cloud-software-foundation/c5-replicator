@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 
+import static c5db.log.SequentialLog.LogEntryNotFound;
+
 /**
  * Service to handle persistence for different quorums' logs.
  */
@@ -102,45 +104,57 @@ public interface LogPersistenceService {
   }
 
   /**
-   * An abstraction in charge of finding entries in the persistence by their sequence number,
-   * rather than by their byte position/address;
+   * Service in charge of finding entries in a persistence by their sequence number, rather
+   * than by their byte position/address. To facilitate fast navigation, it may build an index
+   * of already-written entries and their locations.
    */
   interface PersistenceNavigator {
     /**
-     * Updates the navigator with information about an entry to be written.
-     * TODO: this should be less opaque. It needs to be clear that each navigator is associated
-     * TODO: with a specific BytePersistence that knows its append position/address
+     * Updates the navigator with information about an entry to be written, so that it can
+     * optionally incorporate that information into an internal index.
      *
-     * @param seqNum Sequence number of an entry to be written.
+     * @param seqNum      Sequence number of an entry being written.
+     * @param byteAddress Byte address of the start of the entry within the persistence.
      * @throws IOException
      */
-    void notify(long seqNum) throws IOException;
+    void notifyLogging(long seqNum, long byteAddress) throws IOException;
 
     /**
-     * Find the position or address of an entry (by its sequence number) within the persistence.
+     * Updates the navigator that a truncation is being performed on the log, which may
+     * necessitate updating the navigator's internal index.
      *
-     * @param seqNum Sequence number of entry.
+     * @param seqNum Sequence number of the start of the truncation; i.e., entries greater than
+     *               or equal to this sequence number are being deleted.
+     * @throws IOException
+     */
+    void notifyTruncation(long seqNum) throws IOException;
+
+    /**
+     * Find the position or address of an entry within the persistence, using its sequence number.
+     *
+     * @param seqNum Sequence number of entry to find.
      * @return Byte position or address.
      * @throws IOException
      */
-    long getAddressOfEntry(long seqNum) throws IOException;
+    long getAddressOfEntry(long seqNum) throws IOException, LogEntryNotFound;
 
     /**
-     * Return an input stream ready to read from the persistence from a specified sequence number.
+     * Return an input stream ready to read from the persistence starting at the beginning of the
+     * entry with the specified sequence number.
      *
      * @param fromSeqNum Sequence number to read from.
      * @return A new input stream; the caller takes responsibility for closing it.
      * @throws IOException
      */
-    InputStream getStream(long fromSeqNum) throws IOException;
+    InputStream getStreamAtSeqNum(long fromSeqNum) throws IOException, LogEntryNotFound;
 
     /**
-     * Return the last entry within the persistence, or returns an entry with zero seqNum
-     * and zero electionTerm if there is no entry within the persistence.
+     * Return an input stream ready to read from the persistence starting at the beginning of the
+     * last entry in the persistence.
      *
-     * @return The last entry persisted.
+     * @return A new input stream; the caller takes responsibility for closing it.
      * @throws IOException
      */
-    SequentialEntry getLastEntry() throws IOException;
+    InputStream getStreamAtLastEntry() throws IOException;
   }
 }

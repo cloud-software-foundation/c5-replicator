@@ -17,22 +17,24 @@
 
 package c5db.log;
 
-import com.google.common.collect.Lists;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static c5db.log.EntryEncodingUtil.CrcError;
+import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 
 /**
  * Sequential log that encodes and decodes its entries to bytes, persisting them to a BytePersistence.
  */
 public class EncodedSequentialLog<E extends SequentialEntry> implements SequentialLog<E> {
-  private final LogPersistenceService.BytePersistence persistence;
+  private final BytePersistence persistence;
   private final Codec<E> codec;
   private final PersistenceNavigator persistenceNavigator;
 
@@ -62,17 +64,17 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
     E decode(InputStream inputStream) throws IOException, CrcError;
 
     /**
-     * Skip over an entry in the input stream, returning the entry encountered as a SequentialEntry.
+     * Skip over an entry in the input stream, returning the sequence number of the entry encountered.
      *
      * @param inputStream An open input stream, positioned at the start of an entry.
      * @return The sequence number of the entry encountered.
      * @throws CrcError
      * @throws IOException
      */
-    SequentialEntry skipEntryAndReturnSequence(InputStream inputStream) throws IOException, CrcError;
+    long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException, CrcError;
   }
 
-  public EncodedSequentialLog(LogPersistenceService.BytePersistence persistence,
+  public EncodedSequentialLog(BytePersistence persistence,
                               Codec<E> codec,
                               PersistenceNavigator persistenceNavigator) {
     this.persistence = persistence;
@@ -83,20 +85,19 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
   @Override
   public void append(List<E> entries) throws IOException {
     for (E entry : entries) {
-      persistenceNavigator.notify(entry.getSeqNum());
+      persistenceNavigator.notifyLogging(entry.getSeqNum(), persistence.size());
       persistence.append(codec.encode(entry));
     }
   }
 
   @Override
-  public List<E> subSequence(long start, long end) throws IOException {
-    final List<E> readEntries = Lists.newArrayList();
+  public List<E> subSequence(long start, long end) throws IOException, LogEntryNotFound, LogEntryNotInSequence {
+    final List<E> readEntries = new ArrayList<>();
 
-    try (InputStream reader = persistenceNavigator.getStream(start)) {
+    try (InputStream reader = persistenceNavigator.getStreamAtSeqNum(start)) {
       long seqNum;
       do {
         E entry = codec.decode(reader);
-        ensureAscendingWithNoGaps(readEntries, entry);
         readEntries.add(entry);
         seqNum = entry.getSeqNum();
       } while (seqNum < end - 1);
@@ -104,18 +105,41 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
       throw new LogEntryNotFound(e);
     }
 
+    ensureAscendingWithNoGaps(readEntries);
     return readEntries;
   }
 
   @Override
-  public SequentialEntry getLastEntry() throws IOException {
-    return persistenceNavigator.getLastEntry();
+  public boolean isEmpty() throws IOException {
+    return persistence.size() == 0;
   }
 
   @Override
-  public void truncate(long seqNum) throws IOException {
+  public E getLastEntry() throws IOException, LogEntryNotFound {
+    try (InputStream inputStream = persistenceNavigator.getStreamAtLastEntry()) {
+      return codec.decode(inputStream);
+    } catch (EOFException e) {
+      throw new LogEntryNotFound(e);
+    }
+  }
+
+  @Override
+  public void forEach(Consumer<? super E> doForEach) throws IOException {
+    try (InputStream inputStream = Channels.newInputStream(persistence.getReader())) {
+      //noinspection InfiniteLoopStatement
+      do {
+        E entry = codec.decode(inputStream);
+        doForEach.accept(entry);
+      } while (true);
+    } catch (EOFException ignore) {
+    }
+  }
+
+  @Override
+  public void truncate(long seqNum) throws IOException, LogEntryNotFound {
     long truncationPos = persistenceNavigator.getAddressOfEntry(seqNum);
     persistence.truncate(truncationPos);
+    persistenceNavigator.notifyTruncation(seqNum);
   }
 
   @Override
@@ -128,30 +152,13 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
     persistence.close();
   }
 
-  /**
-   * Exception indicating a requested log entry was not found
-   */
-  public static class LogEntryNotFound extends RuntimeException {
-    public LogEntryNotFound(Throwable cause) {
-      super(cause);
-    }
-  }
-
-  /**
-   * Exception indicating a log entry has been read with an incorrect sequence number.
-   */
-  public static class LogEntryNotInSequence extends RuntimeException {
-    public LogEntryNotInSequence() {
-      super();
-    }
-  }
-
-  private void ensureAscendingWithNoGaps(List<E> entries, E entry) throws LogEntryNotInSequence {
+  private void ensureAscendingWithNoGaps(List<E> entries) throws LogEntryNotInSequence {
     final int size = entries.size();
     if (size > 0) {
-      final E lastEntry = entries.get(size - 1);
-      if (lastEntry.getSeqNum() + 1 != entry.getSeqNum()) {
-        throw new LogEntryNotInSequence();
+      for (int i = 1; i < size; i++) {
+        if (entries.get(i).getSeqNum() != entries.get(i - 1).getSeqNum() + 1) {
+          throw new LogEntryNotInSequence();
+        }
       }
     }
   }

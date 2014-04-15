@@ -80,7 +80,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An implementation of ReplicationModule using instances of ReplicatorInstance to handle each quorum.
- * <p>
+ * <p/>
  * TODO we dont have a way to actually START a freaking ReplicatorInstance - YET.
  * TODO consider being symmetric in how we handle sent messages.
  */

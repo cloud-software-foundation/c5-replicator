@@ -65,7 +65,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Uses broadcast UDP packets to discover 'adjacent' nodes in the cluster. Maintains
  * a state table for them, and provides information to other modules as they request it.
- * <p>
+ * <p/>
  * Currently UDP broadcast has some issues on Mac OSX vs Linux.  The big question,
  * specifically, is what happens when multiple processes bind to 255.255.255.255:PORT
  * and send packets?  Which processes receive such packets?
@@ -80,7 +80,7 @@ import java.util.concurrent.TimeUnit;
  * <li>Please fill this doc in!</li>
  * </ul></li>
  * </ul>
- * <p>
+ * <p/>
  * The beacon service needs to be refactored and different discovery methods need to be
  * pluggable but all behind the discovery module interface.
  */
@@ -225,7 +225,8 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     for (ModuleType moduleType : moduleInfo.keySet()) {
       msgModules.add(
           new ModuleDescriptor(moduleType,
-              moduleInfo.get(moduleType)));
+              moduleInfo.get(moduleType))
+      );
     }
 
     Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);

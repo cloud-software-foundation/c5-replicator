@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static c5db.log.LogTestUtil.makeProtostuffEntry;
@@ -67,7 +68,7 @@ public class MooringTest {
 
   @Test(expected = Exception.class)
   public void doesNotAcceptARequestToLogAnEmptyEntryList() {
-    log.logEntries(Lists.newArrayList());
+    log.logEntries(new ArrayList<>());
   }
 
   @Test
@@ -107,7 +108,8 @@ public class MooringTest {
     log.logEntries(
         Lists.newArrayList(
             makeProtostuffEntry(indexOfFirstEntry, termOfFirstEntry, someData()),
-            makeProtostuffEntry(index(13), term(35), someData())));
+            makeProtostuffEntry(index(13), term(35), someData()))
+    );
     log.truncateLog(13);
 
     assertThat(log.getLastIndex(), is(equalTo(indexOfFirstEntry)));

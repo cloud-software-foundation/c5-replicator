@@ -63,7 +63,7 @@ import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
 /**
  * Single instantiation of a replicator / log / lease. This implementation's logic is based on the
  * RAFT algorithm (see <a href="http://raftconsensus.github.io/">http://raftconsensus.github.io/</a>.
- * <p>
+ * <p/>
  * A ReplicatorInstance handles the consensus and replication for a single quorum, and communicates
  * with the log package via {@link c5db.log.ReplicatorLog}.
  */
@@ -185,7 +185,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                   ReplicatorInstance.this,
                   0,
                   info.currentTimeMillis(),
-                  null));
+                  null)
+          );
         } catch (IOException e) {
           LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
           failReplicatorInstance(e);
@@ -269,7 +270,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             this,
             0,
             info.currentTimeMillis(),
-            e));
+            e)
+    );
     fiber.dispose(); // kill us forever.
   }
 
@@ -397,7 +399,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
               this,
               whosLeader,
               info.currentTimeMillis(),
-              null));
+              null)
+      );
     }
 
     // 5. return failure if log doesn't contain an entry at
@@ -572,7 +575,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             this,
             0,
             info.currentTimeMillis(),
-            null));
+            null)
+    );
 
     final int majority = calculateMajority(peers.size());
     // Start new election "timer".
@@ -708,7 +712,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             this,
             0,
             info.currentTimeMillis(),
-            null));
+            null)
+    );
 
     stopQueueConsumer();
   }
@@ -750,7 +755,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             this,
             myId,
             info.currentTimeMillis(),
-            null));
+            null)
+    );
 
 
     startQueueConsumer();

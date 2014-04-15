@@ -36,25 +36,19 @@ import static c5db.log.EntryEncodingUtil.encodeWithLengthAndCrc;
 import static c5db.log.EntryEncodingUtil.getAndCheckContent;
 import static c5db.log.EntryEncodingUtil.skip;
 
-public class OLogEntry implements SequentialEntry {
-  private final long seqNum;
+public final class OLogEntry extends SequentialEntry {
   private final long electionTerm;
   private final List<ByteBuffer> buffers;
 
   public OLogEntry(long seqNum, long electionTerm, List<ByteBuffer> buffers) {
+    super(seqNum);
+
     assert buffers != null;
 
-    this.seqNum = seqNum;
     this.electionTerm = electionTerm;
     this.buffers = sliceAll(buffers);
   }
 
-  @Override
-  public long getSeqNum() {
-    return seqNum;
-  }
-
-  @Override
   public long getElectionTerm() {
     return electionTerm;
   }
@@ -107,7 +101,7 @@ public class OLogEntry implements SequentialEntry {
 
   public static class Codec implements EncodedSequentialLog.Codec<OLogEntry> {
     private static final Schema<OLogEntryHeader> SCHEMA = OLogEntryHeader.getSchema();
-    private static int CRC_BYTES = 4;
+    private static final int CRC_BYTES = 4;
 
     @Override
     public ByteBuffer[] encode(OLogEntry entry) {
@@ -136,10 +130,10 @@ public class OLogEntry implements SequentialEntry {
     }
 
     @Override
-    public SequentialEntry skipEntryAndReturnSequence(InputStream inputStream) throws IOException {
+    public long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException {
       final OLogEntryHeader header = decodeAndCheckCrc(inputStream, SCHEMA);
       skipContent(inputStream, header.getContentLength());
-      return new OLogEntry(header.getSeqNum(), header.getTerm(), Lists.newArrayList());
+      return header.getSeqNum();
     }
 
     private void skipContent(InputStream inputStream, int contentLength) throws IOException {

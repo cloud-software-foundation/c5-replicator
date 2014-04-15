@@ -70,7 +70,8 @@ public class EntryEncodingUtil {
 
       return appendCrcToBufferList(
           Lists.newArrayList(
-              Iterables.concat(lengthBuf.finish(), messageBuf.finish())));
+              Iterables.concat(lengthBuf.finish(), messageBuf.finish()))
+      );
     } catch (IOException e) {
       // This method performs no IO, so it should not actually be possible for an IOException to be thrown.
       // But just in case...

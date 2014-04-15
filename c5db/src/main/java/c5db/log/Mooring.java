@@ -34,7 +34,7 @@ import static java.lang.Math.max;
  * communicate to the same OLog behind the scenes. For instance, since the OLog API requires specifying
  * quorumId for most operations, whereas the ReplicatorLog does not "know about" quorumId,
  * Mooring bridges the gap by explicitly tracking quorumId and providing it on delegated calls.
- *
+ * <p/>
  * Mooring also caches the current term and the last index (log sequence number) so that in
  * most cases these never need to access OLog.
  */
