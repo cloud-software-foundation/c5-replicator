@@ -155,20 +155,20 @@ public class QuorumDelegatingLogTest {
   }
 
   @Test(expected = LogEntryNotInSequence.class)
-  public void throwsAnExceptionIfAttemptingToLogEntriesWithNonascendingSequenceNumber() throws Exception {
+  public void throwsAnExceptionIfAttemptingToLogEntriesWithoutAscendingSequenceNumber() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);
   }
 
   @Test(expected = Exception.class, timeout = 1000)
-  public void throwsAnExceptionIfTryingToRetrieveAnEntryThatIsntInTheLog() throws Exception {
+  public void throwsAnExceptionIfTryingToRetrieveAnEntryThatIsNotInTheLog() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
     log.getLogEntry(4, quorumId).get();
   }
 
   @Test(expected = Exception.class, timeout = 1000)
-  public void throwsAnExceptionIfTryingToRetrieveEntriesAndAtLeastOneIsntInTheLog() throws Exception {
+  public void throwsAnExceptionIfTryingToRetrieveEntriesAndAtLeastOneIsNotInTheLog() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
     log.getLogEntries(2, 4, quorumId).get();
@@ -219,7 +219,7 @@ public class QuorumDelegatingLogTest {
     assertThat(log.getLastSeqNum(quorumId), resultsIn(equalTo(10L)));
   }
 
-  @Test(timeout = 1000000)
+  @Test(timeout = 1000)
   public void correctlyReturnsLastSequenceNumberAndTermAfterATruncation() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 5), quorumId);
     long term = log.getLastTerm(quorumId).get() + 1;
