@@ -25,7 +25,7 @@ import java.io.IOException;
 
 /**
  * The log module is responsible for running all the threads and IO for write-ahead-logging.
- * <p>
+ * <p/>
  * The write-ahead-log is responsible for maintaining persistence in the face of node or machine
  * failure.
  */

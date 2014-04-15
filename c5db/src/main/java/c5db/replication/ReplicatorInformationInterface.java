@@ -26,7 +26,7 @@ public interface ReplicatorInformationInterface {
 
   /**
    * How often to check if the election needs to be rerun.
-   * <p>
+   * <p/>
    * TODO revisit this to see if necessary or can be set to another derivative value.
    *
    * @return

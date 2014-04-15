@@ -32,7 +32,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * An ExecutorService decorator which accepts tasks with an associated string key, and guarantees
  * that all tasks associated with a given key will be run serially, in the order they are
  * submitted. No guarantee is made about tasks associated with different keys.
- * <p>
+ * <p/>
  * The purpose is so a single thread pool can handle IO requests for, potentially, several
  * different logs: the requests for each individual log need to be serialized with other
  * requests for that same log, and the "key" in that situation is some string that uniquely

@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * Replication is the method by which we get multiple copies of the write-ahead-log to multiple
  * machines. It forms the core of C5's ability to survive machine failures.
- * <p>
+ * <p/>
  * The replication module manages multiple replicator instances, each one responsible for a
  * small chunk of the data-space, also known as a tablet (or region).
  */
@@ -50,8 +50,8 @@ public interface ReplicationModule extends C5Module {
   /**
    * information about when a replicator instance changes state. replicator instances publish
    * these to indicate a variety of conditions.
-   * <p>
-   * <p>
+   * <p/>
+   * <p/>
    * A variety of events can be published:
    * <ul>
    * <li>Quorum started</li>
@@ -129,7 +129,7 @@ public interface ReplicationModule extends C5Module {
 
     /**
      * TODO change the type of datum to a protobuf that is useful.
-     * <p>
+     * <p/>
      * Log a datum
      *
      * @param data Some data to log.

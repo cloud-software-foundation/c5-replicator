@@ -31,7 +31,7 @@ import java.util.List;
  * The discovery module is responsible for determining who the peers in a cluster are.  It
  * additionally provides the ability to translate node ids into network addresses (yes plural,
  * since machines sometimes have multiple network interfaces).
- * <p>
+ * <p/>
  */
 @ModuleTypeBinding(ModuleType.Discovery)
 public interface DiscoveryModule extends C5Module {

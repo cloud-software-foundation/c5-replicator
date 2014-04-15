@@ -101,7 +101,7 @@ public final class OLogEntry extends SequentialEntry {
 
   public static class Codec implements EncodedSequentialLog.Codec<OLogEntry> {
     private static final Schema<OLogEntryHeader> SCHEMA = OLogEntryHeader.getSchema();
-    private static int CRC_BYTES = 4;
+    private static final int CRC_BYTES = 4;
 
     @Override
     public ByteBuffer[] encode(OLogEntry entry) {

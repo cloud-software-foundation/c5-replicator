@@ -108,7 +108,8 @@ public class MooringTest {
     log.logEntries(
         Lists.newArrayList(
             makeProtostuffEntry(indexOfFirstEntry, termOfFirstEntry, someData()),
-            makeProtostuffEntry(index(13), term(35), someData())));
+            makeProtostuffEntry(index(13), term(35), someData()))
+    );
     log.truncateLog(13);
 
     assertThat(log.getLastIndex(), is(equalTo(indexOfFirstEntry)));

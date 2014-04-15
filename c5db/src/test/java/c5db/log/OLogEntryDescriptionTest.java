@@ -59,7 +59,8 @@ public class OLogEntryDescriptionTest {
             term(22),
             DATA.remaining(),
             true,
-            true))));
+            true)
+    )));
   }
 
   @Test
@@ -77,7 +78,8 @@ public class OLogEntryDescriptionTest {
             term(22),
             DATA.remaining(),
             true,
-            false))));
+            false)
+    )));
   }
 
   @Test
