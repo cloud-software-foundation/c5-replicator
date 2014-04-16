@@ -46,7 +46,7 @@ import java.util.List;
 
 import static c5db.AsyncChannelAsserts.assertEventually;
 import static c5db.AsyncChannelAsserts.listenTo;
-import static c5db.TabletMatchers.hasStateEqualTo;
+import static c5db.TabletMatchers.hasMessageWithState;
 
 /**
  * TDD/unit test for tablet.
@@ -149,14 +149,14 @@ public class TabletTest {
   @Test
   public void basicTest() throws Throwable {
     tablet.start();
-    assertEventually(listener, hasStateEqualTo(TabletModule.Tablet.State.Open));
+    assertEventually(listener, hasMessageWithState(TabletModule.Tablet.State.Open));
   }
 
   @Test
   public void shouldRunCallCallbackWhenTabletBecomesTheLeader() throws Throwable {
     tablet.start();
-    assertEventually(listener, hasStateEqualTo(TabletModule.Tablet.State.Open));
+    assertEventually(listener, hasMessageWithState(TabletModule.Tablet.State.Open));
     channel.publish(ReplicationModule.Replicator.State.LEADER);
-    assertEventually(listener, hasStateEqualTo(TabletModule.Tablet.State.Leader));
+    assertEventually(listener, hasMessageWithState(TabletModule.Tablet.State.Leader));
   }
 }
