@@ -25,7 +25,7 @@ import c5db.replication.generated.AppendEntriesReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.util.ExceptionHandlingBatchExecutor;
-import c5db.util.ThrowFiberExceptions;
+import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
@@ -84,7 +84,7 @@ public class InRamLeaderTest {
   private final Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
 
   @Rule
-  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
+  public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
 
   private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
       new ExceptionHandlingBatchExecutor(fiberExceptionHandler));

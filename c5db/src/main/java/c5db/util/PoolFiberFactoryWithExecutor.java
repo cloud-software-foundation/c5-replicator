@@ -21,6 +21,8 @@ import org.jetlang.core.BatchExecutor;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
 
+import java.util.function.Consumer;
+
 /**
  * Wrapper for a {@link org.jetlang.fibers.PoolFiberFactory} that creates fibers with a specific batch executor.
  * A single PoolFiberFactory instance may be wrapped by several instances of this class; so, this class doesn't
@@ -33,6 +35,15 @@ public class PoolFiberFactoryWithExecutor implements C5FiberFactory {
   public PoolFiberFactoryWithExecutor(PoolFiberFactory fiberFactory, BatchExecutor batchExecutor) {
     this.fiberFactory = fiberFactory;
     this.batchExecutor = batchExecutor;
+  }
+
+  public static PoolFiberFactoryWithExecutor
+  factoryWithExceptionHandler(PoolFiberFactory poolFiberFactory,
+                              Consumer<Throwable> exceptionHandler) {
+    return new PoolFiberFactoryWithExecutor(
+        poolFiberFactory,
+        new ExceptionHandlingBatchExecutor(exceptionHandler)
+    );
   }
 
   /**
