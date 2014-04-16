@@ -32,10 +32,10 @@ import java.util.function.Consumer;
  * method runs, this rule will rethrow any caught exceptions. They are rethrown in the context of the thread
  * in which the test runs.
  */
-public class ThrowFiberExceptions implements TestRule, Consumer<Throwable> {
+public class JUnitRuleFiberExceptions implements TestRule, Consumer<Throwable> {
   private final List<Throwable> throwables = new ArrayList<>();
 
-  public ThrowFiberExceptions() {
+  public JUnitRuleFiberExceptions() {
 
   }
 

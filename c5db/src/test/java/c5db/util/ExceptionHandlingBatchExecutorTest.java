@@ -42,7 +42,7 @@ public class ExceptionHandlingBatchExecutorTest {
   private final SettableFuture<Boolean> testFuture = SettableFuture.create();
 
   @Rule
-  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
+  public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
 
   /**
    * One-off implementation of ThrowableRecipient which delegates to fiberExceptionHandler, then
@@ -88,7 +88,7 @@ public class ExceptionHandlingBatchExecutorTest {
 
   /**
    * The fiber is setup to rethrow any exceptions it encounters while executing. They will be
-   * rethrown as part of the @Rule {@link ThrowFiberExceptions}, which throws after the @After
+   * rethrown as part of the @Rule {@link JUnitRuleFiberExceptions}, which throws after the @After
    * method. So this test will pass if it correctly generates an IndexOutOfBoundsException.
    *
    * @throws Exception

@@ -25,7 +25,7 @@ import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.util.CheckedConsumer;
 import c5db.util.ExceptionHandlingBatchExecutor;
-import c5db.util.ThrowFiberExceptions;
+import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -74,7 +74,7 @@ public class InRamTest {
   private static final long OFFSET_STAGGERING_MILLIS = 250; // offset between different peers' clocks
 
   @Rule
-  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
+  public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
 
   private final BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(fiberExceptionHandler);
   private final RunnableExecutor runnableExecutor = new RunnableExecutorImpl(batchExecutor);

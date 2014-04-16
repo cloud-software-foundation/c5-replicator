@@ -24,7 +24,7 @@ import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.LogEntry;
 import c5db.replication.rpc.RpcReply;
 import c5db.util.ExceptionHandlingBatchExecutor;
-import c5db.util.ThrowFiberExceptions;
+import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.jetlang.channels.Channel;
@@ -80,7 +80,7 @@ public class InRamAppendEntriesTest {
   ReplicatorLog log = new InRamLog();
 
   @Rule
-  public ThrowFiberExceptions fiberExceptionHandler = new ThrowFiberExceptions();
+  public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
 
   private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
       new ExceptionHandlingBatchExecutor(fiberExceptionHandler));
