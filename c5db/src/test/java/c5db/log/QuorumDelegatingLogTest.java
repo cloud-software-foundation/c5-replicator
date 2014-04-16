@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static c5db.FutureMatchers.resultsIn;
+import static c5db.FutureMatchers.resultsInException;
 import static c5db.log.LogTestUtil.aSeqNum;
 import static c5db.log.LogTestUtil.anOLogEntry;
 import static c5db.log.LogTestUtil.emptyEntryList;
@@ -38,6 +39,7 @@ import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
 import static c5db.log.LogTestUtil.someData;
 import static c5db.log.LogTestUtil.term;
+import static c5db.log.SequentialLog.LogEntryNotFound;
 import static c5db.log.SequentialLog.LogEntryNotInSequence;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
@@ -74,14 +76,14 @@ public class QuorumDelegatingLogTest {
     logPersistenceService.moveLogsToArchive();
   }
 
-  @Test(expected = Exception.class, timeout = 1000)
+  @Test(timeout = 1000)
   public void throwsExceptionFromGetLogEntryMethodWhenTheLogIsEmpty() throws Exception {
-    log.getLogEntry(1, quorumId).get();
+    assertThat(log.getLogEntry(1, quorumId), resultsInException(LogEntryNotFound.class));
   }
 
-  @Test(expected = Exception.class, timeout = 1000)
+  @Test(timeout = 1000)
   public void throwsExceptionFromGetLogEntriesMethodWhenTheLogIsEmpty() throws Exception {
-    log.getLogEntries(1, 2, quorumId).get();
+    assertThat(log.getLogEntries(1, 2, quorumId), resultsInException(LogEntryNotFound.class));
   }
 
   @Test
@@ -160,18 +162,20 @@ public class QuorumDelegatingLogTest {
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);
   }
 
-  @Test(expected = Exception.class, timeout = 1000)
+  @Test(timeout = 1000)
   public void throwsAnExceptionIfTryingToRetrieveAnEntryThatIsNotInTheLog() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
-    log.getLogEntry(4, quorumId).get();
+
+    assertThat(log.getLogEntry(4, quorumId), resultsInException(LogEntryNotFound.class));
   }
 
-  @Test(expected = Exception.class, timeout = 1000)
+  @Test(timeout = 1000)
   public void throwsAnExceptionIfTryingToRetrieveEntriesAndAtLeastOneIsNotInTheLog() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
-    log.getLogEntries(2, 4, quorumId).get();
+
+    assertThat(log.getLogEntries(2, 4, quorumId), resultsInException(LogEntryNotFound.class));
   }
 
   @Test
