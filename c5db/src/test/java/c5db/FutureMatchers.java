@@ -31,6 +31,10 @@ public class FutureMatchers {
     return returnsAFutureWhoseResult(resultMatcher);
   }
 
+  public static <T> Matcher<Future<T>> resultsInException(Class<? extends Throwable> exceptionClass) {
+    return returnsAFutureWithException(exceptionClass);
+  }
+
   public static <T> Matcher<Future<T>> returnsAFutureWhoseResult(Matcher<T> resultMatcher) {
     return new TypeSafeMatcher<Future<T>>() {
       public Throwable throwable = null;
@@ -60,6 +64,39 @@ public class FutureMatchers {
             description.appendValue(item.get());
           } catch (Exception ignore) {
           }
+        }
+      }
+    };
+  }
+
+  public static <T> Matcher<Future<T>> returnsAFutureWithException(Class<? extends Throwable> exceptionClass) {
+    return new TypeSafeMatcher<Future<T>>() {
+      public Throwable actualExceptionThrown = null;
+      public T result;
+
+      @Override
+      protected boolean matchesSafely(Future<T> item) {
+        try {
+          result = item.get(TIMEOUT, TimeUnit.SECONDS);
+          return false;
+        } catch (Throwable t) {
+          actualExceptionThrown = t.getCause();
+          return exceptionClass.isInstance(actualExceptionThrown);
+        }
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("a Future resulting in: ").appendText(exceptionClass.getCanonicalName());
+      }
+
+      @Override
+      public void describeMismatchSafely(Future<T> item, Description description) {
+        description.appendText("got a Future with result: ");
+        if (actualExceptionThrown != null) {
+          description.appendValue(actualExceptionThrown);
+        } else {
+          description.appendValue(result);
         }
       }
     };
