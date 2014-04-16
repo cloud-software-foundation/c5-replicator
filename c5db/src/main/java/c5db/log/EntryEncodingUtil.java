@@ -30,6 +30,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.List;
 import java.util.zip.Adler32;
 
@@ -185,7 +186,7 @@ public class EntryEncodingUtil {
    * @param buffers List of buffers; this method will not mutate them.
    * @return The sum of the remaining() bytes in each buffer.
    */
-  public static int sumLengths(List<ByteBuffer> buffers) {
+  public static int sumRemaining(Collection<ByteBuffer> buffers) {
     int length = 0;
     if (buffers != null) {
       for (ByteBuffer b : buffers) {

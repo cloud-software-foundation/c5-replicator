@@ -43,20 +43,23 @@ public class LogFileService implements LogPersistenceService {
   public static class FilePersistence implements BytePersistence {
     private final FileChannel appendChannel;
     private final File logFile;
+    private long filePosition;
 
     public FilePersistence(File logFile) throws IOException {
-      appendChannel = FileChannel.open(logFile.toPath(), CREATE, APPEND);
       this.logFile = logFile;
+      appendChannel = FileChannel.open(logFile.toPath(), CREATE, APPEND);
+      filePosition = appendChannel.position();
     }
 
     @Override
     public long size() throws IOException {
-      return appendChannel.position();
+      return filePosition;
     }
 
     @Override
     public void append(ByteBuffer[] buffers) throws IOException {
       appendChannel.write(buffers);
+      filePosition += totalBytesToBeWritten(buffers);
     }
 
     @Override
@@ -70,6 +73,7 @@ public class LogFileService implements LogPersistenceService {
         throw new IllegalArgumentException("Truncation may not grow the file");
       }
       appendChannel.truncate(size);
+      filePosition = size;
     }
 
     @Override
@@ -80,6 +84,15 @@ public class LogFileService implements LogPersistenceService {
     @Override
     public void close() throws IOException {
       appendChannel.close();
+    }
+
+    // TODO This should be done once, in one central place
+    private long totalBytesToBeWritten(ByteBuffer[] buffers) {
+      long sum = 0;
+      for (ByteBuffer b : buffers) {
+        sum += b.position();
+      }
+      return sum;
     }
   }
 

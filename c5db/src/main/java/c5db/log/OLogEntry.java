@@ -58,7 +58,7 @@ public final class OLogEntry extends SequentialEntry {
   }
 
   public int contentLength() {
-    return EntryEncodingUtil.sumLengths(buffers);
+    return EntryEncodingUtil.sumRemaining(buffers);
   }
 
   public LogEntry toProtostuffMessage() {
