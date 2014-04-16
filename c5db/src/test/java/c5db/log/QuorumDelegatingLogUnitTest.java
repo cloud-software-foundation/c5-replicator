@@ -18,7 +18,8 @@
 package c5db.log;
 
 import c5db.util.KeySerializingExecutor;
-import c5db.util.KeySerializingExecutorTest;
+import c5db.util.KeySerializingExecutorDecorator;
+import c5db.util.KeySerializingExecutorDecoratorTest;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.junit.Before;
@@ -42,15 +43,15 @@ public class QuorumDelegatingLogUnitTest {
   @Rule
   public JUnitRuleMockery context = new JUnitRuleMockery();
 
-  LogPersistenceService persistenceService = context.mock(LogPersistenceService.class);
-  ExecutorService executorService = context.mock(ExecutorService.class);
-  KeySerializingExecutor serializingExecutor = new KeySerializingExecutor(executorService); // not a mock!
-  Supplier<TermOracle> termOracleFactory = context.mock(Supplier.class);
-  BiFunction<BytePersistence, Codec<?>, PersistenceNavigator> navigatorFactory = context.mock(BiFunction.class);
-  TermOracle termOracle = context.mock(TermOracle.class);
-  PersistenceNavigator persistenceNavigator = context.mock(PersistenceNavigator.class);
+  private final LogPersistenceService persistenceService = context.mock(LogPersistenceService.class);
+  private final ExecutorService executorService = context.mock(ExecutorService.class);
+  private final KeySerializingExecutor serializingExecutor = new KeySerializingExecutorDecorator(executorService);
+  private final Supplier<TermOracle> termOracleFactory = context.mock(Supplier.class);
+  private final BiFunction<BytePersistence, Codec<?>, PersistenceNavigator> navigatorFactory = context.mock(BiFunction.class);
+  private final TermOracle termOracle = context.mock(TermOracle.class);
+  private final PersistenceNavigator persistenceNavigator = context.mock(PersistenceNavigator.class);
 
-  QuorumDelegatingLog oLog = new QuorumDelegatingLog(
+  private final QuorumDelegatingLog oLog = new QuorumDelegatingLog(
       persistenceService,
       serializingExecutor,
       termOracleFactory,
@@ -91,7 +92,7 @@ public class QuorumDelegatingLogUnitTest {
     context.checking(new Expectations() {{
       ignoring(termOracle);
       ignoring(persistenceService);
-      KeySerializingExecutorTest.allowSubmitOrExecuteOnce(context, executorService);
+      KeySerializingExecutorDecoratorTest.allowSubmitOrExecuteOnce(context, executorService);
     }});
 
     oLog.logEntry(arbitraryEntries(), quorumId);

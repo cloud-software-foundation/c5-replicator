@@ -18,20 +18,18 @@
 package c5db.util;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
- * An ExecutorService decorator which accepts tasks with an associated string key, and guarantees
- * that all tasks associated with a given key will be run serially, in the order they are
- * submitted. No guarantee is made about tasks associated with different keys.
+ * An executor service which accepts tasks (suppliers of some result) each with an associated
+ * string key, and guarantees that all tasks associated with a given key will be run serially,
+ * in the order they are submitted. No guarantee is made about the relative completion order
+ * of tasks associated with different keys.
+ * <p>
+ * The notion of a well-defined "order in which tasks are submitted" requires that tasks with
+ * the same key be submitted in a deterministic order, e.g., unaffected by thread scheduling.
  * <p/>
  * The purpose is so a single thread pool can handle IO requests for, potentially, several
  * different logs: the requests for each individual log need to be serialized with other
@@ -39,80 +37,25 @@ import java.util.concurrent.locks.ReentrantLock;
  * identifies that log. However, in such a situation, IO requests for one log can be freely
  * interspersed with requests for another.
  */
-public class KeySerializingExecutor {
-  private final ExecutorService executorService;
-  private final Map<String, EmptyCheckingQueue<Runnable>> keyQueues = new HashMap<>();
+public interface KeySerializingExecutor {
+  /**
+   * Submit a task for execution.
+   *
+   * @param key  Key associated with the task; the task will not be executed until all previously-submitted
+   *             tasks with the same key have finished execution.
+   * @param task A supplier of some result, which may throw an exception.
+   * @param <T>  The type of the result produced by the task.
+   * @return A future which will produce the result of the task, or else an exception.
+   */
+  <T> ListenableFuture<T> submit(String key, CheckedSupplier<T, Exception> task);
 
-  public KeySerializingExecutor(ExecutorService executorService) {
-    this.executorService = executorService;
-  }
-
-  public <T> ListenableFuture<T> submit(String key, CheckedSupplier<T, Exception> task) {
-    if (!keyQueues.containsKey(key)) {
-      keyQueues.put(key, new EmptyCheckingQueue<>());
-    }
-
-    SettableFuture<T> finished = SettableFuture.create();
-    Runnable taskRunner = createTaskRunner(task, finished);
-
-    final EmptyCheckingQueue<Runnable> queue = keyQueues.get(key);
-    if (queue.checkEmptyAndAdd(taskRunner)) {
-      submitAndThenProcessNext(taskRunner, queue);
-    }
-
-    return finished;
-  }
-
-  public void shutdown() {
-    executorService.shutdown();
-    keyQueues.clear();
-  }
-
-  private <T> Runnable createTaskRunner(CheckedSupplier<T, Exception> task,
-                                        SettableFuture<T> setWhenFinished) {
-    return () -> {
-      try {
-        setWhenFinished.set(task.get());
-      } catch (Exception t) {
-        setWhenFinished.setException(t);
-      }
-    };
-  }
-
-  private void submitAndThenProcessNext(Runnable runnable, EmptyCheckingQueue<Runnable> queue) {
-    executorService.submit(() -> {
-      runnable.run();
-      Runnable nextTask = queue.discardHeadThenPeek();
-      if (nextTask != null) {
-        submitAndThenProcessNext(nextTask, queue);
-      }
-    });
-  }
-
-  private class EmptyCheckingQueue<Q> {
-    private final Queue<Q> queue = new LinkedList<>();
-    private final Lock lock = new ReentrantLock();
-
-    public boolean checkEmptyAndAdd(Q item) {
-      lock.lock();
-      try {
-        boolean empty = queue.isEmpty();
-        queue.add(item);
-        return empty;
-      } finally {
-        lock.unlock();
-      }
-    }
-
-    public Q discardHeadThenPeek() {
-      lock.lock();
-      try {
-        queue.poll();
-        return queue.peek();
-      } finally {
-        lock.unlock();
-      }
-    }
-  }
+  /**
+   * Shut down the executor. After calling this method, any call to submit will result in an exception. This
+   * method will block until all previously submitted tasks complete, or until the specified time limit
+   * expires, in which case a TimeoutException will be thrown.
+   *
+   * @param timeout Time to wait for previously submitted tasks to complete
+   * @param unit    Time unit associated with timeout.
+   */
+  void shutdownAndAwaitTermination(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
 }
-

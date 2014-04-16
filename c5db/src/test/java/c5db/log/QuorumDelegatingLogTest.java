@@ -18,7 +18,7 @@
 package c5db.log;
 
 import c5db.C5CommonTestUtil;
-import c5db.util.KeySerializingExecutor;
+import c5db.util.KeySerializingExecutorDecorator;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
@@ -65,7 +65,7 @@ public class QuorumDelegatingLogTest {
 
     log = new QuorumDelegatingLog(
         logPersistenceService,
-        new KeySerializingExecutor(MoreExecutors.sameThreadExecutor()),
+        new KeySerializingExecutorDecorator(MoreExecutors.sameThreadExecutor()),
         NavigableMapTermOracle::new,
         InMemoryPersistenceNavigator::new);
   }

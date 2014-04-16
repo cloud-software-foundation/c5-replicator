@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -184,7 +186,12 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   @Override
   public void close() throws IOException {
-    taskExecutor.shutdown();
+    try {
+      taskExecutor.shutdownAndAwaitTermination(15, TimeUnit.SECONDS);
+    } catch (InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
+
     for (PerQuorum quorum : quorumMap.values()) {
       quorum.quorumLog.close();
     }
