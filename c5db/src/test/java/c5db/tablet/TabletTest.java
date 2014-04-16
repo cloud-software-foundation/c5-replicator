@@ -19,6 +19,7 @@ package c5db.tablet;
 
 import c5db.AsyncChannelAsserts;
 import c5db.ConfigDirectory;
+import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
 import com.google.common.collect.ImmutableList;
@@ -57,14 +58,13 @@ public class TabletTest {
     setThreadingPolicy(new Synchroniser());
   }};
 
-  private MemoryChannel channel;
+  private MemoryChannel<ReplicationModule.Replicator.State> channel;
 
   final ReplicationModule replicationModule = context.mock(ReplicationModule.class);
   final ReplicationModule.Replicator replicator = context.mock(ReplicationModule.Replicator.class);
   final Region.Creator regionCreator = context.mock(Region.Creator.class);
   final Region region = context.mock(Region.class);
-  //final HLog log = context.mock(HLog.class);
-  final ConfigDirectory configDirectory = context.mock(ConfigDirectory.class);
+  final C5Server server= context.mock(C5Server.class);
 
   final SettableFuture<ReplicationModule.Replicator> future = SettableFuture.create();
 
@@ -78,7 +78,7 @@ public class TabletTest {
   final Configuration conf = new Configuration();
 
   final Fiber tabletFiber = new ThreadFiber();
-  Tablet tablet = new Tablet(
+  Tablet tablet = new Tablet(server,
       regionInfo,
       tableDescriptor,
       peerList,
@@ -90,11 +90,11 @@ public class TabletTest {
 
   AsyncChannelAsserts.ChannelListener<TabletModule.TabletStateChange> listener;
 
-
   @Before
   public void setup() throws Exception {
     Fiber tabletFiber = new ThreadFiber();
-    this.tablet = new Tablet(regionInfo,
+    this.tablet = new Tablet(server,
+        regionInfo,
         tableDescriptor,
         peerList,
         path,
@@ -106,7 +106,7 @@ public class TabletTest {
 
     future.set(replicator);
     listener = listenTo(tablet.getStateChangeChannel());
-    channel = new MemoryChannel();
+    channel = new MemoryChannel<>();
 
     context.checking(new Expectations() {
       {
@@ -130,7 +130,7 @@ public class TabletTest {
             with(same(conf)));
         will(returnValue(region));
         then(state.is("opened"));
-        channel = new MemoryChannel();
+        channel = new MemoryChannel<>();
       }
     });
 
