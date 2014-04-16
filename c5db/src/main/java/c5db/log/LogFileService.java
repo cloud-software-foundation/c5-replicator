@@ -188,8 +188,8 @@ public class LogFileService implements LogPersistenceService {
   }
 
   private File prepareNewLogFile(String quorumId) {
-    long fileNum = System.currentTimeMillis();
-    return walDir.resolve(logFilePrefix(quorumId) + fileNum).toFile();
+    long fileNum = System.nanoTime();
+    return walDir.resolve(logFilePrefix(quorumId) + "-" + fileNum).toFile();
   }
 
   private static String logFilePrefix(String quorumId) {
