@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogTestUtil.makeEntry;
@@ -44,7 +43,7 @@ public class EncodedSequentialLogTest {
   public JUnitRuleMockery context = new JUnitRuleMockery();
 
   private final BytePersistence persistence = context.mock(BytePersistence.class);
-  private final Codec<OLogEntry> codec = context.mock(Codec.class);
+  private final SequentialEntryCodec<OLogEntry> codec = context.mock(SequentialEntryCodec.class);
   private final PersistenceNavigator navigator = context.mock(PersistenceNavigator.class);
 
   private final SequentialLog<OLogEntry> log = new EncodedSequentialLog<>(persistence, codec, navigator);
@@ -142,7 +141,7 @@ public class EncodedSequentialLogTest {
     };
   }
 
-  private void codecWillReturnEntrySequence(Codec<OLogEntry> codec, List<OLogEntry> entries) throws Exception {
+  private void codecWillReturnEntrySequence(SequentialEntryCodec<OLogEntry> codec, List<OLogEntry> entries) throws Exception {
     Sequence seq = context.sequence("Codec#decode method call sequence");
     context.checking(new Expectations() {{
       for (OLogEntry e : entries) {

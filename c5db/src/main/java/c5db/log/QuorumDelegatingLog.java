@@ -32,13 +32,11 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
-import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.LogPersistenceService.BytePersistence;
-import static c5db.log.LogPersistenceService.PersistenceNavigator;
+import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 import static c5db.log.SequentialLog.LogEntryNotInSequence;
+import static c5db.log.TermOracle.TermOracleFactory;
 
 /**
  * OLog that delegates each quorum's logging tasks to a separate SequentialLog for that quorum,
@@ -51,13 +49,13 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   private final KeySerializingExecutor taskExecutor;
   private final Map<String, PerQuorum> quorumMap = new HashMap<>();
 
-  private final Supplier<TermOracle> termOracleFactory;
-  private final BiFunction<BytePersistence, Codec<?>, PersistenceNavigator> persistenceNavigatorFactory;
+  private final TermOracleFactory termOracleFactory;
+  private final PersistenceNavigatorFactory persistenceNavigatorFactory;
 
   public QuorumDelegatingLog(LogPersistenceService persistenceService,
                              KeySerializingExecutor taskExecutor,
-                             Supplier<TermOracle> termOracleFactory,
-                             BiFunction<BytePersistence, Codec<?>, PersistenceNavigator> persistenceNavigatorFactory
+                             TermOracleFactory termOracleFactory,
+                             PersistenceNavigatorFactory persistenceNavigatorFactory
   ) {
     this.persistenceService = persistenceService;
     this.taskExecutor = taskExecutor;
@@ -68,7 +66,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   private class PerQuorum {
     public final SequentialLog<OLogEntry> quorumLog;
     public final TermOracle termOracle;
-    public final Codec<OLogEntry> entryCodec = new OLogEntry.Codec();
+    public final SequentialEntryCodec<OLogEntry> entryCodec = new OLogEntry.Codec();
 
     private long expectedNextSequenceNumber;
 
@@ -78,8 +76,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
         quorumLog = new EncodedSequentialLog<>(
             persistence,
             entryCodec,
-            persistenceNavigatorFactory.apply(persistence, entryCodec));
-        termOracle = termOracleFactory.get();
+            persistenceNavigatorFactory.create(persistence, entryCodec));
+        termOracle = termOracleFactory.create();
       } catch (IOException e) {
         LOG.error("Unable to create quorum info object for quorum {}", quorumId);
         throw new RuntimeException(e);

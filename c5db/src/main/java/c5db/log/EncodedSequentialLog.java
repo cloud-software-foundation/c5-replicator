@@ -20,13 +20,11 @@ package c5db.log;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static c5db.log.EntryEncodingUtil.CrcError;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 
@@ -35,47 +33,11 @@ import static c5db.log.LogPersistenceService.PersistenceNavigator;
  */
 public class EncodedSequentialLog<E extends SequentialEntry> implements SequentialLog<E> {
   private final BytePersistence persistence;
-  private final Codec<E> codec;
+  private final SequentialEntryCodec<E> codec;
   private final PersistenceNavigator persistenceNavigator;
 
-  /**
-   * Encapsulates capability to serialize and deserialize log entry objects.
-   *
-   * @param <E>
-   */
-  public interface Codec<E extends SequentialEntry> {
-    /**
-     * Serialize an entry, including prepending any length necessary to reconstruct
-     * the entry, and including any necessary CRCs.
-     *
-     * @param entry An entry to be serialized.
-     * @return An array of ByteBuffer containing the serialized data.
-     */
-    ByteBuffer[] encode(E entry);
-
-    /**
-     * Deserialize an entry from an input stream, and check its CRC.
-     *
-     * @param inputStream An open input stream, positioned at the start of an entry.
-     * @return The reconstructed entry.
-     * @throws CrcError
-     * @throws IOException
-     */
-    E decode(InputStream inputStream) throws IOException, CrcError;
-
-    /**
-     * Skip over an entry in the input stream, returning the sequence number of the entry encountered.
-     *
-     * @param inputStream An open input stream, positioned at the start of an entry.
-     * @return The sequence number of the entry encountered.
-     * @throws CrcError
-     * @throws IOException
-     */
-    long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException, CrcError;
-  }
-
   public EncodedSequentialLog(BytePersistence persistence,
-                              Codec<E> codec,
+                              SequentialEntryCodec<E> codec,
                               PersistenceNavigator persistenceNavigator) {
     this.persistence = persistence;
     this.codec = codec;

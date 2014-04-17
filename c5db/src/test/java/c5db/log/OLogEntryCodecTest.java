@@ -27,7 +27,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
-import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.term;
@@ -37,7 +36,7 @@ import static org.hamcrest.core.Is.is;
 
 
 public class OLogEntryCodecTest {
-  Codec<OLogEntry> codec = new OLogEntry.Codec();
+  SequentialEntryCodec<OLogEntry> codec = new OLogEntry.Codec();
   private final PipedOutputStream pipedOutputStream = new PipedOutputStream();
   private InputStream readFromMe;
   final WritableByteChannel writeToMe = Channels.newChannel(pipedOutputStream);

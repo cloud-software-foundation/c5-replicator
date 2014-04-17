@@ -99,7 +99,7 @@ public final class OLogEntry extends SequentialEntry {
     return Lists.transform(buffers, ByteBuffer::slice);
   }
 
-  public static class Codec implements EncodedSequentialLog.Codec<OLogEntry> {
+  public static class Codec implements SequentialEntryCodec<OLogEntry> {
     private static final Schema<OLogEntryHeader> SCHEMA = OLogEntryHeader.getSchema();
     private static final int CRC_BYTES = 4;
 

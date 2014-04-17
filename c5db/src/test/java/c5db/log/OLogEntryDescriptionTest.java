@@ -25,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
@@ -36,8 +35,8 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 public class OLogEntryDescriptionTest {
   private final ByteArrayPersistence persistence = new ByteArrayPersistence();
-  private final Codec<OLogEntry> codec = new OLogEntry.Codec();
-  private final Codec<OLogEntryDescription> descriptionCodec = new OLogEntryDescription.Codec();
+  private final SequentialEntryCodec<OLogEntry> codec = new OLogEntry.Codec();
+  private final SequentialEntryCodec<OLogEntryDescription> descriptionCodec = new OLogEntryDescription.Codec();
   private final SequentialLog<OLogEntry> log = new EncodedSequentialLog<>(
       persistence,
       codec,
