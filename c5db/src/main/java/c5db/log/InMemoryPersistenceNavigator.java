@@ -46,7 +46,7 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
   private final NavigableMap<Long, Long> index = new TreeMap<>();
   private int maxEntrySeek = 256;
 
-  InMemoryPersistenceNavigator(BytePersistence persistence, SequentialEntryCodec<E> codec) {
+  public InMemoryPersistenceNavigator(BytePersistence persistence, SequentialEntryCodec<E> codec) {
     this.persistence = persistence;
     this.codec = codec;
 
