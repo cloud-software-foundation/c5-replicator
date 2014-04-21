@@ -22,7 +22,6 @@ import org.apache.hadoop.hbase.TableName;
 
 /**
  * Helper functionality to make various value type/objects.
- *
  */
 public class MetaTableNames {
   public static HTableDescriptor rootTableDescriptor() {
@@ -46,6 +45,7 @@ public class MetaTableNames {
   private static int rootRegionId() {
     return 1;
   }
+
   private static byte[] startKeyZero() {
     return new byte[]{0};
   }
