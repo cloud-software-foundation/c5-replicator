@@ -253,11 +253,18 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     LOG.debug("{} primed {}", myId, this.quorumId);
 
-    setCurrentTerm(term);
+    this.currentTerm = term;
     this.myState = state;
     this.lastCommittedIndex = lastCommittedIndex;
     this.whosLeader = leaderId;
     this.votedFor = votedFor;
+
+    try {
+      persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
+    } catch (IOException e) {
+      failReplicatorInstance(e);
+    }
+
     if (state == State.LEADER) {
       becomeLeader();
     }

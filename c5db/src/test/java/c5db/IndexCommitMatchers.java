@@ -40,7 +40,7 @@ public class IndexCommitMatchers {
 
     @Override
     public void describeTo(Description description) {
-      description.appendText("a index that is")
+      description.appendText("a commit notice index that is ")
           .appendValue(minimumIndexValue);
     }
   }
