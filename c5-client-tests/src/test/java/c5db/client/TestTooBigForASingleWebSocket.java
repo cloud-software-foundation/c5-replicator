@@ -46,7 +46,9 @@ public class TestTooBigForASingleWebSocket extends MiniClusterBase {
 
   @Before
   public void setUp() throws Exception {
-    c5Table = new C5Table(ByteString.copyFromUtf8("test"), getRegionServerPort());
+    ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
+
+    c5Table = new C5Table(tableName, getRegionServerPort());
   }
 
   @Test

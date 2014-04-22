@@ -35,7 +35,7 @@ public class TestMultiUtil extends MiniClusterBase {
   private final byte[] row1 = Bytes.toBytes("row1");
   private final byte[] row2 = Bytes.toBytes("row2");
 
-  @Test
+  @Test(timeout = 1000)
   public void testMultiPut() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     assertThat(DataHelper.valueReadFromDB(table, row), is(not(equalTo(value))));
@@ -43,7 +43,7 @@ public class TestMultiUtil extends MiniClusterBase {
     assertThat(DataHelper.valueReadFromDB(table, row2), is(equalTo(value)));
   }
 
-  @Test
+  @Test(timeout = 1000)
   public void testScan() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     ResultScanner resultScanner = DataHelper.getScanner(table, new byte[]{});
@@ -51,7 +51,7 @@ public class TestMultiUtil extends MiniClusterBase {
     assertThat(DataHelper.nextResult(resultScanner), is(equalTo(value)));
   }
 
-  @Test
+  @Test(timeout = 1000)
   public void testMultiDelete() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     List<Delete> deletes = new ArrayList<>();

@@ -45,5 +45,5 @@ public interface C5Module extends Service {
 
   int port();
 
-  String acceptCommand(String commandString);
+  String acceptCommand(String commandString) throws InterruptedException;
 }

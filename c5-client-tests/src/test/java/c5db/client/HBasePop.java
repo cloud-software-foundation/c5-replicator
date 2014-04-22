@@ -52,6 +52,7 @@ public class HBasePop {
 
     try (HTable table = new HTable(conf, tableName.toByteArray())) {
       ArrayList<Put> puts = new ArrayList<>();
+      long startTime = System.nanoTime();
       for (int j = 1; j != 30 + 1; j++) {
         for (int i = 1; i != (1024 * 81) + 1; i++) {
           puts.add(new Put(Bytes.vintToBytes(i * j)).add(cf, cq, value));
@@ -61,10 +62,12 @@ public class HBasePop {
         for (Put put : puts) {
           i++;
           if (i % 1024 == 0) {
-            System.out.print("#");
+            long timeDiff = (System.nanoTime()) - startTime;
+
+            System.out.print("#(" + timeDiff + ")");
             System.out.flush();
           }
-          if (i % (1024 * 80) == 0) {
+          if (i % (1024 * 20) == 0) {
             System.out.println("");
           }
           table.put(put);

@@ -30,7 +30,6 @@ import java.util.concurrent.TimeoutException;
 import static junit.framework.TestCase.assertFalse;
 
 public class TestInOrderScan extends MiniClusterBase {
-  private static ByteString tableName = ByteString.copyFrom(Bytes.toBytes("tableName"));
 
   byte[] cf = Bytes.toBytes("cf");
 
@@ -38,8 +37,9 @@ public class TestInOrderScan extends MiniClusterBase {
     super();
   }
 
-  @Test
+  @Test(timeout = 10000)
   public void testInOrderScan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+    ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
     C5Table table = new C5Table(tableName, getRegionServerPort());
 
     Result result = null;

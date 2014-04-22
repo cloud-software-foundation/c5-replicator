@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013  Ohm Data
+ * Copyright (C) 2014  Ohm Data
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -24,51 +24,25 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public class Populator extends MiniClusterBase {
+public class TestFlush extends MiniClusterBase {
 
 
-  private static ByteString tableName = ByteString.bytesDefaultValue("testTable");
+  Random random = new Random();
+  private byte[] randomBytes = new byte[1024 * 1024];
 
-  public Populator() throws IOException, InterruptedException {
-
+  {
+    random.nextBytes(randomBytes);
   }
 
+  private static ByteString tableName;
 
-  public static void main(String[] args)
-      throws IOException, InterruptedException {
-    int port;
-    if (args.length < 1) {
-      port = 31337;
-    } else {
-      port = Integer.parseInt(args[0]);
-    }
-    try (C5Table table = new C5Table(tableName, port)) {
-
-      long start = System.currentTimeMillis();
-
-      int numberOfBatches = 1;
-      int batchSize = 1024 * 81;
-      if (args.length == 2) {
-        numberOfBatches = Integer.parseInt(args[0]);
-        batchSize = Integer.parseInt(args[1]);
-
-      }
-      compareToHBasePut(table,
-          Bytes.toBytes("cf"),
-          Bytes.toBytes("cq"),
-          Bytes.toBytes("value"),
-          numberOfBatches,
-          batchSize);
-      long end = System.currentTimeMillis();
-      System.out.println("time:" + (end - start));
-
-    } catch (ExecutionException | TimeoutException e) {
-      e.printStackTrace();
-    }
+  public TestFlush() throws IOException, InterruptedException {
   }
+
 
   public static void compareToHBasePut(final TableInterface table,
                                        final byte[] cf,
@@ -95,7 +69,7 @@ public class Populator extends MiniClusterBase {
           System.out.flush();
           startTime = System.nanoTime();
         }
-        if (i % (1024 * 12) == 0) {
+        if (i % (1024 * 80) == 0) {
           System.out.println("");
         }
         table.put(put);
@@ -106,10 +80,25 @@ public class Populator extends MiniClusterBase {
   }
 
   @Test
-  public void testPopulator() throws IOException, InterruptedException {
-    Populator populator = new Populator();
+  public void testPopulator() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+    TestFlush populator = new TestFlush();
     tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
 
-    populator.main(new String[]{String.valueOf(getRegionServerPort())});
+    int port = getRegionServerPort();
+    C5Table table = new C5Table(tableName, port);
+
+    long start = System.currentTimeMillis();
+
+    int numberOfBatches = 1;
+    int batchSize = 1024;
+
+    compareToHBasePut(table,
+        Bytes.toBytes("cf"),
+        Bytes.toBytes("cq"),
+        randomBytes,
+        numberOfBatches,
+        batchSize);
+    long end = System.currentTimeMillis();
+    System.out.println("time:" + (end - start));
   }
 }

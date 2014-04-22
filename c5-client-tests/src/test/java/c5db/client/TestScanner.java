@@ -29,10 +29,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 public class TestScanner extends MiniClusterBase {
-  ByteString tableName = ByteString.copyFrom(Bytes.toBytes("tableName"));
 
   @Test
   public void scan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+    ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
+
     int i = 0;
     Result result;
     C5Table table = new C5Table(tableName, getRegionServerPort());

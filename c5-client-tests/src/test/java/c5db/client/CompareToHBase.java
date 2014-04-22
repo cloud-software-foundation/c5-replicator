@@ -16,6 +16,7 @@
  */
 package c5db.client;
 
+import c5db.MiniClusterBase;
 import io.protostuff.ByteString;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -28,7 +29,7 @@ import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public class CompareToHBase {
+public class CompareToHBase extends MiniClusterBase {
   private static HTable hTable;
   private static ByteString tableName =
       ByteString.copyFrom(Bytes.toBytes("tableName"));
@@ -48,6 +49,8 @@ public class CompareToHBase {
   }
 
   public void compareToHBaseScan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+    tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
+
     C5Table table = new C5Table(tableName);
 
     long As, Ae, Bs, Be;
