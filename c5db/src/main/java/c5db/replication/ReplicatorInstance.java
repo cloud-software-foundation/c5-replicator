@@ -40,7 +40,6 @@ import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
-import org.jetlang.core.Callback;
 import org.jetlang.core.Disposable;
 import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
@@ -173,40 +172,28 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     assert this.peers.contains(this.myId);
 
-    fiber.execute(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          readPersistentData();
-          // indicate we are running!
-          stateChangeChannel.publish(
-              new ReplicatorInstanceEvent(
-                  ReplicatorInstanceEvent.EventType.QUORUM_START,
-                  ReplicatorInstance.this,
-                  0,
-                  info.currentTimeMillis(),
-                  null)
-          );
-        } catch (IOException e) {
-          LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
-          failReplicatorInstance(e);
-        }
+    fiber.execute(() -> {
+      try {
+        readPersistentData();
+        // indicate we are running!
+        stateChangeChannel.publish(
+            new ReplicatorInstanceEvent(
+                ReplicatorInstanceEvent.EventType.QUORUM_START,
+                ReplicatorInstance.this,
+                0,
+                info.currentTimeMillis(),
+                null)
+        );
+      } catch (IOException e) {
+        LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
+        failReplicatorInstance(e);
       }
     });
 
-    incomingChannel.subscribe(fiber, new Callback<Request<RpcWireRequest, RpcReply>>() {
-      @Override
-      public void onMessage(Request<RpcWireRequest, RpcReply> message) {
-        onIncomingMessage(message);
-      }
-    });
+    incomingChannel.subscribe(fiber, this::onIncomingMessage);
 
-    electionChecker = fiber.scheduleWithFixedDelay(new Runnable() {
-      @Override
-      public void run() {
-        checkOnElection();
-      }
-    }, info.electionCheckRate(), info.electionCheckRate(), TimeUnit.MILLISECONDS);
+    electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, info.electionCheckRate(),
+        info.electionCheckRate(), TimeUnit.MILLISECONDS);
 
     LOG.debug("{} primed {}", myId, this.quorumId);
   }
@@ -600,12 +587,9 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     final List<Long> votes = new ArrayList<>();
     for (long peer : peers) {
       RpcRequest req = new RpcRequest(peer, myId, quorumId, msg);
-      AsyncRequest.withOneReply(fiber, sendRpcChannel, req, new Callback<RpcWireReply>() {
-        @Override
-        public void onMessage(RpcWireReply message) {
-          handleElectionReply0(message, termBeingVotedFor, votes, majority);
-        }
-      }, 1, TimeUnit.SECONDS, new RequestVoteTimeout(req, termBeingVotedFor, votes, majority));
+      AsyncRequest.withOneReply(fiber, sendRpcChannel, req,
+          message -> handleElectionReply0(message, termBeingVotedFor, votes, majority),
+          1, TimeUnit.SECONDS, new RequestVoteTimeout(req, termBeingVotedFor, votes, majority));
     }
   }
 
@@ -648,12 +632,9 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
       LOG.trace("{} request vote timeout to {}, resending RPC", myId, request.to);
 
       // Note we are using 'this' as the recursive timeout.
-      AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
-        @Override
-        public void onMessage(RpcWireReply message) {
-          handleElectionReply0(message, termBeingVotedFor, votes, majority);
-        }
-      }, 1, TimeUnit.SECONDS, this);
+      AsyncRequest.withOneReply(fiber, sendRpcChannel, request,
+          message -> handleElectionReply0(message, termBeingVotedFor, votes, majority),
+          1, TimeUnit.SECONDS, this);
     }
   }
 
@@ -679,7 +660,6 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
       return;
     }
 
-    assert message != null;
     RequestVoteReply reply = message.getRequestVoteReplyMessage();
 
     if (reply.getTerm() > currentTerm) {
@@ -771,14 +751,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
   @FiberOnly
   private void startQueueConsumer() {
-    queueConsumer = fiber.scheduleAtFixedRate(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          consumeQueue();
-        } catch (Throwable t) {
-          failReplicatorInstance(t);
-        }
+    queueConsumer = fiber.scheduleAtFixedRate(() -> {
+      try {
+        consumeQueue();
+      } catch (Throwable t) {
+        failReplicatorInstance(t);
       }
     }, 0, info.groupCommitDelay(), TimeUnit.MILLISECONDS);
   }
@@ -930,36 +907,29 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     );
 
     RpcRequest request = new RpcRequest(peer, myId, quorumId, msg);
-    AsyncRequest.withOneReply(fiber, sendRpcChannel, request, new Callback<RpcWireReply>() {
-          @Override
-          public void onMessage(RpcWireReply message) {
-            LOG.trace("{} got a reply {}", myId, message);
+    AsyncRequest.withOneReply(fiber, sendRpcChannel, request, message -> {
+      LOG.trace("{} got a reply {}", myId, message);
 
-            boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
-            if (!wasSuccessful) {
-              // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
-              if (message.getAppendReplyMessage().getMyLastLogEntry() != 0) {
-                peersNextIndex.put(peer, message.getAppendReplyMessage().getMyLastLogEntry());
-              } else {
-                peersNextIndex.put(peer, peerNextIdx - 1);
-              }
-            } else {
-              // we have been successfully acked up to this point.
-              LOG.trace("{} peer {} acked for {}", myId, peer, lastIndexSent);
-              peersLastAckedIndex.put(peer, lastIndexSent);
-
-              calculateLastVisible(majority, lastIndexSent);
-            }
-          }
-        }, 5, TimeUnit.SECONDS, new Runnable() {
-          @Override
-          public void run() {
-            LOG.trace("{} peer {} timed out", myId, peer);
-            // Do nothing -> let next timeout handle things.
-            // This timeout exists just so that we can cancel and clean up stuff in jetlang.
-          }
+      boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
+      if (!wasSuccessful) {
+        // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
+        if (message.getAppendReplyMessage().getMyLastLogEntry() != 0) {
+          peersNextIndex.put(peer, message.getAppendReplyMessage().getMyLastLogEntry());
+        } else {
+          peersNextIndex.put(peer, peerNextIdx - 1);
         }
-    );
+      } else {
+        // we have been successfully acked up to this point.
+        LOG.trace("{} peer {} acked for {}", myId, peer, lastIndexSent);
+        peersLastAckedIndex.put(peer, lastIndexSent);
+
+        calculateLastVisible(majority, lastIndexSent);
+      }
+    }, 5, TimeUnit.SECONDS, () -> {
+      LOG.trace("{} peer {} timed out", myId, peer);
+      // Do nothing -> let next timeout handle things.
+      // This timeout exists just so that we can cancel and clean up stuff in jetlang.
+    });
   }
 
   private void calculateLastVisible(long majority, long lastIndexSent) {
