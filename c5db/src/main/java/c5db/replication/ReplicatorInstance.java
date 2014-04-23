@@ -30,6 +30,9 @@ import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
 import c5db.util.FiberOnly;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.SortedMultiset;
+import com.google.common.collect.TreeMultiset;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -50,7 +53,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -62,7 +64,7 @@ import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
 /**
  * Single instantiation of a replicator / log / lease. This implementation's logic is based on the
  * RAFT algorithm (see <a href="http://raftconsensus.github.io/">http://raftconsensus.github.io/</a>.
- * <p/>
+ * <p>
  * A ReplicatorInstance handles the consensus and replication for a single quorum, and communicates
  * with the log package via {@link c5db.log.ReplicatorLog}.
  */
@@ -780,7 +782,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     assert lastIndexInList == log.getLastIndex();
 
-    final long majority = calculateMajority(peers.size());
+    final int majority = calculateMajority(peers.size());
 
     for (final long peer : peers) {
       if (myId == peer) {
@@ -886,7 +888,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
   }
 
   @FiberOnly
-  private void sendAppendEntries(long peer, long peerNextIdx, long lastIndexSent, long majority,
+  private void sendAppendEntries(long peer, long peerNextIdx, long lastIndexSent, int majority,
                                  final List<LogEntry> entries) {
     assert (entries.size() == 0) || (entries.get(0).getIndex() == peerNextIdx);
     assert (entries.size() == 0) || (entries.get(entries.size() - 1).getIndex() == lastIndexSent);
@@ -934,50 +936,40 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     });
   }
 
-  private void calculateLastVisible(long majority, long lastIndexSent) {
+  @FiberOnly
+  private void calculateLastVisible(int majority, long lastIndexSent) {
     if (lastIndexSent == lastCommittedIndex) {
-      return; //skip null check basically
+      return; // already committed this entry
     }
 
-    HashMap<Long, Integer> bucket = new HashMap<>();
-    for (long lastAcked : peersLastAckedIndex.values()) {
-      Integer p = bucket.get(lastAcked);
-      if (p == null) {
-        bucket.put(lastAcked, 1);
-      } else {
-        bucket.put(lastAcked, p + 1);
-      }
-    }
-
-    long mostAcked = 0;
-    for (Map.Entry<Long, Integer> e : bucket.entrySet()) {
-      if (e.getValue() >= majority) {
-        if (mostAcked != 0) {
-          LOG.warn("{} strange, found more than 1 'most acked' entry: {} and {}", myId, mostAcked, e.getKey());
-        }
-        mostAcked = e.getKey();
-      }
-    }
-    if (mostAcked == 0) {
-      return;
-    }
     if (myFirstIndexAsLeader == 0) {
       return; // cant declare new visible yet until we have a first index as the leader.
     }
 
-    if (mostAcked < myFirstIndexAsLeader) {
-      LOG.warn("{} Found most-acked entry {} but my first index as leader was {}, cant declare visible yet", myId, mostAcked, myFirstIndexAsLeader);
+    /**
+     * Goal: find an N such that N > lastCommittedIndex, a majority of peersLastAckedIndex[peerId] >= N,
+     * and N >= myFirstIndexAsLeader. If found, commit up to the greatest such N. (sec 5.3, sec 5.4).
+     */
+
+    SortedMultiset<Long> committedIndexs = TreeMultiset.create(peersLastAckedIndex.values());
+    committedIndexs.add(0L, peers.size() - peersLastAckedIndex.size()); // pad with zeros to the correct size
+    final long greatestIndexCommittedByMajority = Iterables.get(committedIndexs.descendingMultiset(), majority - 1);
+
+    if (greatestIndexCommittedByMajority < myFirstIndexAsLeader) {
+      LOG.warn("{} Found most-acked entry {} but my first index as leader was {}, cant declare visible yet",
+          myId, greatestIndexCommittedByMajority, myFirstIndexAsLeader);
       return;
     }
 
-    if (mostAcked < lastCommittedIndex) {
-      LOG.warn("{} weird mostAcked {} is smaller than lastCommittedIndex {}", myId, mostAcked, lastCommittedIndex);
+    if (greatestIndexCommittedByMajority < lastCommittedIndex) {
+      LOG.warn("{} weird mostAcked {} is smaller than lastCommittedIndex {}",
+          myId, greatestIndexCommittedByMajority, lastCommittedIndex);
       return;
     }
-    if (mostAcked == lastCommittedIndex) {
+    if (greatestIndexCommittedByMajority == lastCommittedIndex) {
       return;
     }
-    setLastCommittedIndex(mostAcked);
+    setLastCommittedIndex(greatestIndexCommittedByMajority);
     LOG.trace("{} discovered new visible entry {}", myId, lastCommittedIndex);
 
     // TODO take action and notify clients (pending new system frameworks)
