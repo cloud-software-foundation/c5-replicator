@@ -763,7 +763,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
   @FiberOnly
   private void consumeQueue() {
     // retrieve as many items as possible. send rpc.
-    final ArrayList<IntLogRequest> reqs = new ArrayList<>();
+    final List<IntLogRequest> reqs = new ArrayList<>();
 
     LOG.trace("{} queue consuming", myId);
     while (logRequests.peek() != null) {
@@ -772,63 +772,15 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     LOG.trace("{} {} queue items to commit", myId, reqs.size());
 
-    final long firstInList = log.getLastIndex() + 1;
-    long idAssigner = firstInList;
+    final long firstIndexInList = log.getLastIndex() + 1;
+    final long lastIndexInList = firstIndexInList + reqs.size() - 1;
 
-    // Get these now BEFORE the log append call.
-    final long logLastIndex = log.getLastIndex();
-    final long logLastTerm = log.getLastTerm();
+    List<LogEntry> newLogEntries = createLogEntriesFromIntRequests(reqs, firstIndexInList);
+    leaderLogNewEntries(newLogEntries, lastIndexInList);
 
-    // Build the log entries:
-    ArrayList<LogEntry> newLogEntries = new ArrayList<>(reqs.size());
-    for (IntLogRequest logReq : reqs) {
-      LogEntry entry = new LogEntry(currentTerm, idAssigner, logReq.data);
-      newLogEntries.add(entry);
+    assert lastIndexInList == log.getLastIndex();
 
-      if (myFirstIndexAsLeader == 0) {
-        myFirstIndexAsLeader = idAssigner;
-        LOG.debug("{} my first index as leader is: {}", myId, myFirstIndexAsLeader);
-      }
-
-      // let the client know what our id is
-      logReq.logNumberNotifation.set(idAssigner);
-
-      idAssigner++;
-    }
-
-    // Should throw immediately if there was a basic validation error.
-    final ListenableFuture<Boolean> localLogFuture;
-    if (!newLogEntries.isEmpty()) {
-      localLogFuture = log.logEntries(newLogEntries);
-    } else {
-      localLogFuture = null;
-    }
-
-    // TODO remove one of these i think.
-    final long largestIndexInBatch = idAssigner - 1;
-    final long lastIndexSent = log.getLastIndex();
-    assert lastIndexSent == largestIndexInBatch;
-
-    // What a majority means at this moment (in case of reconfigures)
     final long majority = calculateMajority(peers.size());
-
-    if (localLogFuture != null) {
-      Futures.addCallback(localLogFuture, new FutureCallback<Boolean>() {
-        @Override
-        public void onSuccess(Boolean result) {
-          assert result != null && result;
-
-          peersLastAckedIndex.put(myId, lastIndexSent);
-          calculateLastVisible(majority, lastIndexSent);
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-          // pretty bad.
-          LOG.error("{} failed to commit to local log {}", myId, t);
-        }
-      }, fiber);
-    }
 
     for (final long peer : peers) {
       if (myId == peer) {
@@ -838,8 +790,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
       // for each peer, figure out how many "back messages" should I send:
       final long peerNextIdx = this.peersNextIndex.get(peer);
 
-      if (peerNextIdx < firstInList) {
-        final long moreCount = firstInList - peerNextIdx;
+      if (peerNextIdx < firstIndexInList) {
+        final long moreCount = firstIndexInList - peerNextIdx;
         LOG.debug("{} sending {} more log entires to peer {}", myId, moreCount, peer);
 
         // TODO check moreCount is reasonable, and available in log. Otherwise do alternative peer catch up
@@ -849,7 +801,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
         // TODO cache these extra LogEntry objects so we dont recreate too many of them.
 
-        ListenableFuture<List<LogEntry>> peerEntriesFuture = log.getLogEntries(peerNextIdx, firstInList);
+        ListenableFuture<List<LogEntry>> peerEntriesFuture = log.getLogEntries(peerNextIdx, firstIndexInList);
 
         Futures.addCallback(peerEntriesFuture, new FutureCallback<List<LogEntry>>() {
           @Override
@@ -867,7 +819,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
             List<LogEntry> entriesToAppend = new ArrayList<>((int) (newLogEntries.size() + moreCount));
             entriesToAppend.addAll(entriesFromLog);
             entriesToAppend.addAll(newLogEntries);
-            sendAppendEntries(peer, peerNextIdx, lastIndexSent, majority, entriesToAppend);
+            sendAppendEntries(peer, peerNextIdx, lastIndexInList, majority, entriesToAppend);
           }
 
           @Override
@@ -878,9 +830,59 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
           }
         }, fiber);
       } else {
-        sendAppendEntries(peer, peerNextIdx, lastIndexSent, majority, newLogEntries);
+        sendAppendEntries(peer, peerNextIdx, lastIndexInList, majority, newLogEntries);
       }
     }
+  }
+
+  @FiberOnly
+  private List<LogEntry> createLogEntriesFromIntRequests(List<IntLogRequest> requests, long firstEntryIndex) {
+    long idAssigner = firstEntryIndex;
+
+    // Build the log entries:
+    List<LogEntry> newLogEntries = new ArrayList<>(requests.size());
+    for (IntLogRequest logReq : requests) {
+      LogEntry entry = new LogEntry(currentTerm, idAssigner, logReq.data);
+      newLogEntries.add(entry);
+
+      if (myFirstIndexAsLeader == 0) {
+        myFirstIndexAsLeader = idAssigner;
+        LOG.debug("{} my first index as leader is: {}", myId, myFirstIndexAsLeader);
+      }
+
+      // let the client know what our id is
+      logReq.logNumberNotifation.set(idAssigner);
+
+      idAssigner++;
+    }
+    return newLogEntries;
+  }
+
+  @FiberOnly
+  private void leaderLogNewEntries(List<LogEntry> newLogEntries, long lastIndexInList) {
+    final ListenableFuture<Boolean> localLogFuture;
+
+    if (newLogEntries.isEmpty()) {
+      return;
+    }
+    localLogFuture = log.logEntries(newLogEntries);
+
+    Futures.addCallback(localLogFuture, new FutureCallback<Boolean>() {
+      @Override
+      public void onSuccess(Boolean result) {
+        assert result != null && result;
+
+        peersLastAckedIndex.put(myId, lastIndexInList);
+        int majority = calculateMajority(peers.size());
+        calculateLastVisible(majority, lastIndexInList);
+      }
+
+      @Override
+      public void onFailure(Throwable t) {
+        // pretty bad.
+        LOG.error("{} failed to commit to local log {}", myId, t);
+      }
+    }, fiber);
   }
 
   @FiberOnly
