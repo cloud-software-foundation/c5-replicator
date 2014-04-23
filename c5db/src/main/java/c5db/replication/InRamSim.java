@@ -60,11 +60,11 @@ public class InRamSim {
   private static final Logger LOG = LoggerFactory.getLogger(InRamSim.class);
 
   public static class Info implements ReplicatorInformationInterface {
-
-    public final long offset;
-    public final long electionTimeout;
-    StopWatch stopWatch = new StopWatch();
+    private final long offset;
+    private final long electionTimeout;
+    private final StopWatch stopWatch = new StopWatch();
     private boolean suspended = true; // field needed because StopWatch doesn't have a way to check its state
+    private long lastTimeMillis = 0;
 
     public Info(long offset, long electionTimeout) {
       this.offset = offset;
@@ -73,23 +73,28 @@ public class InRamSim {
       stopWatch.suspend();
     }
 
-    public void startTimeout() {
+    public synchronized void startTimeout() {
       if (suspended) {
         suspended = false;
         stopWatch.resume();
       }
     }
 
-    public void stopTimeout() {
+    public synchronized void stopTimeout() {
       if (!suspended) {
         suspended = true;
+        lastTimeMillis = stopWatch.getTime();
         stopWatch.suspend();
       }
     }
 
     @Override
-    public long currentTimeMillis() {
-      return stopWatch.getTime() + offset;
+    public synchronized long currentTimeMillis() {
+      if (suspended) {
+        return lastTimeMillis + offset;
+      } else {
+        return stopWatch.getTime() + offset;
+      }
     }
 
     @Override
