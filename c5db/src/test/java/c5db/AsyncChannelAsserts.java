@@ -18,6 +18,7 @@
 package c5db;
 
 import c5db.util.ExceptionHandlingBatchExecutor;
+import c5db.util.FiberOnly;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.hamcrest.Description;
@@ -172,6 +173,7 @@ public class AsyncChannelAsserts {
       subscriber.subscribe(fiber, this::onMessage);
     }
 
+    @FiberOnly
     private void onMessage(T message) {
       messageLog.add(message);
       Iterator<Matcher<? super T>> it = waitingToMatch.keySet().iterator();

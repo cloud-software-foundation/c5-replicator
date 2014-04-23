@@ -22,6 +22,7 @@ import c5db.log.InRamLog;
 import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.AppendEntriesReply;
+import c5db.replication.generated.LogEntry;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.util.ExceptionHandlingBatchExecutor;
@@ -30,13 +31,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import io.netty.util.CharsetUtil;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
+import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.Callback;
-import org.jetlang.core.RunnableExecutor;
 import org.jetlang.core.RunnableExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
@@ -50,15 +54,17 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.AsyncChannelAsserts.ChannelListener;
 import static c5db.AsyncChannelAsserts.assertEventually;
 import static c5db.AsyncChannelAsserts.listenTo;
 import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
-import static c5db.replication.ReplicatorInstance.State;
+import static c5db.interfaces.ReplicationModule.Replicator.State;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -78,20 +84,20 @@ public class InRamLeaderTest {
 
   private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel = new MemoryRequestChannel<>();
   private final Map<Long, BlockingQueue<Request<RpcRequest, RpcWireReply>>> requests = new HashMap<>();
-
   private final Map<Long, Callback<Request<RpcRequest, RpcWireReply>>> peerBehaviorialCallbacks = new HashMap<>();
-
   private final Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
 
   @Rule
   public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
-
-  private RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
-      new ExceptionHandlingBatchExecutor(fiberExceptionHandler));
+  private final BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(fiberExceptionHandler);
 
   private final ReplicatorLog log = new InRamLog();
-  private Fiber rpcFiber = new ThreadFiber(runnableExecutor, null, true);
-  private ChannelListener<ReplicationModule.IndexCommitNotice> commitListener;
+  private final Fiber rpcFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor), "rpcFiber-Thread", true);
+  private final ChannelListener<ReplicationModule.IndexCommitNotice> commitListener = listenTo(commitNotices);
+
+  private final MemoryChannel<Request<RpcRequest, RpcWireReply>> requestLog = new MemoryChannel<>();
+  private final ChannelHistoryMonitor<Request<RpcRequest, RpcWireReply>> requestMonitor =
+      new ChannelHistoryMonitor<>(requestLog, rpcFiber);
 
   private final List<Long> peerIdList = ImmutableList.of(1L, 2L, 3L);
 
@@ -99,15 +105,15 @@ public class InRamLeaderTest {
 
   @Before
   public final void before() {
-    commitListener = listenTo(commitNotices);
-
     sendRpcChannel.subscribe(rpcFiber, (request) -> System.out.println(request.getRequest()));
     sendRpcChannel.subscribe(rpcFiber, this::routeOutboundRequests);
+    sendRpcChannel.subscribe(rpcFiber, requestLog::publish);
 
+    Fiber replFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor), "replFiber-Thread", true);
     InRamSim.Info info = new InRamSim.Info(0, 1000);
     info.startTimeout();
 
-    replicatorInstance = new ReplicatorInstance(new ThreadFiber(runnableExecutor, null, true),
+    replicatorInstance = new ReplicatorInstance(replFiber,
         PEER_ID,
         QUORUM_ID,
         peerIdList,
@@ -232,6 +238,23 @@ public class InRamLeaderTest {
     assertTrue(waitCond.get(TEST_TIMEOUT, TimeUnit.SECONDS));
   }
 
+  @Test
+  public void commitsWhenAMajorityOfPeersHaveAckedEvenIfNoSingleIndexHasBeenAckedByAMajority() throws Throwable {
+    /**
+     * Tests the case where the leader has logged up to index 2, a peer has logged up to index 1, and another
+     * peer has logged zero -- as far as the leader knows. No single "last logged index" is in the majority,
+     * yet the leader should still commit index 1.
+     */
+    logSomeData();
+    requestMonitor.waitFor(aRequestToPeer(2L).withLogIndex(1L));
+    logSomeData();
+    requestMonitor.waitFor(aRequestToPeer(2L).withLogIndex(2L));
+
+    sendAppendEntriesReply_Success(
+        requestToPeer(2L).withLogIndex(1));
+
+    assertEventually(commitListener, hasCommitNoticeIndexValueAtLeast(1));
+  }
 
   /**
    * Either route an outbound request to a callback, or queue it, depending on destination peer
@@ -271,7 +294,7 @@ public class InRamLeaderTest {
   /**
    * Execute a callback on all pending requests to a given peer, and any requests hereafter
    */
-  private void createRequestRule(long peerId, Callback<Request<RpcRequest, RpcWireReply>> handler) throws Exception {
+  private void createRequestRule(long peerId, Callback<Request<RpcRequest, RpcWireReply>> handler) {
     peerBehaviorialCallbacks.put(peerId, handler);
     if (requests.containsKey(peerId)) {
       List<Request<RpcRequest, RpcWireReply>> pendingRequests = new LinkedList<>();
@@ -287,5 +310,64 @@ public class InRamLeaderTest {
    */
   private void ackAllRequestsToPeer(long peerId) throws Exception {
     createRequestRule(peerId, this::sendAppendEntriesReply_Success);
+  }
+
+  private void logSomeData() throws Exception {
+    replicatorInstance.logData(TEST_DATUM);
+  }
+
+  public RequestController requestToPeer(long peerId) {
+    return new RequestController(peerId);
+  }
+
+  private class RequestController {
+    private final long peerId;
+
+    private RequestController(long peerId) {
+      this.peerId = peerId;
+    }
+
+    public Request<RpcRequest, RpcWireReply> withLogIndex(long index) {
+      Queue<Request<RpcRequest, RpcWireReply>> peerQueue = requests.get(peerId);
+
+      while (peerQueue.peek() != null) {
+        final Request<RpcRequest, RpcWireReply> request = peerQueue.poll();
+        final List<LogEntry> entries = request.getRequest().getAppendMessage().getEntriesList();
+        if (entries.stream().anyMatch((entry) -> entry.getIndex() == index)) {
+          return request;
+        }
+      }
+
+      return null;
+    }
+  }
+
+  private static RequestMatcherCurriedWithPeerId aRequestToPeer(long peerId) {
+    return index -> requestMatcherForPeerAndEntryIndex(peerId, index);
+  }
+
+  private interface RequestMatcherCurriedWithPeerId {
+    Matcher<Request<RpcRequest, RpcWireReply>> withLogIndex(long index);
+  }
+
+  private static Matcher<Request<RpcRequest, RpcWireReply>> requestMatcherForPeerAndEntryIndex(long peerId,
+                                                                                               long index) {
+    return new TypeSafeMatcher<Request<RpcRequest, RpcWireReply>>() {
+      @Override
+      protected boolean matchesSafely(Request<RpcRequest, RpcWireReply> request) {
+        AppendEntries appendEntriesRequest = request.getRequest().getAppendMessage();
+        if (appendEntriesRequest == null) {
+          return false;
+        }
+        return request.getRequest().to == peerId
+            && appendEntriesRequest.getEntriesList().stream().anyMatch((entry) -> entry.getIndex() == index);
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("a request to peer ").appendValue(peerId)
+            .appendText(" containing a log entry with index ").appendValue(index);
+      }
+    };
   }
 }
