@@ -18,7 +18,6 @@
 package c5db.tablet;
 
 import c5db.AsyncChannelAsserts;
-import c5db.ConfigDirectory;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
@@ -64,7 +63,7 @@ public class TabletTest {
   final ReplicationModule.Replicator replicator = context.mock(ReplicationModule.Replicator.class);
   final Region.Creator regionCreator = context.mock(Region.Creator.class);
   final Region region = context.mock(Region.class);
-  final C5Server server= context.mock(C5Server.class);
+  final C5Server server = context.mock(C5Server.class);
 
   final SettableFuture<ReplicationModule.Replicator> future = SettableFuture.create();
 
