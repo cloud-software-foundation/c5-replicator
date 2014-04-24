@@ -27,7 +27,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.LogTestUtil.seqNum;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
@@ -110,7 +109,7 @@ public class InMemoryPersistenceNavigatorTest {
     }
   }
 
-  private class MethodCallCountingCodec implements Codec<DummyEntry> {
+  private class MethodCallCountingCodec implements SequentialEntryCodec<DummyEntry> {
     public int numDecodes = 0;
     public int numSkips = 0;
 

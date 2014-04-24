@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.EntryEncodingUtil.CrcError;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
@@ -29,7 +28,7 @@ import static c5db.log.LogTestUtil.term;
 
 public class LogPersistenceErrorTest {
   private final ByteArrayPersistence persistence = new ByteArrayPersistence();
-  private final Codec<OLogEntry> codec = new OLogEntry.Codec();
+  private final SequentialEntryCodec<OLogEntry> codec = new OLogEntry.Codec();
   private final SequentialLog<OLogEntry> log = new EncodedSequentialLog<>(
       persistence,
       codec,

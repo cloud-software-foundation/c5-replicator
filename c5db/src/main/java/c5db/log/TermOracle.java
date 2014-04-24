@@ -46,5 +46,9 @@ public interface TermOracle {
    * @return The log term at this sequence number
    */
   long getTermAtSeqNum(long seqNum);
+
+  interface TermOracleFactory {
+    TermOracle create();
+  }
 }
 

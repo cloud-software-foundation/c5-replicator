@@ -18,7 +18,8 @@
 package c5db.log;
 
 import c5db.util.KeySerializingExecutor;
-import c5db.util.KeySerializingExecutorTest;
+import c5db.util.KeySerializingExecutorDecorator;
+import c5db.util.KeySerializingExecutorDecoratorTest;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.junit.Before;
@@ -27,30 +28,29 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
-import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
+import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.term;
+import static c5db.log.TermOracle.TermOracleFactory;
 
 @SuppressWarnings("unchecked")
 public class QuorumDelegatingLogUnitTest {
   @Rule
   public JUnitRuleMockery context = new JUnitRuleMockery();
 
-  LogPersistenceService persistenceService = context.mock(LogPersistenceService.class);
-  ExecutorService executorService = context.mock(ExecutorService.class);
-  KeySerializingExecutor serializingExecutor = new KeySerializingExecutor(executorService); // not a mock!
-  Supplier<TermOracle> termOracleFactory = context.mock(Supplier.class);
-  BiFunction<BytePersistence, Codec<?>, PersistenceNavigator> navigatorFactory = context.mock(BiFunction.class);
-  TermOracle termOracle = context.mock(TermOracle.class);
-  PersistenceNavigator persistenceNavigator = context.mock(PersistenceNavigator.class);
+  private final LogPersistenceService persistenceService = context.mock(LogPersistenceService.class);
+  private final ExecutorService executorService = context.mock(ExecutorService.class);
+  private final KeySerializingExecutor serializingExecutor = new KeySerializingExecutorDecorator(executorService);
+  private final TermOracleFactory termOracleFactory = context.mock(TermOracleFactory.class);
+  private final PersistenceNavigatorFactory navigatorFactory = context.mock(PersistenceNavigatorFactory.class);
+  private final TermOracle termOracle = context.mock(TermOracle.class);
+  private final PersistenceNavigator persistenceNavigator = context.mock(PersistenceNavigator.class);
 
-  QuorumDelegatingLog oLog = new QuorumDelegatingLog(
+  private final QuorumDelegatingLog oLog = new QuorumDelegatingLog(
       persistenceService,
       serializingExecutor,
       termOracleFactory,
@@ -59,10 +59,11 @@ public class QuorumDelegatingLogUnitTest {
   @Before
   public void setUpMockedFactories() {
     context.checking(new Expectations() {{
-      allowing(navigatorFactory).apply(with(any(BytePersistence.class)), with.<Codec<?>>is(any(Codec.class)));
+      allowing(navigatorFactory).create(with(any(BytePersistence.class)),
+          with.<SequentialEntryCodec<?>>is(any(SequentialEntryCodec.class)));
       will(returnValue(persistenceNavigator));
 
-      allowing(termOracleFactory).get();
+      allowing(termOracleFactory).create();
       will(returnValue(termOracle));
     }});
   }
@@ -91,7 +92,7 @@ public class QuorumDelegatingLogUnitTest {
     context.checking(new Expectations() {{
       ignoring(termOracle);
       ignoring(persistenceService);
-      KeySerializingExecutorTest.allowSubmitOrExecuteOnce(context, executorService);
+      KeySerializingExecutorDecoratorTest.allowSubmitOrExecuteOnce(context, executorService);
     }});
 
     oLog.logEntry(arbitraryEntries(), quorumId);

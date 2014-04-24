@@ -24,7 +24,6 @@ import java.nio.channels.Channels;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
-import static c5db.log.EncodedSequentialLog.Codec;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceReader;
@@ -42,12 +41,12 @@ import static c5db.log.SequentialLog.LogEntryNotFound;
 public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements PersistenceNavigator {
 
   private final BytePersistence persistence;
-  private final Codec<E> codec;
+  private final SequentialEntryCodec<E> codec;
 
   private final NavigableMap<Long, Long> index = new TreeMap<>();
   private int maxEntrySeek = 256;
 
-  InMemoryPersistenceNavigator(BytePersistence persistence, Codec<E> codec) {
+  InMemoryPersistenceNavigator(BytePersistence persistence, SequentialEntryCodec<E> codec) {
     this.persistence = persistence;
     this.codec = codec;
 

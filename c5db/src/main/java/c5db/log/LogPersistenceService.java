@@ -157,4 +157,8 @@ public interface LogPersistenceService {
      */
     InputStream getStreamAtLastEntry() throws IOException;
   }
+
+  interface PersistenceNavigatorFactory {
+    PersistenceNavigator create(BytePersistence persistence, SequentialEntryCodec<?> encoding);
+  }
 }

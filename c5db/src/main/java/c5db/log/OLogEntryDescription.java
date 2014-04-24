@@ -97,7 +97,7 @@ public final class OLogEntryDescription extends SequentialEntry {
         ", contentCrcIsValid=" + contentCrcIsValid;
   }
 
-  public static class Codec implements EncodedSequentialLog.Codec<OLogEntryDescription> {
+  public static class Codec implements SequentialEntryCodec<OLogEntryDescription> {
     private static final Schema<OLogEntryHeader> SCHEMA = OLogEntryHeader.getSchema();
     private static final int CRC_BYTES = 4;
 
