@@ -40,21 +40,21 @@ import java.util.concurrent.locks.ReentrantLock;
  * submitted, by the ExecutorService it decorates. This implementation is not safe for use by
  * multiple threads.
  */
-public class KeySerializingExecutorDecorator implements KeySerializingExecutor {
-  private static final Logger LOG = LoggerFactory.getLogger(KeySerializingExecutorDecorator.class);
+public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
+  private static final Logger LOG = LoggerFactory.getLogger(WrappingKeySerializingExecutor.class);
   private final ExecutorService executorService;
   private final Map<String, EmptyCheckingQueue<Runnable>> keyQueues = new HashMap<>();
 
   private boolean shutdown = false;
 
-  public KeySerializingExecutorDecorator(ExecutorService executorService) {
+  public WrappingKeySerializingExecutor(ExecutorService executorService) {
     this.executorService = executorService;
   }
 
   @Override
   public <T> ListenableFuture<T> submit(String key, CheckedSupplier<T, Exception> task) {
     if (shutdown) {
-      throw new RejectedExecutionException("KeySerializingExecutorDecorator already shut down");
+      throw new RejectedExecutionException("WrappingKeySerializingExecutor already shut down");
     }
     addKeyIfItDoesNotExist(key);
 
@@ -97,7 +97,7 @@ public class KeySerializingExecutorDecorator implements KeySerializingExecutor {
       try {
         setWhenFinished.set(task.get());
       } catch (Exception t) {
-        LOG.error("Error executing KeySerializingExecutorDecorator task: {}", t);
+        LOG.error("Error executing WrappingKeySerializingExecutor task: {}", t);
         setWhenFinished.setException(t);
       }
     };
@@ -118,7 +118,7 @@ public class KeySerializingExecutorDecorator implements KeySerializingExecutor {
     executorService.shutdown();
     boolean terminated = executorService.awaitTermination(timeout, unit);
     if (!terminated) {
-      throw new TimeoutException("KeySerializingExecutorDecorator#shutdown");
+      throw new TimeoutException("WrappingKeySerializingExecutor#shutdown");
     }
   }
 
