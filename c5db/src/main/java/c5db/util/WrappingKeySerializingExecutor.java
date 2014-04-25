@@ -35,17 +35,21 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * An ExecutorService decorator which accepts tasks with an associated string key, and guarantees
+ * An ExecutorService wrapper which accepts tasks with an associated string key, and guarantees
  * that all tasks associated with a given key will be run serially, in the order they are
- * submitted, by the ExecutorService it decorates. This implementation is not safe for use by
- * multiple threads.
+ * submitted (if there is a definite order), by the wrapped ExecutorService.
+ * <p>
+ * This implementation is safe for use by multiple threads. However, if there are multiple task
+ * submissions for the same key without a happens-before relationship, such as from multiple
+ * unsynchronized threads, the implementation can make no guarantee about the order in which
+ * those tasks are executed.
  */
 public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(WrappingKeySerializingExecutor.class);
   private final ExecutorService executorService;
   private final Map<String, EmptyCheckingQueue<Runnable>> keyQueues = new HashMap<>();
 
-  private boolean shutdown = false;
+  private volatile boolean shutdown = false;
 
   public WrappingKeySerializingExecutor(ExecutorService executorService) {
     this.executorService = executorService;
@@ -56,41 +60,68 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
     if (shutdown) {
       throw new RejectedExecutionException("WrappingKeySerializingExecutor already shut down");
     }
-    addKeyIfItDoesNotExist(key);
 
-    SettableFuture<T> finished = SettableFuture.create();
-    Runnable taskRunner = createFutureSettingTaskRunner(task, finished);
+    SettableFuture<T> taskFinishedFuture = SettableFuture.create();
+    Runnable taskRunner = createFutureSettingTaskRunner(task, taskFinishedFuture);
 
-    final EmptyCheckingQueue<Runnable> queue = keyQueues.get(key);
-    if (queue.checkEmptyAndAdd(taskRunner)) {
-      submitAndThenProcessNext(taskRunner, queue);
-    }
+    enqueueOrRunTask(taskRunner, getQueueForKey(key));
 
-    return finished;
+    return taskFinishedFuture;
   }
 
   @Override
   public void shutdownAndAwaitTermination(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException {
-
-    final CountDownLatch submittedAllQueuedTasks = new CountDownLatch(keyQueues.size());
-    for (String key : keyQueues.keySet()) {
-      submit(key, () -> {
-        submittedAllQueuedTasks.countDown();
-        return null;
-      });
+    if (getAndSetShutdown()) {
+      return;
     }
 
-    shutdown = true;
-    submittedAllQueuedTasks.await();
+    flushAllQueues();
     shutdownInternalExecutorService(timeout, unit);
   }
 
-  private void addKeyIfItDoesNotExist(String key) {
-    if (!keyQueues.containsKey(key)) {
-      keyQueues.put(key, new EmptyCheckingQueue<>());
+  /**
+   * Retrieve the queue for the given key, creating it first if it does not exist
+   */
+  private EmptyCheckingQueue<Runnable> getQueueForKey(String key) {
+    EmptyCheckingQueue<Runnable> queue = keyQueues.get(key);
+    if (queue == null) {
+      synchronized (keyQueues) {
+        queue = keyQueues.get(key);
+        if (queue == null) {
+          keyQueues.put(key, queue = new EmptyCheckingQueue<>());
+        }
+      }
+    }
+    return queue;
+  }
+
+  /**
+   * Wait for all tasks on all queues to complete
+   */
+  private void flushAllQueues() throws InterruptedException {
+    synchronized (keyQueues) {
+      final CountDownLatch submittedAllQueuedTasks = new CountDownLatch(keyQueues.size());
+
+      for (EmptyCheckingQueue<Runnable> queue : keyQueues.values()) {
+        enqueueOrRunTask(submittedAllQueuedTasks::countDown, queue);
+      }
+      submittedAllQueuedTasks.await();
     }
   }
 
+  /**
+   * Get and set shutdown as an atomic operation
+   */
+  private synchronized boolean getAndSetShutdown() {
+    boolean prev = shutdown;
+    shutdown = true;
+    return prev;
+  }
+
+  /**
+   * Create a Runnable that runs a task which produces a value, then sets the passed-in Future
+   * with the produced value.
+   */
   private <T> Runnable createFutureSettingTaskRunner(CheckedSupplier<T, Exception> task,
                                                      SettableFuture<T> setWhenFinished) {
     return () -> {
@@ -103,16 +134,34 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
     };
   }
 
-  private void submitAndThenProcessNext(Runnable runnable, EmptyCheckingQueue<Runnable> queue) {
+  /**
+   * Add a Runnable to the queue, and then run it if the queue was empty before adding the
+   * Runnable. (If the queue was not empty, then the Runnable will be run as the queue is
+   * consumed).
+   */
+  private void enqueueOrRunTask(Runnable runnable, EmptyCheckingQueue<Runnable> queue) {
+    if (queue.checkEmptyAndAdd(runnable)) {
+      submitToInternalExecutorService(runnable, queue);
+    }
+  }
+
+  /**
+   * Run the Runnable on the instance's ExecutorService. After it has run, if the queue
+   * has any other tasks remaining, run the next one.
+   */
+  private void submitToInternalExecutorService(Runnable runnable, EmptyCheckingQueue<Runnable> queue) {
     executorService.submit(() -> {
       runnable.run();
       Runnable nextTask = queue.discardHeadThenPeek();
       if (nextTask != null) {
-        submitAndThenProcessNext(nextTask, queue);
+        submitToInternalExecutorService(nextTask, queue);
       }
     });
   }
 
+  /**
+   * Shut down the instance's ExecutorService and await its termination.
+   */
   private void shutdownInternalExecutorService(long timeout, TimeUnit unit)
       throws InterruptedException, TimeoutException {
     executorService.shutdown();
