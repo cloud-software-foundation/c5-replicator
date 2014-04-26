@@ -69,8 +69,6 @@ import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
  * with the log package via {@link c5db.log.ReplicatorLog}.
  */
 public class ReplicatorInstance implements ReplicationModule.Replicator {
-  private static final Logger LOG = LoggerFactory.getLogger(ReplicatorInstance.class);
-
   @Override
   public String toString() {
     return "ReplicatorInstance{" +
@@ -101,6 +99,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
   private final Fiber fiber;
   private final long myId;
   private final String quorumId;
+  private final Logger logger;
 
   private final ImmutableList<Long> peers;
 
@@ -160,6 +159,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     this.fiber = fiber;
     this.myId = myId;
     this.quorumId = quorumId;
+    this.logger = getNewLogger();
     this.peers = ImmutableList.copyOf(peers);
     this.sendRpcChannel = sendRpcChannel;
     this.log = log;
@@ -187,7 +187,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                 null)
         );
       } catch (IOException e) {
-        LOG.error("{} {} error during persistent data init {}", quorumId, myId, e);
+        logger.error("error during persistent data init {}", e);
         failReplicatorInstance(e);
       }
     });
@@ -197,7 +197,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, info.electionCheckRate(),
         info.electionCheckRate(), TimeUnit.MILLISECONDS);
 
-    LOG.debug("{} primed {}", myId, this.quorumId);
+    logger.debug("primed");
   }
 
   /**
@@ -222,6 +222,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     this.fiber = fiber;
     this.myId = myId;
     this.quorumId = quorumId;
+    this.logger = getNewLogger();
     this.peers = ImmutableList.copyOf(peers);
     this.sendRpcChannel = sendRpcChannel;
     this.log = log;
@@ -240,7 +241,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection,
         info.electionCheckRate(), info.electionCheckRate(), TimeUnit.MILLISECONDS);
 
-    LOG.debug("{} primed {}", myId, this.quorumId);
+    logger.debug("primed");
 
     this.currentTerm = term;
     this.myState = state;
@@ -276,7 +277,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
   @Override
   public ListenableFuture<Long> logData(List<ByteBuffer> data) throws InterruptedException {
     if (!isLeader()) {
-      LOG.debug("{} attempted to logData on a non-leader", myId);
+      logger.debug("attempted to logData on a non-leader");
       return null;
     }
 
@@ -304,7 +305,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
 
     } else {
-      LOG.warn("{} Got a message of protobuf type I dont know: {}", myId, req);
+      logger.warn("got a message of protobuf type I dont know: {}", req);
     }
 
   }
@@ -323,12 +324,12 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     // 2. if term > currentTerm, currentTerm <- term
     if (msg.getTerm() > currentTerm) {
-      LOG.debug("{} requestVote rpc, pushing forward currentTerm {} to {}", myId, currentTerm, msg.getTerm());
+      logger.debug("RequestVote rpc, pushing forward currentTerm {} to {}", currentTerm, msg.getTerm());
       setCurrentTerm(msg.getTerm());
 
       // 2a. Step down if candidate or leader.
       if (myState != State.FOLLOWER) {
-        LOG.debug("{} stepping down to follower, currentTerm: {}", myId, currentTerm);
+        logger.debug("stepping down to follower, currentTerm: {}", currentTerm);
 
         haltLeader();
       }
@@ -352,7 +353,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
       }
     }
 
-    LOG.debug("{} sending vote reply to {} vote = {}, voted = {}", myId, message.getRequest().from, votedFor, vote);
+    logger.debug("sending vote reply to {} vote = {}, voted = {}", message.getRequest().from, votedFor, vote);
     RequestVoteReply m = new RequestVoteReply(currentTerm, vote);
     RpcReply reply = new RpcReply(m);
     message.reply(reply);
@@ -386,7 +387,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     long theLeader = appendMessage.getLeaderId();
     if (whosLeader != theLeader) {
-      LOG.debug("{} discovered new leader: {}", myId, theLeader);
+      logger.debug("discovered new leader: {}", theLeader);
       whosLeader = theLeader;
 
       stateChangeChannel.publish(
@@ -492,7 +493,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
       long entryIndex = entry.getIndex();
 
       if (entryIndex == nextIndex) {
-        LOG.debug("{} new log entry for idx {} term {}", myId, entryIndex, entry.getTerm());
+        logger.debug("new log entry for idx {} term {}", entryIndex, entry.getTerm());
 
         entriesToCommit.add(entry);
 
@@ -502,8 +503,8 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
       if (entryIndex > nextIndex) {
         // ok this entry is still beyond the LAST entry, so we have a problem:
-        LOG.error("{} log entry missing, i expected {} and the next in the message is {}",
-            myId, nextIndex, entryIndex);
+        logger.error("log entry missing, I expected {} and the next in the message is {}",
+            nextIndex, entryIndex);
 
         future.setException(new Exception("Log entry missing"));
         return;
@@ -519,7 +520,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         // So after this point, we basically return immediately, with a callback schedule.
 
         // conflict:
-        LOG.debug("{} log conflict at idx {} my term: {} term from leader: {}, truncating log after this point", myId,
+        logger.debug("log conflict at idx {} my term: {} term from leader: {}, truncating log after this point",
             entryIndex, log.getLogTerm(entryIndex), entry.getTerm());
 
         // delete this and all subsequent entries:
@@ -549,12 +550,12 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
   @FiberOnly
   private void checkOnElection() {
     if (myState == State.LEADER) {
-      LOG.trace("{} leader during election check.", myId);
+      logger.trace("leader during election check.");
       return;
     }
 
     if (lastRPC + this.myElectionTimeout < info.currentTimeMillis()) {
-      LOG.trace("{} Timed out checkin on election, try new election", myId);
+      logger.trace("timed out checking on election, try new election");
       doElection();
     }
   }
@@ -583,7 +584,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     RequestVote msg = new RequestVote(currentTerm, myId, log.getLastIndex(), log.getLastTerm());
 
-    LOG.debug("{} Starting election for currentTerm: {}", myId, currentTerm);
+    logger.debug("starting election for currentTerm: {}", currentTerm);
 
     final long termBeingVotedFor = currentTerm;
     final List<Long> votes = new ArrayList<>();
@@ -627,11 +628,11 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
       // Also if the term goes forward somehow, this is also out of date, and drop it.
       if (currentTerm > termBeingVotedFor) {
-        LOG.trace("{} request vote timeout, current term has moved on, abandoning this request", myId);
+        logger.trace("request vote timeout, current term has moved on, abandoning this request");
         return;
       }
 
-      LOG.trace("{} request vote timeout to {}, resending RPC", myId, request.to);
+      logger.trace("request vote timeout to {}, resending RPC", request.to);
 
       // Note we are using 'this' as the recursive timeout.
       AsyncRequest.withOneReply(fiber, sendRpcChannel, request,
@@ -645,12 +646,12 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     // if current term has advanced, these replies are stale and should be ignored:
 
     if (message == null) {
-      LOG.warn("{} got a NULL message reply, that's unfortunate", myId);
+      logger.warn("got a NULL message reply, that's unfortunate");
       return;
     }
 
     if (currentTerm > termBeingVotedFor) {
-      LOG.warn("{} election reply from {}, but currentTerm {} > vote term {}", myId, message.from,
+      logger.warn("election reply from {}, but currentTerm {} > vote term {}", message.from,
           currentTerm, termBeingVotedFor);
       return;
     }
@@ -658,21 +659,22 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     // if we are no longer a Candidate, election was over, these replies are stale.
     if (myState != State.CANDIDATE) {
       // we became not, ignore
-      LOG.warn("{} election reply from {} ignored -> in state {}", myId, message.from, myState);
+      logger.warn("election reply from {} ignored -> in state {}", message.from, myState);
       return;
     }
 
     RequestVoteReply reply = message.getRequestVoteReplyMessage();
 
     if (reply.getTerm() > currentTerm) {
-      LOG.warn("{} election reply from {}, but term {} was not my term {}, updating currentTerm", myId,
+      logger.warn("election reply from {}, but term {} was not my term {}, updating currentTerm",
           message.from, reply.getTerm(), currentTerm);
 
       setCurrentTerm(reply.getTerm());
       return;
     } else if (reply.getTerm() < currentTerm) {
       // huh weird.
-      LOG.warn("{} election reply from {}, their term {} < currentTerm {}", myId, reply.getTerm(), currentTerm);
+      logger.warn("election reply from {}, their term {} < currentTerm {}",
+          message.from, reply.getTerm(), currentTerm);
     }
 
     // did you vote for me?
@@ -716,7 +718,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
   }
 
   private void becomeLeader() {
-    LOG.warn("{} I AM THE LEADER NOW, commece AppendEntries RPCz term = {}", myId, currentTerm);
+    logger.warn("I AM THE LEADER NOW, commence AppendEntries RPCs term = {}", currentTerm);
 
     myState = State.LEADER;
     stateMemoryChannel.publish(State.LEADER);
@@ -767,12 +769,12 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     // retrieve as many items as possible. send rpc.
     final List<IntLogRequest> reqs = new ArrayList<>();
 
-    LOG.trace("{} queue consuming", myId);
+    logger.trace("queue consuming");
     while (logRequests.peek() != null) {
       reqs.add(logRequests.poll());
     }
 
-    LOG.trace("{} {} queue items to commit", myId, reqs.size());
+    logger.trace("{} queue items to commit", reqs.size());
 
     final long firstIndexInList = log.getLastIndex() + 1;
     final long lastIndexInList = firstIndexInList + reqs.size() - 1;
@@ -794,7 +796,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
       if (peerNextIdx < firstIndexInList) {
         final long moreCount = firstIndexInList - peerNextIdx;
-        LOG.debug("{} sending {} more log entires to peer {}", myId, moreCount, peer);
+        logger.debug("sending {} more log entries to peer {}", moreCount, peer);
 
         // TODO check moreCount is reasonable, and available in log. Otherwise do alternative peer catch up
         // TODO alternative peer catchup is by a different process, send message to that then skip sending AppendRpc
@@ -849,7 +851,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
       if (myFirstIndexAsLeader == 0) {
         myFirstIndexAsLeader = idAssigner;
-        LOG.debug("{} my first index as leader is: {}", myId, myFirstIndexAsLeader);
+        logger.debug("my first index as leader is: {}", myFirstIndexAsLeader);
       }
 
       // let the client know what our id is
@@ -882,7 +884,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
       @Override
       public void onFailure(Throwable t) {
         // pretty bad.
-        LOG.error("{} failed to commit to local log {}", myId, t);
+        logger.error("failed to commit to local log {}", t);
       }
     }, fiber);
   }
@@ -912,7 +914,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
     RpcRequest request = new RpcRequest(peer, myId, quorumId, msg);
     AsyncRequest.withOneReply(fiber, sendRpcChannel, request, message -> {
-      LOG.trace("{} got a reply {}", myId, message);
+      logger.trace("got a reply {}", message);
 
       boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
       if (!wasSuccessful) {
@@ -924,13 +926,13 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
         }
       } else {
         // we have been successfully acked up to this point.
-        LOG.trace("{} peer {} acked for {}", myId, peer, lastIndexSent);
+        logger.trace("peer {} acked for {}", peer, lastIndexSent);
         peersLastAckedIndex.put(peer, lastIndexSent);
 
         calculateLastVisible(majority, lastIndexSent);
       }
     }, 5, TimeUnit.SECONDS, () -> {
-      LOG.trace("{} peer {} timed out", myId, peer);
+      logger.trace("peer {} timed out", peer);
       // Do nothing -> let next timeout handle things.
       // This timeout exists just so that we can cancel and clean up stuff in jetlang.
     });
@@ -956,28 +958,29 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     final long greatestIndexCommittedByMajority = Iterables.get(committedIndexs.descendingMultiset(), majority - 1);
 
     if (greatestIndexCommittedByMajority < myFirstIndexAsLeader) {
-      LOG.warn("{} Found most-acked entry {} but my first index as leader was {}, cant declare visible yet",
-          myId, greatestIndexCommittedByMajority, myFirstIndexAsLeader);
+      logger.warn("Found most-acked entry {} but my first index as leader was {}, cant declare visible yet",
+          greatestIndexCommittedByMajority, myFirstIndexAsLeader);
       return;
     }
 
     if (greatestIndexCommittedByMajority < lastCommittedIndex) {
-      LOG.warn("{} weird mostAcked {} is smaller than lastCommittedIndex {}",
-          myId, greatestIndexCommittedByMajority, lastCommittedIndex);
+      logger.warn("weird mostAcked {} is smaller than lastCommittedIndex {}",
+          greatestIndexCommittedByMajority, lastCommittedIndex);
       return;
     }
     if (greatestIndexCommittedByMajority == lastCommittedIndex) {
       return;
     }
     setLastCommittedIndex(greatestIndexCommittedByMajority);
-    LOG.trace("{} discovered new visible entry {}", myId, lastCommittedIndex);
+    logger.trace("discovered new visible entry {}", lastCommittedIndex);
 
     // TODO take action and notify clients (pending new system frameworks)
   }
 
   private void setLastCommittedIndex(long newLastCommittedIndex) {
     if (newLastCommittedIndex < lastCommittedIndex) {
-      LOG.warn("{} New lastCommittedIndex {} is smaller than previous lastCommittedIndex {}", myId, newLastCommittedIndex, lastCommittedIndex);
+      logger.warn("New lastCommittedIndex {} is smaller than previous lastCommittedIndex {}",
+          newLastCommittedIndex, lastCommittedIndex);
     } else if (newLastCommittedIndex > lastCommittedIndex) {
       lastCommittedIndex = newLastCommittedIndex;
       notifyLastCommitted();
@@ -1009,6 +1012,10 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
     this.votedFor = 0;
   }
 
+  private Logger getNewLogger() {
+    return LoggerFactory.getLogger("(" + getClass().getSimpleName() + " - " + quorumId + " - " + myId + ")");
+  }
+
   @Override
   public long getId() {
     return myId;
@@ -1025,7 +1032,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
 
   @Override
   public void start() {
-    LOG.debug("{} started {} with election timeout {}", myId, this.quorumId, this.myElectionTimeout);
+    logger.debug("started {} with election timeout {}", this.quorumId, this.myElectionTimeout);
     fiber.start();
   }
 
