@@ -90,7 +90,7 @@ public final class OLogEntry extends SequentialEntry {
   @Override
   public String toString() {
     return "OLogEntry{" +
-        "seqNum='" + seqNum + '\'' +
+        "seqNum=" + seqNum +
         ", electionTerm=" + electionTerm +
         ", buffers=" + buffers;
   }

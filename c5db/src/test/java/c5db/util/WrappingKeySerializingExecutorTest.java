@@ -18,9 +18,6 @@
 package c5db.util;
 
 import c5db.CollectionMatchers;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.hamcrest.Matcher;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -39,6 +36,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static c5db.ConcurrencyTestUtil.runAConcurrencyTestSeveralTimes;
+import static c5db.ConcurrencyTestUtil.runNTimesAndWaitForAllToComplete;
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.FutureMatchers.resultsInException;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
@@ -176,19 +175,6 @@ public class WrappingKeySerializingExecutorTest {
   }
 
 
-  private void runAConcurrencyTestSeveralTimes(int numThreads, int numAttempts, ConcurrencyTest test)
-      throws Exception {
-    final ExecutorService taskSubmitter = Executors.newFixedThreadPool(numThreads);
-
-    for (int attempt = 0; attempt < numAttempts; attempt++) {
-      test.run(numThreads * 2, taskSubmitter);
-    }
-
-    taskSubmitter.shutdown();
-    taskSubmitter.awaitTermination(3, TimeUnit.SECONDS);
-
-  }
-
   private static List<Integer> submitSeveralTasksAndBeginLoggingTheirInvocations(
       KeySerializingExecutor keySerializingExecutor, String key) {
 
@@ -271,17 +257,10 @@ public class WrappingKeySerializingExecutorTest {
       int numSimultaneous,
       ExecutorService executorThatSubmitsTasks,
       KeySerializingExecutor executorThatRunsTasks) throws Exception {
-    final List<ListenableFuture<Boolean>> completedFutureList = new ArrayList<>(numSimultaneous);
 
-    for (int i = 0; i < numSimultaneous; i++) {
-      final String key = keyNumber(i);
-
-      completedFutureList.add(
-          runAndReturnCompletionFuture(executorThatSubmitsTasks,
-              () -> runSeriesOfTasksForOneKey(executorThatRunsTasks, key)));
-    }
-
-    waitForAll(completedFutureList);
+    runNTimesAndWaitForAllToComplete(numSimultaneous, executorThatSubmitsTasks,
+        (int invocationIndex) -> runSeriesOfTasksForOneKey(executorThatRunsTasks, keyNumber(invocationIndex))
+    );
   }
 
   private String keyNumber(int i) {
@@ -337,71 +316,20 @@ public class WrappingKeySerializingExecutorTest {
     final KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(
         Executors.newSingleThreadExecutor());
 
-    final List<ListenableFuture<Boolean>> completedFutureList = new ArrayList<>();
-
     // Simply call shutdown interspersed with other submit calls and ensure there are no errors
     // However, it is nondeterministic which, if any, of the submits will go through.
-    for (int i = 0; i < numberOfSubmissions; i++) {
-      final String key = keyNumber(i);
-
-      completedFutureList.add(
-          runAndReturnCompletionFuture(executor,
-              () -> {
-                try {
-                  keySerializingExecutor.submit(key, () -> null);
-                } catch (RejectedExecutionException ignore) {
-                }
-              }));
-
-      if (i == numberOfSubmissions / 2) {
-        completedFutureList.add(
-            runAndReturnCompletionFuture(executor,
-                () -> keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS)));
-      }
-    }
-
-    waitForAll(completedFutureList);
-  }
-
-
-  private void runNTimesAndWaitForAllToComplete(int nTimes, ExecutorService executor,
-                                                ExceptionThrowingRunnable runnable)
-      throws Exception {
-    final List<ListenableFuture<Boolean>> completedFutureList = new ArrayList<>(nTimes);
-
-    for (int i = 0; i < nTimes; i++) {
-      completedFutureList.add(
-          runAndReturnCompletionFuture(executor, runnable));
-    }
-
-    waitForAll(completedFutureList);
-  }
-
-  private ListenableFuture<Boolean> runAndReturnCompletionFuture(ExecutorService executor,
-                                                                 ExceptionThrowingRunnable runnable) {
-    final SettableFuture<Boolean> setWhenFinished = SettableFuture.create();
-
-    executor.execute(() -> {
-      try {
-        runnable.run();
-        setWhenFinished.set(true);
-      } catch (Throwable t) {
-        setWhenFinished.setException(t);
-      }
-    });
-    return setWhenFinished;
-  }
-
-  private interface ExceptionThrowingRunnable {
-    void run() throws Exception;
-  }
-
-  private interface ConcurrencyTest {
-    void run(int degreeOfConcurrency, ExecutorService executorService) throws Exception;
-  }
-
-  private void waitForAll(List<ListenableFuture<Boolean>> futures) throws Exception {
-    Futures.allAsList(futures).get();
+    runNTimesAndWaitForAllToComplete(numberOfSubmissions, executor,
+        (int invocationIndex) -> {
+          if (invocationIndex == numberOfSubmissions / 2) {
+            keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
+          } else {
+            try {
+              keySerializingExecutor.submit(keyNumber(invocationIndex), () -> null);
+            } catch (RejectedExecutionException ignore) {
+            }
+          }
+        }
+    );
   }
 
   private static Matcher<Collection<?>> containsRecordOfEveryTask() {

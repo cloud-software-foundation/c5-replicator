@@ -202,11 +202,11 @@ public class LogFileService implements LogPersistenceService {
 
   private File prepareNewLogFile(String quorumId) {
     long fileNum = System.nanoTime();
-    return walDir.resolve(logFilePrefix(quorumId) + "-" + fileNum).toFile();
+    return walDir.resolve(logFilePrefix(quorumId) + fileNum).toFile();
   }
 
   private static String logFilePrefix(String quorumId) {
-    return C5ServerConstants.LOG_NAME + quorumId;
+    return C5ServerConstants.LOG_NAME + "-" + quorumId + "-";
   }
 
   private void createDirectoryStructure() throws IOException {
