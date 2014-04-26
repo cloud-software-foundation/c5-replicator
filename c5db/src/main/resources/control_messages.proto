@@ -35,6 +35,8 @@ enum ModuleType {
     Log = 6;
     // Event logger
     EventLog = 7;
+    // Web Management
+    WebAdmin = 8;
 }
 
 message StartModule {
