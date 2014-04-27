@@ -49,14 +49,20 @@ public final class OLogEntryDescription extends SequentialEntry {
     this.contentCrcIsValid = contentCrcIsValid;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   public long getElectionTerm() {
     return electionTerm;
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  public int contentLength() {
+  public int getContentLength() {
     return contentLength;
+  }
+
+  public boolean isHeaderCrcValid() {
+    return headerCrcIsValid;
+  }
+
+  public boolean isContentCrcValid() {
+    return contentCrcIsValid;
   }
 
   @Override

@@ -40,7 +40,10 @@ import static c5db.log.TermOracle.TermOracleFactory;
 
 /**
  * OLog that delegates each quorum's logging tasks to a separate SequentialLog for that quorum,
- * executing the tasks on a KeySerializingExecutor.
+ * executing the tasks on a KeySerializingExecutor, with quorumId as the key. It is safe for use
+ * by multiple threads, but each quorum's sequence numbers must be ascending with no gaps within
+ * that quorum; so having multiple unsynchronized threads writing for the same quorum is unlikely
+ * to work.
  */
 public class QuorumDelegatingLog implements OLog, AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(QuorumDelegatingLog.class);
@@ -78,6 +81,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
             entryCodec,
             persistenceNavigatorFactory.create(persistence, entryCodec));
         termOracle = termOracleFactory.create();
+        // TODO garner election term information from a pre-existing log we may be using
       } catch (IOException e) {
         LOG.error("Unable to create quorum info object for quorum {}", quorumId);
         throw new RuntimeException(e);
@@ -204,13 +208,18 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   private PerQuorum getOrCreateQuorumStructure(String quorumId) {
-    if (quorumMap.containsKey(quorumId)) {
-      return quorumMap.get(quorumId);
-    } else {
-      PerQuorum newQuorumMap = new PerQuorum(quorumId);
-      quorumMap.put(quorumId, newQuorumMap);
-      return newQuorumMap;
+    // The most common case, retrieving the quorum structure when it already exists,
+    // doesn't incur any synchronization overhead.
+    PerQuorum perQuorum = quorumMap.get(quorumId);
+    if (perQuorum == null) {
+      synchronized (quorumMap) {
+        perQuorum = quorumMap.get(quorumId);
+        if (perQuorum == null) {
+          quorumMap.put(quorumId, perQuorum = new PerQuorum(quorumId));
+        }
+      }
     }
+    return perQuorum;
   }
 
   private SequentialLog<OLogEntry> quorumLog(String quorumId) {

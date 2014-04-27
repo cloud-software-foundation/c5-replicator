@@ -19,7 +19,7 @@ package c5db.log;
 
 import c5db.C5CommonTestUtil;
 import c5db.util.KeySerializingExecutor;
-import c5db.util.KeySerializingExecutorDecorator;
+import c5db.util.WrappingKeySerializingExecutor;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -112,7 +112,7 @@ public class QuorumDelegatingLogPerformanceMeasurement {
   }
 
   private void doWarmUp()
-  throws IOException, InterruptedException, ExecutionException {
+      throws IOException, InterruptedException, ExecutionException {
     detailPrintln("Beginning untimed warmup");
     doLogRun(true);
     detailPrintln(
@@ -260,7 +260,7 @@ public class QuorumDelegatingLogPerformanceMeasurement {
   }
 
   private OLog getLog(LogFileService logFileService) {
-    KeySerializingExecutor executor = new KeySerializingExecutorDecorator(newFixedThreadPool(numThreads));
+    KeySerializingExecutor executor = new WrappingKeySerializingExecutor(newFixedThreadPool(numThreads));
     return new QuorumDelegatingLog(logFileService,
         executor,
         NavigableMapTermOracle::new,

@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -35,6 +36,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static c5db.ConcurrencyTestUtil.runAConcurrencyTestSeveralTimes;
+import static c5db.ConcurrencyTestUtil.runNTimesAndWaitForAllToComplete;
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.FutureMatchers.resultsInException;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
@@ -42,18 +45,20 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.core.IsEqual.equalTo;
 
-public class KeySerializingExecutorDecoratorTest {
+public class WrappingKeySerializingExecutorTest {
   @Rule
   public JUnitRuleMockery context = new JUnitRuleMockery();
-  private static final int NUM_TASKS = 20;
   private final ExecutorService fixedThreadExecutor = Executors.newFixedThreadPool(3);
+  private final ExecutorService executorService = context.mock(ExecutorService.class);
+
+  private static int numTasks = 20;
 
   @SuppressWarnings("unchecked")
   private final CheckedSupplier<Integer, Exception> task = context.mock(CheckedSupplier.class);
 
   @Test
   public void runsTasksSubmittedToItAndReturnsTheirResult() throws Exception {
-    KeySerializingExecutor keySerializingExecutor = new KeySerializingExecutorDecorator(sameThreadExecutor());
+    KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(sameThreadExecutor());
 
     context.checking(new Expectations() {{
       oneOf(task).get();
@@ -65,11 +70,11 @@ public class KeySerializingExecutorDecoratorTest {
 
   @Test
   public void returnsFuturesSetWithTheExceptionsThrownBySubmittedTasks() throws Exception {
-    KeySerializingExecutor keySerializingExecutor = new KeySerializingExecutorDecorator(sameThreadExecutor());
+    KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(sameThreadExecutor());
 
     context.checking(new Expectations() {{
       oneOf(task).get();
-      will(throwException(new ArithmeticException()));
+      will(throwException(new ArithmeticException("Expected as part of test")));
     }});
 
     assertThat(keySerializingExecutor.submit("key", task), resultsInException(ArithmeticException.class));
@@ -77,8 +82,7 @@ public class KeySerializingExecutorDecoratorTest {
 
   @Test
   public void submitsTasksOnceEachToTheSuppliedExecutorService() throws Exception {
-    ExecutorService executorService = context.mock(ExecutorService.class);
-    KeySerializingExecutor keySerializingExecutor = new KeySerializingExecutorDecorator(executorService);
+    KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(executorService);
 
     context.checking(new Expectations() {{
       allowSubmitOrExecuteOnce(context, executorService);
@@ -89,7 +93,7 @@ public class KeySerializingExecutorDecoratorTest {
 
   @Test(timeout = 1000)
   public void executesTasksAllHavingTheSameKeyInSeries() throws Exception {
-    KeySerializingExecutor keySerializingExecutor = new KeySerializingExecutorDecorator(fixedThreadExecutor);
+    KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(fixedThreadExecutor);
 
     List<Integer> log =
         submitSeveralTasksAndBeginLoggingTheirInvocations(keySerializingExecutor, "key");
@@ -102,7 +106,7 @@ public class KeySerializingExecutorDecoratorTest {
 
   @Test(timeout = 1000)
   public void executesTasksForDifferentKeysEachSeparatelyInSeries() throws Exception {
-    KeySerializingExecutor keySerializingExecutor = new KeySerializingExecutorDecorator(fixedThreadExecutor);
+    KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(fixedThreadExecutor);
 
     List<Integer> log1 =
         submitSeveralTasksAndBeginLoggingTheirInvocations(keySerializingExecutor, "key1");
@@ -120,14 +124,14 @@ public class KeySerializingExecutorDecoratorTest {
 
   @Test(expected = RejectedExecutionException.class)
   public void throwsAnExceptionIfATaskIsSubmittedAfterShutdownIsCalled() throws Exception {
-    KeySerializingExecutor keySerializingExecutor = new KeySerializingExecutorDecorator(fixedThreadExecutor);
+    KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(fixedThreadExecutor);
     keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
     keySerializingExecutor.submit("key", () -> null);
   }
 
   @Test
   public void onShutdownCompletesAllTasksThatHadBeenSubmittedPriorToShutdown() throws Exception {
-    KeySerializingExecutor keySerializingExecutor = new KeySerializingExecutorDecorator(fixedThreadExecutor);
+    KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(fixedThreadExecutor);
 
     List<Integer> log =
         submitSeveralTasksAndBeginLoggingTheirInvocations(keySerializingExecutor, "key");
@@ -137,19 +141,45 @@ public class KeySerializingExecutorDecoratorTest {
     assertThat(log, containsRecordOfEveryTask());
   }
 
-  private static Matcher<Collection<?>> containsRecordOfEveryTask() {
-    return hasSize(NUM_TASKS * 2);
+  @Test(timeout = 3000)
+  public void acceptsSubmissionsFromMultipleThreadsConcurrentlyWithEachThreadADifferentKey() throws Exception {
+    final int numThreads = 20;
+    final int numAttempts = 150;
+
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeAMultikeySubmissionConcurrencyStressTest);
   }
 
-  private static <T extends Comparable<T>> Matcher<List<T>> isInTheOrderTheTasksWereSubmitted() {
-    return CollectionMatchers.isNondecreasing();
+  @Test(timeout = 3000)
+  public void acceptsSubmissionsFromMultipleThreadsConcurrentlyWithinOneKeyWithExecutionOrderUndetermined()
+      throws Exception {
+    final int numThreads = 50;
+    final int numAttempts = 300;
+
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeASingleKeyConcurrencyStressTest);
   }
+
+  @Test(timeout = 3000)
+  public void shutsDownIdempotently() throws Exception {
+    final int numThreads = 10;
+    final int numAttempts = 300;
+
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeAShutdownIdempotencyStressTest);
+  }
+
+  @Test(timeout = 3000)
+  public void shutsDownAtomicallyWithRespectToSubmitAttempts() throws Exception {
+    final int numThreads = 5;
+    final int numAttempts = 100;
+
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeAShutdownAtomicityStressTest);
+  }
+
 
   private static List<Integer> submitSeveralTasksAndBeginLoggingTheirInvocations(
       KeySerializingExecutor keySerializingExecutor, String key) {
 
-    List<Integer> log = new ArrayList<>();
-    for (int i = 0; i < NUM_TASKS; i++) {
+    List<Integer> log = new ArrayList<>(numTasks * 2);
+    for (int i = 0; i < numTasks; i++) {
       keySerializingExecutor.submit(key, getSupplierWhichLogsItsNumberTwice(i, log));
     }
     return log;
@@ -212,4 +242,101 @@ public class KeySerializingExecutorDecoratorTest {
     }});
   }
 
+  private void executeAMultikeySubmissionConcurrencyStressTest(int numberOfSubmissions, ExecutorService taskSubmitter)
+      throws Exception {
+    final KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(
+        Executors.newSingleThreadExecutor());
+
+    runSeveralSimultaneousSeriesOfTasksAndWaitForAllToComplete(
+        numberOfSubmissions, taskSubmitter, keySerializingExecutor);
+
+    keySerializingExecutor.shutdownAndAwaitTermination(2, TimeUnit.SECONDS);
+  }
+
+  private void runSeveralSimultaneousSeriesOfTasksAndWaitForAllToComplete(
+      int numSimultaneous,
+      ExecutorService executorThatSubmitsTasks,
+      KeySerializingExecutor executorThatRunsTasks) throws Exception {
+
+    runNTimesAndWaitForAllToComplete(numSimultaneous, executorThatSubmitsTasks,
+        (int invocationIndex) -> runSeriesOfTasksForOneKey(executorThatRunsTasks, keyNumber(invocationIndex))
+    );
+  }
+
+  private String keyNumber(int i) {
+    return "key" + String.valueOf(i);
+  }
+
+  private void runSeriesOfTasksForOneKey(KeySerializingExecutor keySerializingExecutor,
+                                         String key) throws Exception {
+    setNumberOfTasks(2);
+
+    List<Integer> log = submitSeveralTasksAndBeginLoggingTheirInvocations(keySerializingExecutor, key);
+    waitForTasksToFinish(keySerializingExecutor, key);
+    assertThat(log, containsRecordOfEveryTask());
+    assertThat(log, isInTheOrderTheTasksWereSubmitted());
+  }
+
+  private static void setNumberOfTasks(int n) {
+    numTasks = n;
+  }
+
+  private void executeASingleKeyConcurrencyStressTest(int numCalls, ExecutorService executor)
+      throws Exception {
+    final KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(
+        Executors.newSingleThreadExecutor());
+    final List<Integer> taskResults = Collections.synchronizedList(new ArrayList<>(numCalls));
+
+    // The keySerializingExecutor can make no guarantee about the order in which tasks will
+    // be completed if added with the same key from multiple threads; only that they will all be completed.
+    runNTimesAndWaitForAllToComplete(numCalls, executor,
+        () -> {
+          keySerializingExecutor.submit("key", () -> {
+            taskResults.add(0);
+            return 0;
+          });
+        });
+
+    keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
+    assertThat(taskResults, hasSize(numCalls));
+  }
+
+  private void executeAShutdownIdempotencyStressTest(int numShutdownCalls,
+                                                     ExecutorService shutdownCallingService) throws Exception {
+    final KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(
+        Executors.newSingleThreadExecutor());
+    keySerializingExecutor.submit("key", () -> null).get();
+
+    runNTimesAndWaitForAllToComplete(numShutdownCalls, shutdownCallingService,
+        () -> keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS));
+  }
+
+  private void executeAShutdownAtomicityStressTest(int numberOfSubmissions,
+                                                   ExecutorService executor) throws Exception {
+    final KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(
+        Executors.newSingleThreadExecutor());
+
+    // Simply call shutdown interspersed with other submit calls and ensure there are no errors
+    // However, it is nondeterministic which, if any, of the submits will go through.
+    runNTimesAndWaitForAllToComplete(numberOfSubmissions, executor,
+        (int invocationIndex) -> {
+          if (invocationIndex == numberOfSubmissions / 2) {
+            keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
+          } else {
+            try {
+              keySerializingExecutor.submit(keyNumber(invocationIndex), () -> null);
+            } catch (RejectedExecutionException ignore) {
+            }
+          }
+        }
+    );
+  }
+
+  private static Matcher<Collection<?>> containsRecordOfEveryTask() {
+    return hasSize(numTasks * 2);
+  }
+
+  private static <T extends Comparable<T>> Matcher<List<T>> isInTheOrderTheTasksWereSubmitted() {
+    return CollectionMatchers.isNondecreasing();
+  }
 }

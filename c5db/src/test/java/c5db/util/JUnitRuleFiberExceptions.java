@@ -23,6 +23,7 @@ import org.junit.runners.model.MultipleFailureException;
 import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -33,7 +34,7 @@ import java.util.function.Consumer;
  * in which the test runs.
  */
 public class JUnitRuleFiberExceptions implements TestRule, Consumer<Throwable> {
-  private final List<Throwable> throwables = new ArrayList<>();
+  private final List<Throwable> throwables = Collections.synchronizedList(new ArrayList<>());
 
   public JUnitRuleFiberExceptions() {
 

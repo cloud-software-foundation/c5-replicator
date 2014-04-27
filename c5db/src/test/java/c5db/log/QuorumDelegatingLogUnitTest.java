@@ -18,8 +18,8 @@
 package c5db.log;
 
 import c5db.util.KeySerializingExecutor;
-import c5db.util.KeySerializingExecutorDecorator;
-import c5db.util.KeySerializingExecutorDecoratorTest;
+import c5db.util.WrappingKeySerializingExecutor;
+import c5db.util.WrappingKeySerializingExecutorTest;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.junit.Before;
@@ -44,7 +44,7 @@ public class QuorumDelegatingLogUnitTest {
 
   private final LogPersistenceService persistenceService = context.mock(LogPersistenceService.class);
   private final ExecutorService executorService = context.mock(ExecutorService.class);
-  private final KeySerializingExecutor serializingExecutor = new KeySerializingExecutorDecorator(executorService);
+  private final KeySerializingExecutor serializingExecutor = new WrappingKeySerializingExecutor(executorService);
   private final TermOracleFactory termOracleFactory = context.mock(TermOracleFactory.class);
   private final PersistenceNavigatorFactory navigatorFactory = context.mock(PersistenceNavigatorFactory.class);
   private final TermOracle termOracle = context.mock(TermOracle.class);
@@ -92,7 +92,7 @@ public class QuorumDelegatingLogUnitTest {
     context.checking(new Expectations() {{
       ignoring(termOracle);
       ignoring(persistenceService);
-      KeySerializingExecutorDecoratorTest.allowSubmitOrExecuteOnce(context, executorService);
+      WrappingKeySerializingExecutorTest.allowSubmitOrExecuteOnce(context, executorService);
     }});
 
     oLog.logEntry(arbitraryEntries(), quorumId);

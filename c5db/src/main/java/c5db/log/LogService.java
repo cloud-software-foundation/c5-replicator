@@ -22,7 +22,7 @@ import c5db.interfaces.C5Server;
 import c5db.interfaces.LogModule;
 import c5db.messages.generated.ModuleType;
 import c5db.util.KeySerializingExecutor;
-import c5db.util.KeySerializingExecutorDecorator;
+import c5db.util.WrappingKeySerializingExecutor;
 import com.google.common.util.concurrent.AbstractService;
 
 import java.io.IOException;
@@ -46,7 +46,7 @@ public class LogService extends AbstractService implements LogModule {
   protected void doStart() {
     try {
       LogFileService logFileService = new LogFileService(server.getConfigDirectory().getBaseConfigPath());
-      KeySerializingExecutor executor = new KeySerializingExecutorDecorator(
+      KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
           Executors.newFixedThreadPool(C5ServerConstants.WAL_THREAD_POOL_SIZE));
       this.oLog = new QuorumDelegatingLog(
           logFileService,
