@@ -141,7 +141,7 @@ public class WrappingKeySerializingExecutorTest {
     assertThat(log, containsRecordOfEveryTask());
   }
 
-  @Test(timeout = 3000)
+  @Test(timeout = 5000)
   public void acceptsSubmissionsFromMultipleThreadsConcurrentlyWithEachThreadADifferentKey() throws Exception {
     final int numThreads = 20;
     final int numAttempts = 150;
@@ -149,7 +149,7 @@ public class WrappingKeySerializingExecutorTest {
     runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeAMultikeySubmissionConcurrencyStressTest);
   }
 
-  @Test(timeout = 3000)
+  @Test(timeout = 5000)
   public void acceptsSubmissionsFromMultipleThreadsConcurrentlyWithinOneKeyWithExecutionOrderUndetermined()
       throws Exception {
     final int numThreads = 50;
@@ -158,7 +158,7 @@ public class WrappingKeySerializingExecutorTest {
     runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeASingleKeyConcurrencyStressTest);
   }
 
-  @Test(timeout = 3000)
+  @Test(timeout = 5000)
   public void shutsDownIdempotently() throws Exception {
     final int numThreads = 10;
     final int numAttempts = 300;
@@ -166,7 +166,7 @@ public class WrappingKeySerializingExecutorTest {
     runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeAShutdownIdempotencyStressTest);
   }
 
-  @Test(timeout = 3000)
+  @Test(timeout = 5000)
   public void shutsDownAtomicallyWithRespectToSubmitAttempts() throws Exception {
     final int numThreads = 5;
     final int numAttempts = 100;
