@@ -311,7 +311,7 @@
                     <configuration>
                         <protoModules>
                             <protoModule>
-                                <source>src/main/resources/</source>
+                                <source>src/main/resources/protobuf</source>
                                 <outputDir>target/generated-sources/protostuff</outputDir>
                                 <output>java_bean_primitives</output>
                                 <encoding>UTF-8</encoding>
