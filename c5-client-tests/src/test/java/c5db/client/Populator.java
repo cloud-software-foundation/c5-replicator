@@ -81,7 +81,6 @@ public class Populator extends MiniClusterBase {
 
     long startTime = System.nanoTime();
     for (int j = 1; j != numberOfBatches + 1; j++) {
-      puts.clear();
       for (int i = 1; i != batchSize + 1; i++) {
         puts.add(new Put(Bytes.vintToBytes(i * j)).add(cf, cq, value));
       }
