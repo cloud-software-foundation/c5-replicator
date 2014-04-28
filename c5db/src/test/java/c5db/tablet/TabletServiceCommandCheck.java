@@ -25,6 +25,8 @@ import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
 import c5db.messages.generated.ModuleType;
 import c5db.util.C5FiberFactory;
+import c5db.util.ExceptionHandlingBatchExecutor;
+import c5db.util.PoolFiberFactoryWithExecutor;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
@@ -36,10 +38,11 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
-import org.jetlang.fibers.ThreadFiber;
+import org.jetlang.fibers.PoolFiberFactory;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.jmock.lib.concurrent.Synchroniser;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,13 +54,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import static c5db.AsyncChannelAsserts.assertEventually;
 import static c5db.AsyncChannelAsserts.listenTo;
 import static c5db.TabletMatchers.hasMessageWithState;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.StringStartsWith.startsWith;
@@ -85,9 +88,24 @@ public class TabletServiceCommandCheck {
   private final SettableFuture<ReplicationModule> replicationServiceFuture = SettableFuture.create();
   private Path configDirectory;
   private ReplicationModule.Replicator replicator;
-  C5FiberFactory fiberFactory = () -> new ThreadFiber();
+  C5FiberFactory fiberFactory = getFiberFactory(this::notifyFailed);
+  PoolFiberFactory fiberPool;
   private byte[] tabletDescBytes;
   private byte[] testRegionBytes;
+
+  protected final void notifyFailed(Throwable cause) {
+  }
+
+
+  public C5FiberFactory getFiberFactory(Consumer<Throwable> throwableConsumer) {
+    fiberPool = new PoolFiberFactory(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
+    return new PoolFiberFactoryWithExecutor(fiberPool, new ExceptionHandlingBatchExecutor(throwableConsumer));
+  }
+
+  @After
+  public void tearDown(){
+    fiberPool.dispose();
+  }
 
   @Before
   public void before() throws Exception {
@@ -107,7 +125,7 @@ public class TabletServiceCommandCheck {
       allowing(config).getBaseConfigPath();
       will(returnValue(configDirectory));
 
-      allowing(config).writeBinaryData(with(any(String.class)),with(any(String.class)),with(any(byte[].class)));
+      allowing(config).writeBinaryData(with(any(String.class)), with(any(String.class)), with(any(byte[].class)));
       allowing(config).writePeersToFile(with(any(String.class)), with(any(List.class)));
       allowing(config).configuredQuorums();
       will(returnValue(Arrays.asList("testTable,\\x00,1.064e3eb1da827b1dc753e03a797dba37.")));
@@ -202,7 +220,7 @@ public class TabletServiceCommandCheck {
         oneOf(replicator).getQuorumId();
         will(returnValue("1"));
 
-        allowing(config).writeBinaryData(with(any(String.class)),with(any(String.class)),with(any(byte[].class)));
+        allowing(config).writeBinaryData(with(any(String.class)), with(any(String.class)), with(any(byte[].class)));
 
         oneOf(config).readBinaryData(with(any(String.class)), with(any(String.class)));
         will(returnValue(testRegionBytes));

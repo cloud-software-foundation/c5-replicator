@@ -119,6 +119,7 @@ public class MiniClusterBase {
 
     table = new C5Table(tableName, getRegionServerPort());
     row = Bytes.toBytes(name.getMethodName());
+    receiver.dispose();
   }
 
   @After
@@ -190,6 +191,5 @@ public class MiniClusterBase {
 
     latch.await();
     receiver.dispose();
-
   }
 }
