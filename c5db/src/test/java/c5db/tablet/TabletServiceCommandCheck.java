@@ -22,7 +22,8 @@ import c5db.ConfigDirectory;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.ReplicationModule;
-import c5db.interfaces.TabletModule;
+import c5db.interfaces.replication.Replicator;
+import c5db.interfaces.tablet.TabletStateChange;
 import c5db.messages.generated.ModuleType;
 import c5db.util.C5FiberFactory;
 import c5db.util.ExceptionHandlingBatchExecutor;
@@ -87,7 +88,7 @@ public class TabletServiceCommandCheck {
   private final SettableFuture<DiscoveryModule> discoveryServiceFuture = SettableFuture.create();
   private final SettableFuture<ReplicationModule> replicationServiceFuture = SettableFuture.create();
   private Path configDirectory;
-  private ReplicationModule.Replicator replicator;
+  private Replicator replicator;
   C5FiberFactory fiberFactory = getFiberFactory(this::notifyFailed);
   PoolFiberFactory fiberPool;
   private byte[] tabletDescBytes;
@@ -116,7 +117,7 @@ public class TabletServiceCommandCheck {
     c5Server = context.mock(C5Server.class, "mockC5Server");
     discoveryModule = context.mock(DiscoveryModule.class);
     replicationModule = context.mock(ReplicationModule.class);
-    replicator = context.mock(ReplicationModule.Replicator.class);
+    replicator = context.mock(Replicator.class);
     // Reset the underlying fiber
 
 
@@ -246,17 +247,17 @@ public class TabletServiceCommandCheck {
         HRegionBridge::new);
 
     tabletRegistry.startOnDiskRegions();
-    Map<String, TabletModule.Tablet> tablets = tabletRegistry.getTablets();
+    Map<String, c5db.interfaces.tablet.Tablet> tablets = tabletRegistry.getTablets();
     assertThat(tablets.size(), is(equalTo(1)));
     assertThat(tablets.keySet().iterator().next(), startsWith(TEST_TABLE_NAME));
 
-    TabletModule.Tablet singleTablet = tablets.values().iterator().next();
-    AsyncChannelAsserts.ChannelListener<TabletModule.TabletStateChange> listener
+    c5db.interfaces.tablet.Tablet singleTablet = tablets.values().iterator().next();
+    AsyncChannelAsserts.ChannelListener<TabletStateChange> listener
         = listenTo(singleTablet.getStateChangeChannel());
 
-    TabletModule.Tablet.State state = singleTablet.getTabletState();
-    if (!state.equals(TabletModule.Tablet.State.Open)) {
-      assertEventually(listener, hasMessageWithState(TabletModule.Tablet.State.Open));
+    c5db.interfaces.tablet.Tablet.State state = singleTablet.getTabletState();
+    if (!state.equals(c5db.interfaces.tablet.Tablet.State.Open)) {
+      assertEventually(listener, hasMessageWithState(c5db.interfaces.tablet.Tablet.State.Open));
     }
   }
 }

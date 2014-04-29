@@ -23,6 +23,11 @@ import c5db.discovery.generated.Availability;
 import c5db.discovery.generated.ModuleDescriptor;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
+import c5db.interfaces.discovery.NewNodeVisible;
+import c5db.interfaces.discovery.NodeInfo;
+import c5db.interfaces.discovery.NodeInfoReply;
+import c5db.interfaces.discovery.NodeInfoRequest;
+import c5db.interfaces.server.ModuleStateChange;
 import c5db.messages.generated.ModuleType;
 import c5db.util.FiberOnly;
 import com.google.common.collect.ImmutableMap;
@@ -262,7 +267,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   }
 
   @FiberOnly
-  private void serviceChange(C5Server.ModuleStateChange message) {
+  private void serviceChange(ModuleStateChange message) {
     if (message.state == State.RUNNING) {
       LOG.debug("BeaconService adding running module {} on port {}",
           message.module.getModuleType(),
@@ -342,9 +347,9 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
             }
           }, 2, 10, TimeUnit.SECONDS);
 
-          c5Server.getModuleStateChangeChannel().subscribe(fiber, new Callback<C5Server.ModuleStateChange>() {
+          c5Server.getModuleStateChangeChannel().subscribe(fiber, new Callback<ModuleStateChange>() {
             @Override
-            public void onMessage(C5Server.ModuleStateChange message) {
+            public void onMessage(ModuleStateChange message) {
               serviceChange(message);
             }
           });

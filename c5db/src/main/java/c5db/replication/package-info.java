@@ -27,7 +27,7 @@
  * as a quorum.
  * <p>
  * ReplicatorService keeps a separate instance of the implementation of the
- * {@link c5db.interfaces.ReplicationModule.Replicator} interface for each quorum it participates in.
+ * {@link c5db.interfaces.replication.Replicator} interface for each quorum it participates in.
  * <p>
  * Each such implementation (e.g. ReplicatorInstance) is in charge of the logic and state for the replication
  * of that quorum, and that logic and state is separate from that of any other quorum supported by the same

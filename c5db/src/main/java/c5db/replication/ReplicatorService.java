@@ -24,6 +24,11 @@ import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.replication.IndexCommitNotice;
+import c5db.interfaces.discovery.NodeInfoReply;
+import c5db.interfaces.discovery.NodeInfoRequest;
+import c5db.interfaces.replication.Replicator;
+import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.Mooring;
 import c5db.messages.generated.ModuleType;
 import c5db.replication.generated.ReplicationWireMessage;
@@ -360,11 +365,11 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       connections.remove(to);
     }
 
-    DiscoveryModule.NodeInfoRequest nodeInfoRequest = new DiscoveryModule.NodeInfoRequest(to, ModuleType.Replication);
-    AsyncRequest.withOneReply(fiber, discoveryModule.getNodeInfo(), nodeInfoRequest, new Callback<DiscoveryModule.NodeInfoReply>() {
+    NodeInfoRequest nodeInfoRequest = new NodeInfoRequest(to, ModuleType.Replication);
+    AsyncRequest.withOneReply(fiber, discoveryModule.getNodeInfo(), nodeInfoRequest, new Callback<NodeInfoReply>() {
       @FiberOnly
       @Override
-      public void onMessage(DiscoveryModule.NodeInfoReply nodeInfoReply) {
+      public void onMessage(NodeInfoReply nodeInfoReply) {
         if (!nodeInfoReply.found) {
           LOG.debug("Can't find the info for the peer {}", to);
           // TODO signal TCP/transport layer failure in a better way

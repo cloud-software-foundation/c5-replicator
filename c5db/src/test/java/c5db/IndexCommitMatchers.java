@@ -17,7 +17,7 @@
 
 package c5db;
 
-import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.replication.IndexCommitNotice;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 
@@ -26,7 +26,7 @@ public class IndexCommitMatchers {
     return new IndexCommitNoticeMatcher(indexValue);
   }
 
-  public static class IndexCommitNoticeMatcher extends TypeSafeMatcher<ReplicationModule.IndexCommitNotice> {
+  public static class IndexCommitNoticeMatcher extends TypeSafeMatcher<IndexCommitNotice> {
     private final long minimumIndexValue;
 
     public IndexCommitNoticeMatcher(long minimumIndexValue) {
@@ -34,7 +34,7 @@ public class IndexCommitMatchers {
     }
 
     @Override
-    protected boolean matchesSafely(ReplicationModule.IndexCommitNotice item) {
+    protected boolean matchesSafely(IndexCommitNotice item) {
       return item.committedIndex >= minimumIndexValue;
     }
 

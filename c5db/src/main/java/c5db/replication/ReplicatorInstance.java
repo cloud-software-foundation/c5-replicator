@@ -17,7 +17,8 @@
 
 package c5db.replication;
 
-import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.replication.IndexCommitNotice;
+import c5db.interfaces.replication.Replicator;
 import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.AppendEntriesReply;
@@ -58,7 +59,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
+import c5db.interfaces.replication.ReplicatorInstanceEvent;
 
 
 /**
@@ -68,7 +69,7 @@ import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
  * A ReplicatorInstance handles the consensus and replication for a single quorum, and communicates
  * with the log package via {@link c5db.log.ReplicatorLog}.
  */
-public class ReplicatorInstance implements ReplicationModule.Replicator {
+public class ReplicatorInstance implements Replicator {
   @Override
   public String toString() {
     return "ReplicatorInstance{" +
@@ -91,7 +92,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
   private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
   private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
   private final Channel<ReplicatorInstanceEvent> stateChangeChannel;
-  private final Channel<ReplicationModule.IndexCommitNotice> commitNoticeChannel;
+  private final Channel<IndexCommitNotice> commitNoticeChannel;
 
   /**
    * ******* final fields ************
@@ -155,7 +156,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                             ReplicatorInfoPersistence persister,
                             RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
                             final Channel<ReplicatorInstanceEvent> stateChangeChannel,
-                            final Channel<ReplicationModule.IndexCommitNotice> commitNoticeChannel) {
+                            final Channel<IndexCommitNotice> commitNoticeChannel) {
     this.fiber = fiber;
     this.myId = myId;
     this.quorumId = quorumId;
@@ -212,7 +213,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
                      ReplicatorInfoPersistence persister,
                      RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
                      final Channel<ReplicatorInstanceEvent> stateChangeChannel,
-                     final Channel<ReplicationModule.IndexCommitNotice> commitNoticeChannel,
+                     final Channel<IndexCommitNotice> commitNoticeChannel,
                      long term,
                      State state,
                      long lastCommittedIndex,
@@ -988,7 +989,7 @@ public class ReplicatorInstance implements ReplicationModule.Replicator {
   }
 
   private void notifyLastCommitted() {
-    commitNoticeChannel.publish(new ReplicationModule.IndexCommitNotice(this, lastCommittedIndex));
+    commitNoticeChannel.publish(new IndexCommitNotice(this, lastCommittedIndex));
   }
 
   private void setVotedFor(long votedFor) {

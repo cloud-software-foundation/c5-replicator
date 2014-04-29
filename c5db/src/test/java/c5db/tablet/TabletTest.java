@@ -20,7 +20,8 @@ package c5db.tablet;
 import c5db.AsyncChannelAsserts;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
-import c5db.interfaces.TabletModule;
+import c5db.interfaces.replication.Replicator;
+import c5db.interfaces.tablet.TabletStateChange;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.conf.Configuration;
@@ -57,15 +58,15 @@ public class TabletTest {
     setThreadingPolicy(new Synchroniser());
   }};
 
-  private MemoryChannel<ReplicationModule.Replicator.State> channel;
+  private MemoryChannel<Replicator.State> channel;
 
   final ReplicationModule replicationModule = context.mock(ReplicationModule.class);
-  final ReplicationModule.Replicator replicator = context.mock(ReplicationModule.Replicator.class);
+  final Replicator replicator = context.mock(Replicator.class);
   final Region.Creator regionCreator = context.mock(Region.Creator.class);
   final Region region = context.mock(Region.class);
   final C5Server server = context.mock(C5Server.class);
 
-  final SettableFuture<ReplicationModule.Replicator> future = SettableFuture.create();
+  final SettableFuture<Replicator> future = SettableFuture.create();
 
   // Value objects for the test.
   final List<Long> peerList = ImmutableList.of(1L, 2L, 3L);
@@ -87,7 +88,7 @@ public class TabletTest {
       replicationModule,
       regionCreator);
 
-  AsyncChannelAsserts.ChannelListener<TabletModule.TabletStateChange> listener;
+  AsyncChannelAsserts.ChannelListener<TabletStateChange> listener;
 
   @Before
   public void setup() throws Exception {
@@ -148,14 +149,14 @@ public class TabletTest {
   @Test
   public void basicTest() throws Throwable {
     tablet.start();
-    assertEventually(listener, hasMessageWithState(TabletModule.Tablet.State.Open));
+    assertEventually(listener, hasMessageWithState(c5db.interfaces.tablet.Tablet.State.Open));
   }
 
   @Test
   public void shouldRunCallCallbackWhenTabletBecomesTheLeader() throws Throwable {
     tablet.start();
-    assertEventually(listener, hasMessageWithState(TabletModule.Tablet.State.Open));
-    channel.publish(ReplicationModule.Replicator.State.LEADER);
-    assertEventually(listener, hasMessageWithState(TabletModule.Tablet.State.Leader));
+    assertEventually(listener, hasMessageWithState(c5db.interfaces.tablet.Tablet.State.Open));
+    channel.publish(Replicator.State.LEADER);
+    assertEventually(listener, hasMessageWithState(c5db.interfaces.tablet.Tablet.State.Leader));
   }
 }

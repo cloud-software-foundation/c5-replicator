@@ -17,7 +17,7 @@
 
 package c5db.replication;
 
-import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.log.InRamLog;
 import c5db.log.ReplicatorLog;
 import c5db.replication.rpc.RpcRequest;
@@ -49,7 +49,7 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
-import static c5db.interfaces.ReplicationModule.ReplicatorInstanceEvent;
+import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -153,7 +153,7 @@ public class InRamSim {
   private final Map<Long, WireObstruction> wireObstructions = new HashMap<>();
   private final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
   final Channel<ReplicatorInstanceEvent> stateChanges = new MemoryChannel<>();
-  final Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
+  final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
   final Fiber rpcFiber;
   final List<Long> peerIds = new ArrayList<>();
   private final PoolFiberFactory fiberPool;
@@ -278,7 +278,7 @@ public class InRamSim {
     return replyChannel;
   }
 
-  public Channel<ReplicationModule.IndexCommitNotice> getCommitNotices() {
+  public Channel<IndexCommitNotice> getCommitNotices() {
     return commitNotices;
   }
 

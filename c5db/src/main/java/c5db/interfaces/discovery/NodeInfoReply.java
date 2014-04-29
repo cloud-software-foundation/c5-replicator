@@ -14,24 +14,35 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package c5db.interfaces.discovery;
 
-package c5db.interfaces;
-
-import c5db.log.Mooring;
-import c5db.log.OLog;
-import c5db.messages.generated.ModuleType;
-
-import java.io.IOException;
+import java.util.List;
 
 /**
- * The log module is responsible for running all the threads and IO for write-ahead-logging.
- * <p/>
- * The write-ahead-log is responsible for maintaining persistence in the face of node or machine
- * failure.
+ * Information about a node/module in response to a request.
  */
-@ModuleTypeBinding(ModuleType.Log)
-public interface LogModule extends C5Module {
-  public OLog getOLogInstance();
+public class NodeInfoReply {
+  /**
+   * Was the node/module information found?
+   */
+  public final boolean found;
+  public final List<String> addresses;
+  public final int port;
 
-  public Mooring getMooring(String quorumId) throws IOException;
+  public NodeInfoReply(boolean found, List<String> addresses, int port) {
+    this.found = found;
+    this.addresses = addresses;
+    this.port = port;
+  }
+
+  @Override
+  public String toString() {
+    return "NodeInfoReply{" +
+        "found=" + found +
+        ", addresses=" + addresses +
+        ", port=" + port +
+        '}';
+  }
+
+  public final static NodeInfoReply NO_REPLY = new NodeInfoReply(false, null, 0);
 }

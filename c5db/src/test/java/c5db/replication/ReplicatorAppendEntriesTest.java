@@ -17,7 +17,6 @@
 
 package c5db.replication;
 
-import c5db.interfaces.ReplicationModule;
 import c5db.log.InRamLog;
 import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
@@ -56,8 +55,9 @@ import java.util.concurrent.TimeUnit;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
-import static c5db.interfaces.ReplicationModule.IndexCommitNotice;
-import static c5db.interfaces.ReplicationModule.Replicator.State;
+
+import c5db.interfaces.replication.IndexCommitNotice;
+import static c5db.interfaces.replication.Replicator.State;
 import static c5db.log.LogTestUtil.aSeqNum;
 import static c5db.log.LogTestUtil.makeProtostuffEntry;
 import static c5db.log.LogTestUtil.someData;
@@ -264,7 +264,7 @@ public class ReplicatorAppendEntriesTest {
   }
 
 
-  private final Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
+  private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
   private final ChannelHistoryMonitor<IndexCommitNotice> commitMonitor =
       new ChannelHistoryMonitor<>(commitNotices, rpcFiber);
 

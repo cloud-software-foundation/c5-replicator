@@ -14,24 +14,27 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package c5db.interfaces.replication;
 
-package c5db.interfaces;
-
-import c5db.log.Mooring;
-import c5db.log.OLog;
-import c5db.messages.generated.ModuleType;
-
-import java.io.IOException;
+import c5db.replication.ReplicatorInstance;
 
 /**
- * The log module is responsible for running all the threads and IO for write-ahead-logging.
- * <p/>
- * The write-ahead-log is responsible for maintaining persistence in the face of node or machine
- * failure.
+ * A broadcast that indicates that a particular index has become visible.
  */
-@ModuleTypeBinding(ModuleType.Log)
-public interface LogModule extends C5Module {
-  public OLog getOLogInstance();
+public class IndexCommitNotice {
+  public final ReplicatorInstance replicatorInstance;
+  public final long committedIndex;
 
-  public Mooring getMooring(String quorumId) throws IOException;
+  public IndexCommitNotice(ReplicatorInstance replicatorInstance, long committedIndex) {
+    this.replicatorInstance = replicatorInstance;
+    this.committedIndex = committedIndex;
+  }
+
+  @Override
+  public String toString() {
+    return "IndexCommitNotice{" +
+        "replicatorInstance=" + replicatorInstance +
+        ", committedIndex=" + committedIndex +
+        '}';
+  }
 }

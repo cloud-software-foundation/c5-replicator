@@ -17,7 +17,7 @@
 
 package c5db.replication;
 
-import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.log.InRamLog;
 import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
@@ -64,7 +64,7 @@ import static c5db.AsyncChannelAsserts.ChannelListener;
 import static c5db.AsyncChannelAsserts.assertEventually;
 import static c5db.AsyncChannelAsserts.listenTo;
 import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
-import static c5db.interfaces.ReplicationModule.Replicator.State;
+import static c5db.interfaces.replication.Replicator.State;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -85,7 +85,7 @@ public class InRamLeaderTest {
   private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel = new MemoryRequestChannel<>();
   private final Map<Long, BlockingQueue<Request<RpcRequest, RpcWireReply>>> requests = new HashMap<>();
   private final Map<Long, Callback<Request<RpcRequest, RpcWireReply>>> peerBehaviorialCallbacks = new HashMap<>();
-  private final Channel<ReplicationModule.IndexCommitNotice> commitNotices = new MemoryChannel<>();
+  private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
 
   @Rule
   public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
@@ -93,7 +93,7 @@ public class InRamLeaderTest {
 
   private final ReplicatorLog log = new InRamLog();
   private final Fiber rpcFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor), "rpcFiber-Thread", true);
-  private final ChannelListener<ReplicationModule.IndexCommitNotice> commitListener = listenTo(commitNotices);
+  private final ChannelListener<IndexCommitNotice> commitListener = listenTo(commitNotices);
 
   private final MemoryChannel<Request<RpcRequest, RpcWireReply>> requestLog = new MemoryChannel<>();
   private final ChannelHistoryMonitor<Request<RpcRequest, RpcWireReply>> requestMonitor =

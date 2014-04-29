@@ -17,15 +17,15 @@
 
 package c5db.interfaces;
 
-import c5db.discovery.generated.Availability;
-import c5db.discovery.generated.ModuleDescriptor;
+import c5db.interfaces.discovery.NewNodeVisible;
+import c5db.interfaces.discovery.NodeInfo;
+import c5db.interfaces.discovery.NodeInfoReply;
+import c5db.interfaces.discovery.NodeInfoRequest;
 import c5db.messages.generated.ModuleType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.RequestChannel;
-
-import java.util.List;
 
 /**
  * The discovery module is responsible for determining who the peers in a cluster are.  It
@@ -40,95 +40,4 @@ public interface DiscoveryModule extends C5Module {
   ListenableFuture<ImmutableMap<Long, NodeInfo>> getState();
 
   Channel<NewNodeVisible> getNewNodeNotifications();
-
-  public static class NewNodeVisible {
-    public final long newNodeId;
-    public final NodeInfo nodeInfo;
-
-    @Override
-    public String toString() {
-      return "NewNodeVisible{" +
-          "newNodeId=" + newNodeId +
-          ", nodeInfo=" + nodeInfo +
-          '}';
-    }
-
-    public NewNodeVisible(long newNodeId, NodeInfo nodeInfo) {
-      this.newNodeId = newNodeId;
-      this.nodeInfo = nodeInfo;
-    }
-  }
-
-  public static class NodeInfoRequest {
-    public final long nodeId;
-    public final ModuleType moduleType;
-
-    public NodeInfoRequest(long nodeId, ModuleType moduleType) {
-      this.nodeId = nodeId;
-      this.moduleType = moduleType;
-    }
-
-    @Override
-    public String toString() {
-      return "NodeInfoRequest{" +
-          "nodeId=" + nodeId +
-          ", moduleType=" + moduleType +
-          '}';
-    }
-  }
-
-  public static class NodeInfoReply {
-    /**
-     * Was the node/module information found?
-     */
-    public final boolean found;
-    public final List<String> addresses;
-    public final int port;
-
-    public NodeInfoReply(boolean found, List<String> addresses, int port) {
-      this.found = found;
-      this.addresses = addresses;
-      this.port = port;
-    }
-
-    @Override
-    public String toString() {
-      return "NodeInfoReply{" +
-          "found=" + found +
-          ", addresses=" + addresses +
-          ", port=" + port +
-          '}';
-    }
-
-    public final static NodeInfoReply NO_REPLY = new NodeInfoReply(false, null, 0);
-  }
-
-  /**
-   * Information about a node.
-   */
-  public static class NodeInfo {
-    public final Availability availability;
-    //public final Beacon.Availability availability;
-    public final long lastContactTime;
-    public final ImmutableMap<ModuleType, Integer> modules;
-
-    public NodeInfo(Availability availability, long lastContactTime) {
-      this.availability = availability;
-      this.lastContactTime = lastContactTime;
-      ImmutableMap.Builder<ModuleType, Integer> b = ImmutableMap.builder();
-      for (ModuleDescriptor moduleDescriptor : availability.getModulesList()) {
-        b.put(moduleDescriptor.getModule(), moduleDescriptor.getModulePort());
-      }
-      modules = b.build();
-    }
-
-    public NodeInfo(Availability availability) {
-      this(availability, System.currentTimeMillis());
-    }
-
-    @Override
-    public String toString() {
-      return availability + " last contact: " + lastContactTime;
-    }
-  }
 }

@@ -22,6 +22,8 @@ import c5db.interfaces.C5Server;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
 import c5db.interfaces.server.CommandRpcRequest;
+import c5db.interfaces.tablet.Tablet;
+import c5db.interfaces.tablet.TabletStateChange;
 import c5db.messages.generated.ModuleSubCommand;
 import c5db.messages.generated.ModuleType;
 import com.google.common.collect.ImmutableMap;
@@ -60,7 +62,7 @@ public class MiniClusterBase {
   public static final byte[] value = Bytes.toBytes("value");
   public static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
   private static final Random rnd = new Random();
-  private static Channel<TabletModule.TabletStateChange> stateChanges;
+  private static Channel<TabletStateChange> stateChanges;
 
   @Rule
   public TestName name = new TestName();
@@ -95,10 +97,10 @@ public class MiniClusterBase {
 
     final CountDownLatch latch = new CountDownLatch(1);
 
-    Callback<TabletModule.TabletStateChange> onMsg = message -> {
+    Callback<TabletStateChange> onMsg = message -> {
       System.out.println(message);
-      if (message.state.equals(TabletModule.Tablet.State.Open)
-          || message.state.equals(TabletModule.Tablet.State.Leader)) {
+      if (message.state.equals(Tablet.State.Open)
+          || message.state.equals(Tablet.State.Leader)) {
         latch.countDown();
       }
     };
@@ -177,9 +179,9 @@ public class MiniClusterBase {
     // create java.util.concurrent.CountDownLatch to notify when message arrives
     final CountDownLatch latch = new CountDownLatch(2);
 
-    Callback<TabletModule.TabletStateChange> onMsg = message -> {
+    Callback<TabletStateChange> onMsg = message -> {
       System.out.println(message);
-      if (message.state.equals(TabletModule.Tablet.State.Open)) {
+      if (message.state.equals(Tablet.State.Open)) {
         latch.countDown();
       }
     };

@@ -53,8 +53,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import static c5db.interfaces.ReplicationModule.IndexCommitNotice;
-import static c5db.interfaces.ReplicationModule.Replicator.State.FOLLOWER;
+import c5db.interfaces.replication.IndexCommitNotice;
+import static c5db.interfaces.replication.Replicator.State.FOLLOWER;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
