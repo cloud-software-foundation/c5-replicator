@@ -128,7 +128,7 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
       try {
         setWhenFinished.set(task.get());
       } catch (Exception t) {
-        LOG.error("Error executing WrappingKeySerializingExecutor task: {}", t);
+        LOG.error("Error executing WrappingKeySerializingExecutor task", t);
         setWhenFinished.setException(t);
       }
     };

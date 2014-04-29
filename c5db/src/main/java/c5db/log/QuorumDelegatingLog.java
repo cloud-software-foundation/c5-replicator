@@ -210,6 +210,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   private PerQuorum getOrCreateQuorumStructure(String quorumId) {
     // The most common case, retrieving the quorum structure when it already exists,
     // doesn't incur any synchronization overhead.
+    // TODO error here if one thread retrieves from the map while another is adding to it; use immutable map?
     PerQuorum perQuorum = quorumMap.get(quorumId);
     if (perQuorum == null) {
       synchronized (quorumMap) {
