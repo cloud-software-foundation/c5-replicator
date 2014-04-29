@@ -53,7 +53,7 @@ public class QuorumDelegatingLogConcurrencyTest {
 
   @Test(timeout = 5000)
   public void isThreadSafeWithRespectToLoggingFromMultipleQuorumsWithEachQuorumItsOwnThread() throws Exception {
-    final int numThreads = 200;
+    final int numThreads = 150;
     final int numAttempts = 5;
 
     runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::runMultipleQuorumThreadSafetyTest);
@@ -62,7 +62,7 @@ public class QuorumDelegatingLogConcurrencyTest {
   @Test(timeout = 5000)
   public void isThreadSafeWithRespectToCallingCloseFromMultipleThreads() throws Exception {
     final int numThreads = 100;
-    final int numAttempts = 25;
+    final int numAttempts = 10;
 
     runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::runCloseThreadSafetyTest);
   }
