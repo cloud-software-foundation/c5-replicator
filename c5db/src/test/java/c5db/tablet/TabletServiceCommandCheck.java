@@ -243,7 +243,7 @@ public class TabletServiceCommandCheck {
         HBaseConfiguration.create(),
         fiberFactory,
         replicationModule,
-        c5db.tablet.Tablet::new,
+        ReplicatedTablet::new,
         HRegionBridge::new);
 
     tabletRegistry.startOnDiskRegions();
