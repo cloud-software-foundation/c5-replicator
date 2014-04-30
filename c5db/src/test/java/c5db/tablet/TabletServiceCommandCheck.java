@@ -69,6 +69,7 @@ import static org.hamcrest.core.StringStartsWith.startsWith;
 public class TabletServiceCommandCheck {
 
   private static final String TEST_TABLE_NAME = "testTable";
+  private static final Channel<TabletStateChange> DONT_CARE_STATE_CHANGE_CHANNEL = null;
   @Rule
   public final JUnitRuleMockery context = new JUnitRuleMockery() {{
     setThreadingPolicy(new Synchroniser());
@@ -242,6 +243,7 @@ public class TabletServiceCommandCheck {
         config,
         HBaseConfiguration.create(),
         fiberFactory,
+        new MemoryChannel<>(),
         replicationModule,
         ReplicatedTablet::new,
         HRegionBridge::new);
