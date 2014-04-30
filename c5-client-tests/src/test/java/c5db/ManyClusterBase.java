@@ -60,7 +60,7 @@ import java.util.concurrent.TimeoutException;
 
 public class ManyClusterBase {
   private static int regionServerPort;
-  private static int webserverPort;
+  private static int webServerPort;
 
   public static final byte[] value = Bytes.toBytes("value");
   public static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
@@ -165,10 +165,10 @@ public class ManyClusterBase {
     System.setProperty("clusterName", String.valueOf("foo"));
 
     regionServerPort = 8080 + rnd.nextInt(1000);
-    webserverPort = 31337 + rnd.nextInt(1000);
+    webServerPort = 31337 + rnd.nextInt(1000);
 
     System.setProperty("regionServerPort", String.valueOf(regionServerPort));
-    System.setProperty("webServerPort", String.valueOf(webserverPort));
+    System.setProperty("webServerPort", String.valueOf(webServerPort));
 
 
     server = Main.startC5Server(new String[]{});
@@ -185,9 +185,9 @@ public class ManyClusterBase {
     }
 
     regionServerPort++;
-    webserverPort++;
+    webServerPort++;
     System.setProperty("regionServerPort", String.valueOf(regionServerPort));
-    System.setProperty("webServerPort", String.valueOf(webserverPort));
+    System.setProperty("webServerPort", String.valueOf(webServerPort));
 
     server1 = Main.startC5Server(new String[]{});
     ListenableFuture<C5Module> regionServerFuture1 = server1.getModule(ModuleType.RegionServer);
@@ -203,9 +203,9 @@ public class ManyClusterBase {
     }
 
     regionServerPort++;
-    webserverPort++;
+    webServerPort++;
     System.setProperty("regionServerPort", String.valueOf(regionServerPort));
-    System.setProperty("webServerPort", String.valueOf(webserverPort));
+    System.setProperty("webServerPort", String.valueOf(webServerPort));
 
     server2= Main.startC5Server(new String[]{});
     ListenableFuture<C5Module> regionServerFuture2 = server2.getModule(ModuleType.RegionServer);
