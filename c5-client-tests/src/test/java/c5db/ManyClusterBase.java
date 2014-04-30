@@ -65,6 +65,7 @@ public class ManyClusterBase {
   public static final byte[] value = Bytes.toBytes("value");
   public static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
   private static final Random rnd = new Random();
+
   private static Channel<TabletStateChange> stateChanges;
   private static Channel<TabletStateChange> stateChanges1;
   private static Channel<TabletStateChange> stateChanges2;
