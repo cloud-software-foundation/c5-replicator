@@ -37,6 +37,7 @@ enum ModuleType {
     EventLog = 7;
     // Web Management
     WebAdmin = 8;
+    ControlRpc = 9;
 }
 
 message StartModule {
