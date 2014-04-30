@@ -31,9 +31,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.jetlang.channels.Channel;
 import org.jetlang.core.Callback;
@@ -69,13 +72,14 @@ public class ManyClusterBase {
   private static Channel<TabletStateChange> stateChanges;
   private static Channel<TabletStateChange> stateChanges1;
   private static Channel<TabletStateChange> stateChanges2;
+  private static Channel<CommandRpcRequest<?>> commandChannel;
 
 
   @Rule
   public TestName name = new TestName();
   public C5Table table;
   public byte[] row;
-
+  static int metaOnPort;
   public static int getRegionServerPort() {
     return regionServerPort;
   }
@@ -114,11 +118,10 @@ public class ManyClusterBase {
       }
     };
     stateChanges.subscribe(receiver, onMsg);
-
+    stateChanges1.subscribe(receiver, onMsg);
+    stateChanges2.subscribe(receiver, onMsg);
 
     final ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
-    Channel<CommandRpcRequest<?>> commandChannel = server.getCommandChannel();
-
     ModuleSubCommand createTableSubCommand = new ModuleSubCommand(ModuleType.Tablet,
         getCreateTabletSubCommand(tableName));
     CommandRpcRequest<ModuleSubCommand> createTableCommand = new CommandRpcRequest<>(server.getNodeId(),
@@ -231,25 +234,62 @@ public class ManyClusterBase {
     // create java.util.concurrent.CountDownLatch to notify when message arrives
     final CountDownLatch latch = new CountDownLatch(2);
 
-    Callback<TabletStateChange> onMsg = message -> {
+    Callback<TabletStateChange> onMsg1 = message -> {
       System.out.println(message);
       if (message.state.equals(Tablet.State.Leader)) {
+        System.out.println("Found: " + message.tablet.getRegionInfo().getRegionNameAsString());
+        if (message.tablet.getRegionInfo().getRegionNameAsString().startsWith("hbase:meta")) {
+          metaOnPort = regionServerPort - 2;
+          commandChannel = server.getCommandChannel();
+        }
         latch.countDown();
       }
     };
 
-    stateChanges.subscribe(receiver, onMsg);
-    stateChanges1.subscribe(receiver, onMsg);
-    stateChanges2.subscribe(receiver, onMsg);
+    Callback<TabletStateChange> onMsg2 = message -> {
+      System.out.println(message);
+      if (message.state.equals(Tablet.State.Leader)) {
+        System.out.println("Found: " + message.tablet.getRegionInfo().getRegionNameAsString());
+        if (message.tablet.getRegionInfo().getRegionNameAsString().startsWith("hbase:meta")) {
+          metaOnPort = regionServerPort - 1;
+          commandChannel = server1.getCommandChannel();
+        }
+        latch.countDown();
+      }
+    };
+
+    Callback<TabletStateChange> onMsg3 = message -> {
+      System.out.println(message);
+      if (message.state.equals(Tablet.State.Leader)) {
+        System.out.println("Found: " + message.tablet.getRegionInfo().getRegionNameAsString());
+        if (message.tablet.getRegionInfo().getRegionNameAsString().startsWith("hbase:meta")) {
+          metaOnPort = regionServerPort;
+          commandChannel = server2.getCommandChannel();
+        }
+        latch.countDown();
+      }
+    };
+
+    stateChanges.subscribe(receiver, onMsg1);
+    stateChanges1.subscribe(receiver, onMsg2);
+    stateChanges2.subscribe(receiver, onMsg3);
 
     latch.await();
     receiver.dispose();
   }
 
   @Test
-  public void manyClusterBootStrap() throws InterruptedException {
-    System.out.println("start");
-    Thread.sleep(10000);
-    System.out.println("end");
+  public void manyClusterBootStrap() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+
+
+    ByteString tableName = ByteString.copyFrom(Bytes.toBytes("hbase:meta"));
+    C5Table c5Table = new C5Table(tableName, metaOnPort);
+    ResultScanner scanner = c5Table.getScanner(HConstants.CATALOG_FAMILY);
+
+    Result result;
+    do {
+      result = scanner.next();
+      System.out.println(result);
+    } while(result != null);
   }
 }
