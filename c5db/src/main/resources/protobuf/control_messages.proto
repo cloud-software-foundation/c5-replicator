@@ -62,3 +62,9 @@ message CommandReply {
     optional string command_stdout = 2;
     optional string command_stderr = 3;
 }
+
+message ControlWireMessage {
+  optional int64 receipientNodeId = 1;
+  optional string subType = 2;
+  optional bytes subMessage = 3;
+}
