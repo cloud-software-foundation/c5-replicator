@@ -85,20 +85,24 @@ public class TestFlush extends MiniClusterBase {
     tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
 
     int port = getRegionServerPort();
-    C5Table table = new C5Table(tableName, port);
+    try(C5Table table = new C5Table(tableName, port)) {
 
-    long start = System.currentTimeMillis();
+      long start = System.currentTimeMillis();
 
-    int numberOfBatches = 1;
-    int batchSize = 1024;
+      int numberOfBatches = 256;
+      int batchSize = 1;
 
-    compareToHBasePut(table,
-        Bytes.toBytes("cf"),
-        Bytes.toBytes("cq"),
-        randomBytes,
-        numberOfBatches,
-        batchSize);
-    long end = System.currentTimeMillis();
-    System.out.println("time:" + (end - start));
+      compareToHBasePut(table,
+          Bytes.toBytes("cf"),
+          Bytes.toBytes("cq"),
+          randomBytes,
+          numberOfBatches,
+          batchSize);
+      long end = System.currentTimeMillis();
+      System.out.println("time:" + (end - start));
+    } finally {
+      table.close();
+    }
+
   }
 }

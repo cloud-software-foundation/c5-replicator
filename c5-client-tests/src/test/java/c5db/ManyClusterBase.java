@@ -79,6 +79,8 @@ public class ManyClusterBase {
   public TestName name = new TestName();
   private C5Table table;
   private static int metaOnPort;
+  private byte[] row;
+
   private static int getRegionServerPort() {
     return regionServerPort;
   }

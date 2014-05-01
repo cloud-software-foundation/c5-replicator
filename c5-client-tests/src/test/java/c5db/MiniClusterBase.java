@@ -39,7 +39,9 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestName;
 import org.mortbay.log.Log;
 
@@ -53,6 +55,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class MiniClusterBase {
+
+  @ClassRule
+  public static TemporaryFolder testFolder = new TemporaryFolder();
+
   private static int regionServerPort;
   public static final byte[] value = Bytes.toBytes("value");
   public static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
@@ -79,8 +85,7 @@ public class MiniClusterBase {
 
     Callback<TabletStateChange> onMsg = message -> {
       System.out.println(message);
-      if (message.state.equals(Tablet.State.Open)
-          || message.state.equals(Tablet.State.Leader)) {
+      if (message.state.equals(Tablet.State.Open) || message.state.equals(Tablet.State.Leader)) {
         latch.countDown();
       }
     };
@@ -135,6 +140,7 @@ public class MiniClusterBase {
   public static void beforeClass() throws Exception {
     Log.warn("-----------------------------------------------------------------------------------------------------------");
 
+    System.setProperty(C5ServerConstants.C5_CFG_PATH, testFolder.getRoot().getAbsolutePath());
 
     regionServerPort = 8080 + rnd.nextInt(1000);
 
