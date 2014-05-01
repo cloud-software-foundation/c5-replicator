@@ -61,6 +61,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
+
 public class ManyClusterBase {
   private static int regionServerPort;
   private static int webServerPort;
@@ -287,9 +290,13 @@ public class ManyClusterBase {
     ResultScanner scanner = c5Table.getScanner(HConstants.CATALOG_FAMILY);
 
     Result result;
+    int counter = 0;
     do {
       result = scanner.next();
       System.out.println(result);
+      counter++;
     } while(result != null);
+
+    assertThat(counter, is(1));
   }
 }

@@ -30,10 +30,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.protostuff.ByteString;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HRegionInfo;
-import org.apache.hadoop.hbase.HTableDescriptor;
-import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.jetlang.channels.Channel;
 import org.jetlang.core.Callback;
@@ -46,7 +42,6 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.mortbay.log.Log;
-import sun.misc.BASE64Encoder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -75,21 +70,6 @@ public class MiniClusterBase {
 
   private static C5Server server;
 
-  String getCreateTabletSubCommand(ByteString tableNameBytes) {
-    TableName tableName = TableName.valueOf(tableNameBytes.toByteArray());
-    HTableDescriptor testDesc = new HTableDescriptor(tableName);
-    testDesc.addFamily(new HColumnDescriptor("cf"));
-    HRegionInfo testRegion = new HRegionInfo(tableName, new byte[]{0}, new byte[]{}, false, 1);
-    String peerString = String.valueOf(server.getNodeId());
-    BASE64Encoder encoder = new BASE64Encoder();
-
-    String hTableDesc = encoder.encodeBuffer(testDesc.toByteArray());
-    String hRegionInfo = encoder.encodeBuffer(testRegion.toByteArray());
-
-    return C5ServerConstants.CREATE_TABLE + ":" + hTableDesc + "," + hRegionInfo + "," + peerString;
-
-  }
-
   @Before
   public void before() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     Fiber receiver = new ThreadFiber();
@@ -111,7 +91,7 @@ public class MiniClusterBase {
     Channel<CommandRpcRequest<?>> commandChannel = server.getCommandChannel();
 
     ModuleSubCommand createTableSubCommand = new ModuleSubCommand(ModuleType.Tablet,
-        getCreateTabletSubCommand(tableName));
+        TestHelpers.getCreateTabletSubCommand(tableName, server.getNodeId()));
     CommandRpcRequest<ModuleSubCommand> createTableCommand = new CommandRpcRequest<>(server.getNodeId(),
         createTableSubCommand);
 
