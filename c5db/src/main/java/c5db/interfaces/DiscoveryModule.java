@@ -37,6 +37,8 @@ import org.jetlang.channels.RequestChannel;
 public interface DiscoveryModule extends C5Module {
   RequestChannel<NodeInfoRequest, NodeInfoReply> getNodeInfo();
 
+  ListenableFuture<NodeInfoReply> getNodeInfo(long nodeId, ModuleType module);
+
   ListenableFuture<ImmutableMap<Long, NodeInfo>> getState();
 
   Channel<NewNodeVisible> getNewNodeNotifications();

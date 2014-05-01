@@ -121,6 +121,26 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     return nodeInfoRequests;
   }
 
+  @Override
+  public ListenableFuture<NodeInfoReply> getNodeInfo(long nodeId, ModuleType module) {
+    SettableFuture<NodeInfoReply> future = SettableFuture.create();
+    fiber.execute(() -> {
+      NodeInfo peer = peers.get(nodeId);
+      if (peer == null) {
+        future.set(NodeInfoReply.NO_REPLY);
+      } else {
+        Integer servicePort = peer.modules.get(module);
+        if (servicePort == null) {
+          future.set(NodeInfoReply.NO_REPLY);
+        } else {
+          List<String> peerAddrs = peer.availability.getAddressesList();
+          future.set(new NodeInfoReply(true, peerAddrs, servicePort));
+        }
+      }
+    });
+    return future;
+  }
+
   @FiberOnly
   private void handleNodeInfoRequest(Request<NodeInfoRequest, NodeInfoReply> message) {
     NodeInfoRequest req = message.getRequest();
