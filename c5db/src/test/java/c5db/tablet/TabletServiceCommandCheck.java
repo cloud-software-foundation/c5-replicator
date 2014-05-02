@@ -23,6 +23,7 @@ import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.replication.Replicator;
+import c5db.interfaces.tablet.Tablet;
 import c5db.interfaces.tablet.TabletStateChange;
 import c5db.messages.generated.ModuleType;
 import c5db.util.C5FiberFactory;
@@ -36,6 +37,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
@@ -168,7 +170,7 @@ public class TabletServiceCommandCheck {
     HTableDescriptor testDesc = new HTableDescriptor(tableName);
     testDesc.addFamily(new HColumnDescriptor("testFamily"));
     HRegionInfo testRegion = new HRegionInfo(tableName, new byte[]{0}, new byte[]{}, false, 1);
-    String peerString = "1, 2, 3";
+    String peerString = "1";
     BASE64Encoder encoder = new BASE64Encoder();
     tabletDescBytes = testDesc.toByteArray();
     String hTableDesc = encoder.encodeBuffer(tabletDescBytes);
@@ -208,6 +210,22 @@ public class TabletServiceCommandCheck {
       }
     });
 
+    Tablet metaTablet = context.mock(Tablet.class);
+    Region metaRegion = context.mock(Region.class);
+    context.checking(new Expectations(){
+      {
+        oneOf(metaTablet).getRegion();
+        will(returnValue(metaRegion));
+
+      }
+    });
+    tabletService.tabletRegistry.getTablets().put("hbase:meta,fake", metaTablet );
+    context.checking(new Expectations(){
+      {
+        oneOf(metaRegion).put(with(any(Put.class)));
+      }
+    });
+
     tabletService.acceptCommand(createTableString());
 
     context.checking(new Expectations() {
@@ -233,7 +251,6 @@ public class TabletServiceCommandCheck {
         oneOf(config).readPeers(with(any(String.class)));
         will(returnValue(Arrays.asList(1l)));
 
-
         allowing(config).configuredQuorums();
 
       }
@@ -247,9 +264,9 @@ public class TabletServiceCommandCheck {
         replicationModule,
         ReplicatedTablet::new,
         HRegionBridge::new);
-
     tabletRegistry.startOnDiskRegions();
     Map<String, c5db.interfaces.tablet.Tablet> tablets = tabletRegistry.getTablets();
+
     assertThat(tablets.size(), is(equalTo(1)));
     assertThat(tablets.keySet().iterator().next(), startsWith(TEST_TABLE_NAME));
 

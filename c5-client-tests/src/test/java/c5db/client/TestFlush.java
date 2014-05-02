@@ -31,75 +31,31 @@ import java.util.concurrent.TimeoutException;
 public class TestFlush extends MiniClusterBase {
 
 
-  Random random = new Random();
-  private byte[] randomBytes = new byte[1024 * 1024];
-
-  {
-    random.nextBytes(randomBytes);
-  }
-
-  private static ByteString tableName;
-
-  public TestFlush() throws IOException, InterruptedException {
-  }
-
-
-  public static void compareToHBasePut(final TableInterface table,
-                                       final byte[] cf,
-                                       final byte[] cq,
-                                       final byte[] value,
-                                       final int numberOfBatches,
-                                       final int batchSize)
-      throws IOException {
-    ArrayList<Put> puts = new ArrayList<>();
-
-    long startTime = System.nanoTime();
-    for (int j = 1; j != numberOfBatches + 1; j++) {
-      puts.clear();
-      for (int i = 1; i != batchSize + 1; i++) {
-        puts.add(new Put(Bytes.vintToBytes(i * j)).add(cf, cq, value));
-      }
-
-      int i = 0;
-      for (Put put : puts) {
-        i++;
-        if (i % 1024 == 0) {
-          long timeDiff = (System.nanoTime()) - startTime;
-          System.out.print("#(" + timeDiff + ")");
-          System.out.flush();
-          startTime = System.nanoTime();
-        }
-        if (i % (1024 * 80) == 0) {
-          System.out.println("");
-        }
-        table.put(put);
-      }
-
-      puts.clear();
-    }
-  }
-
   @Test
-  public void testPopulator() throws IOException, InterruptedException, TimeoutException, ExecutionException {
-    TestFlush populator = new TestFlush();
-    tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
+  public void testFlush() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+
+    Random random = new Random();
+    byte[] randomBytes = new byte[1024 * 1024];
+    random.nextBytes(randomBytes);
+    byte[] cf = Bytes.toBytes("cf");
+    byte[] cq = Bytes.toBytes("cq");
+
+    ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
 
     int port = getRegionServerPort();
-    try(C5Table table = new C5Table(tableName, port)) {
+    try (C5Table table = new C5Table(tableName, port)) {
+      ArrayList<Put> puts = new ArrayList<>();
+      for (int j = 1; j != 24; j++) {
+        for (int i = 1; i != 12; i++) {
+          puts.add(new Put(Bytes.vintToBytes(i * j)).add(cf, cq, randomBytes));
+        }
 
-      long start = System.currentTimeMillis();
+        for (Put put : puts) {
+          table.put(put);
+        }
 
-      int numberOfBatches = 256;
-      int batchSize = 1;
-
-      compareToHBasePut(table,
-          Bytes.toBytes("cf"),
-          Bytes.toBytes("cq"),
-          randomBytes,
-          numberOfBatches,
-          batchSize);
-      long end = System.currentTimeMillis();
-      System.out.println("time:" + (end - start));
+        puts.clear();
+      }
     } finally {
       table.close();
     }

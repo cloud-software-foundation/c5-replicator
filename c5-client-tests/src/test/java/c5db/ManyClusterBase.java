@@ -31,12 +31,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.jetlang.channels.Channel;
 import org.jetlang.core.Callback;
@@ -47,7 +44,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.TestName;
 import org.mortbay.log.Log;
 import sun.misc.BASE64Encoder;
@@ -60,9 +56,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class ManyClusterBase {
   private static int regionServerPort;
@@ -78,8 +71,7 @@ public class ManyClusterBase {
   @Rule
   public TestName name = new TestName();
   private C5Table table;
-  private static int metaOnPort;
-  private byte[] row;
+  public static int metaOnPort;
 
   private static int getRegionServerPort() {
     return regionServerPort;
@@ -125,15 +117,14 @@ public class ManyClusterBase {
     final ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
     ModuleSubCommand createTableSubCommand = new ModuleSubCommand(ModuleType.Tablet,
         getCreateTabletSubCommand(tableName));
-    CommandRpcRequest<ModuleSubCommand> createTableCommand = new CommandRpcRequest<>(server.getNodeId(),
-        createTableSubCommand);
 
-    commandChannel.publish(createTableCommand);
+    commandChannel.publish(new CommandRpcRequest<>(server.getNodeId(), createTableSubCommand));
+    commandChannel.publish(new CommandRpcRequest<>(server1.getNodeId(), createTableSubCommand));
+    commandChannel.publish(new CommandRpcRequest<>(server2.getNodeId(), createTableSubCommand));
     // create java.util.concurrent.CountDownLatch to notify when message arrives
     latch.await();
 
     table = new C5Table(tableName, getRegionServerPort());
-    row = Bytes.toBytes(name.getMethodName());
     receiver.dispose();
   }
 
@@ -162,6 +153,8 @@ public class ManyClusterBase {
     }
 
     server.stopAndWait();
+    server1.stopAndWait();
+    server2.stopAndWait();
   }
 
   @BeforeClass
@@ -174,9 +167,14 @@ public class ManyClusterBase {
 
     System.setProperty("regionServerPort", String.valueOf(regionServerPort));
     System.setProperty("webServerPort", String.valueOf(webServerPort));
-
-
     server = Main.startC5Server(new String[]{});
+    System.setProperty("regionServerPort", String.valueOf(++regionServerPort));
+    System.setProperty("webServerPort", String.valueOf(++webServerPort));
+    server1 = Main.startC5Server(new String[]{});
+    System.setProperty("regionServerPort", String.valueOf(++regionServerPort));
+    System.setProperty("webServerPort", String.valueOf(++webServerPort));
+    server2 = Main.startC5Server(new String[]{});
+
     ListenableFuture<C5Module> regionServerFuture = server.getModule(ModuleType.RegionServer);
     ListenableFuture<C5Module> tabletServerFuture = server.getModule(ModuleType.Tablet);
     ListenableFuture<C5Module> replicationServerFuture = server.getModule(ModuleType.Replication);
@@ -189,12 +187,6 @@ public class ManyClusterBase {
       Thread.sleep(600);
     }
 
-    regionServerPort++;
-    webServerPort++;
-    System.setProperty("regionServerPort", String.valueOf(regionServerPort));
-    System.setProperty("webServerPort", String.valueOf(webServerPort));
-
-    server1 = Main.startC5Server(new String[]{});
     ListenableFuture<C5Module> regionServerFuture1 = server1.getModule(ModuleType.RegionServer);
     ListenableFuture<C5Module> tabletServerFuture1 = server1.getModule(ModuleType.Tablet);
     ListenableFuture<C5Module> replicationServerFuture1 = server1.getModule(ModuleType.Replication);
@@ -207,12 +199,6 @@ public class ManyClusterBase {
       Thread.sleep(600);
     }
 
-    regionServerPort++;
-    webServerPort++;
-    System.setProperty("regionServerPort", String.valueOf(regionServerPort));
-    System.setProperty("webServerPort", String.valueOf(webServerPort));
-
-    server2= Main.startC5Server(new String[]{});
     ListenableFuture<C5Module> regionServerFuture2 = server2.getModule(ModuleType.RegionServer);
     ListenableFuture<C5Module> tabletServerFuture2 = server2.getModule(ModuleType.Tablet);
     ListenableFuture<C5Module> replicationServerFuture2 = server2.getModule(ModuleType.Replication);
@@ -277,24 +263,7 @@ public class ManyClusterBase {
 
     latch.await();
     receiver.dispose();
+
   }
 
-  @Test
-  public void manyClusterBootStrap() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-
-
-    ByteString tableName = ByteString.copyFrom(Bytes.toBytes("hbase:meta"));
-    C5Table c5Table = new C5Table(tableName, metaOnPort);
-    ResultScanner scanner = c5Table.getScanner(HConstants.CATALOG_FAMILY);
-
-    Result result;
-    int counter = 0;
-    do {
-      result = scanner.next();
-      System.out.println(result);
-      counter++;
-    } while(result != null);
-
-    assertThat(counter, is(1));
-  }
 }
