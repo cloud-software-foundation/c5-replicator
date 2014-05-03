@@ -57,6 +57,7 @@ import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.AsyncChannelAsserts.ChannelListener;
 import static c5db.AsyncChannelAsserts.listenTo;
 import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
+import static c5db.RpcMatchers.RequestMatcher;
 import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
 import static c5db.interfaces.replication.Replicator.State;
 import static c5db.log.LogTestUtil.seqNum;
@@ -94,6 +95,7 @@ public class ReplicatorLeaderTest {
   private final ReplicatorLog log = new InRamLog();
 
   private ReplicatorInstance replicatorInstance;
+  private long lastIndex;
 
   @Before
   public final void createLeaderAndSetupFibersAndChannels() {
@@ -148,7 +150,7 @@ public class ReplicatorLeaderTest {
 
   @Test
   public void willFindTheLastEntryItHasInCommonWithAPeerAndSendTheNextEntryInSequence() throws Throwable {
-    final long firstEntryIndexSent = lastIndex + 1;
+    final long firstEntryIndexSent = lastIndexLogged() + 1;
     final long lastEntryIndexSent = 5;
 
     peer(3).willReplyToAllRequestsWith(true);
@@ -208,6 +210,41 @@ public class ReplicatorLeaderTest {
     expectLeaderToCommitUpToIndex(firstRequest.lastEntryIndex());
   }
 
+  @Test
+  public void decrementsTheNextIndexOfAPeerWhenThePeerRepliesFalseWithANextIndexOfZero() throws Throwable {
+    final long maxIndexLogged = 5;
+
+    leader().logDataUpToIndex(maxIndexLogged);
+
+    final SentRequest problematicRequest = waitUntilLeaderSends(aRequestToPeer(2).withLogIndex(maxIndexLogged));
+    ignoringRequestsTheLeaderHasAlreadySent();
+
+    replyTo(problematicRequest, false, 0);
+    expectLeaderToSend(aRequestToPeer(2)
+        .withLogIndex(maxIndexLogged - 1)
+        .withPrevLogIndex(equalTo(maxIndexLogged - 2)));
+  }
+
+  @Test
+  public void sendsTheRequestedNextEntryWhenThePeerRepliesFalseWithANonzeroNextIndex() throws Throwable {
+    final long maxIndexLogged = 5;
+    final long nextIndexPeerRepliesWith = 3;
+
+    leader().logDataUpToIndex(maxIndexLogged);
+
+    final SentRequest problematicRequest = waitUntilLeaderSends(aRequestToPeer(2).withLogIndex(maxIndexLogged));
+    ignoringRequestsTheLeaderHasAlreadySent();
+
+    replyTo(problematicRequest, false, nextIndexPeerRepliesWith);
+    expectLeaderToSend(aRequestToPeer(2)
+        .withLogIndex(nextIndexPeerRepliesWith)
+        .withPrevLogIndex(equalTo(nextIndexPeerRepliesWith - 1)));
+  }
+
+
+  private long lastIndexLogged() {
+    return lastIndex;
+  }
 
   /**
    * Either route an outbound request to a callback, or queue it, depending on destination peer
@@ -249,15 +286,15 @@ public class ReplicatorLeaderTest {
       this.peerId = peerId;
     }
 
-    public Matcher<Request<RpcRequest, RpcWireReply>> withLastEntryLogged() {
+    public RequestMatcher withLastEntryLogged() {
       return withLogIndex(lastIndex);
     }
 
-    public Matcher<Request<RpcRequest, RpcWireReply>> withLogIndex(long index) {
+    public RequestMatcher withLogIndex(long index) {
       return anAppendRequest().to(peerId).containingEntryIndex(index);
     }
 
-    public Matcher<Request<RpcRequest, RpcWireReply>> withPrevLogIndex(long index) {
+    public RequestMatcher withPrevLogIndex(long index) {
       return anAppendRequest().to(peerId).withPrevLogIndex(equalTo(index));
     }
   }
@@ -274,14 +311,14 @@ public class ReplicatorLeaderTest {
     }
 
     public void willReplyToAllRequestsWith(boolean success) {
-      createRequestRule(peerId, (request) -> sendAppendEntriesReply(request, success));
+      createRequestRule(peerId, (request) -> sendAppendEntriesReply(request, success, 0));
     }
 
     public void willReplyToAllRequestsFromNowOnWith(boolean success) {
       if (requests.containsKey(peerId)) {
         requests.get(peerId).clear();
       }
-      createRequestRule(peerId, (request) -> sendAppendEntriesReply(request, success));
+      createRequestRule(peerId, (request) -> sendAppendEntriesReply(request, success, 0));
     }
 
     public void willIgnoreAllRequests() {
@@ -294,7 +331,6 @@ public class ReplicatorLeaderTest {
     return new LeaderController();
   }
 
-  private long lastIndex;
 
   private class LeaderController {
     private LeaderController logSomeData() throws Exception {
@@ -337,7 +373,11 @@ public class ReplicatorLeaderTest {
     }
 
     public void thenPeerWillReply(boolean success) {
-      sendAppendEntriesReply(request, success);
+      thenPeerWillReply(success, 0);
+    }
+
+    public void thenPeerWillReply(boolean success, long myNextIndex) {
+      sendAppendEntriesReply(request, success, myNextIndex);
     }
 
     public long lastEntryIndex() {
@@ -353,16 +393,22 @@ public class ReplicatorLeaderTest {
   /**
    * Reply true or false to a single AppendEntries request
    */
-  private void sendAppendEntriesReply(Request<RpcRequest, RpcWireReply> request, boolean trueIsSuccessFlag) {
+  private void sendAppendEntriesReply(Request<RpcRequest, RpcWireReply> request,
+                                      boolean trueIsSuccessFlag,
+                                      long myNextIndex) {
     RpcRequest message = request.getRequest();
     long termFromMessage = message.getAppendMessage().getTerm();
     RpcWireReply reply = new RpcWireReply(message.to, QUORUM_ID,
-        new AppendEntriesReply(termFromMessage, trueIsSuccessFlag, 0));
+        new AppendEntriesReply(termFromMessage, trueIsSuccessFlag, myNextIndex));
     request.reply(reply);
   }
 
   private void replyTo(SentRequest sentRequest, boolean success) {
-    sentRequest.thenPeerWillReply(success);
+    replyTo(sentRequest, success, 0);
+  }
+
+  private void replyTo(SentRequest sentRequest, boolean success, long myNextLogIndex) {
+    sentRequest.thenPeerWillReply(success, myNextLogIndex);
   }
 
   private void expectLeaderToCommitUpToIndex(long index) {

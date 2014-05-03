@@ -19,6 +19,7 @@ package c5db;
 
 import c5db.replication.QuorumConfiguration;
 import c5db.replication.generated.LogEntry;
+import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import org.hamcrest.Description;
@@ -54,7 +55,7 @@ public class RpcMatchers {
       return new RequestMatcher().addCriterion(
           RpcMatchers::isAnAppendEntriesRequest,
           (description) -> description
-              .appendText("an AppendEntries request "));
+              .appendText("an AppendEntries request"));
     }
 
     public RequestMatcher from(long peerId) {
@@ -119,11 +120,60 @@ public class RpcMatchers {
     }
   }
 
+  public static class ReplyMatcher extends TypeSafeMatcher<RpcReply> {
+    private final List<Predicate<RpcReply>> predicates = new ArrayList<>();
+    private final List<Consumer<Description>> describers = new ArrayList<>();
+
+    @Override
+    protected boolean matchesSafely(RpcReply item) {
+      return predicates.stream().allMatch((predicate) -> predicate.test(item));
+    }
+
+    @Override
+    public void describeTo(Description description) {
+      describers.forEach((describer) -> describer.accept(description));
+    }
+
+    public static ReplyMatcher anAppendReply() {
+      return new ReplyMatcher().addCriterion(
+          RpcMatchers::isAnAppendEntriesReply,
+          (description) -> description
+              .appendText("an AppendEntries reply"));
+    }
+
+    public ReplyMatcher withResult(boolean success) {
+      return addCriterion(
+          (reply) ->
+              reply.getAppendReplyMessage().getSuccess() == success,
+          (description) ->
+              description.appendText(" with result ").appendValue(success));
+    }
+
+    public ReplyMatcher withNextLogIndex(Matcher<Long> indexMatcher) {
+      return addCriterion(
+          (reply) ->
+              indexMatcher.matches(reply.getAppendReplyMessage().getMyNextLogEntry()),
+          (description) ->
+              description.appendText(" with 'myNextLogEntry' ").appendDescriptionOf(indexMatcher));
+    }
+
+    private ReplyMatcher addCriterion(Predicate<RpcReply> predicate,
+                                      Consumer<Description> describer) {
+      predicates.add(predicate);
+      describers.add(describer);
+      return this;
+    }
+  }
+
   private static boolean isAnAppendEntriesRequest(Request<RpcRequest, RpcWireReply> request) {
     return request.getRequest().getAppendMessage() != null;
   }
 
   private static List<LogEntry> entryList(Request<RpcRequest, RpcWireReply> request) {
     return request.getRequest().getAppendMessage().getEntriesList();
+  }
+
+  private static boolean isAnAppendEntriesReply(RpcReply reply) {
+    return reply.getAppendReplyMessage() != null;
   }
 }

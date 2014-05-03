@@ -82,5 +82,5 @@ message AppendEntriesReply {
     optional uint64 term = 1;
     optional bool  success = 2;
 
-    optional int64 my_last_log_entry = 3;
+    optional int64 my_next_log_entry = 3;
 }

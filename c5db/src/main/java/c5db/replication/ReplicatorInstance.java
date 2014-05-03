@@ -519,7 +519,7 @@ public class ReplicatorInstance implements Replicator {
     long msgPrevLogIndex = appendMessage.getPrevLogIndex();
     long msgPrevLogTerm = appendMessage.getPrevLogTerm();
     if (msgPrevLogIndex != 0 && log.getLogTerm(msgPrevLogIndex) != msgPrevLogTerm) {
-      AppendEntriesReply m = new AppendEntriesReply(currentTerm, false, log.getLastIndex());
+      AppendEntriesReply m = new AppendEntriesReply(currentTerm, false, log.getLastIndex() + 1);
       RpcReply reply = new RpcReply(m);
       request.reply(reply);
       return;
@@ -1050,8 +1050,8 @@ public class ReplicatorInstance implements Replicator {
       boolean wasSuccessful = message.getAppendReplyMessage().getSuccess();
       if (!wasSuccessful) {
         // This is per Page 7, paragraph 5.  "After a rejection, the leader decrements nextIndex and retries"
-        if (message.getAppendReplyMessage().getMyLastLogEntry() != 0) {
-          peersNextIndex.put(peer, message.getAppendReplyMessage().getMyLastLogEntry());
+        if (message.getAppendReplyMessage().getMyNextLogEntry() != 0) {
+          peersNextIndex.put(peer, message.getAppendReplyMessage().getMyNextLogEntry());
         } else {
           peersNextIndex.put(peer, Math.max(peerNextIdx - 1, 1));
         }

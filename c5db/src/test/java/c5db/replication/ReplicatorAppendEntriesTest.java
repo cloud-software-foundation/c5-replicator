@@ -29,9 +29,6 @@ import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
@@ -57,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
+import static c5db.RpcMatchers.ReplyMatcher.anAppendReply;
 import static c5db.interfaces.replication.Replicator.State;
 import static c5db.log.LogTestUtil.aSeqNum;
 import static c5db.log.LogTestUtil.makeProtostuffEntry;
@@ -132,7 +130,7 @@ public class ReplicatorAppendEntriesTest {
             .withAnOldTerm()
             .withNoEntries());
 
-    assertThat(reply(), is(anAppendEntriesReplyWithResult(false)));
+    assertThat(reply(), is(anAppendReply().withResult(false)));
   }
 
   @Test
@@ -142,7 +140,7 @@ public class ReplicatorAppendEntriesTest {
             .withAnOldTerm()
             .withEntry(aLogEntry()));
 
-    assertThat(reply(), is(anAppendEntriesReplyWithResult(false)));
+    assertThat(reply(), is(anAppendReply().withResult(false)));
   }
 
   @Test
@@ -158,7 +156,7 @@ public class ReplicatorAppendEntriesTest {
             .withPrevLogTerm(termInMessage).withPrevLogIndex(1)
             .withEntries(entries().term(termInMessage).indexes(2, 3)));
 
-    assertThat(reply(), is(anAppendEntriesReplyWithResult(false)));
+    assertThat(reply(), is(anAppendReply().withResult(false)));
   }
 
   @Test
@@ -168,7 +166,26 @@ public class ReplicatorAppendEntriesTest {
             .withPrevLogTerm(4).withPrevLogIndex(1)
             .withEntry(aLogEntry()));
 
-    assertThat(reply(), is(anAppendEntriesReplyWithResult(false)));
+    assertThat(reply(), is(anAppendReply().withResult(false)));
+  }
+
+  @Test
+  public void willReplyWithItsNextLogEntryIfItReceivesAnAppendRequestThatConflictsWithItsLog() throws Exception {
+    final long termInLog = 3;
+    final long termInMessage = 4;
+
+    havingLogged(
+        entries().term(termInLog).indexes(1, 2, 3));
+
+    havingReceived(
+        anAppendEntriesRequest()
+            .withPrevLogTerm(termInMessage).withPrevLogIndex(10)
+            .withEntries(entries().term(termInMessage).indexes(11, 12)));
+
+    assertThat(reply(), is(
+        anAppendReply()
+            .withResult(false).withNextLogIndex(equalTo(4L))
+    ));
   }
 
   @Test
@@ -183,7 +200,7 @@ public class ReplicatorAppendEntriesTest {
         anAppendEntriesRequest()
             .withANewerTerm(newerTerm));
 
-    assertThat(reply(), is(anAppendEntriesReplyWithResult(true)));
+    assertThat(reply(), is(anAppendReply().withResult(true)));
     assertThat(repl.currentTerm, is(equalTo(newerTerm)));
   }
 
@@ -206,7 +223,7 @@ public class ReplicatorAppendEntriesTest {
             .withPrevLogTerm(prevLogTerm).withPrevLogIndex(prevLogIndex)
             .withEntries(receivedEntries));
 
-    assertThat(reply(), is(anAppendEntriesReplyWithResult(true)));
+    assertThat(reply(), is(anAppendReply().withResult(true)));
   }
 
   @Test
@@ -229,7 +246,7 @@ public class ReplicatorAppendEntriesTest {
             .withPrevLogTerm(prevLogTerm).withPrevLogIndex(prevLogIndex)
             .withEntries(receivedEntries));
 
-    assertThat(reply(), is(anAppendEntriesReplyWithResult(true)));
+    assertThat(reply(), is(anAppendReply().withResult(true)));
   }
 
   @Test
@@ -281,9 +298,10 @@ public class ReplicatorAppendEntriesTest {
         anAppendEntriesRequest()
             .withEntries(receivedEntries));
 
-    assertThat(reply(), is(anAppendEntriesReplyWithResult(true)));
+    assertThat(reply(), is(anAppendReply().withResult(true)));
     assertThat(repl.getQuorumConfiguration(), is(equalTo(configuration)));
   }
+
 
   private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
   private final ChannelHistoryMonitor<IndexCommitNotice> commitMonitor =
@@ -332,21 +350,6 @@ public class ReplicatorAppendEntriesTest {
   private void assertThatReplicatorWillCommitUpToIndex(long index) {
     commitMonitor.waitFor(hasCommitNoticeIndexValueAtLeast(index));
     assertFalse(commitMonitor.hasAny(hasCommitNoticeIndexValueAtLeast(index + 1)));
-  }
-
-  private Matcher<RpcReply> anAppendEntriesReplyWithResult(boolean result) {
-    return new TypeSafeMatcher<RpcReply>() {
-      @Override
-      protected boolean matchesSafely(RpcReply item) {
-        return item.getAppendReplyMessage() != null
-            && item.getAppendReplyMessage().getSuccess() == result;
-      }
-
-      @Override
-      public void describeTo(Description description) {
-        description.appendText("an AppendEntries message with result ").appendValue(result);
-      }
-    };
   }
 
   private SettableFuture<RpcReply> lastReply = null;
