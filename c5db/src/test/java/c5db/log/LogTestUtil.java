@@ -55,11 +55,11 @@ public class LogTestUtil {
   }
 
   public static LogEntry makeProtostuffEntry(long seqNum, long term, String stringData) {
-    return makeEntry(seqNum, term, stringData).toProtostuffMessage();
+    return makeEntry(seqNum, term, stringData).toProtostuff();
   }
 
   public static LogEntry makeProtostuffEntry(long seqNum, long term, ByteBuffer data) {
-    return makeEntry(seqNum, term, data).toProtostuffMessage();
+    return makeEntry(seqNum, term, data).toProtostuff();
   }
 
   public static long seqNum(long seqNum) {

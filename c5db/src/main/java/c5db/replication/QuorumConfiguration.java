@@ -17,13 +17,16 @@
 
 package c5db.replication;
 
+import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.collect.SortedMultiset;
 import com.google.common.collect.TreeMultiset;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -41,8 +44,18 @@ public final class QuorumConfiguration {
   private final Set<Long> prevPeers;
   private final Set<Long> nextPeers;
 
+  public static final QuorumConfiguration EMPTY = new QuorumConfiguration(new HashSet<>());
+
   public static QuorumConfiguration of(Collection<Long> peerCollection) {
     return new QuorumConfiguration(peerCollection);
+  }
+
+  public static QuorumConfiguration fromProtostuff(QuorumConfigurationMessage message) {
+    if (message.getTransitionalConfiguration()) {
+      return new QuorumConfiguration(message.getPrevPeersList(), message.getNextPeersList());
+    } else {
+      return new QuorumConfiguration(message.getAllPeersList());
+    }
   }
 
   public QuorumConfiguration transitionTo(Collection<Long> newPeerCollection) {
@@ -57,6 +70,14 @@ public final class QuorumConfiguration {
     return new QuorumConfiguration(nextPeers);
   }
 
+  public QuorumConfigurationMessage toProtostuff() {
+    return new QuorumConfigurationMessage(
+        transitionalConfiguration,
+        Lists.newArrayList(allPeers),
+        Lists.newArrayList(prevPeers),
+        Lists.newArrayList(nextPeers));
+  }
+
   public Set<Long> allPeers() {
     return allPeers;
   }
@@ -67,6 +88,12 @@ public final class QuorumConfiguration {
 
   public Set<Long> nextPeers() {
     return nextPeers;
+  }
+
+  public boolean isEmpty() {
+    return allPeers.size() == 0
+        && prevPeers.size() == 0
+        && nextPeers.size() == 0;
   }
 
   /**

@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.replication.QuorumConfiguration;
 import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -104,4 +105,19 @@ public interface ReplicatorLog {
    * @return A future set to true upon completion, or set with an exception upon failure.
    */
   ListenableFuture<Boolean> truncateLog(long entryIndex);
+
+  /**
+   * Get the latest, and thus current, configuration of the replicator's peers. (The configuration is
+   * logged just like any other entry.)
+   *
+   * @return The latest configuration; or if there is none, an empty configuration.
+   */
+  QuorumConfiguration getLastConfiguration();
+
+  /**
+   * Get the index of the entry with the latest configuration of the replicator's peers.
+   *
+   * @return The greatest index of any configuration entry in the log, or zero if there is none.
+   */
+  long getLastConfigurationIndex();
 }

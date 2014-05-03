@@ -43,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Helpers that allow us to assert or wait for channel messages from jetlang.
- * <p/>
+ * <p>
  * TODO currently we create a fiber thread for every instance we run, maybe
  * consider using a fiber pool.
  */
@@ -205,6 +205,10 @@ public class AsyncChannelAsserts {
         matcher.describeTo(d);
         throw new AssertionError("Failed waiting for " + d.toString(), e);
       }
+    }
+
+    public void forgetHistory() {
+      fiber.execute(messageLog::clear);
     }
 
     private ListenableFuture<T> future(Matcher<? super T> matcher) {

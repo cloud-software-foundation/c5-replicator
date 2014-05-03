@@ -109,6 +109,10 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
     public LogEntryNotFound(Throwable cause) {
       super(cause);
     }
+
+    public LogEntryNotFound(String s) {
+      super(s);
+    }
   }
 
   /**
@@ -117,6 +121,10 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
   class LogEntryNotInSequence extends RuntimeException {
     public LogEntryNotInSequence() {
       super();
+    }
+
+    public LogEntryNotInSequence(String s) {
+      super(s);
     }
   }
 }

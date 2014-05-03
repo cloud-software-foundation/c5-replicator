@@ -17,12 +17,19 @@
 
 package c5db.log;
 
+import c5db.replication.QuorumConfiguration;
 import c5db.replication.generated.LogEntry;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static c5db.log.SequentialLog.LogEntryNotFound;
+import static c5db.log.SequentialLog.LogEntryNotInSequence;
 
 /**
  * ReplicatorLog hosted in memory, e.g. for unit testing ReplicatorInstance in-memory. This
@@ -36,51 +43,47 @@ public class InRamLog implements ReplicatorLog {
   }
 
   @Override
-  public ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
-    // add them, for great justice.
-
-    assert (entries.isEmpty()) || ((log.size() + 1) == entries.get(0).getIndex());
-    // TODO more assertions
-
+  public synchronized ListenableFuture<Boolean> logEntries(List<LogEntry> entries) {
+    validateEntries(entries);
     log.addAll(entries);
 
-
-    SettableFuture<Boolean> r = SettableFuture.create();
-    r.set(true);
-    return r;
+    return Futures.immediateFuture(true);
   }
 
   @Override
-  public ListenableFuture<LogEntry> getLogEntry(long index) {
+  public synchronized ListenableFuture<LogEntry> getLogEntry(long index) {
     assert index > 0;
 
-    SettableFuture<LogEntry> future = SettableFuture.create();
-    if (index - 1 >= log.size()) {
-      future.set(null);
-    } else {
-      future.set(log.get((int) index - 1));
-    }
-    return future;
+    return Futures.immediateFuture(getEntryInternal(index));
   }
 
   @Override
-  public ListenableFuture<List<LogEntry>> getLogEntries(long start, long end) {
+  public synchronized ListenableFuture<List<LogEntry>> getLogEntries(long start, long end) {
     assert start > 0;
     assert end >= start;
 
-    SettableFuture<List<LogEntry>> future = SettableFuture.create();
-    future.set(log.subList((int) start - 1, (int) end - 1));
-    return future;
+    List<LogEntry> foundEntries = log.stream()
+        .filter((entry) -> start <= entry.getIndex() && entry.getIndex() < end)
+        .collect(Collectors.toList());
+
+    if (foundEntries.size() != (end - start)) {
+      throw new LogEntryNotFound("requested [" + start + ", " + end + "); received" + foundEntries.toString());
+    }
+
+    return Futures.immediateFuture(foundEntries);
   }
 
   @Override
   public synchronized long getLogTerm(long index) {
     assert index > 0;
 
-    if (index - 1 >= log.size()) {
+    Optional<LogEntry> requestedEntry = optionallyGetEntryInternal(index);
+
+    if (requestedEntry.isPresent()) {
+      return requestedEntry.get().getTerm();
+    } else {
       return 0;
     }
-    return log.get((int) index - 1).getTerm();
   }
 
   @Override
@@ -93,14 +96,68 @@ public class InRamLog implements ReplicatorLog {
 
   @Override
   public synchronized long getLastIndex() {
-    return log.size();
+    if (log.isEmpty()) {
+      return 0;
+    }
+    return log.get(log.size() - 1).getIndex();
   }
 
   @Override
   public synchronized ListenableFuture<Boolean> truncateLog(long entryIndex) {
-    log.subList((int) entryIndex - 1, log.size()).clear();
-    SettableFuture<Boolean> r = SettableFuture.create();
-    r.set(true);
-    return r;
+    LogEntry firstRemovedEntry = getEntryInternal(entryIndex);
+    int listIndex = log.lastIndexOf(firstRemovedEntry);
+    log.subList(listIndex, log.size()).clear();
+
+    return Futures.immediateFuture(true);
+  }
+
+  @Override
+  public synchronized QuorumConfiguration getLastConfiguration() {
+    for (LogEntry entry : Lists.reverse(log)) {
+      if (entry.getQuorumConfiguration() != null) {
+        return QuorumConfiguration.fromProtostuff(entry.getQuorumConfiguration());
+      }
+    }
+
+    return QuorumConfiguration.EMPTY;
+  }
+
+  @Override
+  public synchronized long getLastConfigurationIndex() {
+    for (LogEntry entry : Lists.reverse(log)) {
+      if (entry.getQuorumConfiguration() != null) {
+        return entry.getIndex();
+      }
+    }
+
+    return 0;
+  }
+
+  private void validateEntries(List<LogEntry> entries) {
+    // Ensure ascending with no gaps
+    long lastIndex = getLastIndex();
+    for (LogEntry e : entries) {
+      if (lastIndex == 0 || e.getIndex() == lastIndex + 1) {
+        lastIndex = e.getIndex();
+      } else {
+        throw new LogEntryNotInSequence("entries not in sequence: " + entries.toString());
+      }
+    }
+  }
+
+  private Optional<LogEntry> optionallyGetEntryInternal(long index) {
+    return log.stream()
+        .filter((entry) -> entry.getIndex() == index)
+        .findFirst();
+  }
+
+  private LogEntry getEntryInternal(long index) {
+    Optional<LogEntry> requestedEntry = optionallyGetEntryInternal(index);
+
+    if (!requestedEntry.isPresent()) {
+      throw new LogEntryNotFound("entry index " + index + " not found");
+    }
+
+    return requestedEntry.get();
   }
 }

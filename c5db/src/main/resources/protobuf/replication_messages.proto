@@ -44,6 +44,14 @@ message LogEntry {
     optional int64 term = 1;
     optional int64 index = 2;
     repeated bytes data = 3;
+    optional QuorumConfigurationMessage quorumConfiguration = 4;
+}
+
+message QuorumConfigurationMessage {
+    optional bool transitionalConfiguration = 1;
+    repeated int64 allPeers = 2;
+    repeated int64 prevPeers = 3;
+    repeated int64 nextPeers = 4;
 }
 
 message RequestVote {

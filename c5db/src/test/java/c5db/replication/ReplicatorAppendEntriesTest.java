@@ -17,6 +17,7 @@
 
 package c5db.replication;
 
+import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.log.InRamLog;
 import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
@@ -26,6 +27,7 @@ import c5db.replication.rpc.RpcWireRequest;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
@@ -55,8 +57,6 @@ import java.util.concurrent.TimeUnit;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
-
-import c5db.interfaces.replication.IndexCommitNotice;
 import static c5db.interfaces.replication.Replicator.State;
 import static c5db.log.LogTestUtil.aSeqNum;
 import static c5db.log.LogTestUtil.makeProtostuffEntry;
@@ -106,6 +106,8 @@ public class ReplicatorAppendEntriesTest {
       allowing(log).getLastIndex();
       allowing(log).getLastTerm();
       allowing(log).getLogTerm(with(any(Long.class)));
+      allowing(log).getLastConfiguration();
+      allowing(log).getLastConfigurationIndex();
     }});
   }
 
@@ -263,6 +265,25 @@ public class ReplicatorAppendEntriesTest {
     assertThatReplicatorWillCommitUpToIndex(receivedCommitIndex);
   }
 
+  @Test
+  public void willLogANewQuorumConfigurationItReceivesAndUpdateItsCurrentConfiguration() throws Exception {
+    final QuorumConfiguration configuration = aNewConfiguration();
+    final List<LogEntry> receivedEntries = entries()
+        .term(1)
+        .configurationAndIndex(configuration, 1)
+        .build();
+
+    context.checking(new Expectations() {{
+      oneOf(log).logEntries(receivedEntries);
+    }});
+
+    havingReceived(
+        anAppendEntriesRequest()
+            .withEntries(receivedEntries));
+
+    assertThat(reply(), is(anAppendEntriesReplyWithResult(true)));
+    assertThat(repl.getQuorumConfiguration(), is(equalTo(configuration)));
+  }
 
   private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
   private final ChannelHistoryMonitor<IndexCommitNotice> commitMonitor =
@@ -409,6 +430,10 @@ public class ReplicatorAppendEntriesTest {
     return makeProtostuffEntry(nextLogIndex++, CURRENT_TERM, someData());
   }
 
+  private QuorumConfiguration aNewConfiguration() {
+    return QuorumConfiguration.of(Lists.newArrayList(2L, 3L, 4L, 5L));
+  }
+
   private final ReplicatorLog internalLog = new InRamLog();
 
   private void havingLogged(LogSequenceBuilder sequenceBuilder) throws Exception {
@@ -433,6 +458,11 @@ public class ReplicatorAppendEntriesTest {
       for (long index : indexList) {
         logSequence.add(makeProtostuffEntry(index, term, someData()));
       }
+      return this;
+    }
+
+    public LogSequenceBuilder configurationAndIndex(QuorumConfiguration configuration, long index) {
+      logSequence.add(new LogEntry(term, index, new ArrayList<>(), configuration.toProtostuff()));
       return this;
     }
 

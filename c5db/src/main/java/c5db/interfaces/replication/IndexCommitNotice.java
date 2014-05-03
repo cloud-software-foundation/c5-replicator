@@ -16,6 +16,7 @@
  */
 package c5db.interfaces.replication;
 
+import c5db.replication.QuorumConfiguration;
 import c5db.replication.ReplicatorInstance;
 
 /**
@@ -24,10 +25,13 @@ import c5db.replication.ReplicatorInstance;
 public class IndexCommitNotice {
   public final ReplicatorInstance replicatorInstance;
   public final long committedIndex;
+  public final QuorumConfiguration quorumConfig;
 
-  public IndexCommitNotice(ReplicatorInstance replicatorInstance, long committedIndex) {
+  public IndexCommitNotice(ReplicatorInstance replicatorInstance, long committedIndex,
+                           QuorumConfiguration quorumConfig) {
     this.replicatorInstance = replicatorInstance;
     this.committedIndex = committedIndex;
+    this.quorumConfig = quorumConfig;
   }
 
   @Override
@@ -35,6 +39,7 @@ public class IndexCommitNotice {
     return "IndexCommitNotice{" +
         "replicatorInstance=" + replicatorInstance +
         ", committedIndex=" + committedIndex +
+        ", quorumConfig=" + quorumConfig +
         '}';
   }
 }

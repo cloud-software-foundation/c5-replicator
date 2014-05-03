@@ -61,11 +61,11 @@ public final class OLogEntry extends SequentialEntry {
     return EntryEncodingUtil.sumRemaining(buffers);
   }
 
-  public LogEntry toProtostuffMessage() {
-    return new LogEntry(electionTerm, seqNum, buffers);
+  public LogEntry toProtostuff() {
+    return new LogEntry(electionTerm, seqNum, buffers, null);
   }
 
-  public static OLogEntry fromProtostuffMessage(LogEntry entry) {
+  public static OLogEntry fromProtostuff(LogEntry entry) {
     return new OLogEntry(entry.getIndex(), entry.getTerm(), entry.getDataList());
   }
 

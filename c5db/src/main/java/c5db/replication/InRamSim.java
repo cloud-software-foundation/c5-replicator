@@ -18,11 +18,14 @@
 package c5db.replication;
 
 import c5db.interfaces.replication.IndexCommitNotice;
+import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.InRamLog;
 import c5db.log.ReplicatorLog;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.commons.lang.time.StopWatch;
@@ -33,23 +36,24 @@ import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.core.BatchExecutor;
-import org.jetlang.core.BatchExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
-import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -57,7 +61,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
  * A class to simulate a group of ReplicatorInstance nodes interacting via in-RAM channels, for testing purposes.
  */
 public class InRamSim {
-  private static final Logger LOG = LoggerFactory.getLogger(InRamSim.class);
+  private static final Logger LOG = LoggerFactory.getLogger("InRamSim");
 
   public static class Info implements ReplicatorInformationInterface {
     private final long offset;
@@ -135,9 +139,9 @@ public class InRamSim {
   }
 
   private class WireObstruction {
-    public SettableFuture<Boolean> future;
-    public Predicate<RpcRequest> dropIf;
-    public Predicate<RpcRequest> dropUntil;
+    public final SettableFuture<Boolean> future;
+    public final Predicate<RpcRequest> dropIf;
+    public final Predicate<RpcRequest> dropUntil;
 
     public WireObstruction(SettableFuture<Boolean> future, Predicate<RpcRequest> dropIf, Predicate<RpcRequest> dropUntil) {
       this.future = future;
@@ -146,63 +150,83 @@ public class InRamSim {
     }
   }
 
-  final int peerSize;
+  private final Set<Long> peerIds = new HashSet<>();
   private final Set<Long> offlinePeers = new HashSet<>();
   private final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
   private final Map<Long, ReplicatorLog> replicatorLogs = new HashMap<>();
   private final Map<Long, WireObstruction> wireObstructions = new HashMap<>();
   private final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
-  final Channel<ReplicatorInstanceEvent> stateChanges = new MemoryChannel<>();
-  final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
-  final Fiber rpcFiber;
-  final List<Long> peerIds = new ArrayList<>();
+  private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
+  private final Fiber rpcFiber;
   private final PoolFiberFactory fiberPool;
   private final BatchExecutor batchExecutor;
-  final Channel<RpcWireReply> replyChannel = new MemoryChannel<>();
+  private final Channel<RpcWireReply> replyChannel = new MemoryChannel<>();
+  private final Channel<ReplicatorInstanceEvent> stateChanges = new MemoryChannel<>();
 
+  private final long electionTimeout;
+  private final long electionTimeoutOffset;
 
   /**
    * Set up the simulation (but don't actually start it yet).
    *
-   * @param peerSize              The number of nodes in the simulation
    * @param electionTimeout       The timeout in milliseconds before an instance holds a new election
    * @param electionTimeoutOffset the time offset, in milliseconds, between different instances' clocks.
    * @param batchExecutor         The jetlang batch executor for the simulation's fibers to use.
    */
-  public InRamSim(final int peerSize, long electionTimeout, long electionTimeoutOffset, BatchExecutor batchExecutor) {
-    this.peerSize = peerSize;
+  public InRamSim(long electionTimeout, long electionTimeoutOffset, BatchExecutor batchExecutor) {
     this.fiberPool = new PoolFiberFactory(Executors.newCachedThreadPool());
     this.batchExecutor = batchExecutor;
-    Random r = new Random();
+    this.electionTimeout = electionTimeout;
+    this.electionTimeoutOffset = electionTimeoutOffset;
+    this.rpcFiber = fiberPool.create(batchExecutor);
 
-    for (int i = 0; i < peerSize; i++) {
-      peerIds.add((long) r.nextInt());
-    }
+    rpcChannel.subscribe(rpcFiber, this::messageForwarder);
+    commitNotices.subscribe(rpcFiber, message -> LOG.debug("Commit notice {}", message));
+    stateChanges.subscribe(rpcFiber, this::updateCurrentTermAndLeader);
+  }
 
+  public void createAndStartReplicators(Collection<Long> replPeerIds) {
     long plusMillis = 0;
-    for (long peerId : peerIds) {
-      // make me a ....
+    for (long peerId : replPeerIds) {
+      if (replicators.containsKey(peerId)) {
+        continue;
+      }
+
       ReplicatorLog log = new InRamLog();
       ReplicatorInstance rep = new ReplicatorInstance(fiberPool.create(batchExecutor),
           peerId,
           "foobar",
-          peerIds,
+          new ArrayList<>(),
           log,
           new Info(plusMillis, electionTimeout),
           new Persister(),
           rpcChannel,
           stateChanges,
           commitNotices);
+      peerIds.add(peerId);
       replicators.put(peerId, rep);
       replicatorLogs.put(peerId, log);
       plusMillis += electionTimeoutOffset;
+      rep.start();
     }
+  }
 
-    rpcFiber = fiberPool.create(batchExecutor);
+  private long currentTerm = 0;
+  private long currentLeader = 0;
 
-    // subscribe to the rpcChannel:
-    rpcChannel.subscribe(rpcFiber, this::messageForwarder);
-    commitNotices.subscribe(rpcFiber, message -> LOG.debug("Commit notice {}", message));
+  private synchronized void updateCurrentTermAndLeader(ReplicatorInstanceEvent event) {
+    if (event.eventType == ReplicatorInstanceEvent.EventType.LEADER_ELECTED) {
+      currentTerm = event.leaderElectedTerm;
+      currentLeader = event.newLeader;
+    }
+  }
+
+  public synchronized long getCurrentTerm() {
+    return currentTerm;
+  }
+
+  public synchronized long getCurrentLeader() {
+    return currentLeader;
   }
 
   // Stop and dispose of the requested peer; but leave its object in the replicators map so that e.g.
@@ -221,7 +245,7 @@ public class InRamSim {
     ReplicatorInstance repl = new ReplicatorInstance(fiberPool.create(batchExecutor),
         peerId,
         "foobar",
-        peerIds,
+        new ArrayList<>(),
         log,
         oldRepl.info,
         oldRepl.persister,
@@ -232,6 +256,10 @@ public class InRamSim {
     replicatorLogs.put(peerId, log);
     offlinePeers.remove(peerId);
     repl.start();
+  }
+
+  public Set<Long> getOnlinePeers() {
+    return Sets.difference(peerIds, offlinePeers);
   }
 
   public Set<Long> getOfflinePeers() {
@@ -278,6 +306,10 @@ public class InRamSim {
     return replyChannel;
   }
 
+  public Channel<ReplicatorInstanceEvent> getStateChanges() {
+    return stateChanges;
+  }
+
   public Channel<IndexCommitNotice> getCommitNotices() {
     return commitNotices;
   }
@@ -320,8 +352,8 @@ public class InRamSim {
     final ReplicatorInstance repl = replicators.get(dest);
     if (repl == null) {
       // boo
-      LOG.error("Request to non exist {}", dest);
-      origMsg.reply(null);
+      LOG.warn("Request to nonexistent peer {}", dest);
+      // Do nothing and allow request to timeout.
       return;
     }
 
@@ -341,18 +373,12 @@ public class InRamSim {
     });
   }
 
-  public void start() {
-    for (ReplicatorInstance repl : replicators.values()) {
-      repl.start();
-    }
-    rpcFiber.start();
-  }
+  public void start(List<Long> initialPeers) throws ExecutionException, InterruptedException, TimeoutException {
+    createAndStartReplicators(initialPeers);
 
-  public static void main(String[] args) throws InterruptedException {
-    InRamSim sim = new InRamSim(3, 500, 500, new BatchExecutorImpl());
-    sim.start();
-    Thread.sleep(10 * 1000);
-    sim.dispose();
+    rpcFiber.start();
+
+    pickAReplicator().bootstrapQuorum(peerIds).get(4, TimeUnit.SECONDS);
   }
 
   public void dispose() {
@@ -361,5 +387,9 @@ public class InRamSim {
       repl.dispose();
     }
     fiberPool.dispose();
+  }
+
+  private ReplicatorInstance pickAReplicator() {
+    return replicators.get(Iterables.get(peerIds, 0));
   }
 }

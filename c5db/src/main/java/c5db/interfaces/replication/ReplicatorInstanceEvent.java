@@ -43,14 +43,17 @@ public class ReplicatorInstanceEvent {
   public final EventType eventType;
   public final long eventTime;
   public final long newLeader;
+  public final long leaderElectedTerm;
   public final Throwable error;
 
   public ReplicatorInstanceEvent(EventType eventType,
                                  Replicator instance,
                                  long newLeader,
+                                 long leaderElectedTerm,
                                  long eventTime,
                                  Throwable error) {
     this.newLeader = newLeader;
+    this.leaderElectedTerm = leaderElectedTerm;
     this.instance = instance;
     this.eventType = eventType;
     this.eventTime = eventTime;
@@ -60,10 +63,11 @@ public class ReplicatorInstanceEvent {
   @Override
   public String toString() {
     return "ReplicatorInstanceEvent{" +
-        "instance=" + instance +
-        ", eventType=" + eventType +
+        "eventType=" + eventType +
+        ", instance=" + instance +
         ", eventTime=" + eventTime +
         ", newLeader=" + newLeader +
+        ", leaderElectedTerm=" + leaderElectedTerm +
         ", error=" + error +
         '}';
   }
