@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.generated.OLogContentType;
 import c5db.generated.OLogEntryHeader;
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Iterables;
@@ -101,6 +102,7 @@ public final class OLogEntry extends SequentialEntry {
 
   public static class Codec implements SequentialEntryCodec<OLogEntry> {
     private static final Schema<OLogEntryHeader> SCHEMA = OLogEntryHeader.getSchema();
+    // TODO capability of having multiple 4-byte CRCs for large content
     private static final int CRC_BYTES = 4;
 
     @Override
@@ -144,7 +146,8 @@ public final class OLogEntry extends SequentialEntry {
       return new OLogEntryHeader(
           entry.getSeqNum(),
           entry.getElectionTerm(),
-          entry.contentLength());
+          entry.contentLength(),
+          OLogContentType.DATA);
     }
   }
 }

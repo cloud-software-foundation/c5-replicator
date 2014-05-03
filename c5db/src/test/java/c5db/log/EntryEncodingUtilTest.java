@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.generated.OLogContentType;
 import c5db.generated.OLogEntryHeader;
 import io.protostuff.Schema;
 import org.hamcrest.Description;
@@ -40,8 +41,8 @@ import static org.junit.Assert.assertThat;
 
 public class EntryEncodingUtilTest {
   private static final Schema<OLogEntryHeader> SCHEMA = OLogEntryHeader.getSchema();
-  private static final OLogEntryHeader TEST_ENTRY = new OLogEntryHeader(
-      Long.MAX_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE);
+  private static final OLogEntryHeader TEST_ENTRY =
+      new OLogEntryHeader(Long.MAX_VALUE, Long.MAX_VALUE, Integer.MAX_VALUE, OLogContentType.DATA);
 
   private final PipedOutputStream pipedOutputStream = new PipedOutputStream();
 

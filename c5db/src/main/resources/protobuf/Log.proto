@@ -23,19 +23,6 @@ option java_generic_services = true;
 option java_generate_equals_and_hash = true;
 option optimize_for = SPEED;
 
-/**
- * This is the physical entry types in the file.  This is not used in any protobuf, but used
- * while we are writing to the file.
- */
-enum PhysicalEntryTypes {
-    Header = 1;
-    Trailer = 2;
-    QuorumMapping = 3;  // This is done inline with the data entry
-    MetaData = 4;   // not used right now.
-    Data = 5;
-    // TODO do we need this here?
-    TruncationMarker = 6;
-}
 
 message RegionWalEntry {
     optional string regionInfo = 1;
@@ -46,35 +33,6 @@ message RegionWalEntry {
     optional uint64 ts = 6;
 }
 
-message OLogHeader {
-    optional int32 major_version = 1;
-    optional int32 minor_version = 2;
-    // Additional optional fields as we need them, eg: compression flags, etc.
-}
-
-message OLogTrailer {
-    // just some boring stats maybe. just because.
-    optional fixed32 entry_count = 1;
-    optional fixed32 quorum_count = 2;
-    optional fixed32 truncation_count = 3;
-}
-
-message OLogMetaData {
-    optional int32 quorumTag = 1;
-    optional int64 index = 2;
-    optional int64 term = 3;
-}
-
-
-message OLogData {
-    optional OLogMetaData log_data = 1;
-
-    // Inline quorum tag mapping, that will apply to this entry.
-    optional QuorumMapping quorum_tag_mapping = 2;
-
-    repeated bytes kvs = 3;
-}
-
 message QuorumMapping {
     // The ID to use elsewhere in the file.
     optional int32 quorumTag = 1;
@@ -82,44 +40,15 @@ message QuorumMapping {
     optional string quorumId = 2;
 }
 
-// Marks the truncation of a quorum log.
-message TruncationMarker {
-    optional int32 quorum_tag = 1;
-    optional int64 index = 2;
-
-    // Physical location information of the first truncated entry.
-    optional string file_name = 3;
-    optional int64 file_byte_offset = 4;
-}
-
-message OLogImmutableHeader {
-    optional string quorumId = 1;
-    optional int64 seqNum = 2; // same as the "index" in the terminology of the replication algorithm
-    optional int64 term = 3; // election term
-    optional int32 remainingLength = 4; // length of remainder of the log entry after the CRC of this header.
-}
-
-message OLogMutableHeader {
-    enum Type {
-        DATA = 1;
-        TRUNCATION = 2;
-    }
-
-    required Type type = 1;
-    optional int32 contentLength = 2; // Length of entry content (payload), not including CRCs
-    optional int64 skipForward = 3; // File position of the end of the truncation; used only for TRUNCATION messages
+enum OLogContentType {
+    DATA = 1;
+    QUORUM_CONFIGURATION = 2;
 }
 
 message OLogEntryHeader {
     optional int64 seqNum = 1; // same as the "index" in the terminology of the replication algorithm
     optional int64 term = 2; // election term
     optional int32 contentLength = 3; // length of content (raw bytes) after the CRC of this header
+    optional OLogContentType type = 4; // type of content
 }
 
-message WrittenEntry {
-    optional string quorumId = 1;
-    optional int64 seqNum = 2;
-    optional int64 startFilePos = 3;
-    optional int64 endFilePos = 4;
-    optional bool truncation = 5;
-}
