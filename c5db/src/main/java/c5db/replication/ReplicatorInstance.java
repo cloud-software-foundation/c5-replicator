@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -165,6 +166,11 @@ public class ReplicatorInstance implements Replicator {
                 info.currentTimeMillis(),
                 null)
         );
+
+        if (!peers.isEmpty() && Collections.min(peers) == myId) {
+          logger.warn("Booting ReplicatorInstance using deprecated peers argument {}", peers);
+          bootstrapQuorum(peers);
+        }
       } catch (IOException e) {
         logger.error("error during persistent data init", e);
         failReplicatorInstance(e);
