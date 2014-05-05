@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.generated.OLogContentType;
 import c5db.generated.OLogEntryHeader;
 import com.google.common.math.IntMath;
 import io.protostuff.Schema;
@@ -33,18 +34,21 @@ import static c5db.log.EntryEncodingUtil.skip;
 public final class OLogEntryDescription extends SequentialEntry {
   private final long electionTerm;
   private final int contentLength;
+  private final OLogContentType type;
   private final boolean headerCrcIsValid;
   private final boolean contentCrcIsValid;
 
   public OLogEntryDescription(long seqNum,
                               long electionTerm,
                               int contentLength,
+                              OLogContentType type,
                               boolean headerCrcIsValid,
                               boolean contentCrcIsValid) {
     super(seqNum);
 
     this.electionTerm = electionTerm;
     this.contentLength = contentLength;
+    this.type = type;
     this.headerCrcIsValid = headerCrcIsValid;
     this.contentCrcIsValid = contentCrcIsValid;
   }
@@ -55,6 +59,10 @@ public final class OLogEntryDescription extends SequentialEntry {
 
   public int getContentLength() {
     return contentLength;
+  }
+
+  public OLogContentType getType() {
+    return type;
   }
 
   public boolean isHeaderCrcValid() {
@@ -79,6 +87,7 @@ public final class OLogEntryDescription extends SequentialEntry {
     return seqNum == that.seqNum
         && electionTerm == that.electionTerm
         && contentLength == that.contentLength
+        && type == that.type
         && contentCrcIsValid == that.contentCrcIsValid
         && headerCrcIsValid == that.headerCrcIsValid;
   }
@@ -88,6 +97,7 @@ public final class OLogEntryDescription extends SequentialEntry {
     int result = (int) (seqNum ^ (seqNum >>> 32));
     result = 31 * result + (int) (electionTerm ^ (electionTerm >>> 32));
     result = 31 * result + contentLength;
+    result = 31 * result + type.hashCode();
     result = 31 * result + (headerCrcIsValid ? 1 : 0);
     result = 31 * result + (contentCrcIsValid ? 1 : 0);
     return result;
@@ -99,6 +109,7 @@ public final class OLogEntryDescription extends SequentialEntry {
         "seqNum='" + seqNum + '\'' +
         ", electionTerm=" + electionTerm +
         ", contentLength=" + contentLength +
+        ", type=" + type +
         ", headerCrcIsValid=" + headerCrcIsValid +
         ", contentCrcIsValid=" + contentCrcIsValid;
   }
@@ -130,6 +141,7 @@ public final class OLogEntryDescription extends SequentialEntry {
           header.getSeqNum(),
           header.getTerm(),
           header.getContentLength(),
+          header.getType(),
           true,
           contentCrcIsValid);
     }

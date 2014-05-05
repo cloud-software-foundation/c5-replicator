@@ -17,17 +17,17 @@
 
 package c5db.log;
 
-import c5db.generated.OLogContentType;
 import c5db.generated.OLogEntryHeader;
 import c5db.replication.generated.LogEntry;
+import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.math.IntMath;
 import io.protostuff.Schema;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 import static c5db.log.EntryEncodingUtil.CrcError;
@@ -36,38 +36,58 @@ import static c5db.log.EntryEncodingUtil.decodeAndCheckCrc;
 import static c5db.log.EntryEncodingUtil.encodeWithLengthAndCrc;
 import static c5db.log.EntryEncodingUtil.getAndCheckContent;
 import static c5db.log.EntryEncodingUtil.skip;
+import static c5db.log.EntryEncodingUtil.sumRemaining;
 
+/**
+ * A SequentialEntry that can convert itself to and from Protostuff LogEntry objects.
+ * In addition, it can serialize itself directly using the supplied Codec, allowing it
+ * to be written to an {@link EncodedSequentialLog}. Its serialized form consists of a
+ * header together with some content ({@link OLogContent}).
+ * <p>
+ * An OLogEntry is the kind of entry written to, and retrieved from, {@link OLog}.
+ */
 public final class OLogEntry extends SequentialEntry {
   private final long electionTerm;
-  private final List<ByteBuffer> buffers;
+  private final OLogContent content;
 
-  public OLogEntry(long seqNum, long electionTerm, List<ByteBuffer> buffers) {
+  public OLogEntry(long seqNum, long electionTerm, OLogContent content) {
     super(seqNum);
 
-    assert buffers != null;
+    assert content != null;
 
     this.electionTerm = electionTerm;
-    this.buffers = sliceAll(buffers);
+    this.content = content;
   }
 
   public long getElectionTerm() {
     return electionTerm;
   }
 
-  public List<ByteBuffer> getBuffers() {
-    return buffers;
-  }
-
-  public int contentLength() {
-    return EntryEncodingUtil.sumRemaining(buffers);
+  public OLogContent getContent() {
+    return content;
   }
 
   public LogEntry toProtostuff() {
-    return new LogEntry(electionTerm, seqNum, buffers, null);
+    switch (content.getType()) {
+      case DATA:
+        return new LogEntry(electionTerm, seqNum, ((OLogRawDataContent) content).getRawData(), null);
+      case QUORUM_CONFIGURATION:
+        return new LogEntry(electionTerm, seqNum, new ArrayList<>(),
+            (QuorumConfigurationMessage) ((OLogProtostuffContent) content).getMessage());
+    }
+
+    throw new RuntimeException("OLogEntry#toProtostuff");
   }
 
   public static OLogEntry fromProtostuff(LogEntry entry) {
-    return new OLogEntry(entry.getIndex(), entry.getTerm(), entry.getDataList());
+    final OLogContent content;
+    if (entry.getQuorumConfiguration() != null) {
+      content = new OLogProtostuffContent<>(entry.getQuorumConfiguration());
+    } else {
+      content = new OLogRawDataContent(entry.getDataList());
+    }
+
+    return new OLogEntry(entry.getIndex(), entry.getTerm(), content);
   }
 
   @Override
@@ -78,14 +98,14 @@ public final class OLogEntry extends SequentialEntry {
     OLogEntry that = (OLogEntry) o;
     return this.electionTerm == that.getElectionTerm()
         && this.seqNum == that.getSeqNum()
-        && this.buffers.equals(that.getBuffers());
+        && this.content.equals(that.getContent());
   }
 
   @Override
   public int hashCode() {
     return ((int) seqNum) * 31 +
         ((int) electionTerm) * 31 +
-        buffers.hashCode();
+        content.hashCode();
   }
 
   @Override
@@ -93,11 +113,7 @@ public final class OLogEntry extends SequentialEntry {
     return "OLogEntry{" +
         "seqNum=" + seqNum +
         ", electionTerm=" + electionTerm +
-        ", buffers=" + buffers;
-  }
-
-  private static List<ByteBuffer> sliceAll(List<ByteBuffer> buffers) {
-    return Lists.transform(buffers, ByteBuffer::slice);
+        ", content=" + content;
   }
 
   public static class Codec implements SequentialEntryCodec<OLogEntry> {
@@ -108,12 +124,12 @@ public final class OLogEntry extends SequentialEntry {
     @Override
     public ByteBuffer[] encode(OLogEntry entry) {
       try {
-        final OLogEntryHeader header = createHeader(entry);
-        final List<ByteBuffer> entryBufs = encodeWithLengthAndCrc(SCHEMA, header);
+        final List<ByteBuffer> contentBufs = entry.getContent().serialize();
+        final int contentLength = sumRemaining(contentBufs);
+        final OLogEntryHeader header = createHeader(entry, contentLength);
 
-        if (header.getContentLength() > 0) {
-          entryBufs.addAll(appendCrcToBufferList(entry.getBuffers()));
-        }
+        final List<ByteBuffer> entryBufs = encodeWithLengthAndCrc(SCHEMA, header);
+        entryBufs.addAll(appendCrcToBufferList(contentBufs));
 
         return Iterables.toArray(entryBufs, ByteBuffer.class);
       } catch (IOException e) {
@@ -124,11 +140,12 @@ public final class OLogEntry extends SequentialEntry {
     @Override
     public OLogEntry decode(InputStream inputStream) throws IOException, CrcError {
       final OLogEntryHeader header = decodeAndCheckCrc(inputStream, SCHEMA);
-      final ByteBuffer buffer = getAndCheckContent(inputStream, header.getContentLength());
+      final ByteBuffer contentBuf = getAndCheckContent(inputStream, header.getContentLength());
+
       return new OLogEntry(
           header.getSeqNum(),
           header.getTerm(),
-          Lists.newArrayList(buffer));
+          OLogContent.deserialize(contentBuf, header.getType()));
     }
 
     @Override
@@ -142,12 +159,12 @@ public final class OLogEntry extends SequentialEntry {
       skip(inputStream, IntMath.checkedAdd(contentLength, CRC_BYTES));
     }
 
-    private static OLogEntryHeader createHeader(OLogEntry entry) {
+    private static OLogEntryHeader createHeader(OLogEntry entry, int contentLength) {
       return new OLogEntryHeader(
           entry.getSeqNum(),
           entry.getElectionTerm(),
-          entry.contentLength(),
-          OLogContentType.DATA);
+          contentLength,
+          entry.getContent().getType());
     }
   }
 }

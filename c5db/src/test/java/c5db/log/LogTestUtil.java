@@ -43,7 +43,7 @@ public class LogTestUtil {
   }
 
   public static OLogEntry makeEntry(long seqNum, long term, ByteBuffer data) {
-    return new OLogEntry(seqNum, term, Lists.newArrayList(data));
+    return new OLogEntry(seqNum, term, new OLogRawDataContent(Lists.newArrayList(data)));
   }
 
   public static List<OLogEntry> makeSingleEntryList(long seqNum, long term, String stringData) {

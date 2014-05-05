@@ -17,6 +17,9 @@
 
 package c5db.log;
 
+import c5db.replication.QuorumConfiguration;
+import c5db.replication.generated.QuorumConfigurationMessage;
+import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -27,6 +30,8 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
+import static c5db.log.LogTestUtil.aSeqNum;
+import static c5db.log.LogTestUtil.anElectionTerm;
 import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.term;
@@ -36,10 +41,10 @@ import static org.hamcrest.core.Is.is;
 
 
 public class OLogEntryCodecTest {
-  SequentialEntryCodec<OLogEntry> codec = new OLogEntry.Codec();
+  private final SequentialEntryCodec<OLogEntry> codec = new OLogEntry.Codec();
   private final PipedOutputStream pipedOutputStream = new PipedOutputStream();
   private InputStream readFromMe;
-  final WritableByteChannel writeToMe = Channels.newChannel(pipedOutputStream);
+  private final WritableByteChannel writeToMe = Channels.newChannel(pipedOutputStream);
 
   @Before
   public void setUpIOPipe() throws Exception {
@@ -66,8 +71,29 @@ public class OLogEntryCodecTest {
     assertThat(seqNum, is(equalTo(33L)));
   }
 
+  @Test
+  public void decodesQuorumConfigurationEntriesItEncodes() throws Exception {
+    final QuorumConfigurationMessage message = aQuorumConfigurationMessage();
+    final OLogEntry configurationEntry = new OLogEntry(aSeqNum(), anElectionTerm(),
+        new OLogProtostuffContent<>(message));
+
+    ByteBuffer[] encodedBytes = codec.encode(configurationEntry);
+    writeBuffersToPipe(encodedBytes, writeToMe);
+
+    OLogEntry reconstructedEntry = codec.decode(readFromMe);
+    assertThat(reconstructedEntry, is(equalTo(configurationEntry)));
+  }
+
+
   private static OLogEntry anOLogEntry() {
     return makeEntry(seqNum(77), term(88), "data");
+  }
+
+  private static QuorumConfigurationMessage aQuorumConfigurationMessage() {
+    return QuorumConfiguration
+        .of(Lists.newArrayList(1L, 2L, 3L))
+        .transitionTo(Lists.newArrayList(4L, 5L, 6L))
+        .toProtostuff();
   }
 
   private static void writeBuffersToPipe(ByteBuffer[] buffers, WritableByteChannel byteChannel) throws Exception {

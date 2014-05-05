@@ -17,17 +17,19 @@
 
 package c5db.log;
 
+import c5db.generated.OLogContentType;
 import com.google.common.collect.Lists;
-import io.netty.util.CharsetUtil;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import static c5db.log.EntryEncodingUtil.sumRemaining;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
+import static c5db.log.LogTestUtil.someData;
 import static c5db.log.LogTestUtil.term;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -46,17 +48,18 @@ public class OLogEntryDescriptionTest {
       descriptionCodec,
       new InMemoryPersistenceNavigator<>(persistence, descriptionCodec));
 
-  private static final ByteBuffer DATA = ByteBuffer.wrap("data".getBytes(CharsetUtil.UTF_8));
+  private final ByteBuffer rawData = someData();
 
   @Test
   public void returnsADescriptionOfALoggedEntry() throws Exception {
-    log.append(makeSingleEntryList(seqNum(11), term(22), DATA));
+    log.append(makeSingleEntryList(seqNum(11), term(22), rawData));
 
     assertThat(descriptionLog.getLastEntry(), is(equalTo(
         new OLogEntryDescription(
             seqNum(11),
             term(22),
-            DATA.remaining(),
+            rawData.remaining(),
+            OLogContentType.DATA,
             true,
             true)
     )));
@@ -64,7 +67,7 @@ public class OLogEntryDescriptionTest {
 
   @Test
   public void detectsThatLoggedContentHasBeenCorruptedWhenDescribingIt() throws Exception {
-    log.append(makeSingleEntryList(seqNum(11), term(22), DATA));
+    log.append(makeSingleEntryList(seqNum(11), term(22), rawData));
 
     // Hack to find the content within the logged data: assume 4-byte ending CRC, so subtract 5
     // Also assume that the existing byte value at that location is different than zero.
@@ -75,7 +78,8 @@ public class OLogEntryDescriptionTest {
         new OLogEntryDescription(
             seqNum(11),
             term(22),
-            DATA.remaining(),
+            rawData.remaining(),
+            OLogContentType.DATA,
             true,
             false)
     )));
@@ -94,6 +98,11 @@ public class OLogEntryDescriptionTest {
 
   private List<OLogEntryDescription> descriptionsCorrespondingTo(List<OLogEntry> entries) {
     return Lists.transform(entries, (entry) ->
-        new OLogEntryDescription(entry.getSeqNum(), entry.getElectionTerm(), entry.contentLength(), true, true));
+        new OLogEntryDescription(entry.getSeqNum(), entry.getElectionTerm(), entryDataContentLength(entry),
+            entry.getContent().getType(), true, true));
+  }
+
+  private int entryDataContentLength(OLogEntry entry) {
+    return sumRemaining(entry.getContent().serialize());
   }
 }

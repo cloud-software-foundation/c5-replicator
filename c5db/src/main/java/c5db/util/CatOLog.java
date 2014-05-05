@@ -36,9 +36,9 @@ import static c5db.log.LogPersistenceService.PersistenceReader;
 
 public class CatOLog {
   // TODO replace formatting constants with command line parameters
-  private static final int HEX_ADDRESS_DIGITS = 8;
-  private static final int LONG_DIGITS = 10;
-  private static final int INT_DIGITS = 10;
+  private static final int HEX_ADDRESS_DIGITS = 4;
+  private static final int LONG_DIGITS = 8;
+  private static final int INT_DIGITS = 8;
 
   /**
    * Output to System.out the contents of an OLog file, with one entry on each line.
@@ -96,16 +96,17 @@ public class CatOLog {
     StringBuilder sb = new StringBuilder();
     Formatter formatter = new Formatter(sb, Locale.US);
 
-    formatter.format(" [term: %" + LONG_DIGITS + "d] ", entry.getElectionTerm());
-    formatter.format(" [seq: %" + LONG_DIGITS + "d] ", entry.getSeqNum());
-    formatter.format(" [content length: %" + INT_DIGITS + "d] ", entry.getContentLength());
+    formatter.format(" [term: %" + LONG_DIGITS + "d]", entry.getElectionTerm());
+    formatter.format(" [seq: %" + LONG_DIGITS + "d]", entry.getSeqNum());
+    formatter.format(" [content length: %" + INT_DIGITS + "d]", entry.getContentLength());
+    formatter.format(" [type: %s]", entry.getType());
 
     if (!entry.isHeaderCrcValid()) {
-      formatter.format(" <invalid header CRC> ");
+      formatter.format(" <invalid header CRC>");
     }
 
     if (!entry.isContentCrcValid()) {
-      formatter.format(" <invalid content CRC> ");
+      formatter.format(" <invalid content CRC>");
     }
 
     return formatter.toString();
