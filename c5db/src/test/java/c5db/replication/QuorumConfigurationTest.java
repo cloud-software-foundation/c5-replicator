@@ -27,8 +27,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 public class QuorumConfigurationTest {
-  final QuorumConfiguration stableConfiguration = aStableConfiguration();
-  final QuorumConfiguration transitionalConfiguration = aTransitionalConfiguration();
+  private final QuorumConfiguration stableConfiguration = aStableConfiguration();
+  private final QuorumConfiguration transitionalConfiguration = aTransitionalConfiguration();
 
   @Test
   public void convertsAStableConfigurationToAndFromProtostuffFormat() {

@@ -360,8 +360,8 @@ public class InRamTest {
   // If the simulation is running correctly, this should only ever return 0 or 1.
   private int leaderCount() {
     int leaderCount = 0;
-    for (ReplicatorInstance repl : sim.getReplicators().values()) {
-      if (repl.isLeader() && repl.currentTerm >= sim.getCurrentTerm()) {
+    for (ReplicatorInstance replicatorInstance : sim.getReplicators().values()) {
+      if (replicatorInstance.isLeader() && replicatorInstance.currentTerm >= sim.getCurrentTerm()) {
         leaderCount++;
       }
     }

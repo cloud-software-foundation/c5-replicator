@@ -69,7 +69,7 @@ import static org.junit.Assert.assertFalse;
  * messages.
  */
 public class ReplicatorAppendEntriesTest {
-  private ReplicatorInstance repl;
+  private ReplicatorInstance replicatorInstance;
 
   private static final long LEADER_ID = 2;
   private static final long CURRENT_TERM = 4;
@@ -111,15 +111,15 @@ public class ReplicatorAppendEntriesTest {
 
   @Before
   public void createAndStartReplicatorAndRpcFiber() throws Exception {
-    repl = makeTestInstance();
-    repl.start();
+    replicatorInstance = makeTestInstance();
+    replicatorInstance.start();
     rpcFiber.start();
     testState.become("fully-set-up");
   }
 
   @After
   public void disposeReplicatorAndRpcFiber() {
-    repl.dispose();
+    replicatorInstance.dispose();
     rpcFiber.dispose();
   }
 
@@ -201,7 +201,7 @@ public class ReplicatorAppendEntriesTest {
             .withANewerTerm(newerTerm));
 
     assertThat(reply(), is(anAppendReply().withResult(true)));
-    assertThat(repl.currentTerm, is(equalTo(newerTerm)));
+    assertThat(replicatorInstance.currentTerm, is(equalTo(newerTerm)));
   }
 
   @Test
@@ -299,7 +299,7 @@ public class ReplicatorAppendEntriesTest {
             .withEntries(receivedEntries));
 
     assertThat(reply(), is(anAppendReply().withResult(true)));
-    assertThat(repl.getQuorumConfiguration(), is(equalTo(configuration)));
+    assertThat(replicatorInstance.getQuorumConfiguration(), is(equalTo(configuration)));
   }
 
 
@@ -357,7 +357,7 @@ public class ReplicatorAppendEntriesTest {
   private void havingReceived(AppendEntriesMessageBuilder messageBuilder) {
     lastReply = SettableFuture.create();
     final RpcWireRequest request = new RpcWireRequest(LEADER_ID, QUORUM_ID, messageBuilder.build());
-    AsyncRequest.withOneReply(rpcFiber, repl.getIncomingChannel(), request, lastReply::set);
+    AsyncRequest.withOneReply(rpcFiber, replicatorInstance.getIncomingChannel(), request, lastReply::set);
   }
 
   private RpcReply reply() throws Exception {

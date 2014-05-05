@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Immutable value type representing a configuration of which peers are members of a quorum.
@@ -139,14 +140,13 @@ public final class QuorumConfiguration {
 
   private static long getGreatestIndexCommittedByMajority(Set<Long> peers, Map<Long, Long> peersLastAckedIndex) {
     SortedMultiset<Long> committedIndexes = TreeMultiset.create();
-    for (long peerId : peers) {
-      committedIndexes.add(peersLastAckedIndex.getOrDefault(peerId, 0L));
-    }
+    committedIndexes.addAll(peers.stream().map(peerId
+        -> peersLastAckedIndex.getOrDefault(peerId, 0L)).collect(Collectors.toList()));
     return Iterables.get(committedIndexes.descendingMultiset(), calculateNumericalMajority(peers.size()) - 1);
   }
 
-  private static <T> boolean setComprisesMajorityOfAnotherSet(Set<T> sourceSet, Set<T> destSet) {
-    return Sets.intersection(sourceSet, destSet).size() >= calculateNumericalMajority(destSet.size());
+  private static <T> boolean setComprisesMajorityOfAnotherSet(Set<T> sourceSet, Set<T> destinationSet) {
+    return Sets.intersection(sourceSet, destinationSet).size() >= calculateNumericalMajority(destinationSet.size());
   }
 
   private static int calculateNumericalMajority(int setSize) {
@@ -174,16 +174,10 @@ public final class QuorumConfiguration {
 
     QuorumConfiguration that = (QuorumConfiguration) o;
 
-    if (transitionalConfiguration != that.transitionalConfiguration) {
-      return false;
-    }
-    if (!allPeers.equals(that.allPeers)) {
-      return false;
-    }
-    if (!nextPeers.equals(that.nextPeers)) {
-      return false;
-    }
-    return prevPeers.equals(that.prevPeers);
+    return transitionalConfiguration == that.transitionalConfiguration
+        && allPeers.equals(that.allPeers)
+        && nextPeers.equals(that.nextPeers)
+        && prevPeers.equals(that.prevPeers);
   }
 
   @Override

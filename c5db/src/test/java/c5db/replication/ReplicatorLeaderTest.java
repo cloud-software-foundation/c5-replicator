@@ -77,7 +77,7 @@ public class ReplicatorLeaderTest {
   private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel = new MemoryRequestChannel<>();
 
   private final Map<Long, BlockingQueue<Request<RpcRequest, RpcWireReply>>> requests = new HashMap<>();
-  private final Map<Long, Callback<Request<RpcRequest, RpcWireReply>>> peerBehaviorialCallbacks = new HashMap<>();
+  private final Map<Long, Callback<Request<RpcRequest, RpcWireReply>>> peerBehavioralCallbacks = new HashMap<>();
 
   @Rule
   public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
@@ -103,7 +103,7 @@ public class ReplicatorLeaderTest {
     sendRpcChannel.subscribe(rpcFiber, this::routeOutboundRequests);
     sendRpcChannel.subscribe(rpcFiber, requestLog::publish);
 
-    Fiber replFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor), "replFiber-Thread", true);
+    Fiber replicatorFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor), "replicatorFiber-Thread", true);
     InRamSim.Info info = new InRamSim.Info(0, 1000);
     info.startTimeout();
 
@@ -112,7 +112,7 @@ public class ReplicatorLeaderTest {
             new LogEntry(CURRENT_TERM, 1, new ArrayList<>(), QuorumConfiguration.of(PEER_ID_LIST).toProtostuff())));
     lastIndex = 1;
 
-    replicatorInstance = new ReplicatorInstance(replFiber,
+    replicatorInstance = new ReplicatorInstance(replicatorFiber,
         LEADER_ID,
         QUORUM_ID,
         PEER_ID_LIST,
@@ -251,8 +251,8 @@ public class ReplicatorLeaderTest {
    */
   private void routeOutboundRequests(Request<RpcRequest, RpcWireReply> request) {
     long to = request.getRequest().to;
-    if (peerBehaviorialCallbacks.containsKey(to)) {
-      peerBehaviorialCallbacks.get(to).onMessage(request);
+    if (peerBehavioralCallbacks.containsKey(to)) {
+      peerBehavioralCallbacks.get(to).onMessage(request);
     } else {
       if (!requests.containsKey(to)) {
         requests.put(to, new LinkedBlockingQueue<>());
@@ -265,13 +265,11 @@ public class ReplicatorLeaderTest {
    * Execute a callback on all pending requests to a given peer, and any requests hereafter
    */
   private void createRequestRule(long peerId, Callback<Request<RpcRequest, RpcWireReply>> handler) {
-    peerBehaviorialCallbacks.put(peerId, handler);
+    peerBehavioralCallbacks.put(peerId, handler);
     if (requests.containsKey(peerId)) {
       List<Request<RpcRequest, RpcWireReply>> pendingRequests = new LinkedList<>();
       requests.get(peerId).drainTo(pendingRequests);
-      for (Request<RpcRequest, RpcWireReply> request : pendingRequests) {
-        handler.onMessage(request);
-      }
+      pendingRequests.forEach(handler::onMessage);
     }
   }
 
