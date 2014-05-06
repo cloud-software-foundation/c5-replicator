@@ -66,10 +66,7 @@ import static org.hamcrest.core.Is.is;
 
 public class ManyClusterBase {
   private static int regionServerPort;
-  private static int webServerPort;
 
-  public static final byte[] value = Bytes.toBytes("value");
-  public static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
   private static final Random rnd = new Random();
 
   private static Channel<TabletStateChange> stateChanges;
@@ -80,10 +77,9 @@ public class ManyClusterBase {
 
   @Rule
   public TestName name = new TestName();
-  public C5Table table;
-  public byte[] row;
-  static int metaOnPort;
-  public static int getRegionServerPort() {
+  private C5Table table;
+  private static int metaOnPort;
+  private static int getRegionServerPort() {
     return regionServerPort;
   }
 
@@ -172,7 +168,7 @@ public class ManyClusterBase {
     System.setProperty("clusterName", String.valueOf("foo"));
 
     regionServerPort = 8080 + rnd.nextInt(1000);
-    webServerPort = 31337 + rnd.nextInt(1000);
+    int webServerPort = 31337 + rnd.nextInt(1000);
 
     System.setProperty("regionServerPort", String.valueOf(regionServerPort));
     System.setProperty("webServerPort", String.valueOf(webServerPort));
