@@ -43,6 +43,14 @@ public interface LogPersistenceService {
    */
   interface BytePersistence extends AutoCloseable {
     /**
+     * Determine if the store is empty.
+     *
+     * @return True if empty, otherwise false.
+     * @throws IOException
+     */
+    boolean isEmpty() throws IOException;
+
+    /**
      * Get the size in bytes of the data, equal to the position/address of
      * next byte to be appended.
      *

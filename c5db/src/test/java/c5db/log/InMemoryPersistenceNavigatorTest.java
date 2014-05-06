@@ -81,6 +81,11 @@ public class InMemoryPersistenceNavigatorTest {
     assertThat(numberOfSkipOperationsForASecondCall, is(0));
   }
 
+  @Test(expected = Exception.class)
+  public void throwsAnExceptionIfAskedToTruncateToIndexZero() throws Exception {
+    navigator.notifyTruncation(0);
+  }
+
 
   private void performVariousNavigatorOperations() throws Exception {
     navigator.getStreamAtSeqNum(20);

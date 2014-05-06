@@ -52,6 +52,11 @@ public class LogFileService implements LogPersistenceService {
     }
 
     @Override
+    public boolean isEmpty() throws IOException {
+      return filePosition == 0;
+    }
+
+    @Override
     public long size() throws IOException {
       return filePosition;
     }

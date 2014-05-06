@@ -70,9 +70,12 @@ public class QuorumDelegatingLogConcurrencyTest {
 
   private void runMultipleQuorumThreadSafetyTest(int numQuorums, ExecutorService executor) throws Exception {
     try (OLog log = createLog()) {
-      runForNQuorums(numQuorums, executor, (quorumId) ->
-          log.logEntry(logEntriesForQuorum(quorumId), quorumId)
-              .get());
+      runForNQuorums(numQuorums, executor, (quorumId) -> {
+        log.openAsync(quorumId)
+            .get();
+        log.logEntry(logEntriesForQuorum(quorumId), quorumId)
+            .get();
+      });
 
       assertThatEverythingWasLoggedCorrectly(log);
     } finally {
@@ -83,9 +86,12 @@ public class QuorumDelegatingLogConcurrencyTest {
 
   private void runCloseThreadSafetyTest(int numQuorums, ExecutorService executor) throws Exception {
     try (OLog log = createLog()) {
-      runForNQuorums(numQuorums, executor, (quorumId) ->
-          log.logEntry(logEntriesForQuorum(quorumId), quorumId)
-              .get());
+      runForNQuorums(numQuorums, executor, (quorumId) -> {
+        log.openAsync(quorumId)
+            .get();
+        log.logEntry(logEntriesForQuorum(quorumId), quorumId)
+            .get();
+      });
 
       runNTimesAndWaitForAllToComplete(numQuorums * 2, executor, log::close);
     } finally {
@@ -116,7 +122,7 @@ public class QuorumDelegatingLogConcurrencyTest {
     KeySerializingExecutor executor = new WrappingKeySerializingExecutor(newFixedThreadPool(LOG_WORKER_THREADS));
     return new QuorumDelegatingLog(logFileService,
         executor,
-        NavigableMapTermOracle::new,
+        NavigableMapOLogEntryOracle::new,
         InMemoryPersistenceNavigator::new);
   }
 

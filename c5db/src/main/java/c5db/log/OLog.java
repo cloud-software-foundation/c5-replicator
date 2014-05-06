@@ -23,10 +23,25 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
+
 /**
  * A write-ahead log for several quorums.
  */
 public interface OLog extends AutoCloseable {
+
+  /**
+   * Prepare a new quorum for logging, and return notification when it is ready. If existing
+   * information is found for this quorum, this method will find it and set up any internal
+   * structures and/or caches necessary for the quorum.
+   *
+   * @param quorumId Quorum id
+   * @return Future which will return when opening is complete. Any other I/O method call for
+   * this quorum, prior to completion of the future, will throw an exception. The future will
+   * return the latest entry in the log for this quorum; or if there is none, the future will
+   * return null.
+   */
+  ListenableFuture<OLogEntry> openAsync(String quorumId);
 
   /**
    * Append the passed entries to the log. All calls to this method for a given quorum must be
@@ -37,9 +52,10 @@ public interface OLog extends AutoCloseable {
    * @param entries  Non-null list of zero or more entries.
    * @param quorumId Quorum id these entries should be logged under
    * @return Future indicating completion. Failure will be indicated by exception.
-   * @throws c5db.log.EncodedSequentialLog.LogEntryNotInSequence when attempting to log an
-   *                                                             entry not in the correct sequence (for any given quorum, the sequence numbers must be
-   *                                                             strictly ascending with no gaps).
+   * @throws c5db.log.SequentialLog.LogEntryNotInSequence when attempting to log an entry not in
+   *                                                      the correct sequence (for any given
+   *                                                      quorum, the sequence numbers must be
+   *                                                      strictly ascending with no gaps).
    */
   ListenableFuture<Boolean> logEntry(List<OLogEntry> entries, String quorumId);
 
@@ -53,12 +69,13 @@ public interface OLog extends AutoCloseable {
   ListenableFuture<OLogEntry> getLogEntry(long index, String quorumId);
 
   /**
-   * Asynchronously retrieve a range of entries from index start, inclusive, to index end, exclusive. Returns every
-   * entry in the specified range. Any entries retrieved are guaranteed to have consecutive indices.
+   * Asynchronously retrieve a range of entries from index start, inclusive, to index end,
+   * exclusive. Returns every entry in the specified range. Any entries retrieved are guaranteed
+   * to have consecutive indices.
    *
    * @param start    First index in range
-   * @param end      One beyond the last index in the desired range; must be greater than or equal to start. If this
-   *                 equals start, a list of length zero will be retrieved.
+   * @param end      One beyond the last index in the desired range; must be greater than or equal
+   *                 to start. If this equals start, a list of length zero will be retrieved.
    * @param quorumId Quorum id of entries to retrieve
    * @return Future containing a list of log entries upon completion.
    */
@@ -83,20 +100,14 @@ public interface OLog extends AutoCloseable {
   long getLogTerm(long index, String quorumId);
 
   /**
-   * Get the last sequence number written to the log for this quorum, or zero if there is none.
+   * Retrieve the quorum configuration which was active in the given quorum at the given index.
    *
-   * @param quorumId Quorum id
-   * @return (A future which will result in) the sequence number of the last entry logged.
+   * @param index    Log entry index
+   * @param quorumId Log entry quorum
+   * @return The quorum configuration and the sequence number on which it was created; or the empty
+   * configuration and zero, respectively, if 'index' is not found for this quorum.
    */
-  ListenableFuture<Long> getLastSeqNum(String quorumId);
-
-  /**
-   * Get the last election term written to the log for this quorum, or zero if there is none.
-   *
-   * @param quorumId Quorum id
-   * @return (A future which will result in) the election term of the last entry logged.
-   */
-  ListenableFuture<Long> getLastTerm(String quorumId);
+  QuorumConfigurationWithSeqNum getQuorumConfig(long index, String quorumId);
 
   /**
    * Save off and close log file, and begin a new log file.
@@ -115,4 +126,12 @@ public interface OLog extends AutoCloseable {
    */
   void close() throws IOException;
 
+  /**
+   * Exception indicating an operation was attempted on a log that was not open (for the requested quorum).
+   */
+  class QuorumNotOpen extends RuntimeException {
+    public QuorumNotOpen(String s) {
+      super(s);
+    }
+  }
 }

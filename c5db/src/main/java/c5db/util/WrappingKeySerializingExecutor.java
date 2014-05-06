@@ -22,10 +22,10 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(WrappingKeySerializingExecutor.class);
   private final ExecutorService executorService;
-  private final Map<String, EmptyCheckingQueue<Runnable>> keyQueues = new HashMap<>();
+  private final Map<String, EmptyCheckingQueue<Runnable>> keyQueues = new ConcurrentHashMap<>();
 
   private volatile boolean shutdown = false;
 
@@ -83,16 +83,7 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
    * Retrieve the queue for the given key, creating it first if it does not exist
    */
   private EmptyCheckingQueue<Runnable> getQueueForKey(String key) {
-    EmptyCheckingQueue<Runnable> queue = keyQueues.get(key);
-    if (queue == null) {
-      synchronized (keyQueues) {
-        queue = keyQueues.get(key);
-        if (queue == null) {
-          keyQueues.put(key, queue = new EmptyCheckingQueue<>());
-        }
-      }
-    }
-    return queue;
+    return keyQueues.computeIfAbsent(key, (k) -> new EmptyCheckingQueue<>());
   }
 
   /**
@@ -127,8 +118,8 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
     return () -> {
       try {
         setWhenFinished.set(task.get());
-      } catch (Exception t) {
-        LOG.error("Error executing WrappingKeySerializingExecutor task", t);
+      } catch (Throwable t) {
+        LOG.error("Error executing task", t);
         setWhenFinished.setException(t);
       }
     };

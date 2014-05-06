@@ -136,7 +136,7 @@ public class QuorumDelegatingLogPerformanceMeasurement {
   }
 
   private long doLogRun(boolean dynamicSleepInterval)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, ExecutionException {
     final LogFileService logFileService = new LogFileService(testDir);
 
     detailPrintln("Logging to " + testDir.toString());
@@ -145,6 +145,10 @@ public class QuorumDelegatingLogPerformanceMeasurement {
     long startTime;
 
     try (OLog log = getLog(logFileService)) {
+      for (String quorumId : quorumList) {
+        log.openAsync(quorumId).get();
+      }
+
       startTime = System.nanoTime();
 
       for (int messageSizeLog2 : logSequence) {
@@ -263,7 +267,7 @@ public class QuorumDelegatingLogPerformanceMeasurement {
     KeySerializingExecutor executor = new WrappingKeySerializingExecutor(newFixedThreadPool(numThreads));
     return new QuorumDelegatingLog(logFileService,
         executor,
-        NavigableMapTermOracle::new,
+        NavigableMapOLogEntryOracle::new,
         InMemoryPersistenceNavigator::new);
   }
 

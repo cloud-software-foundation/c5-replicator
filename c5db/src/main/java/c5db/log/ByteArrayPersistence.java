@@ -47,6 +47,11 @@ class ByteArrayPersistence implements LogPersistenceService.BytePersistence {
   }
 
   @Override
+  public boolean isEmpty() throws IOException {
+    return stream.size() == 0;
+  }
+
+  @Override
   public long size() throws IOException {
     return stream.size();
   }

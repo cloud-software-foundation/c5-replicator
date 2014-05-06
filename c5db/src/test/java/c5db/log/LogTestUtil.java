@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.replication.QuorumConfiguration;
 import c5db.replication.generated.LogEntry;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.collect.Lists;
@@ -103,5 +104,35 @@ public class LogTestUtil {
 
   public static OLogEntry anOLogEntry() {
     return makeEntry(aSeqNum(), anElectionTerm(), someData());
+  }
+
+  public static LogSequenceBuilder entries() {
+    return new LogSequenceBuilder();
+  }
+
+  public static class LogSequenceBuilder {
+    private final List<LogEntry> logSequence = new ArrayList<>();
+    private long term = 1;
+
+    public LogSequenceBuilder term(long term) {
+      this.term = term;
+      return this;
+    }
+
+    public LogSequenceBuilder indexes(long... indexList) {
+      for (long index : indexList) {
+        logSequence.add(makeProtostuffEntry(index, term, someData()));
+      }
+      return this;
+    }
+
+    public LogSequenceBuilder configurationAndIndex(QuorumConfiguration configuration, long index) {
+      logSequence.add(new LogEntry(term, index, new ArrayList<>(), configuration.toProtostuff()));
+      return this;
+    }
+
+    public List<LogEntry> build() {
+      return logSequence;
+    }
   }
 }

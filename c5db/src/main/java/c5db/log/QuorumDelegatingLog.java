@@ -26,17 +26,18 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
+import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
+import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
 import static c5db.log.SequentialLog.LogEntryNotInSequence;
-import static c5db.log.TermOracle.TermOracleFactory;
 
 /**
  * OLog that delegates each quorum's logging tasks to a separate SequentialLog for that quorum,
@@ -50,42 +51,45 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   private final LogPersistenceService persistenceService;
   private final KeySerializingExecutor taskExecutor;
-  private final Map<String, PerQuorum> quorumMap = new HashMap<>();
+  private final Map<String, PerQuorum> quorumMap = new ConcurrentHashMap<>();
 
-  private final TermOracleFactory termOracleFactory;
+  private final OLogEntryOracleFactory OLogEntryOracleFactory;
   private final PersistenceNavigatorFactory persistenceNavigatorFactory;
 
   public QuorumDelegatingLog(LogPersistenceService persistenceService,
                              KeySerializingExecutor taskExecutor,
-                             TermOracleFactory termOracleFactory,
+                             OLogEntryOracleFactory OLogEntryOracleFactory,
                              PersistenceNavigatorFactory persistenceNavigatorFactory
   ) {
     this.persistenceService = persistenceService;
     this.taskExecutor = taskExecutor;
-    this.termOracleFactory = termOracleFactory;
+    this.OLogEntryOracleFactory = OLogEntryOracleFactory;
     this.persistenceNavigatorFactory = persistenceNavigatorFactory;
   }
 
   private class PerQuorum {
     public final SequentialLog<OLogEntry> quorumLog;
-    public final TermOracle termOracle;
+    public final OLogEntryOracle oLogEntryOracle;
     public final SequentialEntryCodec<OLogEntry> entryCodec = new OLogEntry.Codec();
+
+    private volatile boolean opened;
 
     private long expectedNextSequenceNumber;
 
     public PerQuorum(String quorumId) {
+      final BytePersistence persistence;
       try {
-        BytePersistence persistence = persistenceService.getPersistence(quorumId);
-        quorumLog = new EncodedSequentialLog<>(
-            persistence,
-            entryCodec,
-            persistenceNavigatorFactory.create(persistence, entryCodec));
-        termOracle = termOracleFactory.create();
-        // TODO garner election term information from a pre-existing log we may be using
+        persistence = persistenceService.getPersistence(quorumId);
       } catch (IOException e) {
         LOG.error("Unable to create quorum info object for quorum {}", quorumId);
         throw new RuntimeException(e);
       }
+
+      quorumLog = new EncodedSequentialLog<>(
+          persistence,
+          entryCodec,
+          persistenceNavigatorFactory.create(persistence, entryCodec));
+      oLogEntryOracle = OLogEntryOracleFactory.create();
     }
 
     public void validateConsecutiveEntries(List<OLogEntry> entries) {
@@ -105,11 +109,16 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
+  public ListenableFuture<OLogEntry> openAsync(String quorumId) {
+    return taskExecutor.submit(quorumId, () -> createAndPrepareQuorumStructures(quorumId));
+  }
+
+  @Override
   public ListenableFuture<Boolean> logEntry(List<OLogEntry> passedInEntries, String quorumId) {
     List<OLogEntry> entries = validateAndMakeDefensiveCopy(passedInEntries);
 
-    getOrCreateQuorumStructure(quorumId).validateConsecutiveEntries(entries);
-    updateTermInformationWithNewEntries(entries, quorumId);
+    getQuorumStructure(quorumId).validateConsecutiveEntries(entries);
+    updateOracleWithNewEntries(entries, quorumId);
 
     // TODO group commit / sync
 
@@ -144,8 +153,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   @Override
   public ListenableFuture<Boolean> truncateLog(long seqNum, String quorumId) {
-    getOrCreateQuorumStructure(quorumId).setExpectedNextSequenceNumber(seqNum);
-    termOracle(quorumId).notifyTruncation(seqNum);
+    getQuorumStructure(quorumId).setExpectedNextSequenceNumber(seqNum);
+    oLogEntryOracle(quorumId).notifyTruncation(seqNum);
     return taskExecutor.submit(quorumId, () -> {
       quorumLog(quorumId).truncate(seqNum);
       return true;
@@ -154,31 +163,12 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   @Override
   public long getLogTerm(long seqNum, String quorumId) {
-    return termOracle(quorumId).getTermAtSeqNum(seqNum);
+    return oLogEntryOracle(quorumId).getTermAtSeqNum(seqNum);
   }
 
   @Override
-  public ListenableFuture<Long> getLastSeqNum(String quorumId) {
-    return taskExecutor.submit(quorumId, () -> {
-      SequentialLog<OLogEntry> log = quorumLog(quorumId);
-      if (log.isEmpty()) {
-        return 0L;
-      } else {
-        return log.getLastEntry().getSeqNum();
-      }
-    });
-  }
-
-  @Override
-  public ListenableFuture<Long> getLastTerm(String quorumId) {
-    return taskExecutor.submit(quorumId, () -> {
-      SequentialLog<OLogEntry> log = quorumLog(quorumId);
-      if (log.isEmpty()) {
-        return 0L;
-      } else {
-        return log.getLastEntry().getElectionTerm();
-      }
-    });
+  public QuorumConfigurationWithSeqNum getQuorumConfig(long seqNum, String quorumId) {
+    return oLogEntryOracle(quorumId).getConfigAtSeqNum(seqNum);
   }
 
   @Override
@@ -199,6 +189,34 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
   }
 
+
+  private OLogEntry createAndPrepareQuorumStructures(String quorumId) throws IOException {
+    final PerQuorum perQuorum = createPerQuorum(quorumId);
+    OLogEntry lastEntry = null;
+
+    if (!perQuorum.quorumLog.isEmpty()) {
+      lastEntry = loadDataAndReturnLastEntry(perQuorum);
+
+      if (lastEntry != null) {
+        perQuorum.setExpectedNextSequenceNumber(lastEntry.getSeqNum() + 1);
+      }
+    }
+
+    perQuorum.opened = true;
+    return lastEntry;
+  }
+
+  private OLogEntry loadDataAndReturnLastEntry(PerQuorum perQuorum) throws IOException {
+    OLogEntry[] lastEntryRef = new OLogEntry[1];
+
+    perQuorum.quorumLog.forEach((entry) -> {
+      perQuorum.oLogEntryOracle.notifyLogging(entry);
+      lastEntryRef[0] = entry;
+    });
+
+    return lastEntryRef[0];
+  }
+
   private List<OLogEntry> validateAndMakeDefensiveCopy(List<OLogEntry> entries) {
     if (entries.isEmpty()) {
       throw new IllegalArgumentException("Attempting to log an empty entry list");
@@ -207,34 +225,34 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     return ImmutableList.copyOf(entries);
   }
 
-  private PerQuorum getOrCreateQuorumStructure(String quorumId) {
-    // The most common case, retrieving the quorum structure when it already exists,
-    // doesn't incur any synchronization overhead.
-    // TODO error here if one thread retrieves from the map while another is adding to it; use immutable map?
+  private SequentialLog<OLogEntry> quorumLog(String quorumId) {
+    return getQuorumStructure(quorumId).quorumLog;
+  }
+
+  private OLogEntryOracle oLogEntryOracle(String quorumId) {
+    return getQuorumStructure(quorumId).oLogEntryOracle;
+  }
+
+  private PerQuorum getQuorumStructure(String quorumId) {
     PerQuorum perQuorum = quorumMap.get(quorumId);
-    if (perQuorum == null) {
-      synchronized (quorumMap) {
-        perQuorum = quorumMap.get(quorumId);
-        if (perQuorum == null) {
-          quorumMap.put(quorumId, perQuorum = new PerQuorum(quorumId));
-        }
-      }
+    if (perQuorum == null || !perQuorum.opened) {
+      quorumNotOpen(quorumId);
     }
     return perQuorum;
   }
 
-  private SequentialLog<OLogEntry> quorumLog(String quorumId) {
-    return getOrCreateQuorumStructure(quorumId).quorumLog;
+  private PerQuorum createPerQuorum(String quorumId) {
+    return quorumMap.computeIfAbsent(quorumId, q -> new PerQuorum(quorumId));
   }
 
-  private TermOracle termOracle(String quorumId) {
-    return getOrCreateQuorumStructure(quorumId).termOracle;
-  }
-
-  private void updateTermInformationWithNewEntries(List<OLogEntry> entries, String quorumId) {
-    TermOracle termOracle = termOracle(quorumId);
+  private void updateOracleWithNewEntries(List<OLogEntry> entries, String quorumId) {
+    OLogEntryOracle oLogEntryOracle = oLogEntryOracle(quorumId);
     for (OLogEntry e : entries) {
-      termOracle.notifyLogging(e.getSeqNum(), e.getElectionTerm());
+      oLogEntryOracle.notifyLogging(e);
     }
+  }
+
+  private void quorumNotOpen(String quorumId) {
+    throw new QuorumNotOpen("QuorumDelegatingLog#getQuorumStructure: quorum " + quorumId + " not open");
   }
 }

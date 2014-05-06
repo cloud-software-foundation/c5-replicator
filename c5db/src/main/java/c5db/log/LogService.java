@@ -51,7 +51,7 @@ public class LogService extends AbstractService implements LogModule {
       this.oLog = new QuorumDelegatingLog(
           logFileService,
           executor,
-          NavigableMapTermOracle::new,
+          NavigableMapOLogEntryOracle::new,
           InMemoryPersistenceNavigator::new);
 
       // TODO start the flush threads as necessary

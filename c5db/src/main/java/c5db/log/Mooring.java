@@ -26,10 +26,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NavigableMap;
-import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
+import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
 import static java.lang.Math.max;
 
 /**
@@ -50,17 +49,25 @@ public class Mooring implements ReplicatorLog {
   private long currentTerm;
   private long lastIndex;
 
-  private final NavigableMap<Long, QuorumConfiguration> configurations = new TreeMap<>();
+  private QuorumConfiguration lastQuorumConfig = QuorumConfiguration.EMPTY;
+  private long lastQuorumConfigIndex = 0;
 
   Mooring(OLog log, String quorumId) throws IOException {
     this.quorumId = quorumId;
     this.log = log;
-    configurations.put(0L, QuorumConfiguration.EMPTY);
 
     try {
-      this.currentTerm = log.getLastTerm(quorumId).get(LOG_TIMEOUT, TimeUnit.SECONDS);
-      this.lastIndex = log.getLastSeqNum(quorumId).get(LOG_TIMEOUT, TimeUnit.SECONDS);
-      // TODO get last configuration as well.
+      // TODO maybe move this from the constructor to an 'open' method
+      final OLogEntry lastEntry = log.openAsync(quorumId).get(LOG_TIMEOUT, TimeUnit.SECONDS);
+      if (lastEntry == null) {
+        this.currentTerm = this.lastIndex = 0;
+      } else {
+        this.currentTerm = lastEntry.getElectionTerm();
+        this.lastIndex = lastEntry.getSeqNum();
+      }
+
+      setQuorumConfigFromLog();
+
     } catch (Exception e) {
       throw new IOException(e);
     }
@@ -75,7 +82,8 @@ public class Mooring implements ReplicatorLog {
     List<OLogEntry> oLogEntries = new ArrayList<>();
     for (LogEntry entry : entries) {
       if (isAConfigurationEntry(entry)) {
-        configurations.put(entry.getIndex(), QuorumConfiguration.fromProtostuff(entry.getQuorumConfiguration()));
+        lastQuorumConfig = QuorumConfiguration.fromProtostuff(entry.getQuorumConfiguration());
+        lastQuorumConfigIndex = entry.getIndex();
       }
       oLogEntries.add(OLogEntry.fromProtostuff(entry));
     }
@@ -118,18 +126,24 @@ public class Mooring implements ReplicatorLog {
 
     lastIndex = max(entryIndex - 1, 0);
     currentTerm = log.getLogTerm(lastIndex, quorumId);
-    configurations.tailMap(entryIndex, true).clear();
+    setQuorumConfigFromLog();
     return log.truncateLog(entryIndex, quorumId);
   }
 
   @Override
   public QuorumConfiguration getLastConfiguration() {
-    return configurations.lastEntry().getValue();
+    return lastQuorumConfig;
   }
 
   @Override
   public long getLastConfigurationIndex() {
-    return configurations.lastKey();
+    return lastQuorumConfigIndex;
+  }
+
+  private void setQuorumConfigFromLog() {
+    final QuorumConfigurationWithSeqNum configFromLog = log.getQuorumConfig(lastIndex, quorumId);
+    lastQuorumConfig = configFromLog.quorumConfiguration;
+    lastQuorumConfigIndex = configFromLog.seqNum;
   }
 
 

@@ -31,11 +31,15 @@ import java.util.List;
 
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
+import static c5db.log.LogTestUtil.anOLogEntry;
 import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
 import static c5db.log.LogTestUtil.term;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @SuppressWarnings("unchecked")
 public class EncodedSequentialLogTest {
@@ -92,7 +96,7 @@ public class EncodedSequentialLogTest {
   @Test
   public void readsEntriesFromTheSuppliedPersistenceObjectUsingTheSuppliedCodec() throws Exception {
     long startSeqNum = 77;
-    long endSeqNum = 100;
+    long endSeqNum = 83;
 
     context.checking(new Expectations() {{
       codecWillReturnEntrySequence(codec, someConsecutiveEntries(startSeqNum, endSeqNum));
@@ -120,15 +124,31 @@ public class EncodedSequentialLogTest {
   }
 
   @Test
-  public void delegatesToItsNavigatorToReturnTheLastEntryInTheLog() throws Exception {
+  public void returnsNullWhenRequestedToGetTheLastEntryInAnEmptyLog() throws Exception {
     context.checking(new Expectations() {{
-      ignoring(codec);
+      oneOf(persistence).isEmpty();
+      will(returnValue(true));
+    }});
+
+    assertThat(log.getLastEntry(), is(nullValue()));
+  }
+
+  @Test
+  public void delegatesToItsNavigatorToReturnTheLastEntryInANonEmptyLog() throws Exception {
+    final OLogEntry lastEntry = anOLogEntry();
+
+    context.checking(new Expectations() {{
+      oneOf(persistence).isEmpty();
+      will(returnValue(false));
 
       oneOf(navigator).getStreamAtLastEntry();
       will(returnValue(aMockInputStream()));
+
+      oneOf(codec).decode(with(any(InputStream.class)));
+      will(returnValue(lastEntry));
     }});
 
-    log.getLastEntry();
+    assertThat(log.getLastEntry(), equalTo(lastEntry));
   }
 
 
@@ -151,4 +171,5 @@ public class EncodedSequentialLogTest {
       }
     }});
   }
+
 }

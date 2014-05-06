@@ -56,7 +56,9 @@ import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
 import static c5db.RpcMatchers.ReplyMatcher.anAppendReply;
 import static c5db.interfaces.replication.Replicator.State;
+import static c5db.log.LogTestUtil.LogSequenceBuilder;
 import static c5db.log.LogTestUtil.aSeqNum;
+import static c5db.log.LogTestUtil.entries;
 import static c5db.log.LogTestUtil.makeProtostuffEntry;
 import static c5db.log.LogTestUtil.someData;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -442,36 +444,6 @@ public class ReplicatorAppendEntriesTest {
   private void havingLogged(LogSequenceBuilder sequenceBuilder) throws Exception {
     List<LogEntry> entries = sequenceBuilder.build();
     internalLog.logEntries(entries).get();
-  }
-
-  private LogSequenceBuilder entries() {
-    return new LogSequenceBuilder();
-  }
-
-  private class LogSequenceBuilder {
-    private final List<LogEntry> logSequence = new ArrayList<>();
-    private long term = CURRENT_TERM;
-
-    public LogSequenceBuilder term(long term) {
-      this.term = term;
-      return this;
-    }
-
-    public LogSequenceBuilder indexes(long... indexList) {
-      for (long index : indexList) {
-        logSequence.add(makeProtostuffEntry(index, term, someData()));
-      }
-      return this;
-    }
-
-    public LogSequenceBuilder configurationAndIndex(QuorumConfiguration configuration, long index) {
-      logSequence.add(new LogEntry(term, index, new ArrayList<>(), configuration.toProtostuff()));
-      return this;
-    }
-
-    public List<LogEntry> build() {
-      return logSequence;
-    }
   }
 
   private long firstIndexIn(List<LogEntry> entries) {
