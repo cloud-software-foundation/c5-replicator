@@ -53,7 +53,6 @@ import sun.misc.BASE64Encoder;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -71,14 +70,14 @@ import static org.hamcrest.core.StringStartsWith.startsWith;
 public class TabletServiceCommandCheck {
 
   private static final String TEST_TABLE_NAME = "testTable";
-  private static final Channel<TabletStateChange> DONT_CARE_STATE_CHANGE_CHANNEL = null;
+
   @Rule
   public final JUnitRuleMockery context = new JUnitRuleMockery() {{
     setThreadingPolicy(new Synchroniser());
   }};
   private final Channel<Object> newNodeNotificationChannel = new MemoryChannel<>();
   private final SettableFuture stateFuture = SettableFuture.create();
-  private final SettableFuture replicationFuture = SettableFuture.create();
+  private final SettableFuture<Replicator> replicationFuture = SettableFuture.create();
 
   private C5Server c5Server;
   private TabletService tabletService;
@@ -86,28 +85,27 @@ public class TabletServiceCommandCheck {
   private DiscoveryModule discoveryModule;
   private ReplicationModule replicationModule;
   private ConfigDirectory config;
-  private final List<Throwable> throwables = new ArrayList<>();
 
   private final SettableFuture<DiscoveryModule> discoveryServiceFuture = SettableFuture.create();
   private final SettableFuture<ReplicationModule> replicationServiceFuture = SettableFuture.create();
   private Path configDirectory;
   private Replicator replicator;
-  C5FiberFactory fiberFactory = getFiberFactory(this::notifyFailed);
-  PoolFiberFactory fiberPool;
+  private final C5FiberFactory fiberFactory = getFiberFactory(this::notifyFailed);
+  private PoolFiberFactory fiberPool;
   private byte[] tabletDescBytes;
   private byte[] testRegionBytes;
 
-  protected final void notifyFailed(Throwable cause) {
+  final void notifyFailed(Throwable cause) {
   }
 
 
-  public C5FiberFactory getFiberFactory(Consumer<Throwable> throwableConsumer) {
+  C5FiberFactory getFiberFactory(Consumer<Throwable> throwableConsumer) {
     fiberPool = new PoolFiberFactory(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()));
     return new PoolFiberFactoryWithExecutor(fiberPool, new ExceptionHandlingBatchExecutor(throwableConsumer));
   }
 
   @After
-  public void tearDown(){
+  public void tearDown() {
     fiberPool.dispose();
   }
 
@@ -212,15 +210,15 @@ public class TabletServiceCommandCheck {
 
     Tablet metaTablet = context.mock(Tablet.class);
     Region metaRegion = context.mock(Region.class);
-    context.checking(new Expectations(){
+    context.checking(new Expectations() {
       {
         oneOf(metaTablet).getRegion();
         will(returnValue(metaRegion));
 
       }
     });
-    tabletService.tabletRegistry.getTablets().put("hbase:meta,fake", metaTablet );
-    context.checking(new Expectations(){
+    tabletService.tabletRegistry.getTablets().put("hbase:meta,fake", metaTablet);
+    context.checking(new Expectations() {
       {
         oneOf(metaRegion).put(with(any(Put.class)));
       }
