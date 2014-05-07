@@ -16,6 +16,7 @@
  */
 package c5db.client;
 
+import c5db.ManyClusterBase;
 import c5db.MiniClusterBase;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -31,11 +32,11 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class TestMultiUtil extends MiniClusterBase {
+public class TestMultiUtil extends ManyClusterBase {
   private final byte[] row1 = Bytes.toBytes("row1");
   private final byte[] row2 = Bytes.toBytes("row2");
 
-  @Test(timeout = 1000)
+  @Test(timeout = 10000)
   public void testMultiPut() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     assertThat(DataHelper.valueReadFromDB(table, row), is(not(equalTo(value))));
@@ -43,7 +44,7 @@ public class TestMultiUtil extends MiniClusterBase {
     assertThat(DataHelper.valueReadFromDB(table, row2), is(equalTo(value)));
   }
 
-  @Test(timeout = 1000)
+  @Test(timeout = 10000)
   public void testScan() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     ResultScanner resultScanner = DataHelper.getScanner(table, new byte[]{});
@@ -51,7 +52,7 @@ public class TestMultiUtil extends MiniClusterBase {
     assertThat(DataHelper.nextResult(resultScanner), is(equalTo(value)));
   }
 
-  @Test(timeout = 1000)
+  @Test(timeout = 10000)
   public void testMultiDelete() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     List<Delete> deletes = new ArrayList<>();

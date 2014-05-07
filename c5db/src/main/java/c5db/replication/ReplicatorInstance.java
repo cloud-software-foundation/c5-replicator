@@ -46,6 +46,7 @@ import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.core.Disposable;
 import org.jetlang.fibers.Fiber;
+import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -308,6 +309,12 @@ public class ReplicatorInstance implements Replicator {
   @Override
   public Channel<State> getStateChannel() {
     return stateMemoryChannel;
+  }
+
+
+  @Override
+  public Channel<ReplicatorInstanceEvent> getStateChangeChannel() {
+    return this.stateChangeChannel;
   }
 
   public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
