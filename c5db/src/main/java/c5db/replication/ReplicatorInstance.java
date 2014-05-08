@@ -390,6 +390,11 @@ public class ReplicatorInstance implements Replicator {
     fiber.dispose(); // kill us forever.
   }
 
+  private void setState(State state) {
+    myState = state;
+    stateMemoryChannel.publish(state);
+  }
+
   /**
    * Submits a request to change the quorum, blocking if necessary until the request
    * queue can accept the request.
@@ -855,7 +860,7 @@ public class ReplicatorInstance implements Replicator {
     lastRPC = info.currentTimeMillis();
     // increment term.
     setCurrentTerm(currentTerm + 1);
-    myState = State.CANDIDATE;
+    setState(State.CANDIDATE);
 
     RequestVote msg = new RequestVote(currentTerm, myId, log.getLastIndex(), log.getLastTerm());
 
@@ -972,7 +977,7 @@ public class ReplicatorInstance implements Replicator {
   @FiberOnly
   private void becomeFollower() {
     boolean wasLeader = myState == State.LEADER;
-    myState = State.FOLLOWER;
+    setState(State.FOLLOWER);
 
     if (wasLeader) {
       stateChangeChannel.publish(
@@ -1000,8 +1005,7 @@ public class ReplicatorInstance implements Replicator {
   private void becomeLeader() {
     logger.warn("I AM THE LEADER NOW, commence AppendEntries RPCs term = {}", currentTerm);
 
-    myState = State.LEADER;
-    stateMemoryChannel.publish(State.LEADER);
+    setState(State.LEADER);
 
     // Page 7, para 5
     long myNextLog = log.getLastIndex() + 1;
