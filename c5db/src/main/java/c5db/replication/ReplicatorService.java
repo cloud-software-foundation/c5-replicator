@@ -183,7 +183,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   }
 
   // TODO this should be actually via whatever configuration system we end up using.
-  private static class Info implements ReplicatorInformationInterface {
+  private static class Info implements ReplicatorInformation {
 
     @Override
     public long currentTimeMillis() {

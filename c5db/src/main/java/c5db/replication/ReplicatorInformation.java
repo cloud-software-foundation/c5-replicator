@@ -21,12 +21,12 @@ package c5db.replication;
  * Information used by a {@link c5db.replication.ReplicatorInstance} to configure itself; for instance,
  * tunable timing-related parameters.
  */
-public interface ReplicatorInformationInterface {
+public interface ReplicatorInformation {
   public long currentTimeMillis();
 
   /**
    * How often to check if the election needs to be rerun.
-   * <p/>
+   * <p>
    * TODO revisit this to see if necessary or can be set to another derivative value.
    *
    * @return

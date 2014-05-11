@@ -311,7 +311,7 @@ public class ReplicatorAppendEntriesTest {
   private ReplicatorInstance makeTestInstance() {
     long thisReplicatorId = 1;
     long lastCommittedIndex = 0;
-    ReplicatorInformationInterface info = new InRamSim.Info(0, Long.MAX_VALUE / 2L);
+    ReplicatorInformation info = new InRamSim.Info(0, Long.MAX_VALUE / 2L);
     ReplicatorLog proxyLog = getReplicatorLogWhichInvokesMock();
 
     return new ReplicatorInstance(new ThreadFiber(runnableExecutor, null, true),

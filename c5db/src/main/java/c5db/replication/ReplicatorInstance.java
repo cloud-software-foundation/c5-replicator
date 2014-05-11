@@ -88,7 +88,7 @@ public class ReplicatorInstance implements Replicator {
   private final ReplicatorLog log;
   private final long myElectionTimeout;
 
-  final ReplicatorInformationInterface info;
+  final ReplicatorInformation info;
   final ReplicatorInfoPersistence persister;
 
   /**
@@ -132,7 +132,7 @@ public class ReplicatorInstance implements Replicator {
                             final long myId,
                             final String quorumId,
                             ReplicatorLog log,
-                            ReplicatorInformationInterface info,
+                            ReplicatorInformation info,
                             ReplicatorInfoPersistence persister,
                             RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
                             final Channel<ReplicatorInstanceEvent> stateChangeChannel,
@@ -188,7 +188,7 @@ public class ReplicatorInstance implements Replicator {
                      final long myId,
                      final String quorumId,
                      ReplicatorLog log,
-                     ReplicatorInformationInterface info,
+                     ReplicatorInformation info,
                      ReplicatorInfoPersistence persister,
                      RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
                      final Channel<ReplicatorInstanceEvent> stateChangeChannel,

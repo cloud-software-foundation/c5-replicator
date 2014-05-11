@@ -63,7 +63,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class InRamSim {
   private static final Logger LOG = LoggerFactory.getLogger("InRamSim");
 
-  public static class Info implements ReplicatorInformationInterface {
+  public static class Info implements ReplicatorInformation {
     private final long offset;
     private final long electionTimeout;
     private final StopWatch stopWatch = new StopWatch();
