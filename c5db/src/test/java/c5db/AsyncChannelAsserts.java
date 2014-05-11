@@ -34,6 +34,7 @@ import org.jetlang.fibers.ThreadFiber;
 import org.junit.runners.model.MultipleFailureException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -163,7 +164,7 @@ public class AsyncChannelAsserts {
    * @param <T> Type of channel object
    */
   public static class ChannelHistoryMonitor<T> {
-    private final List<T> messageLog = new ArrayList<>();
+    private final List<T> messageLog = Collections.synchronizedList(new ArrayList<>());
     private final Map<Matcher<? super T>, SettableFuture<T>> waitingToMatch = new HashMap<>();
     private final Fiber fiber;
     private static final int WAIT_TIMEOUT = 5; // seconds
@@ -187,9 +188,11 @@ public class AsyncChannelAsserts {
     }
 
     public boolean hasAny(Matcher<? super T> matcher) {
-      for (T element : messageLog) {
-        if (matcher.matches(element)) {
-          return true;
+      synchronized (messageLog) {
+        for (T element : messageLog) {
+          if (matcher.matches(element)) {
+            return true;
+          }
         }
       }
       return false;
@@ -215,10 +218,12 @@ public class AsyncChannelAsserts {
       SettableFuture<T> finished = SettableFuture.create();
 
       fiber.execute(() -> {
-        for (T element : messageLog) {
-          if (matcher.matches(element)) {
-            finished.set(element);
-            return;
+        synchronized (messageLog) {
+          for (T element : messageLog) {
+            if (matcher.matches(element)) {
+              finished.set(element);
+              return;
+            }
           }
         }
         waitingToMatch.put(matcher, finished);
