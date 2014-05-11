@@ -25,8 +25,8 @@ import io.protostuff.Message;
  */
 public class RpcWireReply extends RpcMessage {
 
-  public RpcWireReply(long from, String quorumId, Message message) {
-    super(0, from, quorumId, message);
+  public RpcWireReply(long to, long from, String quorumId, Message message) {
+    super(to, from, quorumId, message);
   }
 
   public RpcWireReply(ReplicationWireMessage msg) {

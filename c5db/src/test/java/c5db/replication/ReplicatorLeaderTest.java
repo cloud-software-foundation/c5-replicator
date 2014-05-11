@@ -395,9 +395,8 @@ public class ReplicatorLeaderTest {
                                       long myNextIndex) {
     RpcRequest message = request.getRequest();
     long termFromMessage = message.getAppendMessage().getTerm();
-    RpcWireReply reply = new RpcWireReply(message.to, QUORUM_ID,
-        new AppendEntriesReply(termFromMessage, trueIsSuccessFlag, myNextIndex));
-    request.reply(reply);
+    AppendEntriesReply replyMessage = new AppendEntriesReply(termFromMessage, trueIsSuccessFlag, myNextIndex);
+    request.reply(new RpcWireReply(message.from, message.to, QUORUM_ID, replyMessage));
   }
 
   private void replyTo(SentRequest sentRequest, boolean success) {

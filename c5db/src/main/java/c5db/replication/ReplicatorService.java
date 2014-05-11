@@ -85,7 +85,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An implementation of ReplicationModule using instances of ReplicatorInstance to handle each quorum.
- * <p/>
+ * <p>
  * TODO we dont have a way to actually START a freaking ReplicatorInstance - YET.
  * TODO consider being symmetric in how we handle sent messages.
  */
@@ -458,13 +458,10 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
 
     final RpcWireRequest newRequest = new RpcWireRequest(toFrom, quorumId, request.message);
-    AsyncRequest.withOneReply(fiber, repl.getIncomingChannel(), newRequest, new Callback<RpcReply>() {
-      @Override
-      public void onMessage(RpcReply msg) {
-        assert msg.message != null;
-        RpcWireReply newReply = new RpcWireReply(toFrom, quorumId, msg.message);
-        origMessage.reply(newReply);
-      }
+    AsyncRequest.withOneReply(fiber, repl.getIncomingChannel(), newRequest, msg -> {
+      assert msg.message != null;
+      RpcWireReply newReply = new RpcWireReply(toFrom, toFrom, quorumId, msg.message);
+      origMessage.reply(newReply);
     });
   }
 
