@@ -297,12 +297,12 @@ public class ReplicatorInstance implements Replicator {
     return "ReplicatorInstance{" +
         "myId=" + myId +
         ", quorumId='" + quorumId + '\'' +
-        ", quorumConfig='" + quorumConfig + '\'' +
         ", lastCommittedIndex=" + lastCommittedIndex +
         ", myState=" + myState +
         ", currentTerm=" + currentTerm +
         ", votedFor=" + votedFor +
         ", lastRPC=" + lastRPC +
+        ", quorumConfig=" + quorumConfig +
         '}';
   }
 
