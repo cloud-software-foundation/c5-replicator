@@ -182,7 +182,6 @@ public class InRamSim {
 
     rpcChannel.subscribe(rpcFiber, this::messageForwarder);
     commitNotices.subscribe(rpcFiber, message -> LOG.debug("Commit notice {}", message));
-    stateChanges.subscribe(rpcFiber, this::updateCurrentTermAndLeader);
   }
 
   public void createAndStartReplicators(Collection<Long> replPeerIds) {
@@ -209,24 +208,6 @@ public class InRamSim {
       plusMillis += electionTimeoutOffset;
       rep.start();
     }
-  }
-
-  private long currentTerm = 0;
-  private long currentLeader = 0;
-
-  private synchronized void updateCurrentTermAndLeader(ReplicatorInstanceEvent event) {
-    if (event.eventType == ReplicatorInstanceEvent.EventType.LEADER_ELECTED) {
-      currentTerm = event.leaderElectedTerm;
-      currentLeader = event.newLeader;
-    }
-  }
-
-  public synchronized long getCurrentTerm() {
-    return currentTerm;
-  }
-
-  public synchronized long getCurrentLeader() {
-    return currentLeader;
   }
 
   // Stop and dispose of the requested peer; but leave its object in the replicators map so that e.g.

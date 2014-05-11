@@ -197,13 +197,14 @@ public class InRamTest {
   @Test
   public void aFollowerWillStageANewElectionIfItTimesOutWaitingToHearFromTheLeader() throws Exception {
     havingElectedALeaderAtOrAfter(term(1));
+    final long firstLeaderTerm = currentTerm();
 
     PeerController follower = pickFollower();
 
     follower.willDropIncomingAppendsUntil(leader(), is(not(theLeader())));
     follower.allowToTimeout();
 
-    waitForANewLeader();
+    waitForALeader(firstLeaderTerm + 1);
     assertThat(follower, anyOf(is(theLeader()), willRespondToAnAppendRequest()));
   }
 
@@ -343,8 +344,7 @@ public class InRamTest {
     // some tests want to be able to identify a follower right away.
     pickNonLeader().waitForAppendReply();
 
-    final long leaderId = sim.getCurrentLeader();
-    assertThat(peer(leaderId), is(theLeader()));
+    final long leaderId = currentLeader();
     assertThat(leaderCount(), is(equalTo(1)));
 
     sim.startTimeout(leaderId);
@@ -355,15 +355,16 @@ public class InRamTest {
   }
 
   private void waitForANewLeader() throws Exception {
-    waitForALeader(sim.getCurrentTerm() + 1);
+    waitForALeader(currentTerm() + 1);
   }
 
   // Counts leaders in the current term. Used to verify a sane state.
   // If the simulation is running correctly, this should only ever return 0 or 1.
   private int leaderCount() {
+    final long currentTerm = currentTerm();
     int leaderCount = 0;
     for (ReplicatorInstance replicatorInstance : sim.getReplicators().values()) {
-      if (replicatorInstance.isLeader() && replicatorInstance.currentTerm >= sim.getCurrentTerm()) {
+      if (replicatorInstance.isLeader() && replicatorInstance.currentTerm >= currentTerm) {
         leaderCount++;
       }
     }
@@ -391,7 +392,7 @@ public class InRamTest {
 
   class LeaderController extends PeerController {
     public LeaderController() {
-      super(sim.getCurrentLeader());
+      super(currentLeader());
     }
 
     public LeaderController log(List<ByteBuffer> buffers) throws Exception {
@@ -407,7 +408,7 @@ public class InRamTest {
     }
 
     private ReplicatorInstance currentLeaderInstance() {
-      return sim.getReplicators().get(sim.getCurrentLeader());
+      return sim.getReplicators().get(currentLeader());
     }
   }
 
@@ -425,7 +426,7 @@ public class InRamTest {
 
     public boolean isCurrentLeader() {
       return instance.isLeader()
-          && instance.currentTerm >= sim.getCurrentTerm();
+          && instance.currentTerm >= currentTerm();
     }
 
     public QuorumConfiguration currentConfiguration() {
@@ -497,7 +498,7 @@ public class InRamTest {
 
   private void allPeersExceptLeader(CheckedConsumer<PeerController, Throwable> forEach) throws Throwable {
     for (long peerId : sim.getOnlinePeers()) {
-      if (peerId == sim.getCurrentLeader()) {
+      if (peerId == currentLeader()) {
         continue;
       }
       forEach.accept(new PeerController(peerId));
@@ -531,6 +532,14 @@ public class InRamTest {
     return chosenPeer;
   }
 
+  private long currentTerm() {
+    return eventMonitor.getLatest(leaderElectedEvent(anyLeader(), anyTerm())).leaderElectedTerm;
+  }
+
+  private long currentLeader() {
+    return eventMonitor.getLatest(leaderElectedEvent(anyLeader(), anyTerm())).newLeader;
+  }
+
   private static long term(long term) {
     return term;
   }
@@ -540,6 +549,10 @@ public class InRamTest {
   }
 
   private static Matcher<Long> anyLeader() {
+    return any(Long.class);
+  }
+
+  private static Matcher<Long> anyTerm() {
     return any(Long.class);
   }
 

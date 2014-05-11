@@ -19,6 +19,7 @@ package c5db;
 
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberOnly;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.hamcrest.Description;
@@ -198,6 +199,17 @@ public class AsyncChannelAsserts {
       return false;
     }
 
+    public T getLatest(Matcher<? super T> matcher) {
+      synchronized (messageLog) {
+        for (T element : Lists.reverse(messageLog)) {
+          if (matcher.matches(element)) {
+            return element;
+          }
+        }
+      }
+      return null;
+    }
+
     public T waitFor(Matcher<? super T> matcher) {
       ListenableFuture<T> finished = future(matcher);
 
@@ -211,7 +223,7 @@ public class AsyncChannelAsserts {
     }
 
     public void forgetHistory() {
-      fiber.execute(messageLog::clear);
+      messageLog.clear();
     }
 
     private ListenableFuture<T> future(Matcher<? super T> matcher) {
