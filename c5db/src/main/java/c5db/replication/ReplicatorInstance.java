@@ -25,6 +25,8 @@ import c5db.log.ReplicatorLog;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.AppendEntriesReply;
 import c5db.replication.generated.LogEntry;
+import c5db.replication.generated.PreElectionPoll;
+import c5db.replication.generated.PreElectionReply;
 import c5db.replication.generated.RequestVote;
 import c5db.replication.generated.RequestVoteReply;
 import c5db.replication.rpc.RpcReply;
@@ -432,7 +434,10 @@ public class ReplicatorInstance implements Replicator {
   private void onIncomingMessage(Request<RpcWireRequest, RpcReply> message) {
     try {
       RpcWireRequest req = message.getRequest();
-      if (req.isRequestVoteMessage()) {
+      if (req.isPreElectionPollMessage()) {
+        doPreElectionPollMessage(message);
+
+      } else if (req.isRequestVoteMessage()) {
         doRequestVote(message);
 
       } else if (req.isAppendMessage()) {
@@ -445,6 +450,48 @@ public class ReplicatorInstance implements Replicator {
       logger.error("exception while processing message {}: {}", message, e);
       throw e;
     }
+  }
+
+  @FiberOnly
+  private void doPreElectionPollMessage(Request<RpcWireRequest, RpcReply> message) {
+    final RpcWireRequest request = message.getRequest();
+    final PreElectionPoll msg = request.getPreElectionPollMessage();
+    final long msgLastLogTerm = msg.getLastLogTerm();
+    final long msgLastLogIndex = msg.getLastLogIndex();
+
+    final boolean wouldVote =
+        msg.getTerm() >= currentTerm
+            && atLeastAsUpToDateAsLocalLog(msgLastLogTerm, msgLastLogIndex)
+            && !rejectPollFromOldConfiguration(request.from, msgLastLogTerm, msgLastLogIndex);
+
+    logger.debug("sending pre-election reply to {} wouldVote = {}", message.getRequest().from, wouldVote);
+    PreElectionReply m = new PreElectionReply(currentTerm, wouldVote);
+    RpcReply reply = new RpcReply(m);
+    message.reply(reply);
+  }
+
+  /**
+   * Special case for pre-election poll. If the sender's log exactly matches our log, but they
+   * are in the process of being phased out in a transitional configuration (i.e., not a part
+   * of the next set of peers); and if we are in the FOLLOWER state and we are continuing into
+   * the next configuration, then reply false to their poll request. Thus, in a transitional
+   * configuration, a peer being phased out will not be able to initiate an election unless
+   * a node *not* being phased out is already conducting an election; or, unless its log is
+   * more advanced, in which case there may be a legitimate need for the phasing-out peer to
+   * start an election.
+   *
+   * @param from            id of the peer who sent us a pre-election poll request
+   * @param msgLastLogTerm  the term of the last entry in that peer's log
+   * @param msgLastLogIndex the index of the last entry in that peer's log
+   * @return true if we should reply false to the pre-election poll request on the basis described.
+   */
+  private boolean rejectPollFromOldConfiguration(long from, long msgLastLogTerm, long msgLastLogIndex) {
+    return quorumConfig.isTransitional
+        && msgLastLogTerm == log.getLastTerm()
+        && msgLastLogIndex == log.getLastIndex()
+        && !quorumConfig.nextPeers().contains(from)
+        && quorumConfig.nextPeers().contains(myId)
+        && myState == State.FOLLOWER;
   }
 
   @FiberOnly
@@ -477,9 +524,7 @@ public class ReplicatorInstance implements Replicator {
     // and reset election timeout.
 
     boolean vote = false;
-    if ((log.getLastTerm() <= msg.getLastLogTerm())
-        &&
-        log.getLastIndex() <= msg.getLastLogIndex()) {
+    if (atLeastAsUpToDateAsLocalLog(msg.getLastLogTerm(), msg.getLastLogIndex())) {
       // we can vote for this because the candidate's log is at least as
       // complete as the local log.
 
@@ -494,6 +539,14 @@ public class ReplicatorInstance implements Replicator {
     RequestVoteReply m = new RequestVoteReply(currentTerm, vote);
     RpcReply reply = new RpcReply(m);
     message.reply(reply);
+  }
+
+  private boolean atLeastAsUpToDateAsLocalLog(long msgLastLogTerm, long msgLastLogIndex) {
+    final long localLastLogTerm = log.getLastTerm();
+    final long localLastLogIndex = log.getLastIndex();
+
+    return msgLastLogTerm > localLastLogTerm
+        || (msgLastLogTerm == localLastLogTerm && msgLastLogIndex >= localLastLogIndex);
   }
 
   @FiberOnly
@@ -682,6 +735,105 @@ public class ReplicatorInstance implements Replicator {
     if (lastRPC + this.myElectionTimeout < info.currentTimeMillis()
         && quorumConfig.allPeers().contains(myId)) {
       logger.trace("timed out checking on election, try new election");
+      if (myState == State.CANDIDATE) {
+        doElection();
+      } else {
+        doPreElection();
+      }
+    }
+  }
+
+  @FiberOnly
+  private void doPreElection() {
+    stateChangeChannel.publish(
+        new ReplicatorInstanceEvent(
+            ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT,
+            this,
+            0,
+            0,
+            info.currentTimeMillis(),
+            null)
+    );
+
+    // Start new election "timer".
+    lastRPC = info.currentTimeMillis();
+
+    PreElectionPoll msg = new PreElectionPoll(currentTerm, myId, log.getLastIndex(), log.getLastTerm());
+
+    logger.debug("starting pre-election poll for currentTerm: {}", currentTerm);
+
+    final long termBeingVotedFor = currentTerm;
+    final Set<Long> votes = new HashSet<>();
+
+    for (long peer : quorumConfig.allPeers()) {
+      final RpcRequest request = new RpcRequest(peer, myId, quorumId, msg);
+      sendPreElectionRequest(request, termBeingVotedFor, votes, lastRPC);
+    }
+  }
+
+  @FiberOnly
+  private void sendPreElectionRequest(RpcRequest request, long termBeingVotedFor, Set<Long> votes, long startTime) {
+    AsyncRequest.withOneReply(fiber, sendRpcChannel, request,
+        message -> handlePreElectionReply(message, termBeingVotedFor, votes, startTime),
+        1, TimeUnit.SECONDS, () -> handlePreElectionTimeout(request, termBeingVotedFor, votes, startTime));
+  }
+
+  @FiberOnly
+  private void handlePreElectionTimeout(RpcRequest request, long termBeingVotedFor, Set<Long> votes, long startTime) {
+    if (myState != State.FOLLOWER
+        || lastRPC != startTime) {
+      return;
+    }
+
+    // Also if the term goes forward somehow, this is also out of date, and drop it.
+    if (currentTerm > termBeingVotedFor) {
+      logger.trace("pre-election poll timeout, current term has moved on, abandoning this request");
+      return;
+    }
+
+    logger.trace("pre-election poll timeout to {}, resending RPC", request.to);
+    sendPreElectionRequest(request, termBeingVotedFor, votes, startTime);
+  }
+
+  @FiberOnly
+  private void handlePreElectionReply(RpcWireReply message, long termBeingVotedFor, Set<Long> votes, long startTime) {
+    if (message == null) {
+      logger.warn("got a NULL message reply, that's unfortunate");
+      return;
+    }
+
+    if (currentTerm > termBeingVotedFor) {
+      logger.warn("pre-election reply from {}, but currentTerm {} > vote term {}", message.from,
+          currentTerm, termBeingVotedFor);
+      return;
+    }
+
+    if (myState != State.FOLLOWER) {
+      // we became not, ignore
+      logger.warn("pre-election reply from {} ignored -> in state {}", message.from, myState);
+      return;
+    }
+
+    if (lastRPC != startTime) {
+      // Another timeout occurred, so this poll is moot.
+      return;
+    }
+
+    PreElectionReply reply = message.getPreElectionReplyMessage();
+
+    if (reply.getTerm() > currentTerm) {
+      logger.warn("election reply from {}, but term {} was not my term {}, updating currentTerm",
+          message.from, reply.getTerm(), currentTerm);
+
+      setCurrentTerm(reply.getTerm());
+      return;
+    }
+
+    if (reply.getWouldVote()) {
+      votes.add(message.from);
+    }
+
+    if (votesConstituteMajority(votes)) {
       doElection();
     }
   }
@@ -690,7 +842,7 @@ public class ReplicatorInstance implements Replicator {
   private void doElection() {
     stateChangeChannel.publish(
         new ReplicatorInstanceEvent(
-            ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT,
+            ReplicatorInstanceEvent.EventType.ELECTION_STARTED,
             this,
             0,
             0,
