@@ -29,17 +29,22 @@ import org.hamcrest.TypeSafeMatcher;
  */
 class ReplicationMatchers {
 
-  static Matcher<ReplicatorInstanceEvent> leaderElectedEvent(long minimumTerm) {
+  static Matcher<ReplicatorInstanceEvent> leaderElectedEvent(Matcher<Long> leaderMatcher,
+                                                             Matcher<Long> termMatcher) {
     return new TypeSafeMatcher<ReplicatorInstanceEvent>() {
       @Override
       protected boolean matchesSafely(ReplicatorInstanceEvent item) {
         return item.eventType == ReplicatorInstanceEvent.EventType.LEADER_ELECTED
-            && item.leaderElectedTerm >= minimumTerm;
+            && leaderMatcher.matches(item.newLeader)
+            && termMatcher.matches(item.leaderElectedTerm);
       }
 
       @Override
       public void describeTo(Description description) {
-        description.appendText("a ReplicatorInstanceEvent indicating a leader was elected");
+        description.appendText("a ReplicatorInstanceEvent indicating a leader was elected")
+            .appendText(" with id ").appendDescriptionOf(leaderMatcher)
+            .appendText(" with term ").appendDescriptionOf(termMatcher);
+
       }
     };
   }

@@ -68,6 +68,8 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.any;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.IsNot.not;
 
 /**
@@ -334,7 +336,7 @@ public class InRamTest {
   // Throws TimeoutException if that does not occur within the time limit.
   private void waitForALeader(long minimumTerm) throws Exception {
     sim.startAllTimeouts();
-    eventMonitor.waitFor(leaderElectedEvent(minimumTerm));
+    eventMonitor.waitFor(leaderElectedEvent(anyLeader(), greaterThanOrEqualTo(minimumTerm)));
     sim.stopAllTimeouts();
 
     // Wait for at least one other node to recognize the new leader. This is necessary because
@@ -535,6 +537,10 @@ public class InRamTest {
 
   private static long index(long index) {
     return index;
+  }
+
+  private static Matcher<Long> anyLeader() {
+    return any(Long.class);
   }
 
   private void updateLastCommit(IndexCommitNotice notice) {
