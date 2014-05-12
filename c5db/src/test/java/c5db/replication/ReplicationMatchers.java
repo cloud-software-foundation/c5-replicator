@@ -49,6 +49,20 @@ class ReplicationMatchers {
     };
   }
 
+  static Matcher<ReplicatorInstanceEvent> aReplicatorEvent(ReplicatorInstanceEvent.EventType type) {
+    return new TypeSafeMatcher<ReplicatorInstanceEvent>() {
+      @Override
+      protected boolean matchesSafely(ReplicatorInstanceEvent item) {
+        return item.eventType == type;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("a ReplicatorInstanceEvent of type ").appendValue(type);
+      }
+    };
+  }
+
   static Matcher<IndexCommitNotice> aQuorumChangeCommitNotice(QuorumConfiguration quorumConfig) {
     return new TypeSafeMatcher<IndexCommitNotice>() {
       @Override

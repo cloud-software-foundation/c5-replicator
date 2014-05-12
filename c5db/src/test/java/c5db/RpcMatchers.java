@@ -19,7 +19,7 @@ package c5db;
 
 import c5db.replication.QuorumConfiguration;
 import c5db.replication.generated.LogEntry;
-import c5db.replication.rpc.RpcReply;
+import c5db.replication.rpc.RpcMessage;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import org.hamcrest.Description;
@@ -56,6 +56,18 @@ public class RpcMatchers {
           RpcMatchers::isAnAppendEntriesRequest,
           (description) -> description
               .appendText("an AppendEntries request"));
+    }
+
+    public static RequestMatcher aPreElectionPoll() {
+      return new RequestMatcher().addCriterion(
+          (request) -> request.getRequest().isPreElectionPollMessage(),
+          (description) -> description.appendText("a PreElectionPoll"));
+    }
+
+    public static RequestMatcher aRequestVote() {
+      return new RequestMatcher().addCriterion(
+          (request) -> request.getRequest().isRequestVoteMessage(),
+          (description) -> description.appendText("a RequestVote"));
     }
 
     public RequestMatcher from(long peerId) {
@@ -103,10 +115,7 @@ public class RpcMatchers {
     public RequestMatcher containingQuorumConfig(QuorumConfiguration quorumConfig) {
       return addCriterion(
           (request) ->
-              entryList(request).stream().anyMatch(
-                  (entry) ->
-                      QuorumConfiguration.fromProtostuff(entry.getQuorumConfiguration())
-                          .equals(quorumConfig)),
+              containsQuorumConfiguration(entryList(request), quorumConfig),
           (description) ->
               description.appendText(" with an entry containing the quorum configuration ")
                   .appendValue(quorumConfig));
@@ -114,18 +123,21 @@ public class RpcMatchers {
 
     private RequestMatcher addCriterion(Predicate<Request<RpcRequest, RpcWireReply>> predicate,
                                         Consumer<Description> describer) {
-      predicates.add(predicate);
-      describers.add(describer);
-      return this;
+      RequestMatcher copy = new RequestMatcher();
+      copy.predicates.addAll(this.predicates);
+      copy.predicates.add(predicate);
+      copy.describers.addAll(this.describers);
+      copy.describers.add(describer);
+      return copy;
     }
   }
 
-  public static class ReplyMatcher extends TypeSafeMatcher<RpcReply> {
-    private final List<Predicate<RpcReply>> predicates = new ArrayList<>();
+  public static class ReplyMatcher extends TypeSafeMatcher<RpcMessage> {
+    private final List<Predicate<RpcMessage>> predicates = new ArrayList<>();
     private final List<Consumer<Description>> describers = new ArrayList<>();
 
     @Override
-    protected boolean matchesSafely(RpcReply item) {
+    protected boolean matchesSafely(RpcMessage item) {
       return predicates.stream().allMatch((predicate) -> predicate.test(item));
     }
 
@@ -136,9 +148,23 @@ public class RpcMatchers {
 
     public static ReplyMatcher anAppendReply() {
       return new ReplyMatcher().addCriterion(
-          RpcMatchers::isAnAppendEntriesReply,
+          RpcMessage::isAppendReplyMessage,
           (description) -> description
               .appendText("an AppendEntries reply"));
+    }
+
+    public static ReplyMatcher aPreElectionReply() {
+      return new ReplyMatcher().addCriterion(
+          RpcMessage::isPreElectionReplyMessage,
+          (description) -> description.appendText("a PreElectionReply")
+      );
+    }
+
+    public ReplyMatcher withTerm(Matcher<Long> termMatcher) {
+      return addCriterion(
+          (reply) -> termMatcher.matches(reply.getAppendReplyMessage().getTerm()),
+          (description) -> description.appendText(" with term ").appendDescriptionOf(termMatcher)
+      );
     }
 
     public ReplyMatcher withResult(boolean success) {
@@ -157,12 +183,30 @@ public class RpcMatchers {
               description.appendText(" with 'myNextLogEntry' ").appendDescriptionOf(indexMatcher));
     }
 
-    private ReplyMatcher addCriterion(Predicate<RpcReply> predicate,
-                                      Consumer<Description> describer) {
-      predicates.add(predicate);
-      describers.add(describer);
-      return this;
+    public ReplyMatcher withPollResult(boolean wouldVote) {
+      return addCriterion(
+          (reply) ->
+              reply.getPreElectionReplyMessage().getWouldVote() == wouldVote,
+          (description) ->
+              description.appendText(" with poll result ").appendValue(wouldVote));
     }
+
+    private ReplyMatcher addCriterion(Predicate<RpcMessage> predicate,
+                                      Consumer<Description> describer) {
+      ReplyMatcher copy = new ReplyMatcher();
+      copy.predicates.addAll(this.predicates);
+      copy.predicates.add(predicate);
+      copy.describers.addAll(this.describers);
+      copy.describers.add(describer);
+      return copy;
+    }
+  }
+
+  public static boolean containsQuorumConfiguration(List<LogEntry> entryList, QuorumConfiguration configuration) {
+    return entryList.stream().anyMatch(
+        (entry) ->
+            QuorumConfiguration.fromProtostuff(entry.getQuorumConfiguration())
+                .equals(configuration));
   }
 
   private static boolean isAnAppendEntriesRequest(Request<RpcRequest, RpcWireReply> request) {
@@ -171,9 +215,5 @@ public class RpcMatchers {
 
   private static List<LogEntry> entryList(Request<RpcRequest, RpcWireReply> request) {
     return request.getRequest().getAppendMessage().getEntriesList();
-  }
-
-  private static boolean isAnAppendEntriesReply(RpcReply reply) {
-    return reply.getAppendReplyMessage() != null;
   }
 }
