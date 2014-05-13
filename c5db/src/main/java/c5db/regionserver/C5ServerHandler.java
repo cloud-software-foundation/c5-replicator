@@ -30,6 +30,7 @@ import c5db.client.generated.MutationProto;
 import c5db.client.generated.RegionAction;
 import c5db.client.generated.Response;
 import c5db.client.generated.ScanRequest;
+import c5db.tablet.Region;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.apache.hadoop.hbase.client.Result;
@@ -120,8 +121,8 @@ public class C5ServerHandler extends SimpleChannelInboundHandler<Call> {
             );
         }
       }
-      final HRegion region = regionServerService.getOnlineRegion(request.getRegionActionList().get(0).getRegion());
-      region.mutateRow(rm);
+      final Region region = regionServerService.getOnlineRegion(request.getRegionActionList().get(0).getRegion());
+      region.getTheRegion().mutateRow(rm);
     }
     final Response response = new Response(Response.Command.MULTI,
         call.getCommandId(),
@@ -137,24 +138,24 @@ public class C5ServerHandler extends SimpleChannelInboundHandler<Call> {
     final MutateRequest mutateIn = call.getMutate();
     MutateResponse mutateResponse;
     try {
-      final HRegion region = regionServerService.getOnlineRegion(call.getMutate().getRegion());
-      if (region == null) {
+      final Region region = regionServerService.getOnlineRegion(call.getMutate().getRegion());
+      if (region.getTheRegion() == null) {
         throw new IOException("Unable to find region");
       }
       final MutationProto.MutationType type = mutateIn.getMutation().getMutateType();
       switch (type) {
         case PUT:
           if (mutateIn.getCondition().getRow() == null) {
-            success = simplePut(mutateIn, region);
+            success = simplePut(mutateIn, region.getTheRegion());
           } else {
-            success = checkAndPut(mutateIn, region);
+            success = checkAndPut(mutateIn, region.getTheRegion());
           }
           break;
         case DELETE:
           if (mutateIn.getCondition().getRow() == null) {
-            success = simpleDelete(mutateIn, region);
+            success = simpleDelete(mutateIn, region.getTheRegion());
           } else {
-            success = checkAndDelete(mutateIn, region);
+            success = checkAndDelete(mutateIn, region.getTheRegion());
           }
           break;
         default:
@@ -249,10 +250,7 @@ public class C5ServerHandler extends SimpleChannelInboundHandler<Call> {
       final Fiber fiber = new ThreadFiber();
       fiber.start();
       channel = new MemoryChannel<>();
-      HRegion region = regionServerService.getOnlineRegion(call.getScan().getRegion());
-      if (region == null) {
-        throw new IOException("Unable to find region");
-      }
+      Region region = regionServerService.getOnlineRegion(call.getScan().getRegion());
       final ScanRunnable scanRunnable = new ScanRunnable(ctx, call, scannerId, region);
       channel.subscribe(fiber, scanRunnable);
       scanManager.addChannel(scannerId, channel);
@@ -276,7 +274,7 @@ public class C5ServerHandler extends SimpleChannelInboundHandler<Call> {
   private void get(ChannelHandlerContext ctx, Call call) throws IOException {
     final Get getIn = call.getGet().getGet();
 
-    final HRegion region = regionServerService.getOnlineRegion(call.getGet().getRegion());
+    final Region region = regionServerService.getOnlineRegion(call.getGet().getRegion());
     final org.apache.hadoop.hbase.client.Get serverGet = ReverseProtobufUtil.toGet(getIn);
     if (region == null) {
       throw new IOException("Unable to find region");
