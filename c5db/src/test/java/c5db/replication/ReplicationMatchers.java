@@ -63,18 +63,21 @@ class ReplicationMatchers {
     };
   }
 
-  static Matcher<IndexCommitNotice> aQuorumChangeCommitNotice(QuorumConfiguration quorumConfig) {
+  static Matcher<IndexCommitNotice> aQuorumChangeCommitNotice(QuorumConfiguration quorumConfig, long from) {
     return new TypeSafeMatcher<IndexCommitNotice>() {
       @Override
       protected boolean matchesSafely(IndexCommitNotice item) {
         return item.quorumConfig != null
-            && item.quorumConfig.equals(quorumConfig);
+            && item.quorumConfig.equals(quorumConfig)
+            && item.replicatorInstance.getId() == from;
       }
 
       @Override
       public void describeTo(Description description) {
         description.appendText("a commit notice for quorum configuration ")
-            .appendValue(quorumConfig);
+            .appendValue(quorumConfig)
+            .appendText(" from peer ").appendValue(from);
+
       }
     };
   }
@@ -107,6 +110,20 @@ class ReplicationMatchers {
       @Override
       public void describeTo(Description description) {
         description.appendText("The peer who is the leader of the current term");
+      }
+    };
+  }
+
+  static Matcher<InRamTest.PeerController> wonAnElectionWithTerm(Matcher<Long> termMatcher) {
+    return new TypeSafeMatcher<InRamTest.PeerController>() {
+      @Override
+      protected boolean matchesSafely(InRamTest.PeerController peer) {
+        return peer.hasWonAnElection(termMatcher);
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("a peer who won an election with term ").appendDescriptionOf(termMatcher);
       }
     };
   }
@@ -154,14 +171,42 @@ class ReplicationMatchers {
     };
   }
 
-  static Matcher<InRamTest.PeerController> willRespondToAnAppendRequest() {
+  static Matcher<InRamTest.PeerController> willCommitConfiguration(QuorumConfiguration configuration) {
     return new TypeSafeMatcher<InRamTest.PeerController>() {
       Throwable matchException;
 
       @Override
       protected boolean matchesSafely(InRamTest.PeerController peer) {
         try {
-          peer.waitForAppendReply();
+          peer.waitForQuorumCommit(configuration);
+        } catch (Exception e) {
+          matchException = e;
+        }
+        return true;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("Peer will commit the quorum configuration ").appendValue(configuration);
+      }
+
+      @Override
+      public void describeMismatchSafely(InRamTest.PeerController peer, Description description) {
+        if (matchException != null) {
+          description.appendValue(matchException.toString());
+        }
+      }
+    };
+  }
+
+  static Matcher<InRamTest.PeerController> willRespondToAnAppendRequest(long minimumTerm) {
+    return new TypeSafeMatcher<InRamTest.PeerController>() {
+      Throwable matchException;
+
+      @Override
+      protected boolean matchesSafely(InRamTest.PeerController peer) {
+        try {
+          peer.waitForAppendReply(minimumTerm);
         } catch (Exception e) {
           matchException = e;
         }

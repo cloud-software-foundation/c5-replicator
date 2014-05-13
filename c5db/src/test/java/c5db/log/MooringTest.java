@@ -146,7 +146,7 @@ public class MooringTest {
     log.logEntries(
         Lists.newArrayList(
             makeProtostuffEntry(index(2), term, someData()),
-            makeConfigurationEntry(index(3), term, config.toProtostuff()),
+            makeConfigurationEntry(index(3), term, config),
             makeProtostuffEntry(index(4), term, someData())
         ));
 
@@ -174,8 +174,8 @@ public class MooringTest {
 
     log.logEntries(
         Lists.newArrayList(
-            makeConfigurationEntry(firstConfigSeqNum, term, firstConfig.toProtostuff()),
-            makeConfigurationEntry(secondConfigSeqNum, term, secondConfig.toProtostuff())
+            makeConfigurationEntry(firstConfigSeqNum, term, firstConfig),
+            makeConfigurationEntry(secondConfigSeqNum, term, secondConfig)
         ));
 
     assertThat(log.getLastConfiguration(), is(equalTo(secondConfig)));

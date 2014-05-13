@@ -33,10 +33,11 @@ package c5db.interfaces.replication;
 public class ReplicatorInstanceEvent {
   public static enum EventType {
     QUORUM_START,
-    LEADER_ELECTED,
     ELECTION_TIMEOUT,
+    ELECTION_STARTED,
+    LEADER_ELECTED,
+    LEADER_DEPOSED,
     QUORUM_FAILURE,
-    LEADER_DEPOSED
   }
 
   public final Replicator instance;

@@ -21,13 +21,12 @@ import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.InRamLog;
 import c5db.log.ReplicatorLog;
+import c5db.replication.rpc.RpcMessage;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import org.apache.commons.lang.time.StopWatch;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
@@ -41,9 +40,12 @@ import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,11 +66,12 @@ public class InRamSim {
   private static final Logger LOG = LoggerFactory.getLogger("InRamSim");
 
   public static class Info implements ReplicatorInformation {
-    private final long offset;
     private final long electionTimeout;
     private final StopWatch stopWatch = new StopWatch();
     private boolean suspended = true; // field needed because StopWatch doesn't have a way to check its state
     private long lastTimeMillis = 0;
+    private long offset;
+
 
     public Info(long offset, long electionTimeout) {
       this.offset = offset;
@@ -90,6 +93,10 @@ public class InRamSim {
         lastTimeMillis = stopWatch.getTime();
         stopWatch.suspend();
       }
+    }
+
+    public synchronized void advanceTime(long millis) {
+      offset += millis;
     }
 
     @Override
@@ -139,12 +146,10 @@ public class InRamSim {
   }
 
   private class WireObstruction {
-    public final SettableFuture<Boolean> future;
-    public final Predicate<RpcRequest> dropIf;
-    public final Predicate<RpcRequest> dropUntil;
+    public final Predicate<RpcMessage> dropIf;
+    public final Predicate<RpcMessage> dropUntil;
 
-    public WireObstruction(SettableFuture<Boolean> future, Predicate<RpcRequest> dropIf, Predicate<RpcRequest> dropUntil) {
-      this.future = future;
+    public WireObstruction(Predicate<RpcMessage> dropIf, Predicate<RpcMessage> dropUntil) {
       this.dropIf = dropIf;
       this.dropUntil = dropUntil;
     }
@@ -154,13 +159,13 @@ public class InRamSim {
   private final Set<Long> offlinePeers = new HashSet<>();
   private final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
   private final Map<Long, ReplicatorLog> replicatorLogs = new HashMap<>();
-  private final Map<Long, WireObstruction> wireObstructions = new HashMap<>();
+  private final List<WireObstruction> wireObstructions = Collections.synchronizedList(new ArrayList<>());
   private final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
   private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
   private final Fiber rpcFiber;
   private final PoolFiberFactory fiberPool;
   private final BatchExecutor batchExecutor;
-  private final Channel<RpcWireReply> replyChannel = new MemoryChannel<>();
+  private final Channel<RpcMessage> replyChannel = new MemoryChannel<>();
   private final Channel<ReplicatorInstanceEvent> stateChanges = new MemoryChannel<>();
 
   private final long electionTimeout;
@@ -245,43 +250,39 @@ public class InRamSim {
     return offlinePeers;
   }
 
-  // This method initiates a period of time during which requests attempting to reach peerId
-  // will be selectively dropped. It returns a future to let the client of this method know when
-  // the obstruction is removed. This method simply stores the information it's passed. The
-  // shouldDropRequest method is responsible for applying it.
-  public ListenableFuture<Boolean> dropIncomingRequests(long peerId,
-                                                        Predicate<RpcRequest> dropIf,
-                                                        Predicate<RpcRequest> dropUntil) {
-    SettableFuture<Boolean> future = SettableFuture.create();
-    if (wireObstructions.containsKey(peerId)) {
-      wireObstructions.get(peerId).future.set(true);
-    }
-    wireObstructions.put(peerId, new WireObstruction(future, dropIf, dropUntil));
-    return future;
+  // This method initiates a period of time during which messages attempting to reach peerId
+  // will be selectively dropped. This method simply stores the information it's passed. The
+  // shouldDropMessage method is responsible for applying it.
+  public void dropMessages(Predicate<RpcMessage> dropIf,
+                           Predicate<RpcMessage> dropUntil) {
+
+    wireObstructions.add(new WireObstruction(dropIf, dropUntil));
   }
 
-  private boolean shouldDropRequest(RpcRequest request) {
-    long peerId = request.to;
+  private boolean shouldDropMessage(RpcMessage message) {
+    boolean dropMessage = false;
 
-    if (!wireObstructions.containsKey(peerId)) {
-      return false;
-    } else {
-      WireObstruction drop = wireObstructions.get(peerId);
-      if (drop.dropUntil.test(request)) {
-        drop.future.set(true);
-        wireObstructions.remove(peerId);
-        return false;
-      } else {
-        return drop.dropIf.test(request);
+    synchronized (wireObstructions) {
+      Iterator<WireObstruction> iterator = wireObstructions.listIterator();
+
+      while (iterator.hasNext()) {
+        WireObstruction obstruction = iterator.next();
+        if (obstruction.dropUntil.test(message)) {
+          iterator.remove();
+        } else if (obstruction.dropIf.test(message)) {
+          dropMessage = true;
+        }
       }
     }
+
+    return dropMessage;
   }
 
   public RequestChannel<RpcRequest, RpcWireReply> getRpcChannel() {
     return rpcChannel;
   }
 
-  public Channel<RpcWireReply> getReplyChannel() {
+  public Channel<RpcMessage> getReplyChannel() {
     return replyChannel;
   }
 
@@ -327,18 +328,18 @@ public class InRamSim {
   private void messageForwarder(final Request<RpcRequest, RpcWireReply> origMsg) {
 
     final RpcRequest request = origMsg.getRequest();
-    final long dest = request.to;
-    final ReplicatorInstance repl = replicators.get(dest);
+    final long destination = request.to;
+    final ReplicatorInstance repl = replicators.get(destination);
     if (repl == null) {
       // boo
-      LOG.warn("Request to nonexistent peer {}", dest);
+      LOG.warn("Request to nonexistent peer {}", destination);
       // Do nothing and allow request to timeout.
       return;
     }
 
     LOG.info("Request {}", request);
-    if (shouldDropRequest(request)) {
-      LOG.warn("Incoming request dropped: Request {}", request);
+    if (shouldDropMessage(request)) {
+      LOG.warn("Request dropped: {}", request);
       return;
     }
 
@@ -347,12 +348,16 @@ public class InRamSim {
       // Note that 'RpcReply' has an empty from/to/messageId.  We must know from our context (and so we do)
       RpcWireReply newReply = new RpcWireReply(request.from, request.to, request.quorumId, msg.message);
       LOG.info("Reply {}", newReply);
+      if (shouldDropMessage(newReply)) {
+        LOG.warn("Reply dropped: {}", newReply);
+        return;
+      }
       replyChannel.publish(newReply);
       origMsg.reply(newReply);
     });
   }
 
-  public void start(List<Long> initialPeers) throws ExecutionException, InterruptedException, TimeoutException {
+  public void start(Collection<Long> initialPeers) throws ExecutionException, InterruptedException, TimeoutException {
     createAndStartReplicators(initialPeers);
 
     rpcFiber.start();
@@ -377,9 +382,5 @@ public class InRamSim {
       repl.dispose();
     }
     fiberPool.dispose();
-  }
-
-  private ReplicatorInstance pickAReplicator() {
-    return replicators.get(Iterables.get(peerIds, 0));
   }
 }

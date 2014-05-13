@@ -20,14 +20,15 @@ package c5db.replication;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.ReplicatorLog;
+import c5db.replication.rpc.RpcMessage;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.util.CheckedConsumer;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import io.netty.util.CharsetUtil;
 import org.hamcrest.Matcher;
 import org.jetlang.channels.MemoryChannel;
@@ -47,21 +48,30 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
+import static c5db.RpcMatchers.ReplyMatcher.aPreElectionReply;
+import static c5db.RpcMatchers.ReplyMatcher.anAppendReply;
 import static c5db.RpcMatchers.RequestMatcher;
+import static c5db.RpcMatchers.RequestMatcher.aPreElectionPoll;
 import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
+import static c5db.RpcMatchers.containsQuorumConfiguration;
 import static c5db.interfaces.replication.Replicator.State.FOLLOWER;
+import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT;
 import static c5db.replication.ReplicationMatchers.aNoticeMatchingPeerAndCommitIndex;
 import static c5db.replication.ReplicationMatchers.aQuorumChangeCommitNotice;
+import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static c5db.replication.ReplicationMatchers.hasCommittedEntriesUpTo;
 import static c5db.replication.ReplicationMatchers.leaderElectedEvent;
 import static c5db.replication.ReplicationMatchers.theLeader;
+import static c5db.replication.ReplicationMatchers.willCommitConfiguration;
 import static c5db.replication.ReplicationMatchers.willCommitEntriesUpTo;
 import static c5db.replication.ReplicationMatchers.willRespondToAnAppendRequest;
 import static c5db.replication.ReplicationMatchers.willSend;
+import static c5db.replication.ReplicationMatchers.wonAnElectionWithTerm;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -69,6 +79,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.any;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.IsNot.not;
 
@@ -76,10 +87,8 @@ import static org.hamcrest.core.IsNot.not;
  * A class for tests of the behavior of multiple interacting ReplicatorInstance nodes,
  */
 public class InRamTest {
-  private static final int TEST_TIMEOUT = 10; // maximum timeout allowed for any election (seconds)
-  private static final int ELECTION_TIMEOUT = 100; // milliseconds of lost contact before a follower deposes a leader
-  private static final long OFFSET_STAGGERING_MILLIS = 250; // offset between different peers' clocks
-  private static final List<Long> INITIAL_PEERS = Lists.newArrayList(1L, 2L, 3L, 4L, 5L, 6L, 7L);
+  private static final int ELECTION_TIMEOUT_MILLIS = 50; // election timeout (milliseconds)
+  private static final long OFFSET_STAGGERING_MILLIS = 50; // offset between different peers' clocks
 
   @Rule
   public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
@@ -91,6 +100,7 @@ public class InRamTest {
 
   private ChannelHistoryMonitor<IndexCommitNotice> commitMonitor;
   private ChannelHistoryMonitor<ReplicatorInstanceEvent> eventMonitor;
+  private ChannelHistoryMonitor<RpcMessage> replyMonitor;
   private long lastIndexLogged;
 
   private final MemoryChannel<Request<RpcRequest, RpcWireReply>> requestLog = new MemoryChannel<>();
@@ -101,7 +111,7 @@ public class InRamTest {
 
   @Before
   public final void setUpSimulationAndFibers() throws Exception {
-    sim = new InRamSim(ELECTION_TIMEOUT, OFFSET_STAGGERING_MILLIS, batchExecutor);
+    sim = new InRamSim(ELECTION_TIMEOUT_MILLIS, OFFSET_STAGGERING_MILLIS, batchExecutor);
 
     sim.getRpcChannel().subscribe(fiber, requestLog::publish);
     sim.getCommitNotices().subscribe(fiber, this::updateLastCommit);
@@ -109,9 +119,10 @@ public class InRamTest {
     sim.getStateChanges().subscribe(fiber, System.out::println);
     commitMonitor = new ChannelHistoryMonitor<>(sim.getCommitNotices(), fiber);
     eventMonitor = new ChannelHistoryMonitor<>(sim.getStateChanges(), fiber);
+    replyMonitor = new ChannelHistoryMonitor<>(sim.getReplyChannel(), fiber);
 
     fiber.start();
-    sim.start(INITIAL_PEERS);
+    sim.start(initialPeerSet());
   }
 
   @After
@@ -144,12 +155,12 @@ public class InRamTest {
     assertThat(leader(), is(not(equalTo(firstLeader))));
 
     firstLeader.restart();
-    assertThat(firstLeader, willRespondToAnAppendRequest());
+    assertThat(firstLeader, willRespondToAnAppendRequest(currentTerm()));
   }
 
   @Test
   public void ifAnElectionOccursWhileAPeerIsOfflineThenThePeerWillRecognizeTheNewLeaderWhenThePeerRestarts()
-      throws Throwable {
+      throws Exception {
     havingElectedALeaderAtOrAfter(term(1));
 
     LeaderController firstLeader = leader();
@@ -174,7 +185,7 @@ public class InRamTest {
   }
 
   @Test
-  public void aFollowerMaintainsItsCommitIndexWhenItBecomesLeader() throws Throwable {
+  public void aFollowerMaintainsItsCommitIndexWhenItBecomesLeader() throws Exception {
     havingElectedALeaderAtOrAfter(term(1));
 
     leader().log(someData());
@@ -187,7 +198,7 @@ public class InRamTest {
   }
 
   @Test
-  public void aLeaderSendsDataToAllOtherPeersResultingInAllPeersCommitting() throws Throwable {
+  public void aLeaderSendsDataToAllOtherPeersResultingInAllPeersCommitting() throws Exception {
     havingElectedALeaderAtOrAfter(term(1));
     leader().log(someData());
 
@@ -205,11 +216,11 @@ public class InRamTest {
     follower.allowToTimeout();
 
     waitForALeader(firstLeaderTerm + 1);
-    assertThat(follower, anyOf(is(theLeader()), willRespondToAnAppendRequest()));
+    assertThat(follower, anyOf(is(theLeader()), willRespondToAnAppendRequest(currentTerm())));
   }
 
   @Test
-  public void ifAFollowerFallsBehindInReceivingAndLoggingEntriesItIsAbleToCatchUp() throws Throwable {
+  public void ifAFollowerFallsBehindInReceivingAndLoggingEntriesItIsAbleToCatchUp() throws Exception {
     havingElectedALeaderAtOrAfter(term(1));
 
     PeerController follower = pickFollower();
@@ -223,116 +234,187 @@ public class InRamTest {
 
   @Test
   public void aReplicatorReturnsNullIfAskedToChangeQuorumsWhenItIsNotInTheLeaderState() throws Exception {
-    final List<Long> newPeerIds = Lists.newArrayList(7L, 8L, 9L);
+    final Set<Long> newPeerIds = smallerPeerSetWithOneInCommonWithInitialSet();
     havingElectedALeaderAtOrAfter(term(1));
 
     assertThat(pickFollower().changeQuorum(newPeerIds), nullValue());
   }
 
   @Test
-  public void aLeaderCanInitiateAQuorumMembershipChange() throws Throwable {
-    final List<Long> newPeerIds = Lists.newArrayList(7L, 8L, 9L);
+  public void aLeaderCanCoordinateAQuorumMembershipChange() throws Exception {
+    final Set<Long> newPeerIds = smallerPeerSetWithNoneInCommonWithInitialSet();
     final QuorumConfiguration finalConfig = QuorumConfiguration.of(newPeerIds);
 
     havingElectedALeaderAtOrAfter(term(1));
-    leader().changeQuorum(newPeerIds);
 
+    leader().changeQuorum(newPeerIds);
     sim.createAndStartReplicators(newPeerIds);
-    commitMonitor.waitFor(aQuorumChangeCommitNotice(finalConfig));
-    killAllPeersExcept(newPeerIds);
 
     waitForANewLeader();
 
-    assertThatPeersAreInConfiguration(finalConfig);
+    peers(newPeerIds).forEach((peer) ->
+        assertThat(peer, willCommitConfiguration(finalConfig)));
     assertThat(newPeerIds, hasItem(equalTo(leader().id)));
   }
 
   @Test
   public void aQuorumChangeWillGoThroughEvenIfTheLeaderDiesBeforeItCommitsTheTransitionalConfiguration()
-      throws Throwable {
+      throws Exception {
     // Leader dies before it can commit the transitional configuration, but as long as the next leader
     // has already received the transitional configuration entry, it can complete the view change.
 
-    final List<Long> newPeerIds = Lists.newArrayList(10L, 8L, 9L);
+    final Set<Long> newPeerIds = smallerPeerSetWithNoneInCommonWithInitialSet();
     final QuorumConfiguration transitionalConfig =
-        QuorumConfiguration.of(INITIAL_PEERS).getTransitionalConfiguration(newPeerIds);
+        QuorumConfiguration.of(initialPeerSet()).getTransitionalConfiguration(newPeerIds);
 
     havingElectedALeaderAtOrAfter(term(1));
     final long nextLogIndex = leader().log.getLastIndex() + 1;
     leader().changeQuorum(newPeerIds);
 
-    // Leader begins distributing the entries containing the transitional config
+    allPeersExceptLeader((peer) ->
+        assertThat(leader(), willSend(
+            anAppendRequest()
+                .containingQuorumConfig(transitionalConfig)
+                .to(peer.id))));
 
-    assertThat(leader(), willSend(anAppendRequest().containingQuorumConfig(transitionalConfig)));
-    allPeersExceptLeader(PeerController::waitForAppendReply);
+    ignoringPreviousReplies();
+    allPeers((peer) -> peer.waitForAppendReply(currentTerm()));
     assertThat(leader().hasCommittedEntriesUpTo(nextLogIndex), is(false));
 
     // As of this point, all peers have replicated the transitional config, but the leader has not committed.
-    // (It would be impossible to commit because the new peers have not come online, and their votes are
-    // necessary to commit the transitional configuration).
+    // It would be impossible to commit because the new peers have not come online, and their votes are
+    // necessary to commit the transitional configuration.
 
     leader().die();
     sim.createAndStartReplicators(newPeerIds);
     waitForANewLeader();
     assertThat(leader().currentConfiguration(), equalTo(transitionalConfig));
 
-    // The new leader cannot commit until it has committed an entry from its current term,
-    // so we need to log something for the quorum change to go through.
-
+    // Necessary to log again because the new leader may not commit an entry from a past term (such as
+    // the configuration entry) until it has also committed an entry from its current term.
     leader().log(someData());
-    commitMonitor.waitFor(aQuorumChangeCommitNotice(QuorumConfiguration.of(newPeerIds)));
-    killAllPeersExcept(newPeerIds);
-    assertThatPeersAreInConfiguration(transitionalConfig.getCompletedConfiguration());
+
+    peers(newPeerIds).forEach((peer) ->
+        assertThat(peer, willCommitConfiguration(QuorumConfiguration.of(newPeerIds))));
   }
 
   @Test
-  public void afterAQuorumChangeTheNewNodesWillCatchUpToThePreexistingOnes() throws Throwable {
-    final List<Long> newPeerIds = Lists.newArrayList(4L, 5L, 6L, 7L, 8L, 9L, 10L);
+  public void afterAQuorumChangeTheNewNodesWillCatchUpToThePreexistingOnes() throws Exception {
+    final Set<Long> newPeerIds = largerPeerSetWithSomeInCommonWithInitialSet();
     final long maximumIndex = 5;
+
     havingElectedALeaderAtOrAfter(term(1));
 
-    leader().logDataUpToIndex(maximumIndex);
-    leader().waitForCommit(maximumIndex);
+    leader()
+        .logDataUpToIndex(maximumIndex)
+        .waitForCommit(maximumIndex);
 
     sim.createAndStartReplicators(newPeerIds);
     leader().changeQuorum(newPeerIds);
 
-    commitMonitor.waitFor(aQuorumChangeCommitNotice(QuorumConfiguration.of(newPeerIds)));
-    killAllPeersExcept(newPeerIds);
-    waitForANewLeader();
+    peers(newPeerIds).forEach((peer) -> {
+      assertThat(peer, willCommitEntriesUpTo(maximumIndex));
+      assertThat(peer, willCommitConfiguration(QuorumConfiguration.of(newPeerIds)));
+    });
+  }
 
-    allPeers((peer) -> assertThat(peer, willCommitEntriesUpTo(maximumIndex)));
+  @Test
+  public void aQuorumCanMakeProgressEvenIfAFollowerCanSendRequestsButNotReceiveReplies() throws Exception {
+    final long maximumIndex = 5;
+    havingElectedALeaderAtOrAfter(term(1));
+
+    pickFollower()
+        .willDropAllIncomingTraffic()
+        .allowToTimeout();
+
+    waitForAnElectionTimeout();
+
+    leader().logDataUpToIndex(maximumIndex);
+    assertThat(leader(), willCommitEntriesUpTo(maximumIndex));
+  }
+
+  @Test
+  public void aQuorumChangeCanCompleteEvenIfARemovedPeerTimesOutDuringIt() throws Exception {
+    final Set<Long> newPeerIds = smallerPeerSetWithNoneInCommonWithInitialSet();
+    final QuorumConfiguration transitionalConfig =
+        QuorumConfiguration.of(initialPeerSet()).getTransitionalConfiguration(newPeerIds);
+    final QuorumConfiguration finalConfig = transitionalConfig.getCompletedConfiguration();
+
+    havingElectedALeaderAtOrAfter(term(1));
+    final long firstLeaderTerm = currentTerm();
+    final long leaderId = currentLeader();
+
+    dropAllAppendsWithThisConfigurationUntilAPreElectionPollTakesPlace(finalConfig);
+
+    leader().changeQuorum(newPeerIds);
+    sim.createAndStartReplicators(newPeerIds);
+
+    allPeersExceptLeader((peer) ->
+        assertThat(leader(), willSend(
+            anAppendRequest()
+                .containingQuorumConfig(transitionalConfig)
+                .to(peer.id))));
+
+    peers(newPeerIds).forEach((peer) ->
+        assertThat(peer, willCommitConfiguration(transitionalConfig)));
+
+    peersBeingRemoved(transitionalConfig).forEach(PeerController::allowToTimeout);
+    waitForAnElectionTimeout();
+
+    peersBeingRemoved(transitionalConfig).forEach((peer) -> {
+      if (peer.id != leaderId) {
+        assertThat(peer, willSend(aPreElectionPoll()));
+      }
+    });
+
+    waitForALeaderWithId(isIn(newPeerIds));
+    peers(newPeerIds).forEach((peer) ->
+        assertThat(peer, willCommitConfiguration(finalConfig)));
+
+    peersBeingRemoved(transitionalConfig).forEach((peer) ->
+        assertThat(peer, not(wonAnElectionWithTerm(greaterThan(firstLeaderTerm)))));
+  }
+
+  @Test
+  public void aQuorumCanElectANewLeaderEvenWhileReceivingMessagesFromRemovedPeersWhoHaveTimedOut() throws Exception {
+    final Set<Long> newPeerIds = smallerPeerSetWithNoneInCommonWithInitialSet();
+    final QuorumConfiguration transitionalConfig =
+        QuorumConfiguration.of(initialPeerSet()).getTransitionalConfiguration(newPeerIds);
+    final QuorumConfiguration finalConfig = transitionalConfig.getCompletedConfiguration();
+
+    havingElectedALeaderAtOrAfter(term(1));
+    long firstLeaderTerm = currentTerm();
+
+    leader().changeQuorum(newPeerIds);
+    sim.createAndStartReplicators(newPeerIds);
+
+    peers(newPeerIds).forEach((peer) ->
+        assertThat(peer, willCommitConfiguration(finalConfig)));
+
+    peersBeingRemoved(transitionalConfig).forEach(PeerController::allowToTimeout);
+    waitForAnElectionTimeout();
+
+    waitForALeader(term(firstLeaderTerm + 1));
+
+    leader().die();
+
+    waitForANewLeader();
   }
 
   /**
    * Private methods
    */
 
-  // Return a future to enable waiting for a follower to reply to an Append request. Only replies which satisfy
-  // the predicate isValid are considered. For instance, isValid could restrict to a specific peerId. The purpose
-  // is to check the "liveness" of a peer other than the leader (a leader's liveness is considered irrelevant once
-  // enough time elapses that at least one follower initiates a RequestVote. Nothing similar occurs if a follower
-  // stops responding).
-  private ListenableFuture<Boolean> getAppendReplyFuture(Predicate<RpcWireReply> isValid) {
-    SettableFuture<Boolean> future = SettableFuture.create();
-    sim.getReplyChannel().subscribe(fiber, (reply) -> {
-      if (reply.getAppendReplyMessage() != null && isValid.test(reply)) {
-        future.set(true);
-      }
-    });
-    return future;
-  }
-
   // Blocks until a leader is elected during some term >= minimumTerm.
   // Throws TimeoutException if that does not occur within the time limit.
-  private void waitForALeader(long minimumTerm) throws Exception {
+  private void waitForALeader(long minimumTerm) {
     sim.startAllTimeouts();
     eventMonitor.waitFor(leaderElectedEvent(anyLeader(), greaterThanOrEqualTo(minimumTerm)));
     sim.stopAllTimeouts();
 
     // Wait for at least one other node to recognize the new leader. This is necessary because
     // some tests want to be able to identify a follower right away.
-    pickNonLeader().waitForAppendReply();
+    pickNonLeader().waitForAppendReply(minimumTerm);
 
     final long leaderId = currentLeader();
     assertThat(leaderCount(), is(equalTo(1)));
@@ -344,11 +426,11 @@ public class InRamTest {
     waitForALeader(minimumTerm);
   }
 
-  private void waitForANewLeader() throws Exception {
+  private void waitForANewLeader() {
     waitForALeader(currentTerm() + 1);
   }
 
-  // Counts leaders in the current term. Used to verify a sane state.
+  // Counts leaders in the current term. Used to verify a sensible state.
   // If the simulation is running correctly, this should only ever return 0 or 1.
   private int leaderCount() {
     final long currentTerm = currentTerm();
@@ -359,6 +441,14 @@ public class InRamTest {
       }
     }
     return leaderCount;
+  }
+
+  private void waitForAnElectionTimeout() {
+    eventMonitor.waitFor(aReplicatorEvent(ELECTION_TIMEOUT));
+  }
+
+  private void ignoringPreviousReplies() {
+    replyMonitor.forgetHistory();
   }
 
   private static List<ByteBuffer> someData() {
@@ -372,10 +462,6 @@ public class InRamTest {
 
   private long lastIndexLogged() {
     return lastIndexLogged;
-  }
-
-  private PeerController peer(long peerId) {
-    return new PeerController(peerId);
   }
 
   // Syntactic sugar for manipulating leaders
@@ -412,6 +498,11 @@ public class InRamTest {
       this.id = id;
       this.log = sim.getLog(id);
       this.instance = sim.getReplicators().get(id);
+    }
+
+    @Override
+    public String toString() {
+      return instance.toString();
     }
 
     public boolean isCurrentLeader() {
@@ -451,8 +542,13 @@ public class InRamTest {
       return this;
     }
 
-    public PeerController waitForAppendReply() throws Exception {
-      getAppendReplyFuture((reply) -> reply.from == id).get(TEST_TIMEOUT, TimeUnit.SECONDS);
+    public PeerController waitForQuorumCommit(QuorumConfiguration quorumConfiguration) {
+      commitMonitor.waitFor(aQuorumChangeCommitNotice(quorumConfiguration, id));
+      return this;
+    }
+
+    public PeerController waitForAppendReply(long minimumTerm) {
+      replyMonitor.waitFor(anAppendReply().withTerm(greaterThanOrEqualTo(minimumTerm)));
       return this;
     }
 
@@ -465,28 +561,42 @@ public class InRamTest {
       return commitMonitor.hasAny(aNoticeMatchingPeerAndCommitIndex(id, index));
     }
 
+    public boolean hasWonAnElection(Matcher<Long> termMatcher) {
+      return eventMonitor.hasAny(leaderElectedEvent(equalTo(id), termMatcher));
+    }
+
     public void willDropIncomingAppendsUntil(PeerController peer, Matcher<PeerController> matcher) {
-      sim.dropIncomingRequests(id,
-          (request) -> true,
-          (request) -> matcher.matches(peer));
+      sim.dropMessages(
+          (message) -> message.to == id && message.isAppendMessage(),
+          (message) -> matcher.matches(peer));
+    }
+
+    public PeerController willDropAllIncomingTraffic() {
+      sim.dropMessages(
+          (message) -> (message.to == id) && (message.to != message.from),
+          (message) -> false);
+      return this;
     }
   }
 
-  private void killAllPeersExcept(Collection<Long> peerIds) throws Throwable {
-    allPeers((peer) -> {
-      if (!peerIds.contains(peer.id)) {
-        sim.killPeer(peer.id);
-      }
-    });
+
+  private PeerController peer(long peerId) {
+    return new PeerController(peerId);
   }
 
-  private void allPeers(CheckedConsumer<PeerController, Throwable> forEach) throws Throwable {
+  private Set<PeerController> peers(Collection<Long> peerIds) {
+    return peerIds.stream()
+        .map(this::peer)
+        .collect(Collectors.toSet());
+  }
+
+  private <Ex extends Throwable> void allPeers(CheckedConsumer<PeerController, Ex> forEach) throws Ex {
     for (long peerId : sim.getOnlinePeers()) {
       forEach.accept(new PeerController(peerId));
     }
   }
 
-  private void allPeersExceptLeader(CheckedConsumer<PeerController, Throwable> forEach) throws Throwable {
+  private <Ex extends Throwable> void allPeersExceptLeader(CheckedConsumer<PeerController, Ex> forEach) throws Ex {
     for (long peerId : sim.getOnlinePeers()) {
       if (peerId == currentLeader()) {
         continue;
@@ -504,10 +614,13 @@ public class InRamTest {
     return null;
   }
 
-  private void assertThatPeersAreInConfiguration(QuorumConfiguration quorumConfiguration) {
-    for (long peerId : sim.getOnlinePeers()) {
-      assertThat(peer(peerId).currentConfiguration(), equalTo(quorumConfiguration));
-    }
+  private Set<PeerController> peersBeingRemoved(QuorumConfiguration configuration) {
+    assert configuration.isTransitional;
+
+    return Sets.difference(configuration.prevPeers(), configuration.nextPeers())
+        .stream()
+        .map(PeerController::new)
+        .collect(Collectors.toSet());
   }
 
   private PeerController pickFollower() {
@@ -551,5 +664,29 @@ public class InRamTest {
     if (notice.committedIndex > lastCommit.getOrDefault(peerId, 0L)) {
       lastCommit.put(peerId, notice.committedIndex);
     }
+  }
+
+  private void dropAllAppendsWithThisConfigurationUntilAPreElectionPollTakesPlace(QuorumConfiguration configuration) {
+    sim.dropMessages(
+        (message) ->
+            message.isAppendMessage()
+                && containsQuorumConfiguration(message.getAppendMessage().getEntriesList(), configuration),
+        aPreElectionReply()::matches);
+  }
+
+  private static Set<Long> initialPeerSet() {
+    return Sets.newHashSet(1L, 2L, 3L, 4L, 5L, 6L, 7L);
+  }
+
+  private static Set<Long> smallerPeerSetWithOneInCommonWithInitialSet() {
+    return Sets.newHashSet(7L, 8L, 9L);
+  }
+
+  private static Set<Long> smallerPeerSetWithNoneInCommonWithInitialSet() {
+    return Sets.newHashSet(8L, 9L, 10L);
+  }
+
+  private static Set<Long> largerPeerSetWithSomeInCommonWithInitialSet() {
+    return Sets.newHashSet(4L, 5L, 6L, 7L, 8L, 9L, 10L);
   }
 }
