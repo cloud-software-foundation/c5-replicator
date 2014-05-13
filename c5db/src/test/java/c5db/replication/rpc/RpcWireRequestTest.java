@@ -34,7 +34,7 @@ public class RpcWireRequestTest {
     ReplicationWireMessage wireMessage = new ReplicationWireMessage(
         1, 42, 42, "quorum", false,
         new RequestVote(33, 1, 22, 33),
-        null, null, null
+        null, null, null, null, null
     );
 
     RpcWireRequest rpcMsg = new RpcWireRequest(wireMessage);

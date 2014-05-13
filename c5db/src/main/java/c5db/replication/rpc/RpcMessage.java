@@ -19,6 +19,8 @@ package c5db.replication.rpc;
 
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.AppendEntriesReply;
+import c5db.replication.generated.PreElectionPoll;
+import c5db.replication.generated.PreElectionReply;
 import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.generated.RequestVote;
 import c5db.replication.generated.RequestVoteReply;
@@ -72,6 +74,14 @@ public class RpcMessage {
       return wireMessage.getRequestVoteReply();
     }
 
+    if (wireMessage.getPreElectionPoll() != null) {
+      return wireMessage.getPreElectionPoll();
+    }
+
+    if (wireMessage.getPreElectionReply() != null) {
+      return wireMessage.getPreElectionReply();
+    }
+
     return null;
   }
 
@@ -95,7 +105,9 @@ public class RpcMessage {
         getRequestVoteMessage(),
         getRequestVoteReplyMessage(),
         getAppendMessage(),
-        getAppendReplyMessage()
+        getAppendReplyMessage(),
+        getPreElectionPollMessage(),
+        getPreElectionReplyMessage()
     );
   }
 
@@ -108,12 +120,20 @@ public class RpcMessage {
     return message instanceof RequestVote;
   }
 
+  public boolean isPreElectionPollMessage() {
+    return message instanceof PreElectionPoll;
+  }
+
   public boolean isAppendReplyMessage() {
     return message instanceof AppendEntriesReply;
   }
 
   public boolean isRequestVoteReplyMessage() {
     return message instanceof RequestVoteReply;
+  }
+
+  public boolean isPreElectionReplyMessage() {
+    return message instanceof PreElectionReply;
   }
 
   public AppendEntries getAppendMessage() {
@@ -140,6 +160,20 @@ public class RpcMessage {
   public RequestVoteReply getRequestVoteReplyMessage() {
     if (isRequestVoteReplyMessage()) {
       return (RequestVoteReply) message;
+    }
+    return null;
+  }
+
+  public PreElectionPoll getPreElectionPollMessage() {
+    if (isPreElectionPollMessage()) {
+      return (PreElectionPoll) message;
+    }
+    return null;
+  }
+
+  public PreElectionReply getPreElectionReplyMessage() {
+    if (isPreElectionReplyMessage()) {
+      return (PreElectionReply) message;
     }
     return null;
   }

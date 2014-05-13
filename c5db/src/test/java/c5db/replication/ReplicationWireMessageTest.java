@@ -30,24 +30,22 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by ryan on 1/29/14.
- */
+
 public class ReplicationWireMessageTest {
 
   @Test
   public void testSimpleSerialization() throws Exception {
     RequestVote rv = new RequestVote(1, 22222, 34, 22);
     ReplicationWireMessage rwm = new ReplicationWireMessage(
-        1, 1, 0, "quorumId", false, rv, null, null, null
+        1, 1, 0, "quorumId", false, rv, null, null, null, null, null
     );
 
     LowCopyProtobufOutput lcpo = new LowCopyProtobufOutput(new LinkBuffer(24));
     rwm.writeTo(lcpo, rwm);
     List<ByteBuffer> serBufs = lcpo.buffer.finish();
-    logBufsInfos("ReplicationWireMessage", serBufs);
+    logBufsInformation("ReplicationWireMessage", serBufs);
 
-    ByteBuf b = Unpooled.wrappedBuffer(serBufs.toArray(new ByteBuffer[]{}));
+    ByteBuf b = Unpooled.wrappedBuffer(serBufs.toArray(new ByteBuffer[serBufs.size()]));
     System.out.println("ByteBuf info = " + b);
     System.out.println("ByteBuf size = " + b.readableBytes());
     assertEquals(lcpo.buffer.size(), b.readableBytes());
@@ -55,7 +53,7 @@ public class ReplicationWireMessageTest {
     System.out.println("rwm = " + rwm);
   }
 
-  public void logBufsInfos(String desc, List<ByteBuffer> buffs) {
+  void logBufsInformation(String desc, List<ByteBuffer> buffs) {
     System.out.println(desc + ": buffer count = " + buffs.size());
     long size = 0;
     for (ByteBuffer b : buffs) {
