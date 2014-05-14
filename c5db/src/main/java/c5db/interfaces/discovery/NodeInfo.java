@@ -34,8 +34,10 @@ public class NodeInfo {
     this.availability = availability;
     this.lastContactTime = lastContactTime;
     ImmutableMap.Builder<ModuleType, Integer> b = ImmutableMap.builder();
-    for (ModuleDescriptor moduleDescriptor : availability.getModulesList()) {
-      b.put(moduleDescriptor.getModule(), moduleDescriptor.getModulePort());
+    if (availability.getModulesList() != null) {
+      for (ModuleDescriptor moduleDescriptor : availability.getModulesList()) {
+        b.put(moduleDescriptor.getModule(), moduleDescriptor.getModulePort());
+      }
     }
     modules = b.build();
   }
