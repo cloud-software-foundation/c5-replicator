@@ -92,7 +92,7 @@ public class OLogEntryCodecTest {
   private static QuorumConfigurationMessage aQuorumConfigurationMessage() {
     return QuorumConfiguration
         .of(Lists.newArrayList(1L, 2L, 3L))
-        .transitionTo(Lists.newArrayList(4L, 5L, 6L))
+        .getTransitionalConfiguration(Lists.newArrayList(4L, 5L, 6L))
         .toProtostuff();
   }
 

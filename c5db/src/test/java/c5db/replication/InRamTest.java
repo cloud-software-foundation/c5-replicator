@@ -265,7 +265,8 @@ public class InRamTest {
     // has already received the transitional configuration entry, it can complete the view change.
 
     final List<Long> newPeerIds = Lists.newArrayList(8L, 9L, 10L);
-    final QuorumConfiguration transitionalConfig = QuorumConfiguration.of(INITIAL_PEERS).transitionTo(newPeerIds);
+    final QuorumConfiguration transitionalConfig =
+        QuorumConfiguration.of(INITIAL_PEERS).getTransitionalConfiguration(newPeerIds);
 
     havingElectedALeaderAtOrAfter(term(1));
     final long nextLogIndex = leader().log.getLastIndex() + 1;
@@ -292,7 +293,7 @@ public class InRamTest {
     leader().log(someData());
     commitMonitor.waitFor(aQuorumChangeCommitNotice(QuorumConfiguration.of(newPeerIds)));
     killAllPeersExcept(newPeerIds);
-    assertThatPeersAreInConfiguration(transitionalConfig.completeTransition());
+    assertThatPeersAreInConfiguration(transitionalConfig.getCompletedConfiguration());
   }
 
   @Test

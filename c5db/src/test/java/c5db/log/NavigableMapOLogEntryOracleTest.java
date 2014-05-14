@@ -33,8 +33,8 @@ public class NavigableMapOLogEntryOracleTest {
   private final NavigableMapOLogEntryOracle oracle = new NavigableMapOLogEntryOracle();
 
   private final QuorumConfiguration firstConfig = QuorumConfiguration.of(Lists.newArrayList(1L));
-  private final QuorumConfiguration secondConfig = firstConfig.transitionTo(Lists.newArrayList(2L));
-  private final QuorumConfiguration thirdConfig = secondConfig.completeTransition();
+  private final QuorumConfiguration secondConfig = firstConfig.getTransitionalConfiguration(Lists.newArrayList(2L));
+  private final QuorumConfiguration thirdConfig = secondConfig.getCompletedConfiguration();
 
   @Test
   public void returnsTheElectionTermAtAGivenSeqNum() throws Exception {

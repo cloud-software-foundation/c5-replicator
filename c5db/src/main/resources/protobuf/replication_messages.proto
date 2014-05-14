@@ -48,7 +48,7 @@ message LogEntry {
 }
 
 message QuorumConfigurationMessage {
-    optional bool transitionalConfiguration = 1;
+    optional bool transitional = 1;
     repeated int64 allPeers = 2;
     repeated int64 prevPeers = 3;
     repeated int64 nextPeers = 4;

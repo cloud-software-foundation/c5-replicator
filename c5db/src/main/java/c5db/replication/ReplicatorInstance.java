@@ -263,8 +263,8 @@ public class ReplicatorInstance implements Replicator {
       return null;
     }
 
-    final QuorumConfiguration transitionConfig = quorumConfig.transitionTo(newPeers);
-    final QuorumConfiguration destinationConfig = transitionConfig.completeTransition();
+    final QuorumConfiguration transitionConfig = quorumConfig.getTransitionalConfiguration(newPeers);
+    final QuorumConfiguration destinationConfig = transitionConfig.getCompletedConfiguration();
     final SettableFuture<Long> logIndexFuture = SettableFuture.create();
     final QuorumChangeNotification quorumChangeNotification = new QuorumChangeNotification(logIndexFuture, destinationConfig);
 
@@ -956,11 +956,11 @@ public class ReplicatorInstance implements Replicator {
   private void checkOnQuorumChange() {
 
     if (lastCommittedIndex >= quorumConfigIndex) {
-      if (quorumConfig.transitionalConfiguration) {
+      if (quorumConfig.isTransitional) {
         // Current transitional quorum is committed, so begin replicating the next stage.
         // If this call happens to fail because the log request queue is full, we'll catch
         // it the next time around.
-        offerQuorumChangeRequest(quorumConfig.completeTransition());
+        offerQuorumChangeRequest(quorumConfig.getCompletedConfiguration());
       } else {
 
         if (!quorumConfig.allPeers().contains(myId)) {

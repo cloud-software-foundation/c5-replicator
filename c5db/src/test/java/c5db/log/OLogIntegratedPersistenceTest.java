@@ -76,9 +76,10 @@ public class OLogIntegratedPersistenceTest {
 
   @Test
   public void configurationInformationIsPersisted() throws Exception {
-    final QuorumConfiguration firstConfig =
-        QuorumConfiguration.of(Lists.newArrayList(1L, 2L, 3L)).transitionTo(Lists.newArrayList(2L, 3L, 4L));
-    final QuorumConfiguration secondConfig = firstConfig.completeTransition();
+    final QuorumConfiguration firstConfig = QuorumConfiguration
+        .of(Lists.newArrayList(1L, 2L, 3L))
+        .getTransitionalConfiguration(Lists.newArrayList(2L, 3L, 4L));
+    final QuorumConfiguration secondConfig = firstConfig.getCompletedConfiguration();
 
     withReplicatorLog((log) -> {
       log.logEntries(

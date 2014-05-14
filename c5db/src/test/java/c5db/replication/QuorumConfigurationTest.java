@@ -48,18 +48,18 @@ public class QuorumConfigurationTest {
 
   @Test
   public void returnsNewConfigurationsRepresentingTransitionsToADifferentPeerSet() {
-    final QuorumConfiguration transitional = stableConfiguration.transitionTo(aDestinationPeerSet());
+    final QuorumConfiguration transitional = stableConfiguration.getTransitionalConfiguration(aDestinationPeerSet());
     final QuorumConfiguration destinationConfiguration = QuorumConfiguration.of(aDestinationPeerSet());
 
-    assertThat(transitional.transitionalConfiguration, is(equalTo(true)));
-    assertThat(transitional.completeTransition(), is(equalTo(destinationConfiguration)));
+    assertThat(transitional.isTransitional, is(equalTo(true)));
+    assertThat(transitional.getCompletedConfiguration(), is(equalTo(destinationConfiguration)));
   }
 
   @Test
   public void returnsBeforeAndAfterPeerSetsFromATransitionalConfiguration() {
     final QuorumConfiguration transitional =
         QuorumConfiguration.of(aPeerSet())
-            .transitionTo(aDestinationPeerSet());
+            .getTransitionalConfiguration(aDestinationPeerSet());
 
     assertThat(transitional.prevPeers(), equalTo(aPeerSet()));
     assertThat(transitional.nextPeers(), equalTo(aDestinationPeerSet()));
@@ -79,6 +79,6 @@ public class QuorumConfigurationTest {
   }
 
   private QuorumConfiguration aTransitionalConfiguration() {
-    return aStableConfiguration().transitionTo(Sets.newHashSet(3L, 4L, 5L, 6L, 7L, 8L, 9L));
+    return aStableConfiguration().getTransitionalConfiguration(Sets.newHashSet(3L, 4L, 5L, 6L, 7L, 8L, 9L));
   }
 }

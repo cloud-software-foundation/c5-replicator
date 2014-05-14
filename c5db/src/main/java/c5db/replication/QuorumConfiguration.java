@@ -33,13 +33,13 @@ import java.util.stream.Collectors;
 
 /**
  * Immutable value type representing a configuration of which peers are members of a quorum.
- * It satisfies the following invariants: if transitionalConfiguration is true, then allPeers is
- * the union of prevPeers and nextPeers. If transitionalConfiguration is false, then prevPeers
+ * It satisfies the following invariants: if isTransitional is true, then allPeers is
+ * the union of prevPeers and nextPeers. If isTransitional is false, then prevPeers
  * and nextPeers are empty.
  */
 public final class QuorumConfiguration {
 
-  public final boolean transitionalConfiguration;
+  public final boolean isTransitional;
 
   private final Set<Long> allPeers;
   private final Set<Long> prevPeers;
@@ -52,28 +52,28 @@ public final class QuorumConfiguration {
   }
 
   public static QuorumConfiguration fromProtostuff(QuorumConfigurationMessage message) {
-    if (message.getTransitionalConfiguration()) {
+    if (message.getTransitional()) {
       return new QuorumConfiguration(message.getPrevPeersList(), message.getNextPeersList());
     } else {
       return new QuorumConfiguration(message.getAllPeersList());
     }
   }
 
-  public QuorumConfiguration transitionTo(Collection<Long> newPeerCollection) {
-    assert !transitionalConfiguration;
+  public QuorumConfiguration getTransitionalConfiguration(Collection<Long> newPeerCollection) {
+    assert !isTransitional;
 
     return new QuorumConfiguration(allPeers, newPeerCollection);
   }
 
-  public QuorumConfiguration completeTransition() {
-    assert transitionalConfiguration;
+  public QuorumConfiguration getCompletedConfiguration() {
+    assert isTransitional;
 
     return new QuorumConfiguration(nextPeers);
   }
 
   public QuorumConfigurationMessage toProtostuff() {
     return new QuorumConfigurationMessage(
-        transitionalConfiguration,
+        isTransitional,
         Lists.newArrayList(allPeers),
         Lists.newArrayList(prevPeers),
         Lists.newArrayList(nextPeers));
@@ -101,7 +101,7 @@ public final class QuorumConfiguration {
    * Determine if the peers in sourceSet include a majority of the peers in this configuration.
    */
   public boolean setContainsMajority(Set<Long> sourceSet) {
-    if (transitionalConfiguration) {
+    if (isTransitional) {
       return setComprisesMajorityOfAnotherSet(sourceSet, prevPeers)
           && setComprisesMajorityOfAnotherSet(sourceSet, nextPeers);
     } else {
@@ -114,7 +114,7 @@ public final class QuorumConfiguration {
    * index value which is less than or equal to a majority of this configuration's peers' indexes.
    */
   public long calculateCommittedIndex(Map<Long, Long> peersLastAckedIndex) {
-    if (transitionalConfiguration) {
+    if (isTransitional) {
       return Math.min(
           getGreatestIndexCommittedByMajority(prevPeers, peersLastAckedIndex),
           getGreatestIndexCommittedByMajority(nextPeers, peersLastAckedIndex));
@@ -125,13 +125,13 @@ public final class QuorumConfiguration {
 
 
   private QuorumConfiguration(Collection<Long> peers) {
-    this.transitionalConfiguration = false;
+    this.isTransitional = false;
     allPeers = ImmutableSet.copyOf(peers);
     prevPeers = nextPeers = ImmutableSet.of();
   }
 
   private QuorumConfiguration(Collection<Long> prevPeers, Collection<Long> nextPeers) {
-    this.transitionalConfiguration = true;
+    this.isTransitional = true;
     this.prevPeers = ImmutableSet.copyOf(prevPeers);
     this.nextPeers = ImmutableSet.copyOf(nextPeers);
     this.allPeers = Sets.union(this.prevPeers, this.nextPeers).immutableCopy();
@@ -156,7 +156,7 @@ public final class QuorumConfiguration {
   @Override
   public String toString() {
     return "QuorumConfiguration{" +
-        "transitionalConfiguration=" + transitionalConfiguration +
+        "isTransitional=" + isTransitional +
         ", allPeers=" + allPeers +
         ", prevPeers=" + prevPeers +
         ", nextPeers=" + nextPeers +
@@ -174,7 +174,7 @@ public final class QuorumConfiguration {
 
     QuorumConfiguration that = (QuorumConfiguration) o;
 
-    return transitionalConfiguration == that.transitionalConfiguration
+    return isTransitional == that.isTransitional
         && allPeers.equals(that.allPeers)
         && nextPeers.equals(that.nextPeers)
         && prevPeers.equals(that.prevPeers);
@@ -182,7 +182,7 @@ public final class QuorumConfiguration {
 
   @Override
   public int hashCode() {
-    int result = (transitionalConfiguration ? 1 : 0);
+    int result = (isTransitional ? 1 : 0);
     result = 31 * result + allPeers.hashCode();
     result = 31 * result + prevPeers.hashCode();
     result = 31 * result + nextPeers.hashCode();
