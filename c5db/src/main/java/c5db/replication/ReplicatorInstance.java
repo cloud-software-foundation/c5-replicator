@@ -151,7 +151,7 @@ public class ReplicatorInstance implements Replicator {
     this.lastRPC = info.currentTimeMillis();
     this.lastCommittedIndex = 0;
 
-    updateQuorumConfiguration();
+    refreshQuorumConfigurationFromLog();
 
     fiber.execute(() -> {
       try {
@@ -229,7 +229,7 @@ public class ReplicatorInstance implements Replicator {
     this.whosLeader = leaderId;
     this.votedFor = votedFor;
 
-    updateQuorumConfiguration();
+    refreshQuorumConfigurationFromLog();
 
     try {
       persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
@@ -549,7 +549,7 @@ public class ReplicatorInstance implements Replicator {
         (entriesToCommit) -> {
           // 7. Append any new entries not already in the log.
           ListenableFuture<Boolean> logCommitNotification = log.logEntries(entriesToCommit);
-          updateQuorumConfiguration();
+          refreshQuorumConfigurationFromLog();
 
           // 8. apply newly committed entries to state machine
 
@@ -902,7 +902,7 @@ public class ReplicatorInstance implements Replicator {
 
     List<LogEntry> newLogEntries = createLogEntriesFromIntRequests(reqs, firstIndexInList);
     leaderLogNewEntries(newLogEntries, lastIndexInList);
-    updateQuorumConfiguration();
+    refreshQuorumConfigurationFromLog();
 
     assert lastIndexInList == log.getLastIndex();
 
@@ -1172,7 +1172,7 @@ public class ReplicatorInstance implements Replicator {
     return Sets.difference(quorumConfig.allPeers(), Sets.newHashSet(myId));
   }
 
-  private void updateQuorumConfiguration() {
+  private void refreshQuorumConfigurationFromLog() {
     quorumConfig = log.getLastConfiguration();
     quorumConfigIndex = log.getLastConfigurationIndex();
   }
