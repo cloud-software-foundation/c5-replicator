@@ -344,9 +344,12 @@ public class TabletServiceCommandCheck {
     tabletService.acceptCommand(addMetaEntryToRoot());
     Tablet tablet = context.mock(Tablet.class);
     Region region = context.mock(Region.class);
-    tabletService.onlineRegions.put("hbase:root", region);
-    tabletService.tabletRegistry.getTablets().put("hbase:meta,fake", tablet);
+    tabletService.tabletRegistry.getTablets().put("hbase:root,fake", tablet);
     context.checking(new Expectations() {{
+      oneOf(tablet).getRegion();
+      will(returnValue(region));
+
+      // This is where we update meta leader
       oneOf(region).put(with(any(Put.class)));
     }});
     tabletService.acceptCommand(addMETALeaderToRootString());
