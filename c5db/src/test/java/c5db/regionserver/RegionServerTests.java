@@ -61,7 +61,6 @@ public class RegionServerTests {
   Tablet tablet = context.mock(Tablet.class);
   Region region = context.mock(Region.class);
 
-
   private final NioEventLoopGroup acceptConnectionGroup = new NioEventLoopGroup(1);
   private final NioEventLoopGroup ioWorkerGroup = new NioEventLoopGroup();
   private final C5FiberFactory c5FiberFactory = context.mock(C5FiberFactory.class);
@@ -72,7 +71,6 @@ public class RegionServerTests {
   private final Random random = new Random();
   private final int port = 10000 + random.nextInt(100);
 
-  private RegionServerService regionServerService;
   private RegionServerHandler regionServerHandler;
 
 
@@ -85,7 +83,10 @@ public class RegionServerTests {
       oneOf(c5FiberFactory).create();
       will(returnValue(fiberFactory.create()));
     }});
-    regionServerService = new RegionServerService(acceptConnectionGroup, ioWorkerGroup, port, server);
+    RegionServerService regionServerService = new RegionServerService(acceptConnectionGroup,
+        ioWorkerGroup,
+        port,
+        server);
 
     SettableFuture<TabletModule> tabletModuleSettableFuture = SettableFuture.create();
     tabletModuleSettableFuture.set(tabletModule);
@@ -153,10 +154,38 @@ public class RegionServerTests {
     regionServerHandler.channelRead0(ctx, new Call(Call.Command.SCAN, 1, null, null, null, null));
   }
 
+  @Test
+  public void shouldBeAbleToHandleGet() throws Exception {
+    ByteBuffer regionLocation = ByteBuffer.wrap(Bytes.toBytes("testTable"));
+    RegionSpecifier regionSpecifier = new RegionSpecifier(RegionSpecifier.RegionSpecifierType.REGION_NAME,
+        regionLocation);
+
+
+    Get get = ProtobufUtil.toGet(new org.apache.hadoop.hbase.client.Get(Bytes.toBytes("fakeRow")), false);
+    GetRequest getRequest = new GetRequest(regionSpecifier, get);
+
+    Cell cell = new KeyValue(Bytes.toBytes("row"), Bytes.toBytes("cf"), Bytes.toBytes("cq"), Bytes.toBytes("value"));
+    Result result = Result.create(new Cell[]{cell});
+    context.checking(new Expectations() {{
+      oneOf(tabletModule).getTablet("testTable");
+      will(returnValue(tablet));
+
+      oneOf(tablet).getRegion();
+      will(returnValue(region));
+
+      oneOf(region).get(with(any(org.apache.hadoop.hbase.client.Get.class)));
+      will(returnValue(result));
+
+      oneOf(ctx).writeAndFlush(with(any(Response.class)));
+
+    }});
+
+    regionServerHandler.channelRead0(ctx, new Call(Call.Command.GET, 1, getRequest, null, null, null));
+  }
 
 
   @Test
-  public void shouldBeAbleToHandleGet() throws Exception {
+  public void shouldBeAbleToHandleConditionalGet() throws Exception {
     ByteBuffer regionLocation = ByteBuffer.wrap(Bytes.toBytes("testTable"));
     RegionSpecifier regionSpecifier = new RegionSpecifier(RegionSpecifier.RegionSpecifierType.REGION_NAME,
         regionLocation);

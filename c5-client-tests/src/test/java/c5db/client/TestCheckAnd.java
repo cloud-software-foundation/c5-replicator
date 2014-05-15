@@ -37,45 +37,39 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class TestCheckAnd extends MiniClusterBase {
 
   @Test
-  public void shouldFailCheckAndPutNullRow()
-      throws IOException, InterruptedException, TimeoutException, ExecutionException {
-    assertFalse(checkAndPutRowAndValueIntoDatabase(table, row, value, notEqualToValue));
+  public void shouldFailCheckAndPutNullRow() throws IOException {
+   assertFalse(checkAndPutRowAndValueIntoDatabase(table, row, value, notEqualToValue));
   }
 
   @Test
-  public void shouldFailCheckAndPutWrongRow()
-      throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void shouldFailCheckAndPutWrongRow() throws IOException {
     putRowAndValueIntoDatabase(table, row, notEqualToValue);
     assertFalse(checkAndPutRowAndValueIntoDatabase(table, row, value, value));
     assertThat(valueReadFromDB(table, row), is(equalTo(notEqualToValue)));
   }
 
   @Test
-  public void simpleCheckAndPutCanSucceed()
-      throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void simpleCheckAndPutCanSucceed() throws IOException {
     putRowAndValueIntoDatabase(table, row, value);
     assertTrue(checkAndPutRowAndValueIntoDatabase(table, row, value, notEqualToValue));
     assertThat(valueReadFromDB(table, row), is(equalTo(notEqualToValue)));
   }
 
   @Test
-  public void shouldFailCheckAndDeleteNullRow()
-      throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void shouldFailCheckAndDeleteNullRow() throws IOException {
     assertFalse(checkAndDeleteRowAndValueIntoDatabase(table, row, value));
   }
 
   @Test
-  public void shouldFailCheckAndDeleteWrongRow()
-      throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void shouldFailCheckAndDeleteWrongRow() throws IOException {
     putRowAndValueIntoDatabase(table, row, notEqualToValue);
     assertFalse(checkAndDeleteRowAndValueIntoDatabase(table, row, value));
     assertThat(valueReadFromDB(table, row), is(equalTo(notEqualToValue)));
   }
 
   @Test
-  public void testSimpleCheckAndDeleteCanSucceed()
-      throws IOException, InterruptedException, TimeoutException, ExecutionException {
-    putRowAndValueIntoDatabase(table, row, value);
+  public void testSimpleCheckAndDeleteCanSucceed() throws IOException {
+     putRowAndValueIntoDatabase(table, row, value);
     assertTrue(checkAndDeleteRowAndValueIntoDatabase(table, row, value));
     assertThat(valueReadFromDB(table, row), not(equalTo(value)));
   }

@@ -16,6 +16,7 @@
  */
 package c5db.client;
 
+import c5db.C5TestServerConstants;
 import c5db.MiniClusterBase;
 import io.protostuff.ByteString;
 import org.apache.hadoop.conf.Configuration;
@@ -48,10 +49,10 @@ public class CompareToHBase extends MiniClusterBase {
     hTable.close();
   }
 
-  public void compareToHBaseScan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void compareToHBaseScan() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
 
-    C5Table table = new C5Table(tableName);
+    FakeHTable table = new FakeHTable(C5TestServerConstants.LOCALHOST, getRegionServerPort(), tableName);
 
     long As, Ae, Bs, Be;
     int i = 0;

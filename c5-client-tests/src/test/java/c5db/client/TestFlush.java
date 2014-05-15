@@ -16,6 +16,7 @@
  */
 package c5db.client;
 
+import c5db.C5TestServerConstants;
 import c5db.MiniClusterBase;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Put;
@@ -32,7 +33,7 @@ public class TestFlush extends MiniClusterBase {
 
 
   @Test
-  public void testFlush() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void testFlush() throws IOException, InterruptedException, TimeoutException, ExecutionException, MutationFailedException {
 
     Random random = new Random();
     byte[] randomBytes = new byte[1024 * 1024];
@@ -43,7 +44,7 @@ public class TestFlush extends MiniClusterBase {
     ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
 
     int port = getRegionServerPort();
-    try (C5Table table = new C5Table(tableName, port)) {
+    try (FakeHTable table = new FakeHTable(C5TestServerConstants.LOCALHOST, port, tableName)) {
       ArrayList<Put> puts = new ArrayList<>();
       for (int j = 1; j != 24; j++) {
         for (int i = 1; i != 12; i++) {

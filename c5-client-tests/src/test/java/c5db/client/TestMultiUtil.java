@@ -17,7 +17,6 @@
 package c5db.client;
 
 import c5db.ManyClusterBase;
-import c5db.MiniClusterBase;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -36,7 +35,7 @@ public class TestMultiUtil extends ManyClusterBase {
   private final byte[] row1 = Bytes.toBytes("row1");
   private final byte[] row2 = Bytes.toBytes("row2");
 
-  @Test(timeout = 10000)
+  @Test()
   public void testMultiPut() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     assertThat(DataHelper.valueReadFromDB(table, row), is(not(equalTo(value))));
@@ -44,7 +43,7 @@ public class TestMultiUtil extends ManyClusterBase {
     assertThat(DataHelper.valueReadFromDB(table, row2), is(equalTo(value)));
   }
 
-  @Test(timeout = 10000)
+  @Test()
   public void testScan() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     ResultScanner resultScanner = DataHelper.getScanner(table, new byte[]{});
@@ -52,7 +51,7 @@ public class TestMultiUtil extends ManyClusterBase {
     assertThat(DataHelper.nextResult(resultScanner), is(equalTo(value)));
   }
 
-  @Test(timeout = 10000)
+  @Test()
   public void testMultiDelete() throws IOException {
     DataHelper.putsRowInDB(table, new byte[][]{row1, row2}, value);
     List<Delete> deletes = new ArrayList<>();

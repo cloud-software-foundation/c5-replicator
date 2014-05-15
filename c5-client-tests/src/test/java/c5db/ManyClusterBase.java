@@ -16,7 +16,8 @@
  */
 package c5db;
 
-import c5db.client.C5Table;
+import c5db.client.C5AsyncDatabase;
+import c5db.client.FakeHTable;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.C5Server;
 import c5db.interfaces.ControlModule;
@@ -27,7 +28,6 @@ import c5db.interfaces.tablet.Tablet;
 import c5db.interfaces.tablet.TabletStateChange;
 import c5db.messages.generated.ModuleSubCommand;
 import c5db.messages.generated.ModuleType;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.protostuff.ByteString;
@@ -72,7 +72,7 @@ public class ManyClusterBase {
 
   @Rule
   public TestName name = new TestName();
-  public C5Table table;
+  public FakeHTable table;
   public static int metaOnPort;
   public byte[] row;
   private int userTabletOn;
@@ -143,14 +143,14 @@ public class ManyClusterBase {
     // create java.util.concurrent.CountDownLatch to notify when message arrives
     latch.await();
 
-    table = new C5Table(tableName, userTabletOn);
+    table = new FakeHTable(C5TestServerConstants.LOCALHOST, userTabletOn, tableName);
     row = Bytes.toBytes(name.getMethodName());
 
     receiver.dispose();
   }
 
   @After
-  public void after() {
+  public void after() throws InterruptedException {
     table.close();
   }
 

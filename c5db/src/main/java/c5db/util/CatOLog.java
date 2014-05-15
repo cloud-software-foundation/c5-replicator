@@ -49,7 +49,7 @@ public class CatOLog {
   public static void main(String args[]) throws IOException {
     if (args.length != 1) {
       System.err.println("Usage: CatOLog filename");
-      System.exit(-1);
+
     }
 
     File inputLogFile = new File(args[0]);

@@ -51,13 +51,13 @@ public class TestingUtil extends MiniClusterBase {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testInvalidPut() throws IOException {
+  public void testInvalidPut() throws IOException, InterruptedException, ExecutionException, TimeoutException, MutationFailedException {
     putRowInDB(table, new byte[]{});
   }
 
   // TODO Should be an IllegalArgument HBase!!!
   @Test(expected = NullPointerException.class)
-  public void testNullPut() throws IOException {
+  public void testNullPut() throws IOException, InterruptedException, ExecutionException, TimeoutException, MutationFailedException {
     putRowInDB(table, null);
   }
 
@@ -85,7 +85,7 @@ public class TestingUtil extends MiniClusterBase {
   }
 
   @Test
-  public void testScan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void testScan() throws IOException {
     byte[] row1 = new byte[]{0x00};
     byte[] row2 = new byte[]{0x01};
     byte[] row3 = new byte[]{0x02};
@@ -105,7 +105,7 @@ public class TestingUtil extends MiniClusterBase {
   }
 
   @Test
-  public void testMultiGet() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void testMultiGet() throws IOException {
     byte[] neverInserted = Bytes.toBytes("rowNeverInserted");
     putRowInDB(table, row);
     byte[][] values = valuesReadFromDB(table, new byte[][]{row, neverInserted});
@@ -114,7 +114,7 @@ public class TestingUtil extends MiniClusterBase {
   }
 
   @Test
-  public void testMultiExists() throws IOException, InterruptedException, TimeoutException, ExecutionException {
+  public void testMultiExists() throws IOException, InterruptedException, TimeoutException, ExecutionException, MutationFailedException {
     byte[] neverInserted = Bytes.toBytes("rowNeverInserted");
     putRowInDB(table, row);
     Boolean[] values = valuesExistsInDB(table, new byte[][]{row, neverInserted});

@@ -16,11 +16,9 @@
  */
 package c5db;
 
-import c5db.client.C5Table;
+import c5db.client.FakeHTable;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.C5Server;
-import c5db.interfaces.ControlModule;
-import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.TabletModule;
 import c5db.interfaces.server.CommandRpcRequest;
 import c5db.interfaces.tablet.Tablet;
@@ -68,7 +66,7 @@ public class MiniClusterBase {
 
   @Rule
   public TestName name = new TestName();
-  public C5Table table;
+  public FakeHTable table;
   public byte[] row;
 
   public static int getRegionServerPort() {
@@ -105,13 +103,13 @@ public class MiniClusterBase {
     // create java.util.concurrent.CountDownLatch to notify when message arrives
     latch.await();
 
-    table = new C5Table(tableName, getRegionServerPort());
+    table = new FakeHTable(C5TestServerConstants.LOCALHOST, getRegionServerPort(), tableName);
     row = Bytes.toBytes(name.getMethodName());
     receiver.dispose();
   }
 
   @After
-  public void after() {
+  public void after() throws InterruptedException {
     table.close();
   }
 

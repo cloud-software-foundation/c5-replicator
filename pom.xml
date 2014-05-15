@@ -6,8 +6,7 @@
     <groupId>c5db</groupId>
     <artifactId>parent</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <parent>
+    <packaging>pom</packaging><parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
@@ -856,7 +855,10 @@
                         <optional>true</optional>
                         <scope>test</scope>
                     </dependency>
+
                 </dependencies>
+
+
             </dependencyManagement>
         </profile>
     </profiles>

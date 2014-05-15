@@ -16,8 +16,8 @@
  */
 package c5db.client;
 
+import c5db.C5TestServerConstants;
 import c5db.ManyClusterBase;
-import c5db.MiniClusterBase;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -41,47 +41,49 @@ public class TestTooBigForASingleWebSocket extends ManyClusterBase {
     random.nextBytes(randomBytes);
   }
 
-  private C5Table c5Table;
-  private byte[] cf = Bytes.toBytes("cf");
-  private byte[] cq = Bytes.toBytes("cq");
+  private FakeHTable c5AsyncDatabase;
+  private final byte[] cf = Bytes.toBytes("cf");
+  private final byte[] cq = Bytes.toBytes("cq");
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
 
-    c5Table = new C5Table(tableName, getRegionServerPort());
+    c5AsyncDatabase = new FakeHTable(C5TestServerConstants.LOCALHOST, getRegionServerPort(), tableName);
   }
 
   @Test
-  public void shouldSuccessfullyAcceptSmallPut() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    DataHelper.putRowInDB(c5Table, row);
+  public void shouldSuccessfullyAcceptSmallPut() throws InterruptedException, ExecutionException, TimeoutException, IOException, MutationFailedException {
+    DataHelper.putRowInDB(c5AsyncDatabase, row);
   }
 
   @Test
-  public void shouldSuccessfullyAcceptSmallPutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void shouldSuccessfullyAcceptSmallPutAndReadSameValue()
+      throws InterruptedException, ExecutionException, TimeoutException, MutationFailedException, IOException {
     byte[] valuePutIntoDatabase = row;
     putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
-    assertThat(DataHelper.valueReadFromDB(c5Table, row), is(equalTo(valuePutIntoDatabase)));
+    assertThat(DataHelper.valueReadFromDB(c5AsyncDatabase, row), is(equalTo(valuePutIntoDatabase)));
   }
 
   @Test
-  public void testSendBigOne() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void testSendBigOne()
+      throws InterruptedException, ExecutionException, TimeoutException, IOException, MutationFailedException {
     byte[] valuePutIntoDatabase = randomBytes;
     putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
   }
 
   @Test
-  public void shouldSuccessfullyAcceptLargePutAndReadSameValue() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void shouldSuccessfullyAcceptLargePutAndReadSameValue() throws IOException {
     byte[] valuePutIntoDatabase = randomBytes;
     putRowAndValueIntoDatabase(row, valuePutIntoDatabase);
-    assertThat(DataHelper.valueReadFromDB(c5Table, row), is(equalTo(valuePutIntoDatabase)));
+    assertThat(DataHelper.valueReadFromDB(c5AsyncDatabase, row), is(equalTo(valuePutIntoDatabase)));
   }
 
   private void putRowAndValueIntoDatabase(byte[] row,
                                           byte[] valuePutIntoDatabase) throws IOException {
     Put put = new Put(row);
     put.add(cf, cq, valuePutIntoDatabase);
-    c5Table.put(put);
+    c5AsyncDatabase.put(put);
   }
 
 }

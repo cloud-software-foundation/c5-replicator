@@ -16,6 +16,7 @@
  */
 package c5db.client;
 
+import c5db.C5TestServerConstants;
 import c5db.MiniClusterBase;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Put;
@@ -32,21 +33,20 @@ public class Populator extends MiniClusterBase {
 
   private static ByteString tableName = ByteString.bytesDefaultValue("testTable");
 
-  public Populator() throws IOException, InterruptedException {
+  public Populator()  {
 
   }
 
 
-  public static void main(String[] args)
-      throws IOException, InterruptedException {
+  public static void main(String[] args) throws InterruptedException, ExecutionException, TimeoutException, IOException {
+
     int port;
     if (args.length < 1) {
       port = 31337;
     } else {
       port = Integer.parseInt(args[0]);
     }
-    try (C5Table table = new C5Table(tableName, port)) {
-
+    try (FakeHTable table = new FakeHTable(C5TestServerConstants.LOCALHOST, port, tableName)) {
       long start = System.currentTimeMillis();
 
       int numberOfBatches = 1;
@@ -65,18 +65,17 @@ public class Populator extends MiniClusterBase {
       long end = System.currentTimeMillis();
       System.out.println("time:" + (end - start));
 
-    } catch (ExecutionException | TimeoutException e) {
-      e.printStackTrace();
+
     }
   }
 
-  public static void compareToHBasePut(final TableInterface table,
-                                       final byte[] cf,
-                                       final byte[] cq,
-                                       final byte[] value,
-                                       final int numberOfBatches,
-                                       final int batchSize)
-      throws IOException {
+  private static void compareToHBasePut(final FakeHTable table,
+                                        final byte[] cf,
+                                        final byte[] cq,
+                                        final byte[] value,
+                                        final int numberOfBatches,
+                                        final int batchSize) throws IOException {
+
     ArrayList<Put> puts = new ArrayList<>();
 
     long startTime = System.nanoTime();
@@ -105,10 +104,10 @@ public class Populator extends MiniClusterBase {
   }
 
   @Test
-  public void testPopulator() throws IOException, InterruptedException {
+  public void testPopulator() throws IOException, InterruptedException, ExecutionException, MutationFailedException, TimeoutException {
     Populator populator = new Populator();
     tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
 
-    populator.main(new String[]{String.valueOf(getRegionServerPort())});
+    main(new String[]{String.valueOf(getRegionServerPort())});
   }
 }

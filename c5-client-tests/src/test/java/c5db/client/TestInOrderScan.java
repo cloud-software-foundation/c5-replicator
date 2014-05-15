@@ -16,6 +16,7 @@
  */
 package c5db.client;
 
+import c5db.C5TestServerConstants;
 import c5db.MiniClusterBase;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.client.Result;
@@ -40,7 +41,7 @@ public class TestInOrderScan extends MiniClusterBase {
   @Test(timeout = 10000)
   public void testInOrderScan() throws IOException, InterruptedException, TimeoutException, ExecutionException {
     ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
-    C5Table table = new C5Table(tableName, getRegionServerPort());
+    FakeHTable table = new FakeHTable(C5TestServerConstants.LOCALHOST, getRegionServerPort(), tableName);
 
     Result result = null;
     ResultScanner scanner;

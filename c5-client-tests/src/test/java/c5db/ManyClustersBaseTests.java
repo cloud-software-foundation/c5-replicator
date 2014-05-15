@@ -16,7 +16,8 @@
  */
 package c5db;
 
-import c5db.client.C5Table;
+import c5db.client.C5AsyncDatabase;
+import c5db.client.FakeHTable;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Result;
@@ -34,11 +35,10 @@ import static org.hamcrest.core.Is.is;
 public class ManyClustersBaseTests extends ManyClusterBase {
 
   @Test
-  public void metaTableShouldContainUserTableEntries()
-      throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void metaTableShouldContainUserTableEntries() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     ByteString tableName = ByteString.copyFrom(Bytes.toBytes("hbase:meta"));
-    C5Table c5Table = new C5Table(tableName, metaOnPort);
-    ResultScanner scanner = c5Table.getScanner(HConstants.CATALOG_FAMILY);
+    FakeHTable c5AsyncDatabase = new FakeHTable(C5TestServerConstants.LOCALHOST, metaOnPort, tableName);
+    ResultScanner scanner = c5AsyncDatabase.getScanner(HConstants.CATALOG_FAMILY);
 
     Result result;
     int counter = 0;

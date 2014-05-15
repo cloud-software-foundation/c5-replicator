@@ -19,6 +19,7 @@ package c5db.client;
 import c5db.MiniClusterBase;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
@@ -41,14 +42,14 @@ public class DataHelper {
   private static final byte[] cf = Bytes.toBytes("cf");
   private static final byte[] cq = Bytes.toBytes("cq");
 
-  static byte[][] valuesReadFromDB(C5Table c5Table, byte[][] row) throws IOException {
+  static byte[][] valuesReadFromDB(FakeHTable hTable, byte[][] row) throws IOException {
     List<Get> gets = Arrays.asList(row).stream().map(getRow -> {
       Get get = new Get(getRow);
       get.addColumn(cf, cq);
       return get;
     }).collect(toList());
 
-    Result[] results = c5Table.get(gets);
+    Result[] results = hTable.get(gets);
 
     List<byte[]> values = Arrays
         .asList(results)
@@ -58,68 +59,68 @@ public class DataHelper {
 
   }
 
-  static Boolean[] valuesExistsInDB(C5Table c5Table, byte[][] row) throws IOException {
+  static Boolean[] valuesExistsInDB(FakeHTable hTable, byte[][] row) throws IOException {
     List<Get> gets = Arrays.asList(row).stream().map(getRow -> {
       Get get = new Get(getRow);
       get.addColumn(cf, cq);
       return get;
     }).collect(toList());
 
-    return c5Table.exists(gets);
+    return hTable.exists(gets);
   }
 
-  static byte[] valueReadFromDB(C5Table c5Table, byte[] row) throws IOException {
+  static byte[] valueReadFromDB(FakeHTable hTable, byte[] row) throws IOException {
     Get get = new Get(row);
     get.addColumn(cf, cq);
-    Result result = c5Table.get(get);
+    Result result = hTable.get(get);
     return result.getValue(cf, cq);
   }
 
-  static boolean valueExistsInDB(C5Table c5Table, byte[] row) throws IOException {
+  static boolean valueExistsInDB(FakeHTable hTable, byte[] row) throws IOException {
     Get get = new Get(row);
     get.addColumn(cf, cq);
-    return c5Table.exists(get);
+    return hTable.exists(get);
   }
 
-  static void putRowInDB(C5Table c5Table, byte[] row) throws IOException {
+  static void putRowInDB(FakeHTable hTable, byte[] row) throws IOException {
     Put put = new Put(row);
     put.add(cf, cq, MiniClusterBase.value);
-    c5Table.put(put);
+    hTable.put(put);
   }
 
-  static void putRowAndValueIntoDatabase(C5Table c5Table,
+  static void putRowAndValueIntoDatabase(FakeHTable hTable,
                                          byte[] row,
                                          byte[] valuePutIntoDatabase) throws IOException {
     Put put = new Put(row);
     put.add(cf, cq, valuePutIntoDatabase);
-    c5Table.put(put);
+    hTable.put(put);
   }
 
-  static void putsRowInDB(C5Table c5Table, byte[][] rows, byte[] value) throws IOException {
+  static void putsRowInDB(FakeHTable hTable, byte[][] rows, byte[] value) throws IOException {
     Stream<Put> puts = Arrays.asList(rows).stream().map(row -> new Put(row).add(cf, cq, value));
-    c5Table.put(puts.collect(toList()));
+    hTable.put(puts.collect(toList()));
   }
 
-  static boolean checkAndPutRowAndValueIntoDatabase(C5Table c5Table,
+  static boolean checkAndPutRowAndValueIntoDatabase(FakeHTable hTable,
                                                     byte[] row,
                                                     byte[] valueToCheck,
                                                     byte[] valuePutIntoDatabase) throws IOException {
     Put put = new Put(row);
     put.add(cf, cq, valuePutIntoDatabase);
-    return c5Table.checkAndPut(row, cf, cq, valueToCheck, put);
+    return hTable.checkAndPut(row, cf, cq, valueToCheck, put);
   }
 
-  static boolean checkAndDeleteRowAndValueIntoDatabase(C5Table c5Table,
+  static boolean checkAndDeleteRowAndValueIntoDatabase(FakeHTable hTable,
                                                        byte[] row,
                                                        byte[] valueToCheck) throws IOException {
     Delete delete = new Delete(row);
-    return c5Table.checkAndDelete(row, cf, cq, valueToCheck, delete);
+    return hTable.checkAndDelete(row, cf, cq, valueToCheck, delete);
   }
 
-  static ResultScanner getScanner(C5Table c5Table, byte[] row) throws IOException {
+  static ResultScanner getScanner(FakeHTable hTable, byte[] row) throws IOException {
     Scan scan = new Scan(row);
     scan.addColumn(cf, cq);
-    return c5Table.getScanner(scan);
+    return hTable.getScanner(scan);
   }
 
   static byte[] nextResult(ResultScanner resultScanner) throws IOException {
