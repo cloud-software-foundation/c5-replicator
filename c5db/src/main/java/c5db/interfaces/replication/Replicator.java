@@ -38,10 +38,14 @@ public interface Replicator {
    * the current quorum).
    *
    * @param newPeers The collection of peer IDs in the new quorum.
-   * @return a future which will return the log entry index of the quorum configuration entry,
-   * when it is known; or, this method will return null if this replicator is not the leader.
+   * @return a future which will return the log entry index of the transitional quorum
+   * configuration entry, when it is known. The transitional quorum configuration combines
+   * the current group of peers with the given collection of new peers. When that transitional
+   * configuration is committed, the quorum configuration is guaranteed to go through; prior
+   * to that commit, it is possible that a fault will cancel the quorum change operation.
+   * <p>
    * The actual completion of the quorum change will be signaled by the commitment of the
-   * log entry at the returned index.
+   * quorum consisting of the given peers.
    */
   ListenableFuture<Long> changeQuorum(Collection<Long> newPeers) throws InterruptedException;
 

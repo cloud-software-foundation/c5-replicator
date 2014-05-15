@@ -60,7 +60,6 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -84,7 +83,6 @@ public class ReplicatorInstance implements Replicator {
   private final Logger logger;
   private final ReplicatorLog log;
   private final long myElectionTimeout;
-  private final AtomicReference<QuorumChangeNotification> quorumChangeNotificationRef = new AtomicReference<>();
 
   final ReplicatorInformationInterface info;
   final ReplicatorInfoPersistence persister;
@@ -264,21 +262,7 @@ public class ReplicatorInstance implements Replicator {
     }
 
     final QuorumConfiguration transitionConfig = quorumConfig.getTransitionalConfiguration(newPeers);
-    final QuorumConfiguration destinationConfig = transitionConfig.getCompletedConfiguration();
-    final SettableFuture<Long> logIndexFuture = SettableFuture.create();
-    final QuorumChangeNotification quorumChangeNotification = new QuorumChangeNotification(logIndexFuture, destinationConfig);
-
-    boolean success = this.quorumChangeNotificationRef.compareAndSet(null, quorumChangeNotification);
-
-    if (!success) {
-      logger.warn("quorum change is already in progress: current config {} destination config {} requested {}",
-          quorumConfig, this.quorumChangeNotificationRef.get().destinationConfig, destinationConfig);
-      throw new RuntimeException("changeQuorum");
-    }
-
-    putQuorumChangeRequest(transitionConfig);
-
-    return logIndexFuture;
+    return putQuorumChangeRequest(transitionConfig);
   }
 
   @Override
@@ -353,13 +337,16 @@ public class ReplicatorInstance implements Replicator {
 
     final QuorumConfiguration config = QuorumConfiguration.of(peerIds);
     final SettableFuture<Long> logIndexFuture = SettableFuture.create();
-    quorumChangeNotificationRef.set(new QuorumChangeNotification(logIndexFuture, config));
 
     fiber.execute(() -> {
       try {
         setCurrentTerm(currentTerm + 1);
         becomeLeader();
-        offerQuorumChangeRequest(config);
+        C5Futures.addCallback(
+            offerQuorumChangeRequest(config),
+            logIndexFuture::set,
+            logIndexFuture::setException,
+            fiber);
       } catch (Throwable t) {
         logger.error("error trying to bootstrap quorum", t);
       }
@@ -815,7 +802,6 @@ public class ReplicatorInstance implements Replicator {
   private void becomeFollower() {
     boolean wasLeader = myState == State.LEADER;
     myState = State.FOLLOWER;
-    quorumChangeNotificationRef.set(null);
 
     if (wasLeader) {
       stateChangeChannel.publish(
@@ -968,16 +954,6 @@ public class ReplicatorInstance implements Replicator {
           // Resign if it does not include me.
           // TODO should there be a special event for this? Should the replicator shut itself down completely?
           becomeFollower();
-        }
-
-        final QuorumChangeNotification status = quorumChangeNotificationRef.get();
-
-        if (status != null) {
-          // Handle a possible waiting callback.
-          if (status.destinationConfig.equals(quorumConfig)) {
-            status.logIndexFuture.set(quorumConfigIndex);
-          }
-          quorumChangeNotificationRef.set(null);
         }
       }
     }

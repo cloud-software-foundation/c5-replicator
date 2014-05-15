@@ -229,17 +229,6 @@ public class InRamTest {
     assertThat(pickFollower().changeQuorum(newPeerIds), nullValue());
   }
 
-  @Test(expected = Exception.class)
-  public void throwsAnExceptionIfALeaderIsAskedToChangeQuorumsWhileAQuorumChangeIsAlreadyInProgress()
-      throws Exception {
-    final List<Long> newPeerIds = Lists.newArrayList(7L, 8L, 9L);
-    havingElectedALeaderAtOrAfter(term(1));
-
-    assertThat(leader().changeQuorum(newPeerIds), not(nullValue()));
-
-    leader().changeQuorum(newPeerIds); // exception
-  }
-
   @Test
   public void aLeaderCanInitiateAQuorumMembershipChange() throws Throwable {
     final List<Long> newPeerIds = Lists.newArrayList(7L, 8L, 9L);
