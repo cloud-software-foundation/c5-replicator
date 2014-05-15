@@ -24,6 +24,8 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+
 /**
  * Assorted matchers used for replicator tests.
  */
@@ -206,7 +208,7 @@ class ReplicationMatchers {
       @Override
       protected boolean matchesSafely(InRamTest.PeerController peer) {
         try {
-          peer.waitForAppendReply(minimumTerm);
+          peer.waitForAppendReply(greaterThanOrEqualTo(minimumTerm));
         } catch (Exception e) {
           matchException = e;
         }

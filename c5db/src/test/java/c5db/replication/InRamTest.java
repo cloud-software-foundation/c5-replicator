@@ -17,6 +17,7 @@
 
 package c5db.replication;
 
+import c5db.interfaces.replication.IllegalQuorumBootstrapException;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.ReplicatorLog;
@@ -53,6 +54,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
+import static c5db.CollectionMatchers.isIn;
+import static c5db.FutureMatchers.resultsIn;
 import static c5db.RpcMatchers.ReplyMatcher.aPreElectionReply;
 import static c5db.RpcMatchers.ReplyMatcher.anAppendReply;
 import static c5db.RpcMatchers.RequestMatcher;
@@ -240,6 +243,14 @@ public class InRamTest {
     assertThat(pickFollower().changeQuorum(newPeerIds), nullValue());
   }
 
+  @Test(expected = IllegalQuorumBootstrapException.class)
+  public void aReplicatorThrowsAnExceptionIfAskedToBootstrapItsQuorumAfterItIsAlreadyPartOfAQuorum()
+      throws Exception {
+    havingElectedALeaderAtOrAfter(term(1));
+
+    leader().instance.bootstrapQuorum(largerPeerSetWithSomeInCommonWithInitialSet());
+  }
+
   @Test
   public void aLeaderCanCoordinateAQuorumMembershipChange() throws Exception {
     final Set<Long> newPeerIds = smallerPeerSetWithNoneInCommonWithInitialSet();
@@ -255,6 +266,42 @@ public class InRamTest {
     peers(newPeerIds).forEach((peer) ->
         assertThat(peer, willCommitConfiguration(finalConfig)));
     assertThat(newPeerIds, hasItem(equalTo(leader().id)));
+  }
+
+  @Test
+  public void aSecondQuorumChangeWillOverrideTheFirst() throws Exception {
+    final Set<Long> firstPeerSet = smallerPeerSetWithOneInCommonWithInitialSet();
+    final Set<Long> secondPeerSet = largerPeerSetWithSomeInCommonWithInitialSet();
+
+    havingElectedALeaderAtOrAfter(term(1));
+
+    leader().changeQuorum(firstPeerSet);
+    sim.createAndStartReplicators(firstPeerSet);
+
+    leader().changeQuorum(secondPeerSet);
+    sim.createAndStartReplicators(secondPeerSet);
+
+    peers(secondPeerSet).forEach((peer) ->
+        assertThat(peer,
+            willCommitConfiguration(
+                QuorumConfiguration.of(secondPeerSet))));
+
+    waitForALeaderWithId(isIn(secondPeerSet));
+  }
+
+  @Test
+  public void theFutureReturnedByAQuorumChangeRequestWillReturnTheLogIndexOfTheTransitionalConfigurationEntry()
+      throws Exception {
+    final Set<Long> newPeerIds = smallerPeerSetWithOneInCommonWithInitialSet();
+    final long lastIndexBeforeQuorumChange = 4;
+
+    havingElectedALeaderAtOrAfter(term(1));
+
+    sim.createAndStartReplicators(newPeerIds);
+    leader().logDataUpToIndex(lastIndexBeforeQuorumChange);
+
+    assertThat(leader().changeQuorum(newPeerIds),
+        resultsIn(equalTo(lastIndexBeforeQuorumChange + 1)));
   }
 
   @Test
@@ -278,7 +325,7 @@ public class InRamTest {
                 .to(peer.id))));
 
     ignoringPreviousReplies();
-    allPeers((peer) -> peer.waitForAppendReply(currentTerm()));
+    allPeers((peer) -> peer.waitForAppendReply(greaterThanOrEqualTo(currentTerm())));
     assertThat(leader().hasCommittedEntriesUpTo(nextLogIndex), is(false));
 
     // As of this point, all peers have replicated the transitional config, but the leader has not committed.
@@ -408,13 +455,21 @@ public class InRamTest {
   // Blocks until a leader is elected during some term >= minimumTerm.
   // Throws TimeoutException if that does not occur within the time limit.
   private void waitForALeader(long minimumTerm) {
+    waitForALeaderElectedEventMatching(anyLeader(), greaterThanOrEqualTo(minimumTerm));
+  }
+
+  private void waitForALeaderWithId(Matcher<Long> leaderIdMatcher) {
+    waitForALeaderElectedEventMatching(leaderIdMatcher, anyTerm());
+  }
+
+  private void waitForALeaderElectedEventMatching(Matcher<Long> leaderIdMatcher, Matcher<Long> termMatcher) {
     sim.startAllTimeouts();
-    eventMonitor.waitFor(leaderElectedEvent(anyLeader(), greaterThanOrEqualTo(minimumTerm)));
+    eventMonitor.waitFor(leaderElectedEvent(leaderIdMatcher, termMatcher));
     sim.stopAllTimeouts();
 
     // Wait for at least one other node to recognize the new leader. This is necessary because
     // some tests want to be able to identify a follower right away.
-    pickNonLeader().waitForAppendReply(minimumTerm);
+    pickNonLeader().waitForAppendReply(termMatcher);
 
     final long leaderId = currentLeader();
     assertThat(leaderCount(), is(equalTo(1)));
@@ -547,8 +602,8 @@ public class InRamTest {
       return this;
     }
 
-    public PeerController waitForAppendReply(long minimumTerm) {
-      replyMonitor.waitFor(anAppendReply().withTerm(greaterThanOrEqualTo(minimumTerm)));
+    public PeerController waitForAppendReply(Matcher<Long> termMatcher) {
+      replyMonitor.waitFor(anAppendReply().withTerm(termMatcher));
       return this;
     }
 
