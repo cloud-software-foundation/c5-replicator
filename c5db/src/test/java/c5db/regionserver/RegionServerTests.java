@@ -45,6 +45,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -56,6 +57,11 @@ public class RegionServerTests {
   public JUnitRuleMockery context = new JUnitRuleMockery() {{
     setThreadingPolicy(new Synchroniser());
   }};
+
+  Tablet tablet = context.mock(Tablet.class);
+  Region region = context.mock(Region.class);
+
+
   private final NioEventLoopGroup acceptConnectionGroup = new NioEventLoopGroup(1);
   private final NioEventLoopGroup ioWorkerGroup = new NioEventLoopGroup();
   private final C5FiberFactory c5FiberFactory = context.mock(C5FiberFactory.class);
@@ -93,6 +99,8 @@ public class RegionServerTests {
     regionServerHandler = new RegionServerHandler(regionServerService);
   }
 
+
+
   @Test(expected = RegionNotFoundException.class)
   public void shouldThrowErrorWhenInvalidRegionSpecifierSpecified() throws Exception {
     RegionSpecifier regionSpecifier = new RegionSpecifier(RegionSpecifier.RegionSpecifierType.REGION_NAME, null);
@@ -102,7 +110,7 @@ public class RegionServerTests {
   }
 
 
-  @Test
+  @Test(expected = IOException.class)
   public void shouldQuietlyHandleInvalidGet() throws Exception {
     ByteBuffer regionLocation = ByteBuffer.wrap(Bytes.toBytes("testTable"));
     RegionSpecifier regionSpecifier = new RegionSpecifier(RegionSpecifier.RegionSpecifierType.REGION_NAME,
@@ -110,8 +118,6 @@ public class RegionServerTests {
     Get get = new Get();
     GetRequest getRequest = new GetRequest(regionSpecifier, get);
 
-    Tablet tablet = context.mock(Tablet.class);
-    Region region = context.mock(Region.class);
     context.checking(new Expectations() {{
       oneOf(tabletModule).getTablet("testTable");
       will(returnValue(tablet));
@@ -123,6 +129,32 @@ public class RegionServerTests {
     regionServerHandler.channelRead0(ctx, new Call(Call.Command.GET, 1, getRequest, null, null, null));
   }
 
+
+  @Test(expected = IOException.class)
+  public void shouldHandleGetCommandRequestWithNullArgument() throws Exception {
+    regionServerHandler.channelRead0(ctx, new Call(Call.Command.GET, 1, null, null, null, null));
+  }
+
+
+  @Test(expected = IOException.class)
+  public void shouldHandleMutateWithNullArguments() throws Exception {
+    regionServerHandler.channelRead0(ctx, new Call(Call.Command.MUTATE, 1, null, null, null, null));
+  }
+
+
+  @Test(expected = IOException.class)
+  public void shouldHandleMultiWithNullArgument() throws Exception {
+    regionServerHandler.channelRead0(ctx, new Call(Call.Command.MULTI, 1, null, null, null, null));
+  }
+
+
+  @Test(expected = IOException.class)
+  public void shouldHandleScanCommandRequestWithNullArgument() throws Exception {
+    regionServerHandler.channelRead0(ctx, new Call(Call.Command.SCAN, 1, null, null, null, null));
+  }
+
+
+
   @Test
   public void shouldBeAbleToHandleGet() throws Exception {
     ByteBuffer regionLocation = ByteBuffer.wrap(Bytes.toBytes("testTable"));
@@ -133,8 +165,6 @@ public class RegionServerTests {
     Get get = ProtobufUtil.toGet(new org.apache.hadoop.hbase.client.Get(Bytes.toBytes("fakeRow")), false);
     GetRequest getRequest = new GetRequest(regionSpecifier, get);
 
-    Tablet tablet = context.mock(Tablet.class);
-    Region region = context.mock(Region.class);
     Cell cell = new KeyValue(Bytes.toBytes("row"), Bytes.toBytes("cf"), Bytes.toBytes("cq"), Bytes.toBytes("value"));
     Result result = Result.create(new Cell[]{cell});
     context.checking(new Expectations() {{
