@@ -21,6 +21,7 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
+import java.util.Collection;
 import java.util.List;
 
 public class CollectionMatchers {
@@ -39,6 +40,21 @@ public class CollectionMatchers {
       @Override
       public void describeTo(Description description) {
         description.appendText("a list whose elements are nondecreasing");
+      }
+    };
+  }
+
+  public static <T> Matcher<T> isIn(Collection<T> collection) {
+    return new TypeSafeMatcher<T>() {
+      @Override
+      protected boolean matchesSafely(T item) {
+        return collection.contains(item);
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("an item contained within the collection ")
+            .appendValue(collection);
       }
     };
   }
