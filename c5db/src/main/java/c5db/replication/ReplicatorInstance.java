@@ -17,6 +17,7 @@
 
 package c5db.replication;
 
+import c5db.interfaces.replication.IllegalQuorumBootstrapException;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
@@ -33,6 +34,7 @@ import c5db.replication.rpc.RpcWireRequest;
 import c5db.util.C5Futures;
 import c5db.util.FiberOnly;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.AsyncRequest;
@@ -127,7 +129,6 @@ public class ReplicatorInstance implements Replicator {
   public ReplicatorInstance(final Fiber fiber,
                             final long myId,
                             final String quorumId,
-                            @SuppressWarnings("UnusedParameters") @Deprecated List<Long> peers,
                             ReplicatorLog log,
                             ReplicatorInformationInterface info,
                             ReplicatorInfoPersistence persister,
@@ -164,11 +165,6 @@ public class ReplicatorInstance implements Replicator {
                 info.currentTimeMillis(),
                 null)
         );
-
-        if (!peers.isEmpty() && Collections.min(peers) == myId) {
-          logger.warn("Booting ReplicatorInstance using deprecated peers argument {}", peers);
-          bootstrapQuorum(peers);
-        }
       } catch (IOException e) {
         logger.error("error during persistent data init", e);
         failReplicatorInstance(e);
@@ -189,7 +185,6 @@ public class ReplicatorInstance implements Replicator {
   ReplicatorInstance(final Fiber fiber,
                      final long myId,
                      final String quorumId,
-                     @SuppressWarnings("UnusedParameters") @Deprecated List<Long> peers,
                      ReplicatorLog log,
                      ReplicatorInformationInterface info,
                      ReplicatorInfoPersistence persister,
@@ -323,8 +318,15 @@ public class ReplicatorInstance implements Replicator {
   }
 
   /**
-   * Promote this replicator to a leader and establish a new quorum configuration. This method
-   * is not safe to call on any node in a "running" quorum;
+   * Call this method on each replicator in a new quorum in order to establish the quorum
+   * configuration and elect a leader.
+   * <p>
+   * Before a quorum (a group of cooperating replicators) may process replication requests
+   * it must elect a leader. But a leader cannot elect itself unless it's aware of its peers,
+   * which requires it to log a quorum configuration entry containing that peer set. This
+   * method chooses a replicator, promotes it to leader, and has it log that first entry.
+   * Because it creates a leader without an election, it's dangerous to call on any peer
+   * that's already part of an active quorum.
    *
    * @param peerIds Collection of peers in the new quorum.
    * @return A future which will return the log entry index of the new quorum's configuration
@@ -332,8 +334,16 @@ public class ReplicatorInstance implements Replicator {
    * commitment of the log entry at the returned index.
    */
   public ListenableFuture<Long> bootstrapQuorum(Collection<Long> peerIds) {
-    assert quorumConfig.isEmpty();
     assert peerIds.size() > 0;
+
+    if (!quorumConfig.isEmpty() || myState != State.FOLLOWER || log.getLastIndex() != 0) {
+      throw new IllegalQuorumBootstrapException("Replicator is already part of an active quorum");
+    }
+
+    // Choose the peer with the least id.
+    if (Collections.min(peerIds) != myId) {
+      return Futures.immediateFuture(0L);
+    }
 
     final QuorumConfiguration config = QuorumConfiguration.of(peerIds);
     final SettableFuture<Long> logIndexFuture = SettableFuture.create();

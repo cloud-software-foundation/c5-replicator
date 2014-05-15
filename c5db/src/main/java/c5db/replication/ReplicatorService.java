@@ -24,9 +24,9 @@ import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
-import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.discovery.NodeInfoReply;
 import c5db.interfaces.discovery.NodeInfoRequest;
+import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.Mooring;
@@ -154,7 +154,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 instanceFiber,
                 server.getNodeId(),
                 quorumId,
-                peers,
                 logMooring,
                 new Info(),
                 persister,
@@ -162,6 +161,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 replicatorStateChanges,
                 indexCommitNotices
             );
+        instance.bootstrapQuorum(peers);
         throwableChannel.subscribe(fiber, instance::failReplicatorInstance);
         replicatorInstances.put(quorumId, instance);
         future.set(instance);

@@ -115,7 +115,6 @@ public class ReplicatorLeaderTest {
     replicatorInstance = new ReplicatorInstance(replicatorFiber,
         LEADER_ID,
         QUORUM_ID,
-        PEER_ID_LIST,
         log,
         info,
         new InRamSim.Persister(),

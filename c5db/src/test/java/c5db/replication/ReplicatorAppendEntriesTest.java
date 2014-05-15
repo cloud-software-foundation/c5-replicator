@@ -26,7 +26,6 @@ import c5db.replication.rpc.RpcReply;
 import c5db.replication.rpc.RpcWireRequest;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.JUnitRuleFiberExceptions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.AsyncRequest;
@@ -310,7 +309,6 @@ public class ReplicatorAppendEntriesTest {
       new ChannelHistoryMonitor<>(commitNotices, rpcFiber);
 
   private ReplicatorInstance makeTestInstance() {
-    List<Long> peerIdList = ImmutableList.of(1L, 2L, 3L);
     long thisReplicatorId = 1;
     long lastCommittedIndex = 0;
     ReplicatorInformationInterface info = new InRamSim.Info(0, Long.MAX_VALUE / 2L);
@@ -319,7 +317,6 @@ public class ReplicatorAppendEntriesTest {
     return new ReplicatorInstance(new ThreadFiber(runnableExecutor, null, true),
         thisReplicatorId,
         QUORUM_ID,
-        peerIdList,
         proxyLog,
         info,
         persistence,

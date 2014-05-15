@@ -41,7 +41,6 @@ import org.jetlang.fibers.PoolFiberFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -195,7 +194,6 @@ public class InRamSim {
       ReplicatorInstance rep = new ReplicatorInstance(fiberPool.create(batchExecutor),
           peerId,
           "foobar",
-          new ArrayList<>(),
           log,
           new Info(plusMillis, electionTimeout),
           new Persister(),
@@ -226,7 +224,6 @@ public class InRamSim {
     ReplicatorInstance repl = new ReplicatorInstance(fiberPool.create(batchExecutor),
         peerId,
         "foobar",
-        new ArrayList<>(),
         log,
         oldRepl.info,
         oldRepl.persister,
