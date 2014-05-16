@@ -20,8 +20,6 @@ import c5db.MiniClusterBase;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import static c5db.client.DataHelper.checkAndDeleteRowAndValueIntoDatabase;
 import static c5db.client.DataHelper.checkAndPutRowAndValueIntoDatabase;
@@ -38,7 +36,7 @@ public class TestCheckAnd extends MiniClusterBase {
 
   @Test
   public void shouldFailCheckAndPutNullRow() throws IOException {
-   assertFalse(checkAndPutRowAndValueIntoDatabase(table, row, value, notEqualToValue));
+    assertFalse(checkAndPutRowAndValueIntoDatabase(table, row, value, notEqualToValue));
   }
 
   @Test
@@ -69,7 +67,7 @@ public class TestCheckAnd extends MiniClusterBase {
 
   @Test
   public void testSimpleCheckAndDeleteCanSucceed() throws IOException {
-     putRowAndValueIntoDatabase(table, row, value);
+    putRowAndValueIntoDatabase(table, row, value);
     assertTrue(checkAndDeleteRowAndValueIntoDatabase(table, row, value));
     assertThat(valueReadFromDB(table, row), not(equalTo(value)));
   }

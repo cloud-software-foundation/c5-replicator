@@ -16,7 +16,6 @@
  */
 package c5db;
 
-import c5db.client.C5AsyncDatabase;
 import c5db.client.FakeHTable;
 import io.protostuff.ByteString;
 import org.apache.hadoop.hbase.HConstants;

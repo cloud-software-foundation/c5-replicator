@@ -16,7 +16,6 @@
  */
 package c5db;
 
-import c5db.client.C5AsyncDatabase;
 import c5db.client.FakeHTable;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.C5Server;

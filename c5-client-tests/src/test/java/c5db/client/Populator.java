@@ -33,7 +33,7 @@ public class Populator extends MiniClusterBase {
 
   private static ByteString tableName = ByteString.bytesDefaultValue("testTable");
 
-  public Populator()  {
+  public Populator() {
 
   }
 
