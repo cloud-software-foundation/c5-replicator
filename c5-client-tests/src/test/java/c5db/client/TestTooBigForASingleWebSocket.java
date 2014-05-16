@@ -41,9 +41,9 @@ public class TestTooBigForASingleWebSocket extends ManyClusterBase {
     random.nextBytes(randomBytes);
   }
 
-  private FakeHTable c5AsyncDatabase;
   private final byte[] cf = Bytes.toBytes("cf");
   private final byte[] cq = Bytes.toBytes("cq");
+  private FakeHTable c5AsyncDatabase;
 
   @Before
   public void setUp() throws InterruptedException, ExecutionException, TimeoutException, IOException {

@@ -55,15 +55,14 @@ import java.util.concurrent.TimeoutException;
 
 public class MiniClusterBase {
 
-  @ClassRule
-  public static TemporaryFolder testFolder = new TemporaryFolder();
-
-  private static int regionServerPort;
   public static final byte[] value = Bytes.toBytes("value");
   public static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
   private static final Random rnd = new Random();
+  @ClassRule
+  public static TemporaryFolder testFolder = new TemporaryFolder();
+  private static int regionServerPort;
   private static Channel<TabletStateChange> stateChanges;
-
+  private static C5Server server;
   @Rule
   public TestName name = new TestName();
   public FakeHTable table;
@@ -71,46 +70,6 @@ public class MiniClusterBase {
 
   public static int getRegionServerPort() {
     return regionServerPort;
-  }
-
-  private static C5Server server;
-
-  @Before
-  public void before() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    Fiber receiver = new ThreadFiber();
-    receiver.start();
-
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    Callback<TabletStateChange> onMsg = message -> {
-      System.out.println(message);
-      if (message.state.equals(Tablet.State.Open) || message.state.equals(Tablet.State.Leader)) {
-        latch.countDown();
-      }
-    };
-    stateChanges.subscribe(receiver, onMsg);
-
-
-    final ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
-    Channel<CommandRpcRequest<?>> commandChannel = server.getCommandChannel();
-
-    ModuleSubCommand createTableSubCommand = new ModuleSubCommand(ModuleType.Tablet,
-        TestHelpers.getCreateTabletSubCommand(tableName, server.getNodeId()));
-    CommandRpcRequest<ModuleSubCommand> createTableCommand = new CommandRpcRequest<>(server.getNodeId(),
-        createTableSubCommand);
-
-    commandChannel.publish(createTableCommand);
-    // create java.util.concurrent.CountDownLatch to notify when message arrives
-    latch.await();
-
-    table = new FakeHTable(C5TestServerConstants.LOCALHOST, getRegionServerPort(), tableName);
-    row = Bytes.toBytes(name.getMethodName());
-    receiver.dispose();
-  }
-
-  @After
-  public void after() throws InterruptedException {
-    table.close();
   }
 
   @AfterClass
@@ -183,5 +142,43 @@ public class MiniClusterBase {
 
     latch.await();
     receiver.dispose();
+  }
+
+  @Before
+  public void before() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    Fiber receiver = new ThreadFiber();
+    receiver.start();
+
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    Callback<TabletStateChange> onMsg = message -> {
+      System.out.println(message);
+      if (message.state.equals(Tablet.State.Open) || message.state.equals(Tablet.State.Leader)) {
+        latch.countDown();
+      }
+    };
+    stateChanges.subscribe(receiver, onMsg);
+
+
+    final ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
+    Channel<CommandRpcRequest<?>> commandChannel = server.getCommandChannel();
+
+    ModuleSubCommand createTableSubCommand = new ModuleSubCommand(ModuleType.Tablet,
+        TestHelpers.getCreateTabletSubCommand(tableName, server.getNodeId()));
+    CommandRpcRequest<ModuleSubCommand> createTableCommand = new CommandRpcRequest<>(server.getNodeId(),
+        createTableSubCommand);
+
+    commandChannel.publish(createTableCommand);
+    // create java.util.concurrent.CountDownLatch to notify when message arrives
+    latch.await();
+
+    table = new FakeHTable(C5TestServerConstants.LOCALHOST, getRegionServerPort(), tableName);
+    row = Bytes.toBytes(name.getMethodName());
+    receiver.dispose();
+  }
+
+  @After
+  public void after() throws InterruptedException {
+    table.close();
   }
 }

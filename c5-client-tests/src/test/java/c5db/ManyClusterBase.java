@@ -58,100 +58,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class ManyClusterBase {
-  private static int regionServerPort;
-
+  public static final byte[] value = Bytes.toBytes("value");
   private static final Random rnd = new Random();
-
+  public static int metaOnPort;
+  private static int regionServerPort;
   private static Channel<TabletStateChange> stateChanges;
   private static Channel<TabletStateChange> stateChanges1;
   private static Channel<TabletStateChange> stateChanges2;
   private static Channel<CommandRpcRequest<?>> commandChannel;
-  public static final byte[] value = Bytes.toBytes("value");
-
-
-  @Rule
-  public TestName name = new TestName();
-  public FakeHTable table;
-  public static int metaOnPort;
-  public byte[] row;
-  private int userTabletOn;
-
-  public int getRegionServerPort() {
-    Log.info("Getting region from: " + userTabletOn);
-    return userTabletOn;
-  }
-
   private static C5Server server;
   private static C5Server server1;
   private static C5Server server2;
-
-  String getCreateTabletSubCommand(ByteString tableNameBytes) {
-    TableName tableName = TableName.valueOf(tableNameBytes.toByteArray());
-    HTableDescriptor testDesc = new HTableDescriptor(tableName);
-    testDesc.addFamily(new HColumnDescriptor("cf"));
-    HRegionInfo testRegion = new HRegionInfo(tableName, new byte[]{0}, new byte[]{}, false, 1);
-    String peerString = String.valueOf(server.getNodeId() + "," + server1.getNodeId() + "," + server2.getNodeId());
-    BASE64Encoder encoder = new BASE64Encoder();
-
-    String hTableDesc = encoder.encodeBuffer(testDesc.toByteArray());
-    String hRegionInfo = encoder.encodeBuffer(testRegion.toByteArray());
-
-    return C5ServerConstants.CREATE_TABLE + ":" + hTableDesc + "," + hRegionInfo + "," + peerString;
-
-  }
-
-  @Before
-  public void before() throws InterruptedException, ExecutionException, TimeoutException, IOException {
-    Fiber receiver = new ThreadFiber();
-    receiver.start();
-
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    Callback<TabletStateChange> onMsg = message -> {
-      System.out.println(message);
-      if (message.state.equals(Tablet.State.Leader)) {
-        userTabletOn = regionServerPort - 2;
-        latch.countDown();
-      }
-    };
-    Callback<TabletStateChange> onMsg1 = message -> {
-      System.out.println(message);
-      if (message.state.equals(Tablet.State.Leader)) {
-        userTabletOn = regionServerPort - 1;
-        latch.countDown();
-      }
-    };
-    Callback<TabletStateChange> onMsg2 = message -> {
-      System.out.println(message);
-      if (message.state.equals(Tablet.State.Leader)) {
-        userTabletOn = regionServerPort;
-        latch.countDown();
-      }
-    };
-    stateChanges.subscribe(receiver, onMsg);
-    stateChanges1.subscribe(receiver, onMsg1);
-    stateChanges2.subscribe(receiver, onMsg2);
-
-    final ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
-    ModuleSubCommand createTableSubCommand = new ModuleSubCommand(ModuleType.Tablet,
-        getCreateTabletSubCommand(tableName));
-
-    commandChannel.publish(new CommandRpcRequest<>(server.getNodeId(), createTableSubCommand));
-    commandChannel.publish(new CommandRpcRequest<>(server1.getNodeId(), createTableSubCommand));
-    commandChannel.publish(new CommandRpcRequest<>(server2.getNodeId(), createTableSubCommand));
-    // create java.util.concurrent.CountDownLatch to notify when message arrives
-    latch.await();
-
-    table = new FakeHTable(C5TestServerConstants.LOCALHOST, userTabletOn, tableName);
-    row = Bytes.toBytes(name.getMethodName());
-
-    receiver.dispose();
-  }
-
-  @After
-  public void after() throws InterruptedException {
-    table.close();
-  }
+  @Rule
+  public TestName name = new TestName();
+  public FakeHTable table;
+  public byte[] row;
+  private int userTabletOn;
 
   @AfterClass
   public static void afterClass() throws InterruptedException, ExecutionException, TimeoutException {
@@ -327,6 +249,79 @@ public class ManyClusterBase {
     latch.await();
     receiver.dispose();
 
+  }
+
+  public int getRegionServerPort() {
+    Log.info("Getting region from: " + userTabletOn);
+    return userTabletOn;
+  }
+
+  String getCreateTabletSubCommand(ByteString tableNameBytes) {
+    TableName tableName = TableName.valueOf(tableNameBytes.toByteArray());
+    HTableDescriptor testDesc = new HTableDescriptor(tableName);
+    testDesc.addFamily(new HColumnDescriptor("cf"));
+    HRegionInfo testRegion = new HRegionInfo(tableName, new byte[]{0}, new byte[]{}, false, 1);
+    String peerString = String.valueOf(server.getNodeId() + "," + server1.getNodeId() + "," + server2.getNodeId());
+    BASE64Encoder encoder = new BASE64Encoder();
+
+    String hTableDesc = encoder.encodeBuffer(testDesc.toByteArray());
+    String hRegionInfo = encoder.encodeBuffer(testRegion.toByteArray());
+
+    return C5ServerConstants.CREATE_TABLE + ":" + hTableDesc + "," + hRegionInfo + "," + peerString;
+
+  }
+
+  @Before
+  public void before() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+    Fiber receiver = new ThreadFiber();
+    receiver.start();
+
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    Callback<TabletStateChange> onMsg = message -> {
+      System.out.println(message);
+      if (message.state.equals(Tablet.State.Leader)) {
+        userTabletOn = regionServerPort - 2;
+        latch.countDown();
+      }
+    };
+    Callback<TabletStateChange> onMsg1 = message -> {
+      System.out.println(message);
+      if (message.state.equals(Tablet.State.Leader)) {
+        userTabletOn = regionServerPort - 1;
+        latch.countDown();
+      }
+    };
+    Callback<TabletStateChange> onMsg2 = message -> {
+      System.out.println(message);
+      if (message.state.equals(Tablet.State.Leader)) {
+        userTabletOn = regionServerPort;
+        latch.countDown();
+      }
+    };
+    stateChanges.subscribe(receiver, onMsg);
+    stateChanges1.subscribe(receiver, onMsg1);
+    stateChanges2.subscribe(receiver, onMsg2);
+
+    final ByteString tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
+    ModuleSubCommand createTableSubCommand = new ModuleSubCommand(ModuleType.Tablet,
+        getCreateTabletSubCommand(tableName));
+
+    commandChannel.publish(new CommandRpcRequest<>(server.getNodeId(), createTableSubCommand));
+    commandChannel.publish(new CommandRpcRequest<>(server1.getNodeId(), createTableSubCommand));
+    commandChannel.publish(new CommandRpcRequest<>(server2.getNodeId(), createTableSubCommand));
+    // create java.util.concurrent.CountDownLatch to notify when message arrives
+    latch.await();
+
+    table = new FakeHTable(C5TestServerConstants.LOCALHOST, userTabletOn, tableName);
+    row = Bytes.toBytes(name.getMethodName());
+
+    receiver.dispose();
+  }
+
+  @After
+  public void after() throws InterruptedException {
+    table.close();
   }
 
 }
