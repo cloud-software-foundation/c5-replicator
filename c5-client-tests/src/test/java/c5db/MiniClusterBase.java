@@ -97,7 +97,8 @@ public class MiniClusterBase {
   @BeforeClass
   public static void beforeClass() throws Exception {
     Log.warn("-----------------------------------------------------------------------------------------------------------");
-    System.setProperty(C5ServerConstants.C5_CFG_PATH, testFolder.getRoot().getAbsolutePath());
+
+    System.setProperty(C5ServerConstants.C5_CFG_PATH, MiniClusterBase.testFolder.getRoot().getAbsolutePath());
     int webServerPort = 9091 + rnd.nextInt(100);
     regionServerPort = 8080 + rnd.nextInt(1000);
     System.setProperty("clusterName", C5ServerConstants.LOCALHOST);
