@@ -161,7 +161,9 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 replicatorStateChanges,
                 indexCommitNotices
             );
-        instance.bootstrapQuorum(peers);
+        if (logMooring.getLastIndex() == 0) {
+          instance.bootstrapQuorum(peers);
+    	}
         throwableChannel.subscribe(fiber, instance::failReplicatorInstance);
         replicatorInstances.put(quorumId, instance);
         future.set(instance);
