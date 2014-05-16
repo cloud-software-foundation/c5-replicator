@@ -13,7 +13,7 @@
     </parent>
 
     <modules>
-        <module>c5-client-tests</module>
+        <module>c5-end-to-end-tests</module>
         <module>c5db</module>
         <module>c5db-client</module>
         <module>hbase-common</module>
@@ -86,20 +86,8 @@
         <maven-compiler-plugin.version>3.0</maven-compiler-plugin.version>
 
         <!-- test junk, this seems too complex -->
-        <surefire.version>2.12-TRUNK-HBASE-2</surefire.version>
-        <surefire.provider>surefire-junit47</surefire.provider>
-        <!-- default: run small & medium, medium with 2 threads -->
-        <surefire.skipFirstPart>false</surefire.skipFirstPart>
-        <surefire.skipSecondPart>false</surefire.skipSecondPart>
-        <surefire.firstPartForkMode>once</surefire.firstPartForkMode>
-        <surefire.firstPartParallel>classes</surefire.firstPartParallel>
-        <surefire.firstPartThreadCount>1</surefire.firstPartThreadCount>
-        <surefire.secondPartThreadCount>2</surefire.secondPartThreadCount>
-        <surefire.firstPartGroups>org.apache.hadoop.hbase.SmallTests</surefire.firstPartGroups>
-        <surefire.secondPartGroups>org.apache.hadoop.hbase.MediumTests</surefire.secondPartGroups>
         <test.output.tofile>true</test.output.tofile>
-        <surefire.timeout>900</surefire.timeout>
-
+        <surefire.version>2.17</surefire.version>
     </properties>
 
     <pluginRepositories>
@@ -242,55 +230,9 @@
                     </configuration>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${surefire.version}</version>
-                    <dependencies>
-                        <!-- by default surefire selects dynamically the connector to the unit tests
-                          tool. We want to use always the same as the different connectors can have different
-                          bugs and behaviour. -->
-                        <dependency>
-                            <groupId>org.apache.maven.surefire</groupId>
-                            <artifactId>${surefire.provider}</artifactId>
-                            <version>${surefire.version}</version>
-                        </dependency>
-                    </dependencies>
-                    <!-- Generic testing configuration for all packages -->
-                    <configuration>
-                        <failIfNoTests>false</failIfNoTests>
-                        <skip>${surefire.skipFirstPart}</skip>
-                        <forkMode>${surefire.firstPartForkMode}</forkMode>
-                        <parallel>${surefire.firstPartParallel}</parallel>
-                        <perCoreThreadCount>false</perCoreThreadCount>
-                        <threadCount>${surefire.firstPartThreadCount}</threadCount>
-                        <parallel>classes</parallel>
-                        <!-- surefire hack, if not we're
-                          using method parallelization class ! -->
-                        <testFailureIgnore>false</testFailureIgnore>
-                        <forkedProcessTimeoutInSeconds>${surefire.timeout}</forkedProcessTimeoutInSeconds>
-                        <argLine>-enableassertions -Xmx1900m -Djava.security.egd=file:/dev/./urandom -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true</argLine>
-                        <redirectTestOutputToFile>${test.output.tofile}</redirectTestOutputToFile>
-                        <enableAssertions>true</enableAssertions>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>secondPartTestsExecution</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>test</goal>
-                            </goals>
-                            <configuration>
-                                <skip>${surefire.skipSecondPart}</skip>
-                                <testFailureIgnore>false</testFailureIgnore>
-                                <forkMode>perThread</forkMode>
-                                <perCoreThreadCount>false</perCoreThreadCount>
-                                <threadCount>${surefire.secondPartThreadCount}</threadCount>
-                                <parallel>classes</parallel>
-                                <!-- surefire hack, if not we're using method
-                                  parallelisation class ! -->
-                                <groups>${surefire.secondPartGroups}</groups>
-                            </configuration>
-                        </execution>
-                    </executions>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -301,11 +243,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-eclipse-plugin</artifactId>
                     <version>${maven-eclipse-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>${surefire.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jamon</groupId>
