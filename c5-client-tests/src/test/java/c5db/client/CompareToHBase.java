@@ -36,9 +36,9 @@ public class CompareToHBase extends MiniClusterBase {
       ByteString.copyFrom(Bytes.toBytes("tableName"));
   private static Configuration conf;
 
-  byte[] cf = Bytes.toBytes("cf");
+  private final byte[] cf = Bytes.toBytes("cf");
 
-  public CompareToHBase() throws IOException, InterruptedException {
+  private CompareToHBase() {
     conf = HBaseConfiguration.create();
   }
 
@@ -49,7 +49,7 @@ public class CompareToHBase extends MiniClusterBase {
     hTable.close();
   }
 
-  public void compareToHBaseScan() throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  void compareToHBaseScan() throws InterruptedException, ExecutionException, TimeoutException, IOException {
     tableName = ByteString.copyFrom(Bytes.toBytes(name.getMethodName()));
 
     FakeHTable table = new FakeHTable(C5TestServerConstants.LOCALHOST, getRegionServerPort(), tableName);

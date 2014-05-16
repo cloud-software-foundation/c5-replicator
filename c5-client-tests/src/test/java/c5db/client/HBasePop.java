@@ -30,9 +30,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class HBasePop {
-  static ByteString tableName = ByteString.copyFrom(Bytes.toBytes("tableName"));
-  static Configuration conf = HBaseConfiguration.create();
-  static byte[] cf = Bytes.toBytes("cf");
+  private static final ByteString tableName = ByteString.copyFrom(Bytes.toBytes("tableName"));
+  private static final Configuration conf = HBaseConfiguration.create();
+  private static final byte[] cf = Bytes.toBytes("cf");
 
   public static void main(String[] args) throws IOException, InterruptedException {
     HBaseAdmin admin = new HBaseAdmin(conf);
@@ -46,7 +46,7 @@ public class HBasePop {
     System.out.println("time:" + (end - start));
   }
 
-  public static void compareToHBasePut() throws IOException {
+  private static void compareToHBasePut() throws IOException {
     byte[] cq = Bytes.toBytes("cq");
     byte[] value = Bytes.toBytes("value");
 

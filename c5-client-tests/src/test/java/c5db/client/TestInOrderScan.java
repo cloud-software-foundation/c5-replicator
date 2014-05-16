@@ -32,7 +32,7 @@ import static junit.framework.TestCase.assertFalse;
 
 public class TestInOrderScan extends MiniClusterBase {
 
-  byte[] cf = Bytes.toBytes("cf");
+  private final byte[] cf = Bytes.toBytes("cf");
 
   public TestInOrderScan() throws IOException, InterruptedException {
     super();

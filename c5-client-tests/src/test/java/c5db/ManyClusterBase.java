@@ -58,9 +58,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class ManyClusterBase {
-  public static final byte[] value = Bytes.toBytes("value");
+  protected static final byte[] value = Bytes.toBytes("value");
   private static final Random rnd = new Random();
-  public static int metaOnPort;
+  static int metaOnPort;
   private static int regionServerPort;
   private static Channel<TabletStateChange> stateChanges;
   private static Channel<TabletStateChange> stateChanges1;
@@ -71,8 +71,8 @@ public class ManyClusterBase {
   private static C5Server server2;
   @Rule
   public TestName name = new TestName();
-  public FakeHTable table;
-  public byte[] row;
+  protected FakeHTable table;
+  protected byte[] row;
   private int userTabletOn;
 
   @AfterClass
@@ -251,7 +251,7 @@ public class ManyClusterBase {
 
   }
 
-  public int getRegionServerPort() {
+  protected int getRegionServerPort() {
     Log.info("Getting region from: " + userTabletOn);
     return userTabletOn;
   }

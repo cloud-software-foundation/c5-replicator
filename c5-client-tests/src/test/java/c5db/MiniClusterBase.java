@@ -56,7 +56,7 @@ import java.util.concurrent.TimeoutException;
 public class MiniClusterBase {
 
   public static final byte[] value = Bytes.toBytes("value");
-  public static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
+  protected static final byte[] notEqualToValue = Bytes.toBytes("notEqualToValue");
   private static final Random rnd = new Random();
   @ClassRule
   public static TemporaryFolder testFolder = new TemporaryFolder();
@@ -65,10 +65,10 @@ public class MiniClusterBase {
   private static C5Server server;
   @Rule
   public TestName name = new TestName();
-  public FakeHTable table;
-  public byte[] row;
+  protected FakeHTable table;
+  protected byte[] row;
 
-  public static int getRegionServerPort() {
+  protected static int getRegionServerPort() {
     return regionServerPort;
   }
 

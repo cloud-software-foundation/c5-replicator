@@ -37,7 +37,7 @@ import static java.util.stream.Collectors.toList;
  * <p/>
  * Add additional static verbs as necessary!
  */
-public class DataHelper {
+class DataHelper {
   private static final byte[] cf = Bytes.toBytes("cf");
   private static final byte[] cq = Bytes.toBytes("cq");
 
