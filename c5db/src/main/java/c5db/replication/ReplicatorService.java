@@ -561,7 +561,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                         message.error);
                     replicatorInstances.remove(message.instance.getQuorumId());
                   } else {
-                    LOG.info("replicator indicates state change {}", message);
+                    LOG.debug("replicator indicates state change {}", message);
                   }
                 }
               });
