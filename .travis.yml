@@ -4,7 +4,3 @@ jdk:
 after_failure: ./print_surefire_reports.sh
 notifications:
   slack: ohmdata:Hyf76GxhkJmd9rTGlhTuUOX5
-before_install:
-  - mvn clean install -DskipTests
-script:
-  - (cd c5-client-test ; mvn test)
