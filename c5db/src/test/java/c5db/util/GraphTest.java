@@ -90,6 +90,6 @@ public class GraphTest {
   }
 
   private static enum NodeType {
-    A, B, C, D, E, F;
+    A, B, C, D, E, F
   }
 }

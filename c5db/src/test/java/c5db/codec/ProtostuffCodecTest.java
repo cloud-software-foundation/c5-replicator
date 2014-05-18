@@ -169,11 +169,8 @@ public class ProtostuffCodecTest {
       if (timestamp != serObj.timestamp) {
         return false;
       }
-      if (!desc.equals(serObj.desc)) {
-        return false;
-      }
+      return desc.equals(serObj.desc);
 
-      return true;
     }
 
     @Override

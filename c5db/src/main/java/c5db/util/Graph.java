@@ -121,11 +121,8 @@ public class Graph {
 
       Node node = (Node) o;
 
-      if (type != node.type) {
-        return false;
-      }
+      return type == node.type;
 
-      return true;
     }
 
     @Override
