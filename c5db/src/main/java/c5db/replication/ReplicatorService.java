@@ -583,7 +583,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   }
 
   protected void failModule(Throwable t) {
-    LOG.error("ReplicatorService failure, shutting down all ReplicatorInstances");
+    LOG.error("ReplicatorService failure, shutting down all ReplicatorInstances",t);
     try {
       replicatorInstances.values().forEach(ReplicatorInstance::dispose);
       fiber.dispose();
