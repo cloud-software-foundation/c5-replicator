@@ -310,7 +310,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       @Override
       public void run() {
         bootstrap = new Bootstrap();
-        try {
           bootstrap.group(eventLoop)
               .channel(NioDatagramChannel.class)
               .option(ChannelOption.SO_BROADCAST, true)
@@ -342,8 +341,13 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
             sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
           }
           //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
+        try {
           localIPs = getLocalIPs();
-          //msgBuilder.addAllAddresses(getLocalIPs());
+        } catch (SocketException e) {
+          LOG.error("SocketException:", e);
+          notifyFailed(e);
+        }
+        //msgBuilder.addAllAddresses(getLocalIPs());
           //beaconMessage = msgBuilder.build();
 
           // Schedule fiber tasks and subscriptions.
@@ -377,13 +381,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
           fiber.start();
 
           notifyStarted();
-        } catch (Throwable t) {
-          if (fiber != null) {
-            fiber.dispose();
-          }
 
-          notifyFailed(t);
-        }
       }
     });
   }
