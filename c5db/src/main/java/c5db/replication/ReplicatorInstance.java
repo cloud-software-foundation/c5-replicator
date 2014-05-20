@@ -37,6 +37,7 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import org.jetbrains.annotations.Nullable;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
@@ -399,7 +400,7 @@ public class ReplicatorInstance implements Replicator {
    * or null if it was not possible to submit the request without blocking.
    */
   @FiberOnly
-  private ListenableFuture<Long> offerQuorumChangeRequest(QuorumConfiguration quorumConfig) {
+  private @Nullable ListenableFuture<Long> offerQuorumChangeRequest(QuorumConfiguration quorumConfig) {
     if (this.quorumConfig.equals(quorumConfig)) {
       logger.warn("got a request to change quorum to but I'm already in that quorum config {} ", quorumConfig);
       return null;

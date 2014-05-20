@@ -52,6 +52,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -356,7 +357,18 @@ public class InRamSim {
 
     rpcFiber.start();
 
-    pickAReplicator().bootstrapQuorum(peerIds).get(4, TimeUnit.SECONDS);
+    // bootstrap ALL the replicators, collect their futures and skip the null ones.
+    List<ListenableFuture<Long>> futures = replicators.values()
+        .stream().map(repl -> repl.bootstrapQuorum(peerIds))
+        .filter(future -> future != null)
+        .collect(Collectors.toList());
+
+    for (ListenableFuture<Long> aFuture : futures) {
+      LOG.info("Waiting for bootstrap");
+      aFuture.get(4, TimeUnit.SECONDS);
+    }
+
+//    pickAReplicator().bootstrapQuorum(peerIds).get(4, TimeUnit.SECONDS);
   }
 
   public void dispose() {

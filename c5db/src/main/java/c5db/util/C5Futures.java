@@ -18,6 +18,7 @@
 package c5db.util;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.jetbrains.annotations.NotNull;
 import org.jetlang.fibers.Fiber;
 
 import java.util.concurrent.ExecutionException;
@@ -29,10 +30,10 @@ import java.util.function.Consumer;
  */
 public class C5Futures {
 
-  public static <V> void addCallback(ListenableFuture<V> future,
-                                     Consumer<? super V> success,
-                                     Consumer<Throwable> failure,
-                                     Fiber fiber) {
+  public static <V> void addCallback(@NotNull ListenableFuture<V> future,
+                                     @NotNull Consumer<? super V> success,
+                                     @NotNull Consumer<Throwable> failure,
+                                     @NotNull Fiber fiber) {
     Runnable callbackListener = () -> {
       final V value;
       try {
@@ -46,7 +47,7 @@ public class C5Futures {
     future.addListener(callbackListener, fiber);
   }
 
-  public static <V> V getUninterruptibly(Future<V> future)
+  public static <V> V getUninterruptibly(@NotNull Future<V> future)
       throws ExecutionException {
     boolean interrupted = false;
     try {

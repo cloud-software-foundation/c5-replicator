@@ -253,7 +253,7 @@ public class InRamTest {
     // Leader dies before it can commit the transitional configuration, but as long as the next leader
     // has already received the transitional configuration entry, it can complete the view change.
 
-    final List<Long> newPeerIds = Lists.newArrayList(8L, 9L, 10L);
+    final List<Long> newPeerIds = Lists.newArrayList(10L, 8L, 9L);
     final QuorumConfiguration transitionalConfig =
         QuorumConfiguration.of(INITIAL_PEERS).getTransitionalConfiguration(newPeerIds);
 

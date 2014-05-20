@@ -746,6 +746,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>13.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>com.github.stephenc.findbugs</groupId>
             <artifactId>findbugs-annotations</artifactId>
             <version>${findbugs-annotations}</version>
