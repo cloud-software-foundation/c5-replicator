@@ -31,7 +31,7 @@
         <log4j.version>1.2.17</log4j.version>
         <junit.version>4.11</junit.version>
         <slf4j-api.version>1.7.4</slf4j-api.version>
-        <netty.version>4.0.10.Final</netty.version>
+        <netty.version>4.0.19.Final</netty.version>
         <protobuf.version>2.5.0</protobuf.version>
         <metrics-core.version>3.0.0</metrics-core.version>
         <hbase.version>0.96.0</hbase.version>

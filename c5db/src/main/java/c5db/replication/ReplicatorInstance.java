@@ -17,6 +17,7 @@
 
 package c5db.replication;
 
+import c5db.C5ServerConstants;
 import c5db.interfaces.replication.IllegalQuorumBootstrapException;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
@@ -48,7 +49,6 @@ import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.core.Disposable;
 import org.jetlang.fibers.Fiber;
-import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +97,8 @@ public class ReplicatorInstance implements Replicator {
    * state used by leader
    */
 
-  private final BlockingQueue<InternalReplicationRequest> logRequests = new ArrayBlockingQueue<>(100);
+  private final BlockingQueue<InternalReplicationRequest> logRequests =
+      new ArrayBlockingQueue<>(C5ServerConstants.MAXIMUM_SIMULTANEOUS_LOG_ENTRIES_PER_LOG);
 
   // this is the next index from our log we need to send to each peer, kept track of on a per-peer basis.
   private final Map<Long, Long> peersNextIndex = new HashMap<>();

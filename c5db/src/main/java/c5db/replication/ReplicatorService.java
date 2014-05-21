@@ -52,10 +52,10 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -211,8 +211,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   private final int port;
   private final C5Server server;
   private final Fiber fiber;
-  private final NioEventLoopGroup bossGroup;
-  private final NioEventLoopGroup workerGroup;
+  private final EventLoopGroup bossGroup;
+  private final EventLoopGroup workerGroup;
 
   private final Map<Long, Channel> connections = new HashMap<>();
   private final Map<String, ReplicatorInstance> replicatorInstances = new HashMap<>();
@@ -235,8 +235,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   private long messageIdGen = 1;
 
-  public ReplicatorService(NioEventLoopGroup bossGroup,
-                           NioEventLoopGroup workerGroup,
+  public ReplicatorService(EventLoopGroup bossGroup,
+                           EventLoopGroup workerGroup,
                            int port, C5Server server) {
     this.bossGroup = bossGroup;
     this.workerGroup = workerGroup;
@@ -582,7 +582,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   }
 
   protected void failModule(Throwable t) {
-    LOG.error("ReplicatorService failure, shutting down all ReplicatorInstances",t);
+    LOG.error("ReplicatorService failure, shutting down all ReplicatorInstances", t);
     try {
       replicatorInstances.values().forEach(ReplicatorInstance::dispose);
       fiber.dispose();
