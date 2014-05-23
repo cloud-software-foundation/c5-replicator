@@ -65,7 +65,7 @@ import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
 import static c5db.RpcMatchers.containsQuorumConfiguration;
 import static c5db.interfaces.replication.Replicator.State.FOLLOWER;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT;
-import static c5db.replication.ReplicationMatchers.aQuorumChangeCommitNotice;
+import static c5db.replication.ReplicationMatchers.aQuorumChangeCommittedEvent;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static c5db.replication.ReplicationMatchers.hasCommittedEntriesUpTo;
 import static c5db.replication.ReplicationMatchers.leaderElectedEvent;
@@ -482,7 +482,7 @@ public class InRamTest {
     sim.startTimeout(leaderId);
   }
 
-  private void havingElectedALeaderAtOrAfter(long minimumTerm) throws Exception {
+  private void havingElectedALeaderAtOrAfter(long minimumTerm) {
     waitForALeader(minimumTerm);
   }
 
@@ -603,7 +603,7 @@ public class InRamTest {
     }
 
     public PeerController waitForQuorumCommit(QuorumConfiguration quorumConfiguration) {
-      commitMonitor.waitFor(aQuorumChangeCommitNotice(quorumConfiguration, id));
+      eventMonitor.waitFor(aQuorumChangeCommittedEvent(quorumConfiguration, equalTo(id)));
       return this;
     }
 

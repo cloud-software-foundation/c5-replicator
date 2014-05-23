@@ -168,7 +168,7 @@ public class ReplicatorInstance implements Replicator {
                 0,
                 0,
                 info.currentTimeMillis(),
-                null)
+                null, null)
         );
       } catch (IOException e) {
         logger.error("error during persistent data init", e);
@@ -176,6 +176,7 @@ public class ReplicatorInstance implements Replicator {
       }
     });
 
+    commitNoticeChannel.subscribe(fiber, this::onCommit);
     incomingChannel.subscribe(fiber, this::onIncomingMessage);
 
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, info.electionCheckRate(),
@@ -215,6 +216,7 @@ public class ReplicatorInstance implements Replicator {
     this.myElectionTimeout = info.electionTimeout();
     this.lastRPC = info.currentTimeMillis();
 
+    commitNoticeChannel.subscribe(fiber, this::onCommit);
     incomingChannel.subscribe(fiber, this::onIncomingMessage);
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection,
         info.electionCheckRate(), info.electionCheckRate(), TimeUnit.MILLISECONDS);
@@ -346,7 +348,7 @@ public class ReplicatorInstance implements Replicator {
    * @param peerIds Collection of peers in the new quorum.
    * @return A future which will return the receipt for the new quorum's configuration
    * entry, when the log index is known. The actual completion of the bootstrap will be
-   * signaled by the commitment of the log entry described by the returned receipt.
+   * signaled by a ReplicatorInstanceEvent with the appropriate quorum configuration.
    */
   public ListenableFuture<ReplicatorReceipt> bootstrapQuorum(Collection<Long> peerIds) {
     assert peerIds.size() > 0;
@@ -389,6 +391,7 @@ public class ReplicatorInstance implements Replicator {
             0,
             0,
             info.currentTimeMillis(),
+            null,
             e)
     );
     fiber.dispose(); // kill us forever.
@@ -663,7 +666,7 @@ public class ReplicatorInstance implements Replicator {
             whosLeader,
             currentTerm,
             info.currentTimeMillis(),
-            null)
+            null, null)
     );
   }
 
@@ -763,7 +766,7 @@ public class ReplicatorInstance implements Replicator {
             0,
             0,
             info.currentTimeMillis(),
-            null)
+            null, null)
     );
 
     // Start new election "timer".
@@ -858,7 +861,7 @@ public class ReplicatorInstance implements Replicator {
             0,
             0,
             info.currentTimeMillis(),
-            null)
+            null, null)
     );
 
     // Start new election "timer".
@@ -992,7 +995,7 @@ public class ReplicatorInstance implements Replicator {
               0,
               0,
               info.currentTimeMillis(),
-              null));
+              null, null));
     }
 
     stopQueueConsumer();
@@ -1032,7 +1035,7 @@ public class ReplicatorInstance implements Replicator {
             myId,
             currentTerm,
             info.currentTimeMillis(),
-            null)
+            null, null)
     );
 
     startQueueConsumer();
@@ -1293,8 +1296,23 @@ public class ReplicatorInstance implements Replicator {
   }
 
   private void notifyLastCommitted(long old) {
-    commitNoticeChannel.publish(new IndexCommitNotice(myId, old, lastCommittedIndex, currentTerm));
-    // TODO issue quorum change event.
+    commitNoticeChannel.publish(new IndexCommitNotice(myId, old + 1, lastCommittedIndex, currentTerm));
+  }
+
+  private void onCommit(IndexCommitNotice notice) {
+    if (notice.firstIndex <= quorumConfigIndex
+        && quorumConfigIndex <= notice.lastIndex
+        && myId == notice.replicatorId) {
+      eventChannel.publish(
+          new ReplicatorInstanceEvent(
+              ReplicatorInstanceEvent.EventType.QUORUM_CONFIGURATION_COMMITTED,
+              this,
+              0,
+              0,
+              info.currentTimeMillis(),
+              quorumConfig,
+              null));
+    }
   }
 
   private void setVotedFor(long votedFor) {

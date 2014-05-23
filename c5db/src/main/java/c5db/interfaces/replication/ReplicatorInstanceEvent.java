@@ -16,6 +16,8 @@
  */
 package c5db.interfaces.replication;
 
+import c5db.replication.QuorumConfiguration;
+
 /**
  * information about when a replicator instance changes state. replicator instances publish
  * these to indicate a variety of conditions.
@@ -24,10 +26,12 @@ package c5db.interfaces.replication;
  * A variety of events can be published:
  * <ul>
  * <li>Quorum started</li>
- * <li>Leader elected</li>
- * <li>election timeout, doing new election (became candidate)</li>
- * <li>quorum failure with Throwable</li>
- * <li>As a leader, I was deposed by someone else and have unbecome leader</li>
+ * <li>Election timeout: I am doing an pre-election poll to determine if an election could succeed</li>
+ * <li>Election started: I am starting an leader election</li>
+ * <li>Leader elected: either me or someone else</li>
+ * <li>Leader deposed: as a leader, I was deposed by someone else and have unbecome leader</li>
+ * <li>Quorum configuration committed: a new configuration of peers has been committed</li>
+ * <li>Quorum failure: with Throwable</li>
  * </ul>
  */
 public class ReplicatorInstanceEvent {
@@ -37,6 +41,7 @@ public class ReplicatorInstanceEvent {
     ELECTION_STARTED,
     LEADER_ELECTED,
     LEADER_DEPOSED,
+    QUORUM_CONFIGURATION_COMMITTED,
     QUORUM_FAILURE,
   }
 
@@ -45,6 +50,7 @@ public class ReplicatorInstanceEvent {
   public final long eventTime;
   public final long newLeader;
   public final long leaderElectedTerm;
+  public final QuorumConfiguration configuration;
   public final Throwable error;
 
   public ReplicatorInstanceEvent(EventType eventType,
@@ -52,12 +58,14 @@ public class ReplicatorInstanceEvent {
                                  long newLeader,
                                  long leaderElectedTerm,
                                  long eventTime,
+                                 QuorumConfiguration configuration,
                                  Throwable error) {
     this.newLeader = newLeader;
     this.leaderElectedTerm = leaderElectedTerm;
     this.instance = instance;
     this.eventType = eventType;
     this.eventTime = eventTime;
+    this.configuration = configuration;
     this.error = error;
   }
 
@@ -69,6 +77,7 @@ public class ReplicatorInstanceEvent {
         ", eventTime=" + eventTime +
         ", newLeader=" + newLeader +
         ", leaderElectedTerm=" + leaderElectedTerm +
+        ", configuration=" + configuration +
         ", error=" + error +
         '}';
   }

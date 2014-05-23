@@ -46,8 +46,8 @@ public interface Replicator {
    * to go through; prior to that commit, it is possible that a fault will cancel the quorum
    * change operation.
    * <p>
-   * The actual completion of the quorum change will be signaled by the commitment of the
-   * quorum consisting of the given peers.
+   * The actual completion of the quorum change will be signaled by a ReplicatorInstanceEvent
+   * indicating the commitment of the quorum configuration consisting of the given peers,
    */
   ListenableFuture<ReplicatorReceipt> changeQuorum(Collection<Long> newPeers) throws InterruptedException;
 
