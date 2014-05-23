@@ -56,7 +56,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.AsyncChannelAsserts.ChannelListener;
 import static c5db.AsyncChannelAsserts.listenTo;
-import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
+import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.RpcMatchers.RequestMatcher;
 import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
 import static c5db.interfaces.replication.Replicator.State;
@@ -64,6 +64,8 @@ import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.someData;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertFalse;
 
 
@@ -408,8 +410,8 @@ public class ReplicatorLeaderTest {
   }
 
   private void expectLeaderToCommitUpToIndex(long index) {
-    commitMonitor.waitFor(hasCommitNoticeIndexValueAtLeast(index));
-    assertFalse(commitMonitor.hasAny(hasCommitNoticeIndexValueAtLeast(index + 1)));
+    commitMonitor.waitFor(aCommitNotice().withIndex(greaterThanOrEqualTo(index)));
+    assertFalse(commitMonitor.hasAny(aCommitNotice().withIndex(greaterThan(index))));
   }
 
 }

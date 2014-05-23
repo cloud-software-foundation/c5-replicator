@@ -52,7 +52,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
-import static c5db.IndexCommitMatchers.hasCommitNoticeIndexValueAtLeast;
+import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.RpcMatchers.ReplyMatcher.anAppendReply;
 import static c5db.interfaces.replication.Replicator.State;
 import static c5db.log.LogTestUtil.LogSequenceBuilder;
@@ -62,6 +62,8 @@ import static c5db.log.LogTestUtil.makeProtostuffEntry;
 import static c5db.log.LogTestUtil.someData;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertFalse;
 
@@ -347,8 +349,8 @@ public class ReplicatorAppendEntriesTest {
   }
 
   private void assertThatReplicatorWillCommitUpToIndex(long index) {
-    commitMonitor.waitFor(hasCommitNoticeIndexValueAtLeast(index));
-    assertFalse(commitMonitor.hasAny(hasCommitNoticeIndexValueAtLeast(index + 1)));
+    commitMonitor.waitFor(aCommitNotice().withIndex(greaterThanOrEqualTo(index)));
+    assertFalse(commitMonitor.hasAny(aCommitNotice().withIndex(greaterThan(index))));
   }
 
   private SettableFuture<RpcReply> lastReply = null;

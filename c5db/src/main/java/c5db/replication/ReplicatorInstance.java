@@ -1286,17 +1286,15 @@ public class ReplicatorInstance implements Replicator {
       logger.warn("New lastCommittedIndex {} is smaller than previous lastCommittedIndex {}",
           newLastCommittedIndex, lastCommittedIndex);
     } else if (newLastCommittedIndex > lastCommittedIndex) {
+      long oldLastCommittedIndex = lastCommittedIndex;
       lastCommittedIndex = newLastCommittedIndex;
-      notifyLastCommitted();
+      notifyLastCommitted(oldLastCommittedIndex);
     }
   }
 
-  private void notifyLastCommitted() {
-    if (lastCommittedIndex >= quorumConfigIndex) {
-      commitNoticeChannel.publish(new IndexCommitNotice(this, lastCommittedIndex, quorumConfig));
-    } else {
-      commitNoticeChannel.publish(new IndexCommitNotice(this, lastCommittedIndex, null));
-    }
+  private void notifyLastCommitted(long old) {
+    commitNoticeChannel.publish(new IndexCommitNotice(myId, old, lastCommittedIndex, currentTerm));
+    // TODO issue quorum change event.
   }
 
   private void setVotedFor(long votedFor) {

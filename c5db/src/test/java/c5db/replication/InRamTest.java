@@ -56,6 +56,7 @@ import java.util.stream.Collectors;
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.CollectionMatchers.isIn;
 import static c5db.FutureMatchers.resultsIn;
+import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.RpcMatchers.ReplyMatcher.aPreElectionReply;
 import static c5db.RpcMatchers.ReplyMatcher.anAppendReply;
 import static c5db.RpcMatchers.RequestMatcher;
@@ -64,7 +65,6 @@ import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
 import static c5db.RpcMatchers.containsQuorumConfiguration;
 import static c5db.interfaces.replication.Replicator.State.FOLLOWER;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT;
-import static c5db.replication.ReplicationMatchers.aNoticeMatchingPeerAndCommitIndex;
 import static c5db.replication.ReplicationMatchers.aQuorumChangeCommitNotice;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static c5db.replication.ReplicationMatchers.hasCommittedEntriesUpTo;
@@ -598,7 +598,7 @@ public class InRamTest {
     }
 
     public PeerController waitForCommit(long commitIndex) {
-      commitMonitor.waitFor(aNoticeMatchingPeerAndCommitIndex(id, commitIndex));
+      commitMonitor.waitFor(aCommitNotice().withIndex(greaterThanOrEqualTo(commitIndex)).issuedFromPeer(id));
       return this;
     }
 
@@ -618,7 +618,7 @@ public class InRamTest {
     }
 
     public boolean hasCommittedEntriesUpTo(long index) {
-      return commitMonitor.hasAny(aNoticeMatchingPeerAndCommitIndex(id, index));
+      return commitMonitor.hasAny(aCommitNotice().withIndex(greaterThanOrEqualTo(index)).issuedFromPeer(id));
     }
 
     public boolean hasWonAnElection(Matcher<Long> termMatcher) {
@@ -720,9 +720,9 @@ public class InRamTest {
   }
 
   private void updateLastCommit(IndexCommitNotice notice) {
-    long peerId = notice.replicatorInstance.getId();
-    if (notice.committedIndex > lastCommit.getOrDefault(peerId, 0L)) {
-      lastCommit.put(peerId, notice.committedIndex);
+    long peerId = notice.replicatorId;
+    if (notice.lastIndex > lastCommit.getOrDefault(peerId, 0L)) {
+      lastCommit.put(peerId, notice.lastIndex);
     }
   }
 

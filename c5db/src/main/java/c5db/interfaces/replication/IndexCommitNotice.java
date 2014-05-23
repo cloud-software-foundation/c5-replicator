@@ -16,30 +16,35 @@
  */
 package c5db.interfaces.replication;
 
-import c5db.replication.QuorumConfiguration;
-import c5db.replication.ReplicatorInstance;
-
 /**
- * A broadcast that indicates that a particular index has become visible.
+ * A broadcast that indicates that a particular range of replicator indexes have become
+ * visible, i.e., been committed. All of the indexes in this range must correspond to
+ * a single term, so if a given range subsumes multiple terms and they are all committed
+ * at once, multiple IndexCommitNotices will be needed -- one for each term.
  */
 public class IndexCommitNotice {
-  public final ReplicatorInstance replicatorInstance;
-  public final long committedIndex;
-  public final QuorumConfiguration quorumConfig;
+  public final long replicatorId;
+  public final long firstIndex;
+  public final long lastIndex;
+  public final long term;
 
-  public IndexCommitNotice(ReplicatorInstance replicatorInstance, long committedIndex,
-                           QuorumConfiguration quorumConfig) {
-    this.replicatorInstance = replicatorInstance;
-    this.committedIndex = committedIndex;
-    this.quorumConfig = quorumConfig;
+  public IndexCommitNotice(long replicatorId,
+                           long firstIndex,
+                           long lastIndex,
+                           long term) {
+    this.replicatorId = replicatorId;
+    this.firstIndex = firstIndex;
+    this.lastIndex = lastIndex;
+    this.term = term;
   }
 
   @Override
   public String toString() {
     return "IndexCommitNotice{" +
-        "replicatorInstance=" + replicatorInstance +
-        ", committedIndex=" + committedIndex +
-        ", quorumConfig=" + quorumConfig +
+        "replicatorId=" + replicatorId +
+        ", firstIndex=" + firstIndex +
+        ", lastIndex=" + lastIndex +
+        ", term=" + term +
         '}';
   }
 }

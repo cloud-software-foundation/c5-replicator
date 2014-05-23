@@ -52,6 +52,7 @@ class ReplicationMatchers {
   }
 
   static Matcher<ReplicatorInstanceEvent> aReplicatorEvent(ReplicatorInstanceEvent.EventType type) {
+    // TODO add 'from' matcher
     return new TypeSafeMatcher<ReplicatorInstanceEvent>() {
       @Override
       protected boolean matchesSafely(ReplicatorInstanceEvent item) {
@@ -69,9 +70,8 @@ class ReplicationMatchers {
     return new TypeSafeMatcher<IndexCommitNotice>() {
       @Override
       protected boolean matchesSafely(IndexCommitNotice item) {
-        return item.quorumConfig != null
-            && item.quorumConfig.equals(quorumConfig)
-            && item.replicatorInstance.getId() == from;
+        // TODO replace with a ReplicatorInstanceEvent matcher.
+        return false;
       }
 
       @Override
@@ -80,24 +80,6 @@ class ReplicationMatchers {
             .appendValue(quorumConfig)
             .appendText(" from peer ").appendValue(from);
 
-      }
-    };
-  }
-
-  static Matcher<IndexCommitNotice> aNoticeMatchingPeerAndCommitIndex(long peerId, long index) {
-    return new TypeSafeMatcher<IndexCommitNotice>() {
-      @Override
-      protected boolean matchesSafely(IndexCommitNotice item) {
-        return item.committedIndex >= index &&
-            item.replicatorInstance.getId() == peerId;
-      }
-
-      @Override
-      public void describeTo(Description description) {
-        description.appendText("a commit notice with index at least ")
-            .appendValue(index)
-            .appendText(" for peer ")
-            .appendValue(peerId);
       }
     };
   }
