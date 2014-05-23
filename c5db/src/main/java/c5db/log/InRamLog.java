@@ -20,8 +20,8 @@ package c5db.log;
 import c5db.replication.QuorumConfiguration;
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,14 +47,14 @@ public class InRamLog implements ReplicatorLog {
     validateEntries(entries);
     log.addAll(entries);
 
-    return Futures.immediateFuture(true);
+    return blockingFuture(true);
   }
 
   @Override
   public synchronized ListenableFuture<LogEntry> getLogEntry(long index) {
     assert index > 0;
 
-    return Futures.immediateFuture(getEntryInternal(index));
+    return blockingFuture(getEntryInternal(index));
   }
 
   @Override
@@ -70,7 +70,7 @@ public class InRamLog implements ReplicatorLog {
       throw new LogEntryNotFound("requested [" + start + ", " + end + "); received" + foundEntries.toString());
     }
 
-    return Futures.immediateFuture(foundEntries);
+    return blockingFuture(foundEntries);
   }
 
   @Override
@@ -108,7 +108,7 @@ public class InRamLog implements ReplicatorLog {
     int listIndex = log.lastIndexOf(firstRemovedEntry);
     log.subList(listIndex, log.size()).clear();
 
-    return Futures.immediateFuture(true);
+    return blockingFuture(true);
   }
 
   @Override
@@ -159,5 +159,12 @@ public class InRamLog implements ReplicatorLog {
     }
 
     return requestedEntry.get();
+  }
+
+  private static <V> ListenableFuture<V> blockingFuture(V result) {
+    SettableFuture<V> future = SettableFuture.create();
+    new Thread(() -> future.set(result))
+        .start();
+    return future;
   }
 }
