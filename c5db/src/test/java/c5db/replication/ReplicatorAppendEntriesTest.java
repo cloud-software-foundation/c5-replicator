@@ -28,11 +28,13 @@ import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.SettableFuture;
+import org.hamcrest.Matcher;
+import org.hamcrest.Matchers;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
-import org.jetlang.core.RunnableExecutor;
+import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.RunnableExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
@@ -89,10 +91,9 @@ public class ReplicatorAppendEntriesTest {
 
   @Rule
   public JUnitRuleFiberExceptions fiberExceptionHandler = new JUnitRuleFiberExceptions();
+  private final BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(fiberExceptionHandler);
 
-  private final RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
-      new ExceptionHandlingBatchExecutor(fiberExceptionHandler));
-  private final Fiber rpcFiber = new ThreadFiber(runnableExecutor, null, true);
+  private final Fiber rpcFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor), null, true);
 
   @Before
   public void setOverallTestExpectations() throws Exception {
@@ -286,6 +287,30 @@ public class ReplicatorAppendEntriesTest {
   }
 
   @Test
+  public void issuesASeparateCommitNoticeForEachTermInTheRangeOfCommittedEntries() throws Exception {
+    context.checking(new Expectations() {{
+      allowing(log).logEntries(with(anyList()));
+    }});
+
+    havingReceived(
+        anAppendEntriesRequest()
+            .withEntries(entries()
+                .term(101).indexes(1)
+                .term(102).indexes(2, 3)
+                .term(103).indexes(4, 5, 6))
+            .withCommitIndex(5));
+
+    assertThatReplicatorWillIssue(aCommitNotice()
+        .withTerm(equalTo(101L)).withIndexRange(equalTo(1L), equalTo(1L)));
+
+    assertThatReplicatorWillIssue(aCommitNotice()
+        .withTerm(equalTo(102L)).withIndexRange(equalTo(2L), equalTo(3L)));
+
+    assertThatReplicatorWillIssue(aCommitNotice()
+        .withTerm(equalTo(103L)).withIndexRange(equalTo(4L), equalTo(5L)));
+  }
+
+  @Test
   public void willLogANewQuorumConfigurationItReceivesAndUpdateItsCurrentConfiguration() throws Exception {
     final QuorumConfiguration configuration = aNewConfiguration();
     final List<LogEntry> receivedEntries = entries()
@@ -316,7 +341,7 @@ public class ReplicatorAppendEntriesTest {
     ReplicatorInformation info = new InRamSim.Info(0, Long.MAX_VALUE / 2L);
     ReplicatorLog proxyLog = getReplicatorLogWhichInvokesMock();
 
-    return new ReplicatorInstance(new ThreadFiber(runnableExecutor, null, true),
+    return new ReplicatorInstance(new ThreadFiber(new RunnableExecutorImpl(batchExecutor), null, true),
         thisReplicatorId,
         QUORUM_ID,
         proxyLog,
@@ -351,6 +376,10 @@ public class ReplicatorAppendEntriesTest {
   private void assertThatReplicatorWillCommitUpToIndex(long index) {
     commitMonitor.waitFor(aCommitNotice().withIndex(greaterThanOrEqualTo(index)));
     assertFalse(commitMonitor.hasAny(aCommitNotice().withIndex(greaterThan(index))));
+  }
+
+  private void assertThatReplicatorWillIssue(Matcher<IndexCommitNotice> commitNoticeMatcher) {
+    commitMonitor.waitFor(commitNoticeMatcher);
   }
 
   private SettableFuture<RpcReply> lastReply = null;
@@ -451,5 +480,9 @@ public class ReplicatorAppendEntriesTest {
 
   private long votedForNoOne() {
     return 0;
+  }
+
+  private Matcher<List<LogEntry>> anyList() {
+    return Matchers.instanceOf(List.class);
   }
 }
