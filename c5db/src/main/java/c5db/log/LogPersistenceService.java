@@ -142,7 +142,7 @@ public interface LogPersistenceService {
      *
      * @param seqNum Sequence number of entry to find.
      * @return Byte position or address.
-     * @throws IOException
+     * @throws IOException, LogEntryNotFound
      */
     long getAddressOfEntry(long seqNum) throws IOException, LogEntryNotFound;
 
@@ -152,13 +152,13 @@ public interface LogPersistenceService {
      *
      * @param fromSeqNum Sequence number to read from.
      * @return A new input stream; the caller takes responsibility for closing it.
-     * @throws IOException
+     * @throws IOException, LogEntryNotFound
      */
     InputStream getStreamAtSeqNum(long fromSeqNum) throws IOException, LogEntryNotFound;
 
     /**
      * Return an input stream ready to read from the persistence starting at the beginning of the
-     * last entry in the persistence.
+     * last entry in the persistence. Throws an unchecked exception if the log is empty.
      *
      * @return A new input stream; the caller takes responsibility for closing it.
      * @throws IOException

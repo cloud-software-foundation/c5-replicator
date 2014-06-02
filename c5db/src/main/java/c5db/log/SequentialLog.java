@@ -42,16 +42,14 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
   void append(List<E> entry) throws IOException;
 
   /**
-   * Retrieve entries from the log. This method guarantees to return at most (end - start) entries.
-   * It may return fewer than that many, if the log does not contain entries with the requested
-   * sequence numbers. The entries returned are guaranteed to have ascending, consecutive sequence
-   * numbers.
+   * Retrieve entries from the log. This method guarantees to return exactly (end - start) entries.
+   * The entries returned are guaranteed to have ascending, consecutive sequence numbers.
    *
    * @param start The sequence number of the first entry to retrieve.
    * @param end   One beyond the sequence number of the last entry to retrieve. End must be greater
    *              than or equal to start.
    * @return A list of the requested entries.
-   * @throws IOException
+   * @throws IOException, LogEntryNotFound, LogEntryNotInSequence
    */
   List<E> subSequence(long start, long end) throws IOException, LogEntryNotFound, LogEntryNotInSequence;
 
@@ -69,7 +67,7 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
    * @return The last entry.
    * @throws IOException
    */
-  E getLastEntry() throws IOException, LogEntryNotFound;
+  E getLastEntry() throws IOException;
 
   /**
    * Iterate over every entry in the log, executing a callback for each one.
@@ -82,7 +80,7 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
    * Remove entries from the tail of the log.
    *
    * @param seqNum Remove every entry with sequence number greater than or equal to seqNum.
-   * @throws IOException
+   * @throws IOException, LogEntryNotFound
    */
   void truncate(long seqNum) throws IOException, LogEntryNotFound;
 
@@ -105,7 +103,7 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
   /**
    * Exception indicating a requested log entry was not found
    */
-  class LogEntryNotFound extends RuntimeException {
+  class LogEntryNotFound extends Exception {
     public LogEntryNotFound(Throwable cause) {
       super(cause);
     }
@@ -118,7 +116,7 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
   /**
    * Exception indicating a log entry has been read with an incorrect sequence number.
    */
-  class LogEntryNotInSequence extends RuntimeException {
+  class LogEntryNotInSequence extends Exception {
     public LogEntryNotInSequence() {
       super();
     }

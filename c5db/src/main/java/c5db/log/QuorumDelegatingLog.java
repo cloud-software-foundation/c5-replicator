@@ -37,7 +37,6 @@ import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
-import static c5db.log.SequentialLog.LogEntryNotInSequence;
 
 /**
  * OLog that delegates each quorum's logging tasks to a separate SequentialLog for that quorum,
@@ -98,7 +97,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
         if (expectedNextSequenceNumber == 0 || (seqNum == expectedNextSequenceNumber)) {
           expectedNextSequenceNumber = seqNum + 1;
         } else {
-          throw new LogEntryNotInSequence();
+          throw new IllegalArgumentException("Unexpected sequence number in entries requested to be logged");
         }
       }
     }

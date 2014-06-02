@@ -39,7 +39,6 @@ import static c5db.log.LogTestUtil.someConsecutiveEntries;
 import static c5db.log.LogTestUtil.someData;
 import static c5db.log.LogTestUtil.term;
 import static c5db.log.SequentialLog.LogEntryNotFound;
-import static c5db.log.SequentialLog.LogEntryNotInSequence;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -154,13 +153,13 @@ public class QuorumDelegatingLogTest {
     log.logEntry(someConsecutiveEntries(3, 5), quorumId);
   }
 
-  @Test(expected = LogEntryNotInSequence.class)
+  @Test(expected = RuntimeException.class)
   public void throwsAnExceptionIfAttemptingToLogEntriesWithASequenceGap() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 3), quorumId);
     log.logEntry(someConsecutiveEntries(4, 5), quorumId);
   }
 
-  @Test(expected = LogEntryNotInSequence.class)
+  @Test(expected = RuntimeException.class)
   public void throwsAnExceptionIfAttemptingToLogEntriesWithoutAscendingSequenceNumber() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);

@@ -29,7 +29,6 @@ import java.util.concurrent.Executors;
 
 import static c5db.log.LogTestUtil.entries;
 import static c5db.log.LogTestUtil.seqNum;
-import static c5db.log.SequentialLog.LogEntryNotInSequence;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -107,8 +106,9 @@ public class OLogIntegratedPersistenceTest {
     });
   }
 
-  @Test(expected = LogEntryNotInSequence.class)
-  public void informationAboutWhatSequenceNumberComesNextIsPersisted() throws Exception {
+  @Test(expected = RuntimeException.class)
+  public void informationAboutWhatSequenceNumberComesNextIsPersistedSoThatAnIncorrectSeqNumCanBeCaught()
+      throws Exception {
     withReplicatorLog((log) -> {
       log.logEntries(
           entries().term(1).indexes(1, 2, 3).build());

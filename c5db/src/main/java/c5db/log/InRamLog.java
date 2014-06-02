@@ -28,9 +28,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static c5db.log.SequentialLog.LogEntryNotFound;
-import static c5db.log.SequentialLog.LogEntryNotInSequence;
-
 /**
  * ReplicatorLog hosted in memory, e.g. for unit testing ReplicatorInstance in-memory. This
  * implementation just provides the basics needed to make the consensus algorithm work.
@@ -67,7 +64,7 @@ public class InRamLog implements ReplicatorLog {
         .collect(Collectors.toList());
 
     if (foundEntries.size() != (end - start)) {
-      throw new LogEntryNotFound("requested [" + start + ", " + end + "); received" + foundEntries.toString());
+      throw new RuntimeException("requested [" + start + ", " + end + "); received" + foundEntries.toString());
     }
 
     return blockingFuture(foundEntries);
@@ -140,7 +137,7 @@ public class InRamLog implements ReplicatorLog {
       if (lastIndex == 0 || e.getIndex() == lastIndex + 1) {
         lastIndex = e.getIndex();
       } else {
-        throw new LogEntryNotInSequence("entries not in sequence: " + entries.toString());
+        throw new RuntimeException("entries not in sequence: " + entries.toString());
       }
     }
   }
@@ -155,7 +152,7 @@ public class InRamLog implements ReplicatorLog {
     Optional<LogEntry> requestedEntry = optionallyGetEntryInternal(index);
 
     if (!requestedEntry.isPresent()) {
-      throw new LogEntryNotFound("entry index " + index + " not found");
+      throw new RuntimeException("entry index " + index + " not found");
     }
 
     return requestedEntry.get();

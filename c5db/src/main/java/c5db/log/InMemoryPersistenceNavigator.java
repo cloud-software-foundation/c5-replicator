@@ -92,23 +92,25 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
 
   @Override
   public InputStream getStreamAtLastEntry() throws IOException {
-    long entrySeqNum = lastSeqNum();
-    PersistenceReader reader = getReaderAtSeqNum(entrySeqNum);
-    long lastEntryAddress = reader.position();
+    long lastEntrySeqNum = lastIndexedSeqNum();
+    long lastEntryAddress = index.get(lastEntrySeqNum);
+
+    PersistenceReader reader = persistence.getReader();
+    reader.position(lastEntryAddress);
     InputStream inputStream = Channels.newInputStream(reader);
 
     try {
       //noinspection InfiniteLoopStatement
       while (true) {
         long entryStartAddress = reader.position();
-        entrySeqNum = codec.skipEntryAndReturnSeqNum(inputStream);
+        lastEntrySeqNum = codec.skipEntryAndReturnSeqNum(inputStream);
         lastEntryAddress = entryStartAddress;
       }
     } catch (EOFException ignore) {
     }
 
     reader.position(lastEntryAddress);
-    addToIndex(entrySeqNum, lastEntryAddress);
+    addToIndex(lastEntrySeqNum, lastEntryAddress);
     return inputStream;
   }
 
@@ -140,12 +142,12 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
   /**
    * @return The greatest seqNum in the index, or 0 if no seqNum has ever been added to the index.
    */
-  private long lastSeqNum() {
+  private long lastIndexedSeqNum() {
     return index.lastKey();
   }
 
   private void maybeAddToIndex(long seqNum, long address) {
-    if (seqNum - lastSeqNum() >= maxEntrySeek) {
+    if (seqNum - lastIndexedSeqNum() >= maxEntrySeek) {
       index.put(seqNum, address);
     }
   }

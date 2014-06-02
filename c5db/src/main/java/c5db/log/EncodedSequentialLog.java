@@ -77,16 +77,13 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
   }
 
   @Override
-  public E getLastEntry() throws IOException, LogEntryNotFound {
+  public E getLastEntry() throws IOException {
     if (isEmpty()) {
       return null;
     }
 
-    try (InputStream inputStream = persistenceNavigator.getStreamAtLastEntry()) {
-      return codec.decode(inputStream);
-    } catch (EOFException e) {
-      throw new LogEntryNotFound(e);
-    }
+    InputStream inputStream = persistenceNavigator.getStreamAtLastEntry();
+    return codec.decode(inputStream);
   }
 
   @Override

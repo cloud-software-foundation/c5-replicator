@@ -52,10 +52,10 @@ public interface OLog extends AutoCloseable {
    * @param entries  Non-null list of zero or more entries.
    * @param quorumId Quorum id these entries should be logged under
    * @return Future indicating completion. Failure will be indicated by exception.
-   * @throws c5db.log.SequentialLog.LogEntryNotInSequence when attempting to log an entry not in
-   *                                                      the correct sequence (for any given
-   *                                                      quorum, the sequence numbers must be
-   *                                                      strictly ascending with no gaps).
+   * @throws java.lang.IllegalArgumentException when attempting to log an entry not in
+   *                                            the correct sequence (for any given
+   *                                            quorum, the sequence numbers must be
+   *                                            strictly ascending with no gaps).
    */
   ListenableFuture<Boolean> logEntry(List<OLogEntry> entries, String quorumId);
 
