@@ -74,6 +74,7 @@
         <maven-eclipse-plugin.version>2.8</maven-eclipse-plugin.version>
         <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
+        <maven-enforcer-plugin.version>1.3.1</maven-enforcer-plugin.version>
         <jamon.plugin.version>2.3.4</jamon.plugin.version>
         <build-helper.plugin.version>1.5</build-helper.plugin.version>
         <findbugs-maven-plugin.version>2.5.2</findbugs-maven-plugin.version>
@@ -172,6 +173,27 @@
                         </goals>
                         <configuration>
                             <excludeFilterFile>${basedir}/dev-support/findbugs-exclude.xml</excludeFilterFile>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven-3</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[3.0,)</version>
+                                </requireMavenVersion>
+                            </rules>
+                            <fail>true</fail>
                         </configuration>
                     </execution>
                 </executions>
