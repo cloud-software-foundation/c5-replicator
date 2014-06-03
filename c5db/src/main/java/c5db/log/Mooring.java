@@ -94,11 +94,6 @@ public class Mooring implements ReplicatorLog {
   }
 
   @Override
-  public ListenableFuture<LogEntry> getLogEntry(long index) {
-    return Futures.transform(log.getLogEntry(index, quorumId), OLogEntry::toProtostuff);
-  }
-
-  @Override
   public ListenableFuture<List<LogEntry>> getLogEntries(long start, long end) {
     return Futures.transform(log.getLogEntries(start, end, quorumId), Mooring::toProtostuffMessages);
   }

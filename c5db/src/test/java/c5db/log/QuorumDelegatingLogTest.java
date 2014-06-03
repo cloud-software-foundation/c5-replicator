@@ -19,7 +19,6 @@ package c5db.log;
 
 import c5db.C5CommonTestUtil;
 import c5db.util.WrappingKeySerializingExecutor;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +31,6 @@ import java.util.List;
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.FutureMatchers.resultsInException;
 import static c5db.log.LogTestUtil.aSeqNum;
-import static c5db.log.LogTestUtil.anOLogEntry;
 import static c5db.log.LogTestUtil.emptyEntryList;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
@@ -77,24 +75,8 @@ public class QuorumDelegatingLogTest {
   }
 
   @Test(timeout = 1000)
-  public void throwsExceptionFromGetLogEntryMethodWhenTheLogIsEmpty() throws Exception {
-    assertThat(log.getLogEntry(1, quorumId), resultsInException(LogEntryNotFound.class));
-  }
-
-  @Test(timeout = 1000)
   public void throwsExceptionFromGetLogEntriesMethodWhenTheLogIsEmpty() throws Exception {
     assertThat(log.getLogEntries(1, 2, quorumId), resultsInException(LogEntryNotFound.class));
-  }
-
-  @Test
-  public void canLogAndRetrieveASingleEntry() throws Exception {
-    OLogEntry entryToLog = anOLogEntry();
-    long seqNum = entryToLog.getSeqNum();
-
-    log.logEntry(Lists.newArrayList(entryToLog), quorumId);
-
-    assertThat(log.getLogEntry(seqNum, quorumId),
-        resultsIn(equalTo(entryToLog)));
   }
 
   @Test
@@ -163,14 +145,6 @@ public class QuorumDelegatingLogTest {
   public void throwsAnExceptionIfAttemptingToLogEntriesWithoutAscendingSequenceNumber() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);
-  }
-
-  @Test(timeout = 1000)
-  public void throwsAnExceptionIfTryingToRetrieveAnEntryThatIsNotInTheLog() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 5), quorumId);
-    log.truncateLog(3, quorumId);
-
-    assertThat(log.getLogEntry(4, quorumId), resultsInException(LogEntryNotFound.class));
   }
 
   @Test(timeout = 1000)

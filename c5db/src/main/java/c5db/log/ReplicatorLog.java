@@ -27,20 +27,20 @@ import java.util.List;
  * A log abstraction for the consensus/replication algorithm. This interface provides logging service for
  * a single replicator; so, each replicator can envision that it has its own log, according to the log
  * abstraction defined in the consensus algorithm.
- * <p/>
+ * <p>
  * As a replicator I promise not to call from more than 1 thread.
  */
 public interface ReplicatorLog {
   /**
    * Log entries to the log.  The entries are in order, and should start from getLastIndex() + 1.
-   * <p/>
+   * <p>
    * The implementation should feel free to verify this.
-   * <p/>
+   * <p>
    * After this call returns, the log implementation should mark these entries as "to be committed"
    * and calls to 'getLastIndex()' should return the last entry in "entries".  The implementation will
    * then return a future that will be set true upon successful sync to durable storage, or else
    * set with an exception.
-   * <p/>
+   * <p>
    * Note that over time, multiple calls to logEntries() may be issued before the prior call has signaled
    * full sync to the client.  This also implies that once this call returns, calls to the other methods
    * of this interface must now return data from these entries.  For example calling getLogTerm(long) should
@@ -50,15 +50,6 @@ public interface ReplicatorLog {
    * @return an future that indicates success.
    */
   ListenableFuture<Boolean> logEntries(List<LogEntry> entries);
-
-  /**
-   * Get a future which will return the entry for a given log index. If the given index is not
-   * present in the log, then this future will return null.
-   *
-   * @param index the index to retrieve
-   * @return a future which will yield the entry at 'index', or an exception if an error occurs.
-   */
-  ListenableFuture<LogEntry> getLogEntry(long index);
 
   /**
    * Get a future which will return the entries in a specified range of indexes from start, inclusive, to end,
@@ -98,7 +89,7 @@ public interface ReplicatorLog {
 
   /**
    * Delete all log entries after and including the specified index.
-   * <p/>
+   * <p>
    * To persist the deletion, this might take a few so use a future.
    *
    * @param entryIndex the index entry to truncate log from.

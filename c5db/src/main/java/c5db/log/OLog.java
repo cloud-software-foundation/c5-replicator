@@ -60,15 +60,6 @@ public interface OLog extends AutoCloseable {
   ListenableFuture<Boolean> logEntry(List<OLogEntry> entries, String quorumId);
 
   /**
-   * Asynchronously retrieve the entry at the given index in the given quorum.
-   *
-   * @param index    Index of entry to retrieve
-   * @param quorumId Quorum id of entry to retrieve
-   * @return Future containing the log entry upon completion, or null if not found.
-   */
-  ListenableFuture<OLogEntry> getLogEntry(long index, String quorumId);
-
-  /**
    * Asynchronously retrieve a range of entries from index start, inclusive, to index end,
    * exclusive. Returns every entry in the specified range. Any entries retrieved are guaranteed
    * to have consecutive indices.

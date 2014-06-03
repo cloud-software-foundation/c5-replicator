@@ -48,13 +48,6 @@ public class InRamLog implements ReplicatorLog {
   }
 
   @Override
-  public synchronized ListenableFuture<LogEntry> getLogEntry(long index) {
-    assert index > 0;
-
-    return blockingFuture(getEntryInternal(index));
-  }
-
-  @Override
   public synchronized ListenableFuture<List<LogEntry>> getLogEntries(long start, long end) {
     assert start > 0;
     assert end >= start;

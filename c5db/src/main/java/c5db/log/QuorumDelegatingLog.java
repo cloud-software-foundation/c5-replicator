@@ -128,18 +128,6 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
-  public ListenableFuture<OLogEntry> getLogEntry(long seqNum, String quorumId) {
-    return taskExecutor.submit(quorumId, () -> {
-      List<OLogEntry> results = quorumLog(quorumId).subSequence(seqNum, seqNum + 1);
-      if (results.isEmpty()) {
-        return null;
-      } else {
-        return results.get(0);
-      }
-    });
-  }
-
-  @Override
   public ListenableFuture<List<OLogEntry>> getLogEntries(long start, long end, String quorumId) {
     if (end < start) {
       throw new IllegalArgumentException("getLogEntries: end < start");
