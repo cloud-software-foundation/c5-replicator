@@ -23,6 +23,8 @@ option java_generic_services = true;
 option java_generate_equals_and_hash = true;
 option optimize_for = SPEED;
 
+import "replication_messages.proto";
+
 
 message RegionWalEntry {
     optional string regionInfo = 1;
@@ -38,6 +40,12 @@ message QuorumMapping {
     optional int32 quorumTag = 1;
     // The actual string that was provided to us.
     optional string quorumId = 2;
+}
+
+message OLogHeader {
+    optional int64 baseTerm = 1;
+    optional int64 baseSeqNum = 2;
+    optional c5db.replication.QuorumConfigurationMessage baseConfiguration = 3;
 }
 
 enum OLogContentType {
