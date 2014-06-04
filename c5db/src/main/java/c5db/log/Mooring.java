@@ -121,8 +121,9 @@ public class Mooring implements ReplicatorLog {
 
     lastIndex = max(entryIndex - 1, 0);
     currentTerm = log.getLogTerm(lastIndex, quorumId);
+    ListenableFuture<Boolean> truncateFuture = log.truncateLog(entryIndex, quorumId);
     setQuorumConfigFromLog();
-    return log.truncateLog(entryIndex, quorumId);
+    return truncateFuture;
   }
 
   @Override
@@ -136,7 +137,7 @@ public class Mooring implements ReplicatorLog {
   }
 
   private void setQuorumConfigFromLog() {
-    final QuorumConfigurationWithSeqNum configFromLog = log.getQuorumConfig(lastIndex, quorumId);
+    final QuorumConfigurationWithSeqNum configFromLog = log.getLastQuorumConfig(quorumId);
     lastQuorumConfig = configFromLog.quorumConfiguration;
     lastQuorumConfigIndex = configFromLog.seqNum;
   }

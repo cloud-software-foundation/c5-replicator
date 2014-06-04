@@ -73,7 +73,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
     private volatile boolean opened;
 
-    private long expectedNextSequenceNumber;
+    private long expectedNextSequenceNumber = 1;
 
     public PerQuorum(String quorumId) {
       final BytePersistence persistence;
@@ -94,11 +94,10 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     public void validateConsecutiveEntries(List<OLogEntry> entries) {
       for (OLogEntry e : entries) {
         long seqNum = e.getSeqNum();
-        if (expectedNextSequenceNumber == 0 || (seqNum == expectedNextSequenceNumber)) {
-          expectedNextSequenceNumber = seqNum + 1;
-        } else {
+        if (seqNum != expectedNextSequenceNumber) {
           throw new IllegalArgumentException("Unexpected sequence number in entries requested to be logged");
         }
+        expectedNextSequenceNumber++;
       }
     }
 
@@ -149,13 +148,23 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
+  public long getNextSeqNum(String quorumId) {
+    return getQuorumStructure(quorumId).expectedNextSequenceNumber;
+  }
+
+  @Override
+  public long getLastTerm(String quorumId) {
+    return oLogEntryOracle(quorumId).getLastTerm();
+  }
+
+  @Override
   public long getLogTerm(long seqNum, String quorumId) {
     return oLogEntryOracle(quorumId).getTermAtSeqNum(seqNum);
   }
 
   @Override
-  public QuorumConfigurationWithSeqNum getQuorumConfig(long seqNum, String quorumId) {
-    return oLogEntryOracle(quorumId).getConfigAtSeqNum(seqNum);
+  public QuorumConfigurationWithSeqNum getLastQuorumConfig(String quorumId) {
+    return oLogEntryOracle(quorumId).getLastQuorumConfig();
   }
 
   @Override

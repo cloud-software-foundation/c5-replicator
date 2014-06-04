@@ -60,18 +60,27 @@ public class NavigableMapOLogEntryOracle implements OLogEntryOracle {
   }
 
   @Override
+  public long getLastTerm() {
+    if (termMap.isEmpty()) {
+      return 0;
+    } else {
+      return termMap.lastEntry().getValue();
+    }
+  }
+
+  @Override
   public long getTermAtSeqNum(long seqNum) {
     final Map.Entry<Long, Long> entry = termMap.floorEntry(seqNum);
     return entry == null ? 0 : entry.getValue();
   }
 
   @Override
-  public QuorumConfigurationWithSeqNum getConfigAtSeqNum(long seqNum) {
-    final Map.Entry<Long, QuorumConfiguration> entry = configMap.floorEntry(seqNum);
-    if (entry == null) {
+  public QuorumConfigurationWithSeqNum getLastQuorumConfig() {
+    if (configMap.isEmpty()) {
       return new QuorumConfigurationWithSeqNum(QuorumConfiguration.EMPTY, 0);
     } else {
-      return new QuorumConfigurationWithSeqNum(entry.getValue(), entry.getKey());
+      final Map.Entry<Long, QuorumConfiguration> lastEntry = configMap.lastEntry();
+      return new QuorumConfigurationWithSeqNum(lastEntry.getValue(), lastEntry.getKey());
     }
   }
 
@@ -79,14 +88,6 @@ public class NavigableMapOLogEntryOracle implements OLogEntryOracle {
     if (entryTerm < lastTerm) {
       LOG.error("Encountered a decreasing term, {}, where the last known term was {}", entryTerm, lastTerm);
       throw new IllegalArgumentException("Decreasing term number");
-    }
-  }
-
-  private long getLastTerm() {
-    if (termMap.isEmpty()) {
-      return 0;
-    } else {
-      return termMap.lastEntry().getValue();
     }
   }
 }

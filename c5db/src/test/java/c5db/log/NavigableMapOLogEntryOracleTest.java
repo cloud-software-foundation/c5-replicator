@@ -34,7 +34,6 @@ public class NavigableMapOLogEntryOracleTest {
 
   private final QuorumConfiguration firstConfig = QuorumConfiguration.of(Lists.newArrayList(1L));
   private final QuorumConfiguration secondConfig = firstConfig.getTransitionalConfiguration(Lists.newArrayList(2L));
-  private final QuorumConfiguration thirdConfig = secondConfig.getCompletedConfiguration();
 
   @Test
   public void returnsTheElectionTermAtAGivenSeqNum() throws Exception {
@@ -63,18 +62,21 @@ public class NavigableMapOLogEntryOracleTest {
   }
 
   @Test
-  public void returnsTheQuorumConfigurationWhichWasActiveAtAGivenSeqNum() throws Exception {
+  public void returnsTheLastQuorumConfigurationAndItsSeqNum() throws Exception {
     havingLogged(
         entries()
             .term(999)
-            .indexes(5).configurationAndIndex(firstConfig, 6)
-            .indexes(7, 8, 9).configurationAndIndex(secondConfig, 10)
-            .configurationAndIndex(thirdConfig, 11));
+            .indexes(5)
+            .configurationAndIndex(firstConfig, 6)
+            .indexes(7, 8, 9));
+    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(firstConfig, 6))));
 
-    assertThat(oracle.getConfigAtSeqNum(5), is(equalTo(configurationAndIndex(EMPTY, 0))));
-    assertThat(oracle.getConfigAtSeqNum(6), is(equalTo(configurationAndIndex(firstConfig, 6))));
-    assertThat(oracle.getConfigAtSeqNum(9), is(equalTo(configurationAndIndex(firstConfig, 6))));
-    assertThat(oracle.getConfigAtSeqNum(11), is(equalTo(configurationAndIndex(thirdConfig, 11))));
+    havingLogged(
+        entries()
+            .term(999)
+            .configurationAndIndex(secondConfig, 10));
+
+    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(secondConfig, 10))));
   }
 
   @Test
@@ -83,12 +85,12 @@ public class NavigableMapOLogEntryOracleTest {
         entries()
             .term(7).configurationAndIndex(firstConfig, 1));
     havingTruncatedToIndex(1);
+    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(EMPTY, 0))));
+
     havingLogged(
         entries()
             .term(8).configurationAndIndex(secondConfig, 2));
-
-    assertThat(oracle.getConfigAtSeqNum(1), is(equalTo(configurationAndIndex(EMPTY, 0))));
-    assertThat(oracle.getConfigAtSeqNum(2), is(equalTo(configurationAndIndex(secondConfig, 2))));
+    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(secondConfig, 2))));
   }
 
 

@@ -82,6 +82,23 @@ public interface OLog extends AutoCloseable {
   ListenableFuture<Boolean> truncateLog(long entryIndex, String quorumId);
 
   /**
+   * Gets the sequence number the log expects to receive next for the given quorum. After logging an
+   * entry, the next sequence number will be the entry's sequence number plus one.
+   *
+   * @param quorumId Quorum id
+   * @return The next sequence number for the given quorum.
+   */
+  long getNextSeqNum(String quorumId);
+
+  /**
+   * Gets the latest election term value in the log for the given quorum.
+   *
+   * @param quorumId Quorum id
+   * @return the last term or 0 if no term has been established.
+   */
+  long getLastTerm(String quorumId);
+
+  /**
    * Retrieve the "term" (i.e., leader or election term) corresponding to the given pair (index, quorum)
    *
    * @param index    Log entry index
@@ -91,14 +108,13 @@ public interface OLog extends AutoCloseable {
   long getLogTerm(long index, String quorumId);
 
   /**
-   * Retrieve the quorum configuration which was active in the given quorum at the given index.
+   * Retrieve the latest quorum configuration and the sequence number on which it was established.
    *
-   * @param index    Log entry index
    * @param quorumId Log entry quorum
    * @return The quorum configuration and the sequence number on which it was created; or the empty
-   * configuration and zero, respectively, if 'index' is not found for this quorum.
+   * configuration and zero, respectively, if there is none.
    */
-  QuorumConfigurationWithSeqNum getQuorumConfig(long index, String quorumId);
+  QuorumConfigurationWithSeqNum getLastQuorumConfig(String quorumId);
 
   /**
    * Save off and close log file, and begin a new log file.

@@ -18,7 +18,10 @@
 package c5db.log;
 
 import c5db.C5CommonTestUtil;
+import c5db.replication.QuorumConfiguration;
 import c5db.util.WrappingKeySerializingExecutor;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Before;
@@ -30,12 +33,14 @@ import java.util.List;
 
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.FutureMatchers.resultsInException;
-import static c5db.log.LogTestUtil.aSeqNum;
 import static c5db.log.LogTestUtil.emptyEntryList;
+import static c5db.log.LogTestUtil.makeConfigurationEntry;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
+import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
 import static c5db.log.LogTestUtil.someData;
 import static c5db.log.LogTestUtil.term;
+import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
 import static c5db.log.SequentialLog.LogEntryNotFound;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.core.Is.is;
@@ -163,10 +168,22 @@ public class QuorumDelegatingLogTest {
   }
 
   @Test
+  public void returnsTheExpectedNextSequenceNumber() {
+    assertThat(log.getNextSeqNum(quorumId), equalTo(1L));
+
+    log.logEntry(someConsecutiveEntries(1, 4), quorumId);
+    assertThat(log.getNextSeqNum(quorumId), equalTo(4L));
+
+    log.truncateLog(seqNum(2), quorumId);
+    assertThat(log.getNextSeqNum(quorumId), equalTo(2L));
+  }
+
+  @Test
   public void storesAndRetrievesElectionTermForEntriesItHasLogged() {
     log.logEntry(makeSingleEntryList(nextSeqNum(), term(1), someData()), quorumId);
     log.logEntry(makeSingleEntryList(nextSeqNum(), term(2), someData()), quorumId);
 
+    assertThat(log.getLastTerm(quorumId), is(equalTo(term(2))));
     assertThat(log.getLogTerm(lastSeqNum(), quorumId), is(equalTo(term(2))));
     assertThat(log.getLogTerm(lastSeqNum() - 1, quorumId), is(equalTo(term(1))));
   }
@@ -178,7 +195,26 @@ public class QuorumDelegatingLogTest {
     log.truncateLog(lastSeqNum(), quorumId);
     log.logEntry(makeSingleEntryList(lastSeqNum(), term(3), someData()), quorumId);
 
+    assertThat(log.getLastTerm(quorumId), is(equalTo(term(3))));
     assertThat(log.getLogTerm(lastSeqNum(), quorumId), is(equalTo(term(3))));
+  }
+
+  @Test
+  public void retrievesTheLastQuorumConfigurationAndItsSequenceNumber() {
+    QuorumConfiguration firstConfig = QuorumConfiguration.of(Sets.newHashSet(1L, 2L, 3L));
+    QuorumConfiguration secondConfig = firstConfig.getTransitionalConfiguration(Sets.newHashSet(4L, 5L, 6L));
+
+    log.logEntry(singleConfigurationEntryList(firstConfig, seqNum(1)), quorumId);
+    assertThat(log.getLastQuorumConfig(quorumId),
+        equalTo(new QuorumConfigurationWithSeqNum(firstConfig, seqNum(1))));
+
+    log.logEntry(singleConfigurationEntryList(secondConfig, seqNum(2)), quorumId);
+    assertThat(log.getLastQuorumConfig(quorumId),
+        equalTo(new QuorumConfigurationWithSeqNum(secondConfig, seqNum(2))));
+
+    log.truncateLog(seqNum(2), quorumId);
+    assertThat(log.getLastQuorumConfig(quorumId),
+        equalTo(new QuorumConfigurationWithSeqNum(firstConfig, seqNum(1))));
   }
 
   @Test
@@ -196,7 +232,7 @@ public class QuorumDelegatingLogTest {
    * Private methods
    */
 
-  private long testSequenceNumber = aSeqNum();
+  private long testSequenceNumber = 0;
 
   private long nextSeqNum() {
     testSequenceNumber++;
@@ -207,4 +243,9 @@ public class QuorumDelegatingLogTest {
     return testSequenceNumber;
   }
 
+  private List<OLogEntry> singleConfigurationEntryList(QuorumConfiguration config, long seqNum) {
+    return Lists.newArrayList(
+        OLogEntry.fromProtostuff(
+            makeConfigurationEntry(seqNum, term(1), config)));
+  }
 }

@@ -41,6 +41,13 @@ public interface OLogEntryOracle {
   void notifyTruncation(long seqNum);
 
   /**
+   * Get the last term logged, or zero if there is none.
+   *
+   * @return The latest election term.
+   */
+  long getLastTerm();
+
+  /**
    * Get the log term for a specified sequence number, or zero if the sequence number
    * is less than that of every entry logged.
    *
@@ -50,16 +57,14 @@ public interface OLogEntryOracle {
   long getTermAtSeqNum(long seqNum);
 
   /**
-   * Get the quorum configuration which was active as of a specified sequence number,
-   * together with the sequence number at which it was established. If the sequence
-   * number is less than every entry logged, return the empty quorum configuration and
-   * a seqNum of zero.
+   * Get the last quorum configuration, together with the sequence number at which it was
+   * established. If there is none, return the empty quorum configuration and a seqNum
+   * of zero.
    *
-   * @param seqNum Log sequence number
    * @return The quorum configuration active at this sequence number, and the sequence
    * number at which it became active.
    */
-  QuorumConfigurationWithSeqNum getConfigAtSeqNum(long seqNum);
+  QuorumConfigurationWithSeqNum getLastQuorumConfig();
 
 
   interface OLogEntryOracleFactory {

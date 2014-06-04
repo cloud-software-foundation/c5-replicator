@@ -53,7 +53,7 @@ public class MooringTest {
       will(returnValue(
           Futures.immediateFuture(makeEntry(0, 0, ""))));
 
-      oneOf(oLog).getQuorumConfig(0, quorumId);
+      oneOf(oLog).getLastQuorumConfig(quorumId);
       will(returnValue(zeroConfiguration()));
     }});
 
@@ -97,7 +97,7 @@ public class MooringTest {
     oLogGetTermWillReturn(0);
 
     context.checking(new Expectations() {{
-      oneOf(oLog).getQuorumConfig(index - 1, quorumId);
+      oneOf(oLog).getLastQuorumConfig(quorumId);
       will(returnValue(zeroConfiguration()));
     }});
 
@@ -117,7 +117,7 @@ public class MooringTest {
     oLogGetTermWillReturn(termOfFirstEntry);
 
     context.checking(new Expectations() {{
-      oneOf(oLog).getQuorumConfig(indexOfFirstEntry, quorumId);
+      oneOf(oLog).getLastQuorumConfig(quorumId);
       will(returnValue(zeroConfiguration()));
     }});
 
@@ -182,7 +182,7 @@ public class MooringTest {
     assertThat(log.getLastConfigurationIndex(), is(equalTo(secondConfigSeqNum)));
 
     context.checking(new Expectations() {{
-      oneOf(oLog).getQuorumConfig(firstConfigSeqNum, quorumId);
+      oneOf(oLog).getLastQuorumConfig(quorumId);
       will(returnValue(new QuorumConfigurationWithSeqNum(firstConfig, firstConfigSeqNum)));
     }});
 

@@ -34,9 +34,10 @@ import java.util.List;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
-import static c5db.log.LogTestUtil.anOLogEntry;
+import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
+import static c5db.log.LogTestUtil.someData;
 import static c5db.log.LogTestUtil.term;
 import static c5db.log.OLog.QuorumNotOpen;
 import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
@@ -128,8 +129,7 @@ public class QuorumDelegatingLogUnitTest {
   @Test
   public void passesLoggedEntriesToItsOLogEntryOracleObject() throws Exception {
     final String quorumId = "quorum";
-    final OLogEntry entry = anOLogEntry();
-
+    final OLogEntry entry = makeEntry(seqNum(1), term(1), someData());
 
     context.checking(new Expectations() {{
       ignoring(persistenceNavigator);
