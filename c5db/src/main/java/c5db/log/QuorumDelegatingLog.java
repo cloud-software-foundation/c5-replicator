@@ -20,6 +20,7 @@ package c5db.log;
 import c5db.C5ServerConstants;
 import c5db.generated.OLogHeader;
 import c5db.replication.QuorumConfiguration;
+import c5db.util.CheckedSupplier;
 import c5db.util.KeySerializingExecutor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -138,7 +139,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   @Override
   public ListenableFuture<Void> openAsync(String quorumId) {
-    return taskExecutor.submit(quorumId, () -> {
+    return submitQuorumTask(quorumId, () -> {
       createAndPrepareQuorumStructures(quorumId);
       return null;
     });
@@ -153,7 +154,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
     // TODO group commit / sync
 
-    return taskExecutor.submit(quorumId, () -> {
+    return submitQuorumTask(quorumId, () -> {
       quorumLog(quorumId).append(entries);
       return true;
     });
@@ -167,14 +168,14 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       return Futures.immediateFuture(new ArrayList<>());
     }
 
-    return taskExecutor.submit(quorumId, () -> quorumLog(quorumId).subSequence(start, end));
+    return submitQuorumTask(quorumId, () -> quorumLog(quorumId).subSequence(start, end));
   }
 
   @Override
   public ListenableFuture<Boolean> truncateLog(long seqNum, String quorumId) {
     getQuorumStructure(quorumId).setExpectedNextSequenceNumber(seqNum);
     oLogEntryOracle(quorumId).notifyTruncation(seqNum);
-    return taskExecutor.submit(quorumId, () -> {
+    return submitQuorumTask(quorumId, () -> {
       quorumLog(quorumId).truncate(seqNum);
       return true;
     });
@@ -284,5 +285,9 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   private void quorumNotOpen(String quorumId) {
     throw new QuorumNotOpen("QuorumDelegatingLog#getQuorumStructure: quorum " + quorumId + " not open");
+  }
+
+  private <T> ListenableFuture<T> submitQuorumTask(String quorumId, CheckedSupplier<T, Exception> task) {
+    return taskExecutor.submit(quorumId, task);
   }
 }
