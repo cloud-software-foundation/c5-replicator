@@ -187,6 +187,6 @@ public interface LogPersistenceService {
   }
 
   interface PersistenceNavigatorFactory {
-    PersistenceNavigator create(BytePersistence persistence, SequentialEntryCodec<?> encoding);
+    PersistenceNavigator create(BytePersistence persistence, SequentialEntryCodec<?> encoding, long offset);
   }
 }

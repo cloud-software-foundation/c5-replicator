@@ -20,7 +20,6 @@ package c5db.log;
 import c5db.replication.QuorumConfiguration;
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.junit.Before;
@@ -30,8 +29,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static c5db.FutureActions.returnFutureWithValue;
 import static c5db.log.LogTestUtil.makeConfigurationEntry;
-import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.makeProtostuffEntry;
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -50,8 +49,13 @@ public class MooringTest {
   public void accessesOLogToObtainTheLastTermAndIndexWhenItIsConstructed() throws Exception {
     context.checking(new Expectations() {{
       oneOf(oLog).openAsync(quorumId);
-      will(returnValue(
-          Futures.immediateFuture(makeEntry(0, 0, ""))));
+      will(returnFutureWithValue(null));
+
+      allowing(oLog).getLastTerm(quorumId);
+      will(returnValue(0L));
+
+      allowing(oLog).getNextSeqNum(quorumId);
+      will(returnValue(1L));
 
       oneOf(oLog).getLastQuorumConfig(quorumId);
       will(returnValue(zeroConfiguration()));

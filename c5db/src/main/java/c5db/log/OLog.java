@@ -37,11 +37,9 @@ public interface OLog extends AutoCloseable {
    *
    * @param quorumId Quorum id
    * @return Future which will return when opening is complete. Any other I/O method call for
-   * this quorum, prior to completion of the future, will throw an exception. The future will
-   * return the latest entry in the log for this quorum; or if there is none, the future will
-   * return null.
+   * this quorum, prior to completion of the future, will throw an exception.
    */
-  ListenableFuture<OLogEntry> openAsync(String quorumId);
+  ListenableFuture<Void> openAsync(String quorumId);
 
   /**
    * Append the passed entries to the log. All calls to this method for a given quorum must be

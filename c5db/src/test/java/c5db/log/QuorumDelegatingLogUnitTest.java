@@ -23,11 +23,14 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.jmock.lib.concurrent.Synchroniser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -45,7 +48,9 @@ import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
 @SuppressWarnings("unchecked")
 public class QuorumDelegatingLogUnitTest {
   @Rule
-  public JUnitRuleMockery context = new JUnitRuleMockery();
+  public JUnitRuleMockery context = new JUnitRuleMockery() {{
+    setThreadingPolicy(new Synchroniser());
+  }};
 
   private final LogPersistenceService persistenceService = context.mock(LogPersistenceService.class);
   private final BytePersistence bytePersistence = context.mock(BytePersistence.class);
@@ -70,11 +75,15 @@ public class QuorumDelegatingLogUnitTest {
   public void setUpMockedFactories() throws Exception {
     context.checking(new Expectations() {{
       allowing(navigatorFactory).create(with(any(BytePersistence.class)),
-          with.<SequentialEntryCodec<?>>is(any(SequentialEntryCodec.class)));
+          with.<SequentialEntryCodec<?>>is(any(SequentialEntryCodec.class)),
+          with(any(Long.class)));
       will(returnValue(persistenceNavigator));
 
       allowing(OLogEntryOracleFactory).create();
       will(returnValue(oLogEntryOracle));
+
+      allowing(persistenceNavigator).getStreamAtFirstEntry();
+      will(returnValue(aZeroLengthInputStream()));
 
       allowing(bytePersistence).isEmpty();
       will(returnValue(true));
@@ -102,7 +111,7 @@ public class QuorumDelegatingLogUnitTest {
     oLog.openAsync("quorum");
   }
 
-  @Test
+  @Test(timeout = 3000)
   public void getsOneNewPersistenceObjectPerQuorumWhenLogEntriesIsCalled() throws Exception {
     String quorumA = "quorumA";
     String quorumB = "quorumB";
@@ -110,6 +119,7 @@ public class QuorumDelegatingLogUnitTest {
     context.checking(new Expectations() {{
       allowing(oLogEntryOracle).notifyLogging(with(any(OLogEntry.class)));
       allowing(persistenceNavigator).notifyLogging(with(any(Long.class)), with(any(Long.class)));
+      allowing(persistenceNavigator).addToIndex(with(any(Long.class)), with(any(Long.class)));
       allowing(bytePersistence).append(with(any(ByteBuffer[].class)));
 
       oneOf(persistenceService).getPersistence(quorumA);
@@ -126,7 +136,7 @@ public class QuorumDelegatingLogUnitTest {
     oLog.logEntry(arbitraryEntries(), quorumB);
   }
 
-  @Test
+  @Test(timeout = 3000)
   public void passesLoggedEntriesToItsOLogEntryOracleObject() throws Exception {
     final String quorumId = "quorum";
     final OLogEntry entry = makeEntry(seqNum(1), term(1), someData());
@@ -148,5 +158,14 @@ public class QuorumDelegatingLogUnitTest {
 
   private static List<OLogEntry> arbitraryEntries() {
     return makeSingleEntryList(seqNum(1), term(1), "x");
+  }
+
+  private InputStream aZeroLengthInputStream() {
+    return new InputStream() {
+      @Override
+      public int read() throws IOException {
+        return -1;
+      }
+    };
   }
 }

@@ -17,14 +17,18 @@
 
 package c5db.log;
 
+import c5db.generated.OLogHeader;
+import c5db.replication.QuorumConfiguration;
 import c5db.util.KeySerializingExecutor;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.io.CountingInputStream;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +37,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static c5db.log.EntryEncodingUtil.decodeAndCheckCrc;
+import static c5db.log.EntryEncodingUtil.encodeWithLengthAndCrc;
 import static c5db.log.LogPersistenceService.BytePersistence;
+import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
@@ -46,8 +53,6 @@ import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
  * to work.
  */
 public class QuorumDelegatingLog implements OLog, AutoCloseable {
-  private static final Logger LOG = LoggerFactory.getLogger(QuorumDelegatingLog.class);
-
   private final LogPersistenceService persistenceService;
   private final KeySerializingExecutor taskExecutor;
   private final Map<String, PerQuorum> quorumMap = new ConcurrentHashMap<>();
@@ -68,27 +73,33 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   private class PerQuorum {
     public final SequentialLog<OLogEntry> quorumLog;
-    public final OLogEntryOracle oLogEntryOracle;
-    public final SequentialEntryCodec<OLogEntry> entryCodec = new OLogEntry.Codec();
+    public final OLogEntryOracle oLogEntryOracle = OLogEntryOracleFactory.create();
+    public volatile boolean opened;
 
-    private volatile boolean opened;
+    private final SequentialEntryCodec<OLogEntry> entryCodec = new OLogEntry.Codec();
+    private final BytePersistence persistence;
+    private final PersistenceNavigator navigator;
+    private final OLogHeader header;
+    private final long headerSize;
 
-    private long expectedNextSequenceNumber = 1;
+    private long expectedNextSequenceNumber;
 
-    public PerQuorum(String quorumId) {
-      final BytePersistence persistence;
-      try {
-        persistence = persistenceService.getPersistence(quorumId);
-      } catch (IOException e) {
-        LOG.error("Unable to create quorum info object for quorum {}", quorumId);
-        throw new RuntimeException(e);
+    public PerQuorum(String quorumId) throws IOException {
+      persistence = createOrOpenBytePersistence(quorumId);
+
+      if (persistence.isEmpty()) {
+        header = writeAndReturnEmptyLogHeader();
+        headerSize = persistence.size();
+      } else {
+        CountingInputStream input = getCountingInputStream();
+        header = decodeAndCheckCrc(input, OLogHeader.getSchema());
+        headerSize = input.getCount();
       }
 
-      quorumLog = new EncodedSequentialLog<>(
-          persistence,
-          entryCodec,
-          persistenceNavigatorFactory.create(persistence, entryCodec));
-      oLogEntryOracle = OLogEntryOracleFactory.create();
+      navigator = persistenceNavigatorFactory.create(persistence, entryCodec, headerSize);
+      quorumLog = new EncodedSequentialLog<>(persistence, entryCodec, navigator);
+      prepareInMemoryObjects();
+      opened = true;
     }
 
     public void validateConsecutiveEntries(List<OLogEntry> entries) {
@@ -104,11 +115,38 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     public void setExpectedNextSequenceNumber(long seqNum) {
       this.expectedNextSequenceNumber = seqNum;
     }
+
+    private BytePersistence createOrOpenBytePersistence(String quorumId) throws IOException {
+      return persistenceService.getPersistence(quorumId);
+    }
+
+    private OLogHeader writeAndReturnEmptyLogHeader() throws IOException {
+      OLogHeader header = new OLogHeader(0, 0, QuorumConfiguration.EMPTY.toProtostuff());
+      List<ByteBuffer> buffers = encodeWithLengthAndCrc(OLogHeader.getSchema(), header);
+      persistence.append(Iterables.toArray(buffers, ByteBuffer.class));
+      return header;
+    }
+
+    private CountingInputStream getCountingInputStream() throws IOException {
+      return new CountingInputStream(Channels.newInputStream(persistence.getReader()));
+    }
+
+    private void prepareInMemoryObjects() throws IOException {
+      setExpectedNextSequenceNumber(header.getBaseSeqNum() + 1);
+      navigator.addToIndex(header.getBaseSeqNum() + 1, headerSize);
+      quorumLog.forEach((entry) -> {
+        oLogEntryOracle.notifyLogging(entry);
+        setExpectedNextSequenceNumber(entry.getSeqNum() + 1);
+      });
+    }
   }
 
   @Override
-  public ListenableFuture<OLogEntry> openAsync(String quorumId) {
-    return taskExecutor.submit(quorumId, () -> createAndPrepareQuorumStructures(quorumId));
+  public ListenableFuture<Void> openAsync(String quorumId) {
+    return taskExecutor.submit(quorumId, () -> {
+      createAndPrepareQuorumStructures(quorumId);
+      return null;
+    });
   }
 
   @Override
@@ -185,34 +223,6 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
   }
 
-
-  private OLogEntry createAndPrepareQuorumStructures(String quorumId) throws IOException {
-    final PerQuorum perQuorum = createPerQuorum(quorumId);
-    OLogEntry lastEntry = null;
-
-    if (!perQuorum.quorumLog.isEmpty()) {
-      lastEntry = loadDataAndReturnLastEntry(perQuorum);
-
-      if (lastEntry != null) {
-        perQuorum.setExpectedNextSequenceNumber(lastEntry.getSeqNum() + 1);
-      }
-    }
-
-    perQuorum.opened = true;
-    return lastEntry;
-  }
-
-  private OLogEntry loadDataAndReturnLastEntry(PerQuorum perQuorum) throws IOException {
-    OLogEntry[] lastEntryRef = new OLogEntry[1];
-
-    perQuorum.quorumLog.forEach((entry) -> {
-      perQuorum.oLogEntryOracle.notifyLogging(entry);
-      lastEntryRef[0] = entry;
-    });
-
-    return lastEntryRef[0];
-  }
-
   private List<OLogEntry> validateAndMakeDefensiveCopy(List<OLogEntry> entries) {
     if (entries.isEmpty()) {
       throw new IllegalArgumentException("Attempting to log an empty entry list");
@@ -237,8 +247,15 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     return perQuorum;
   }
 
-  private PerQuorum createPerQuorum(String quorumId) {
-    return quorumMap.computeIfAbsent(quorumId, q -> new PerQuorum(quorumId));
+  private void createAndPrepareQuorumStructures(String quorumId) {
+    quorumMap.computeIfAbsent(quorumId, q -> {
+      try {
+        return new PerQuorum(quorumId);
+      } catch (IOException e) {
+        // Translate exception because computeIfAbsent 's Function declares no checked exception
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   private void updateOracleWithNewEntries(List<OLogEntry> entries, String quorumId) {

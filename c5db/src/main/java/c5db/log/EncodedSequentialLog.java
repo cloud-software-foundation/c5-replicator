@@ -20,7 +20,6 @@ package c5db.log;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -89,7 +88,7 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
 
   @Override
   public void forEach(Consumer<? super E> doForEach) throws IOException {
-    try (InputStream inputStream = Channels.newInputStream(persistence.getReader())) {
+    try (InputStream inputStream = persistenceNavigator.getStreamAtFirstEntry()) {
       //noinspection InfiniteLoopStatement
       do {
         E entry = codec.decode(inputStream);

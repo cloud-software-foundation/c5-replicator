@@ -58,13 +58,11 @@ public class Mooring implements ReplicatorLog {
 
     try {
       // TODO maybe move this from the constructor to an 'open' method
-      final OLogEntry lastEntry = log.openAsync(quorumId).get(LOG_TIMEOUT, TimeUnit.SECONDS);
-      if (lastEntry == null) {
-        this.currentTerm = this.lastIndex = 0;
-      } else {
-        this.currentTerm = lastEntry.getElectionTerm();
-        this.lastIndex = lastEntry.getSeqNum();
-      }
+      log.openAsync(quorumId)
+          .get(LOG_TIMEOUT, TimeUnit.SECONDS);
+
+      currentTerm = log.getLastTerm(quorumId);
+      lastIndex = log.getNextSeqNum(quorumId) - 1;
 
       setQuorumConfigFromLog();
 
@@ -141,7 +139,6 @@ public class Mooring implements ReplicatorLog {
     lastQuorumConfig = configFromLog.quorumConfiguration;
     lastQuorumConfigIndex = configFromLog.seqNum;
   }
-
 
   private static List<LogEntry> toProtostuffMessages(List<OLogEntry> entries) {
     return Lists.transform(entries, OLogEntry::toProtostuff);
