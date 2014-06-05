@@ -82,7 +82,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     private final OLogHeader header;
     private final long headerSize;
 
-    private long expectedNextSequenceNumber;
+    private volatile long expectedNextSequenceNumber;
 
     public PerQuorum(String quorumId)
     throws IOException {
@@ -103,10 +103,11 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       opened = true;
     }
 
-    public void validateConsecutiveEntries(List<OLogEntry> entries) {
+    public void ensureEntriesAreConsecutive(List<OLogEntry> entries) {
       for (OLogEntry e : entries) {
-        long seqNum = e.getSeqNum();
-        if (seqNum != expectedNextSequenceNumber) {
+        long entrySeqNum = e.getSeqNum();
+        long expectedSeqNum = expectedNextSequenceNumber;
+        if (entrySeqNum != expectedSeqNum) {
           throw new IllegalArgumentException("Unexpected sequence number in entries requested to be logged");
         }
         expectedNextSequenceNumber++;
@@ -114,7 +115,11 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
 
     public void setExpectedNextSequenceNumber(long seqNum) {
-      this.expectedNextSequenceNumber = seqNum;
+      expectedNextSequenceNumber = seqNum;
+    }
+
+    public long getExpectedNextSequenceNumber() {
+      return expectedNextSequenceNumber;
     }
 
     private CountingInputStream getCountingInputStream(PersistenceReader reader) throws IOException {
@@ -143,7 +148,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   public ListenableFuture<Boolean> logEntry(List<OLogEntry> passedInEntries, String quorumId) {
     List<OLogEntry> entries = validateAndMakeDefensiveCopy(passedInEntries);
 
-    getQuorumStructure(quorumId).validateConsecutiveEntries(entries);
+    getQuorumStructure(quorumId).ensureEntriesAreConsecutive(entries);
     updateOracleWithNewEntries(entries, quorumId);
 
     // TODO group commit / sync
@@ -177,7 +182,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   @Override
   public long getNextSeqNum(String quorumId) {
-    return getQuorumStructure(quorumId).expectedNextSequenceNumber;
+    return getQuorumStructure(quorumId).getExpectedNextSequenceNumber();
   }
 
   @Override
