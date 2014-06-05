@@ -71,7 +71,7 @@ public final class OLogProtostuffContent<T extends Schema<T> & Message<T>> exten
 
   public static <T extends Schema<T> & Message<T>> OLogProtostuffContent<T> deserialize(ByteBuffer buffer,
                                                                                         Schema<T> schema) {
-    final ByteBufferInput input = new ByteBufferInput(buffer, true);
+    final ByteBufferInput input = new ByteBufferInput(buffer, false);
     final T message = schema.newMessage();
 
     try {

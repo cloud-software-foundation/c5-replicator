@@ -23,7 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
 import io.protostuff.LinkBuffer;
 import io.protostuff.LowCopyProtobufOutput;
-import io.protostuff.ProtostuffIOUtil;
+import io.protostuff.ProtobufIOUtil;
 import io.protostuff.Schema;
 
 import java.io.DataInputStream;
@@ -94,7 +94,7 @@ public class EntryEncodingUtil {
     // TODO this should check the length first and compare it with a passed-in maximum length
     final T message = schema.newMessage();
     final CrcInputStream crcStream = new CrcInputStream(inputStream, new Adler32());
-    ProtostuffIOUtil.mergeDelimitedFrom(crcStream, message, schema);
+    ProtobufIOUtil.mergeDelimitedFrom(crcStream, message, schema);
 
     final long computedCrc = crcStream.getValue();
     final long diskCrc = readCrc(inputStream);
