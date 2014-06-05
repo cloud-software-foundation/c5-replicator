@@ -128,6 +128,16 @@ public interface LogPersistenceService {
     void notifyLogging(long seqNum, long byteAddress) throws IOException;
 
     /**
+     * Updates the navigator with information about the location of an entry within the
+     * persistence, guaranteeing it will be added to the internal index.
+     *
+     * @param seqNum      Sequence number the entry.
+     * @param byteAddress Byte address of the start of the entry within the persistence.
+     * @throws IOException
+     */
+    void addToIndex(long seqNum, long byteAddress) throws IOException;
+
+    /**
      * Updates the navigator that a truncation is being performed on the log, which may
      * necessitate updating the navigator's internal index.
      *
@@ -155,6 +165,16 @@ public interface LogPersistenceService {
      * @throws IOException, LogEntryNotFound
      */
     InputStream getStreamAtSeqNum(long fromSeqNum) throws IOException, LogEntryNotFound;
+
+    /**
+     * Return an input stream ready to read from the persistence starting at the beginning of the
+     * first entry in the persistence. If there are no entries, the stream will be positioned at
+     * the end of the persistence.
+     *
+     * @return A new input stream; the caller takes responsibility for closing it.
+     * @throws IOException
+     */
+    InputStream getStreamAtFirstEntry() throws IOException;
 
     /**
      * Return an input stream ready to read from the persistence starting at the beginning of the

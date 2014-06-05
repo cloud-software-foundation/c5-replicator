@@ -29,6 +29,7 @@ import java.util.List;
 
 import static c5db.log.LogTestUtil.seqNum;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
 
@@ -84,6 +85,26 @@ public class InMemoryPersistenceNavigatorTest {
   @Test(expected = Exception.class)
   public void throwsAnExceptionIfAskedToTruncateToIndexZero() throws Exception {
     navigator.notifyTruncation(0);
+  }
+
+  @Test
+  public void returnsAStreamPositionedAtTheFirstEntry() throws Exception {
+    InputStream input = navigator.getStreamAtFirstEntry();
+    assertThat(navigatorsCodec.decode(input).getSeqNum(), is(equalTo(1L)));
+  }
+
+  @Test
+  public void returnsAStreamPositionedAtTheLastEntry() throws Exception {
+    InputStream input = navigator.getStreamAtLastEntry();
+    assertThat(navigatorsCodec.decode(input).getSeqNum(), is(equalTo((long) LAST_SEQ_NUM)));
+  }
+
+  @Test
+  public void returnsAStreamPositionedAtASpecifiedEntry() throws Exception {
+    long entrySeqNum = 12;
+
+    InputStream input = navigator.getStreamAtSeqNum(entrySeqNum);
+    assertThat(navigatorsCodec.decode(input).getSeqNum(), is(equalTo(entrySeqNum)));
   }
 
 

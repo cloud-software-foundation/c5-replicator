@@ -44,11 +44,17 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
   private final SequentialEntryCodec<E> codec;
 
   private final NavigableMap<Long, Long> index = new TreeMap<>();
+  private final long fileOffset;
   private int maxEntrySeek = 256;
 
   public InMemoryPersistenceNavigator(BytePersistence persistence, SequentialEntryCodec<E> codec) {
+    this(persistence, codec, 0);
+  }
+
+  public InMemoryPersistenceNavigator(BytePersistence persistence, SequentialEntryCodec<E> codec, long offset) {
     this.persistence = persistence;
     this.codec = codec;
+    this.fileOffset = offset;
 
     // Logic is simplified if the index NavigableMap is guaranteed to have at least one entry.
     index.put(0L, 0L);
@@ -64,6 +70,11 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
   @Override
   public void notifyLogging(long seqNum, long byteAddress) throws IOException {
     maybeAddToIndex(seqNum, byteAddress);
+  }
+
+  @Override
+  public void addToIndex(long seqNum, long address) {
+    index.put(seqNum, address);
   }
 
   @Override
@@ -88,6 +99,13 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
   @Override
   public InputStream getStreamAtSeqNum(long seqNum) throws IOException, LogEntryNotFound {
     return Channels.newInputStream(getReaderAtSeqNum(seqNum));
+  }
+
+  @Override
+  public InputStream getStreamAtFirstEntry() throws IOException {
+    PersistenceReader reader = persistence.getReader();
+    reader.position(fileOffset);
+    return Channels.newInputStream(reader);
   }
 
   @Override
@@ -150,10 +168,6 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
     if (seqNum - lastIndexedSeqNum() >= maxEntrySeek) {
       index.put(seqNum, address);
     }
-  }
-
-  private void addToIndex(long seqNum, long address) {
-    index.put(seqNum, address);
   }
 
   private long nearestAddressTo(long seqNum) {
