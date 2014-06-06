@@ -30,9 +30,11 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.FutureMatchers.resultsInException;
+import static c5db.log.LogMatchers.aListOfEntriesWithConsecutiveSeqNums;
 import static c5db.log.LogTestUtil.emptyEntryList;
 import static c5db.log.LogTestUtil.makeConfigurationEntry;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
@@ -130,41 +132,36 @@ public class QuorumDelegatingLogTest {
 
     log.logEntry(entries, quorumId);
 
-    assertThat(log.getLogEntries(4, 6, quorumId), resultsIn(equalTo(entries.subList(3, 5))));
+    assertThat(log.getLogEntries(4, 6, quorumId), resultsIn(equalTo(subListWithSeqNums(entries, 4, 6))));
   }
 
   @Test
-  public void truncatesEntriesFromTheEndOfTheLog() throws Exception {
+  public void truncatesEntriesFromTheEndOfTheLogAndMaintainsTheCorrectSequence() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
     log.logEntry(someConsecutiveEntries(3, 5), quorumId);
+
+    assertThat(log.getLogEntries(1, 5, quorumId), resultsIn(aListOfEntriesWithConsecutiveSeqNums(1, 5)));
   }
 
   @Test(expected = RuntimeException.class)
-  public void throwsAnExceptionIfAttemptingToLogEntriesWithASequenceGap() throws Exception {
+  public void throwsAnExceptionIfAskedToLogEntriesWithASequenceGap() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 3), quorumId);
     log.logEntry(someConsecutiveEntries(4, 5), quorumId);
   }
 
   @Test(expected = RuntimeException.class)
-  public void throwsAnExceptionIfAttemptingToLogEntriesWithoutAscendingSequenceNumber() throws Exception {
+  public void throwsAnExceptionIfAskedToLogEntriesWithoutAscendingSequenceNumber() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);
     log.logEntry(someConsecutiveEntries(1, 2), quorumId);
   }
 
   @Test(timeout = 1000)
-  public void throwsAnExceptionIfTryingToRetrieveEntriesAndAtLeastOneIsNotInTheLog() throws Exception {
+  public void returnsAFutureWithAnExceptionIfAskedToRetrieveEntriesAndAtLeastOneIsNotInTheLog() throws Exception {
     log.logEntry(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
 
     assertThat(log.getLogEntries(2, 4, quorumId), resultsInException(LogEntryNotFound.class));
-  }
-
-  @Test
-  public void maintainsCorrectSequenceAfterATruncation() {
-    log.logEntry(someConsecutiveEntries(1, 5), quorumId);
-    log.truncateLog(3, quorumId);
-    log.logEntry(someConsecutiveEntries(3, 6), quorumId);
   }
 
   @Test
@@ -243,9 +240,15 @@ public class QuorumDelegatingLogTest {
     return testSequenceNumber;
   }
 
-  private List<OLogEntry> singleConfigurationEntryList(QuorumConfiguration config, long seqNum) {
+  private static List<OLogEntry> singleConfigurationEntryList(QuorumConfiguration config, long seqNum) {
     return Lists.newArrayList(
         OLogEntry.fromProtostuff(
             makeConfigurationEntry(seqNum, term(1), config)));
+  }
+
+  private static List<OLogEntry> subListWithSeqNums(List<OLogEntry> entryList, long start, long end) {
+    return entryList.stream()
+        .filter((entry) -> start <= entry.getSeqNum() && entry.getSeqNum() < end)
+        .collect(Collectors.toList());
   }
 }
