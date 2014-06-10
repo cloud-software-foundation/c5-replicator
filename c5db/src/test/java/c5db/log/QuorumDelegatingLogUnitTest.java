@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.replication.QuorumConfiguration;
 import c5db.util.CheckedSupplier;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
@@ -35,23 +36,30 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import static c5db.FutureMatchers.resultsInException;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 import static c5db.log.LogTestUtil.makeEntry;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
+import static c5db.log.LogTestUtil.someConsecutiveEntries;
 import static c5db.log.LogTestUtil.someData;
 import static c5db.log.LogTestUtil.term;
 import static c5db.log.OLog.QuorumNotOpen;
 import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
+import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 
 @SuppressWarnings("unchecked")
 public class QuorumDelegatingLogUnitTest {
@@ -69,9 +77,9 @@ public class QuorumDelegatingLogUnitTest {
   private final PersistenceNavigatorFactory navigatorFactory = context.mock(PersistenceNavigatorFactory.class);
   private final PersistenceNavigator persistenceNavigator = context.mock(PersistenceNavigator.class);
 
-
+  private final ArrayPersistenceService persistenceService = new ArrayPersistenceService();
   private final QuorumDelegatingLog oLog = new QuorumDelegatingLog(
-      new ArrayPersistenceService(),
+      persistenceService,
       serializingExecutor,
       OLogEntryOracleFactory,
       navigatorFactory);
@@ -141,6 +149,53 @@ public class QuorumDelegatingLogUnitTest {
     oLog.logEntry(Lists.newArrayList(entry), quorumId);
   }
 
+  @Test(timeout = 3000)
+  public void createsANewLogWhenRollIsCalledAndWritesSubsequentEntriesToTheNewLog() throws Exception {
+    final String quorumId = "quorum";
+
+    context.checking(new Expectations() {{
+      ignoring(persistenceNavigator);
+
+      allowing(oLogEntryOracle).notifyLogging(with(any(OLogEntry.class)));
+
+      allowing(oLogEntryOracle).getLastTerm();
+      allowing(oLogEntryOracle).getLastQuorumConfig();
+      will(returnValue(new QuorumConfigurationWithSeqNum(QuorumConfiguration.EMPTY, 0)));
+    }});
+
+    oLog.openAsync(quorumId).get();
+    oLog.logEntry(someConsecutiveEntries(1, 11), quorumId);
+    oLog.roll(quorumId).get();
+
+    assertThat(logPersistenceObjectsForQuorum(quorumId), hasSize(2));
+
+    deleteFirstLog(quorumId);
+    oLog.logEntry(someConsecutiveEntries(11, 21), quorumId).get();
+  }
+
+  @Test(timeout = 3000)
+  public void returnsAnExceptionIfAttemptingToTruncateBackToANonExistentLog() throws Exception {
+    final String quorumId = "quorum";
+
+    context.checking(new Expectations() {{
+      ignoring(persistenceNavigator);
+
+      allowing(oLogEntryOracle).notifyLogging(with(any(OLogEntry.class)));
+      allowing(oLogEntryOracle).notifyTruncation(with(any(Long.class)));
+      allowing(oLogEntryOracle).getLastTerm();
+
+      allowing(oLogEntryOracle).getLastQuorumConfig();
+      will(returnValue(new QuorumConfigurationWithSeqNum(QuorumConfiguration.EMPTY, 0)));
+    }});
+
+    oLog.openAsync(quorumId).get();
+    oLog.logEntry(someConsecutiveEntries(1, 11), quorumId);
+    oLog.roll(quorumId).get();
+
+    deleteFirstLog(quorumId);
+    assertThat(oLog.truncateLog(seqNum(5), quorumId), resultsInException(IOException.class));
+  }
+
   private static List<OLogEntry> arbitraryEntries() {
     return makeSingleEntryList(seqNum(1), term(1), "x");
   }
@@ -154,6 +209,16 @@ public class QuorumDelegatingLogUnitTest {
     };
   }
 
+  private Collection<BytePersistence> logPersistenceObjectsForQuorum(String quorumId) {
+    return new ArrayList<>(persistenceService.quorumMap.get(quorumId));
+  }
+
+  private void deleteFirstLog(String quorumId) throws Exception {
+    // TODO for now, closing the persistence, which is actually in-memory and not really persisted
+    // TODO  to any medium, is used to simulate the underlying persistence having been deleted.
+    persistenceService.firstLog(quorumId).close();
+  }
+
   /**
    * In-memory LogPersistenceService to simplify these tests, rather than use mocks that return mocks.
    */
@@ -163,7 +228,7 @@ public class QuorumDelegatingLogUnitTest {
     @Nullable
     @Override
     public ByteArrayPersistence getCurrent(String quorumId) throws IOException {
-      quorumMap.putIfAbsent(quorumId, new ArrayDeque<>());
+      quorumMap.putIfAbsent(quorumId, new LinkedList<>());
       return quorumMap.get(quorumId).peek();
     }
 
@@ -175,7 +240,7 @@ public class QuorumDelegatingLogUnitTest {
 
     @Override
     public void append(String quorumId, @NotNull ByteArrayPersistence persistence) throws IOException {
-      quorumMap.putIfAbsent(quorumId, new ArrayDeque<>());
+      quorumMap.putIfAbsent(quorumId, new LinkedList<>());
       quorumMap.get(quorumId).push(persistence);
     }
 
@@ -189,6 +254,10 @@ public class QuorumDelegatingLogUnitTest {
       return Iterators.transform(
           quorumMap.get(quorumId).iterator(),
           (persistence) -> (() -> persistence));
+    }
+
+    public BytePersistence firstLog(String quorumId) {
+      return quorumMap.get(quorumId).peekLast();
     }
   }
 }

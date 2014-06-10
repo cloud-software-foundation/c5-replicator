@@ -22,13 +22,20 @@ import c5db.replication.QuorumConfiguration;
 import c5db.util.CheckedConsumer;
 import c5db.util.WrappingKeySerializingExecutor;
 import com.google.common.collect.Lists;
+import org.hamcrest.core.Is;
 import org.junit.Test;
 
 import java.nio.file.Path;
 import java.util.concurrent.Executors;
 
+import static c5db.FutureMatchers.resultsIn;
+import static c5db.log.LogMatchers.aListOfEntriesWithConsecutiveSeqNums;
 import static c5db.log.LogTestUtil.entries;
+import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
+import static c5db.log.LogTestUtil.someConsecutiveEntries;
+import static c5db.log.LogTestUtil.someData;
+import static c5db.log.LogTestUtil.term;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -120,10 +127,68 @@ public class OLogIntegratedPersistenceTest {
     });
   }
 
+  @Test(timeout = 3000)
+  public void headerInformationIsPersistedAfterARollOperation() throws Exception {
+    final QuorumConfiguration configuration = QuorumConfiguration.of(Lists.newArrayList(1L, 2L, 3L));
+    final long lastTerm = 97;
+
+    try (OLog oLog = getOLog()) {
+      new Mooring(oLog, QUORUM_ID)
+          .logEntries(entries()
+              .term(lastTerm)
+              .configurationAndIndex(configuration, 1).build());
+      oLog.roll(QUORUM_ID).get();
+    }
+
+    withReplicatorLog((log) -> {
+      assertThat(log.getLastTerm(), is(equalTo(lastTerm)));
+      assertThat(log.getLastConfiguration(), is(equalTo(configuration)));
+    });
+  }
+
+  @Test(timeout = 3000)
+  public void rollsKeepingTrackOfTermCorrectly() throws Exception {
+    withOpenOLog((oLog) -> {
+      oLog.logEntry(makeSingleEntryList(seqNum(1), term(17), someData()), QUORUM_ID);
+      oLog.roll(QUORUM_ID);
+      oLog.logEntry(makeSingleEntryList(seqNum(2), term(56), someData()), QUORUM_ID);
+    });
+
+    withOpenOLog((oLog) -> {
+      assertThat(oLog.getLastTerm(QUORUM_ID), Is.is(equalTo(56L)));
+
+      oLog.truncateLog(seqNum(2), QUORUM_ID);
+      assertThat(oLog.getLastTerm(QUORUM_ID), Is.is(equalTo(17L)));
+    });
+  }
+
+  @Test(timeout = 3000)
+  public void performsMultiLogFetchesCorrectlyFromPersistence() throws Exception {
+    withOpenOLog((oLog) -> {
+      oLog.logEntry(someConsecutiveEntries(1, 6), QUORUM_ID);
+      oLog.roll(QUORUM_ID);
+      oLog.logEntry(someConsecutiveEntries(6, 11), QUORUM_ID);
+      oLog.roll(QUORUM_ID);
+      oLog.logEntry(someConsecutiveEntries(11, 16), QUORUM_ID);
+    });
+
+    withOpenOLog((oLog) ->
+        assertThat(oLog.getLogEntries(3, 15, QUORUM_ID), resultsIn(aListOfEntriesWithConsecutiveSeqNums(3, 15))));
+
+    withOpenOLog((oLog) ->
+        assertThat(oLog.getLogEntries(1, 6, QUORUM_ID), resultsIn(aListOfEntriesWithConsecutiveSeqNums(1, 6))));
+  }
 
   private void withReplicatorLog(CheckedConsumer<ReplicatorLog, Exception> useLog) throws Exception {
     try (OLog oLog = getOLog()) {
       useLog.accept(new Mooring(oLog, QUORUM_ID));
+    }
+  }
+
+  private void withOpenOLog(CheckedConsumer<OLog, Exception> useLog) throws Exception {
+    try (OLog oLog = getOLog()) {
+      oLog.openAsync(QUORUM_ID).get();
+      useLog.accept(oLog);
     }
   }
 

@@ -50,7 +50,7 @@ import static org.junit.Assert.assertThat;
 
 public class QuorumDelegatingLogTest {
   private static Path testDirectory;
-  private LogFileService logPersistenceService;
+  private LogFileService logFileService;
   private OLog log;
   private final String quorumId = "quorumId";
 
@@ -63,11 +63,11 @@ public class QuorumDelegatingLogTest {
 
   @Before
   public final void setUp() throws Exception {
-    logPersistenceService = new LogFileService(testDirectory);
-    logPersistenceService.clearAllLogs();
+    logFileService = new LogFileService(testDirectory);
+    logFileService.clearAllLogs();
 
     log = new QuorumDelegatingLog(
-        logPersistenceService,
+        logFileService,
         new WrappingKeySerializingExecutor(MoreExecutors.sameThreadExecutor()),
         NavigableMapOLogEntryOracle::new,
         InMemoryPersistenceNavigator::new);
@@ -78,7 +78,7 @@ public class QuorumDelegatingLogTest {
   @After
   public final void tearDown() throws Exception {
     log.close();
-    logPersistenceService.clearAllLogs();
+    logFileService.clearAllLogs();
   }
 
   @Test(timeout = 1000)
@@ -224,6 +224,35 @@ public class QuorumDelegatingLogTest {
     assertThat(log.getLogEntries(5, 10, quorumId), resultsIn(equalTo(replacementEntries)));
   }
 
+  @Test(timeout = 3000)
+  public void rollsTheLogWhileAcceptingLogRequestsAndEnsuresThatAllRequestedEntriesEndUpInTheNewLog() throws Exception {
+    log.logEntry(someConsecutiveEntries(1, 11), quorumId);
+    log.roll(quorumId);
+    log.logEntry(someConsecutiveEntries(11, 21), quorumId);
+
+    assertThat(log.getLogEntries(11, 21, quorumId), resultsIn(aListOfEntriesWithConsecutiveSeqNums(11, 21)));
+  }
+
+  @Test
+  public void truncatesARolledFileIfRequestedToTruncateToAPointBeforeTheBeginningOfTheCurrentFile() throws Exception {
+    log.logEntry(someConsecutiveEntries(1, 11), quorumId);
+    log.roll(quorumId);
+    log.truncateLog(seqNum(6), quorumId);
+    log.logEntry(someConsecutiveEntries(6, 21), quorumId);
+
+    assertThat(log.getLogEntries(6, 21, quorumId), resultsIn(aListOfEntriesWithConsecutiveSeqNums(6, 21)));
+  }
+
+  @Test
+  public void fulfillsGetRequestsThatSpanMultipleLogFiles() throws Exception {
+    log.logEntry(someConsecutiveEntries(1, 6), quorumId);
+    log.roll(quorumId);
+    log.logEntry(someConsecutiveEntries(6, 11), quorumId);
+    log.roll(quorumId);
+    log.logEntry(someConsecutiveEntries(11, 16), quorumId);
+
+    assertThat(log.getLogEntries(3, 15, quorumId), resultsIn(aListOfEntriesWithConsecutiveSeqNums(3, 15)));
+  }
 
   /**
    * Private methods
