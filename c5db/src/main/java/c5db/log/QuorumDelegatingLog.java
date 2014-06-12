@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -196,8 +195,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
-  public void roll() throws IOException, ExecutionException, InterruptedException {
-    // TODO implement roll()
+  public ListenableFuture<Void> roll(String quorumId) throws IOException {
+    return null;
   }
 
   @Override

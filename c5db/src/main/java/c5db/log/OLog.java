@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
 
@@ -115,14 +114,17 @@ public interface OLog extends AutoCloseable {
   QuorumConfigurationWithSeqNum getLastQuorumConfig(String quorumId);
 
   /**
-   * Save off and close log file, and begin a new log file.
+   * Save off and close a quorum's log, and begin a new one. Any entries logged prior to calling
+   * this method will end up in the old log, and any logged afterwards will end up in the new log.
+   * <p>
+   * It is possible that a later truncation operation which truncates to an index present in the
+   * old log will undo this operation.
    *
+   * @param quorumId Quorum id
+   * @return A future which will return when the operation is complete, or else yield an exception.
    * @throws IOException
-   * @throws ExecutionException
-   * @throws InterruptedException
    */
-  @SuppressWarnings("UnusedDeclaration")
-  void roll() throws IOException, ExecutionException, InterruptedException;
+  ListenableFuture<Void> roll(String quorumId) throws IOException;
 
   /**
    * Dispose of held resources after completing any pending operations.
