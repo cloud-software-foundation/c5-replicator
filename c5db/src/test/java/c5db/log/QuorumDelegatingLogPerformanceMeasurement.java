@@ -170,8 +170,7 @@ public class QuorumDelegatingLogPerformanceMeasurement {
         }
       }
     } finally {
-      logFileService.moveLogsToArchive();
-      logFileService.clearOldArchivedLogs(0);
+      logFileService.clearAllLogs();
     }
 
     return System.nanoTime() - startTime;

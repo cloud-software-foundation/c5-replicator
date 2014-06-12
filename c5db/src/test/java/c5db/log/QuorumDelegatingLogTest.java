@@ -64,7 +64,7 @@ public class QuorumDelegatingLogTest {
   @Before
   public final void setUp() throws Exception {
     logPersistenceService = new LogFileService(testDirectory);
-    logPersistenceService.moveLogsToArchive();
+    logPersistenceService.clearAllLogs();
 
     log = new QuorumDelegatingLog(
         logPersistenceService,
@@ -78,7 +78,7 @@ public class QuorumDelegatingLogTest {
   @After
   public final void tearDown() throws Exception {
     log.close();
-    logPersistenceService.moveLogsToArchive();
+    logPersistenceService.clearAllLogs();
   }
 
   @Test(timeout = 1000)

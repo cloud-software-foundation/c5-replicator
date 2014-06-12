@@ -24,8 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -36,11 +39,9 @@ import java.util.TreeMap;
  */
 public class LogFileService implements LogPersistenceService<FilePersistence> {
   private final Path walRootDir;
-  private final Path archiveDir;
 
   public LogFileService(Path basePath) throws IOException {
     this.walRootDir = basePath.resolve(C5ServerConstants.WAL_ROOT_DIRECTORY_NAME);
-    this.archiveDir = basePath.resolve(C5ServerConstants.ARCHIVE_DIR);
 
     createDirectoryStructure();
   }
@@ -112,37 +113,20 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   }
 
   /**
-   * Move everything in the log directory to the archive directory.
+   * Delete all the logs stored in the wal root directory.
    *
    * @throws IOException
    */
-  public void moveLogsToArchive() throws IOException {
-    for (File file : allFilesInDirectory(walRootDir)) {
-      boolean success = file.renameTo(archiveDir
-          .resolve(file.getName())
-          .toFile());
-      if (!success) {
-        String err = "Unable to move: " + file.getAbsolutePath() + " to " + walRootDir;
-        throw new IOException(err);
-      }
-    }
-  }
-
-  /**
-   * Clean out old logs.
-   *
-   * @param timestamp Only clear logs older than timestamp. Or if 0 then remove all logs.
-   * @throws IOException
-   */
-  public void clearOldArchivedLogs(long timestamp) throws IOException {
-    for (File file : allFilesInDirectory(archiveDir)) {
-      if (timestamp == 0 || file.lastModified() > timestamp) {
-        boolean success = file.delete();
-        if (!success) {
-          throw new IOException("Unable to delete file:" + file);
+  public void clearAllLogs() throws IOException {
+    Files.walkFileTree(walRootDir, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        if (!attrs.isDirectory()) {
+          Files.delete(file);
         }
+        return FileVisitResult.CONTINUE;
       }
-    }
+    });
   }
 
   private Path getNewLogFilePath(String quorumId) throws IOException {

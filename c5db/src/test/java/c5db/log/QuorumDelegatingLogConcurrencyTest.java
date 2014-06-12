@@ -79,8 +79,7 @@ public class QuorumDelegatingLogConcurrencyTest {
 
       assertThatEverythingWasLoggedCorrectly(log);
     } finally {
-      logFileService.moveLogsToArchive();
-      logFileService.clearOldArchivedLogs(0);
+      logFileService.clearAllLogs();
     }
   }
 
@@ -95,8 +94,7 @@ public class QuorumDelegatingLogConcurrencyTest {
 
       runNTimesAndWaitForAllToComplete(numQuorums * 2, executor, log::close);
     } finally {
-      logFileService.moveLogsToArchive();
-      logFileService.clearOldArchivedLogs(0);
+      logFileService.clearAllLogs();
     }
   }
 
