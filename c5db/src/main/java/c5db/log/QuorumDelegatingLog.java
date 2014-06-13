@@ -42,6 +42,7 @@ import static c5db.log.EntryEncodingUtil.encodeWithLengthAndCrc;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
+import static c5db.log.LogPersistenceService.PersistenceReader;
 import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
 
@@ -53,14 +54,14 @@ import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
  * to work.
  */
 public class QuorumDelegatingLog implements OLog, AutoCloseable {
-  private final LogPersistenceService persistenceService;
+  private final LogPersistenceService<?> persistenceService;
   private final KeySerializingExecutor taskExecutor;
   private final Map<String, PerQuorum> quorumMap = new ConcurrentHashMap<>();
 
   private final OLogEntryOracleFactory OLogEntryOracleFactory;
   private final PersistenceNavigatorFactory persistenceNavigatorFactory;
 
-  public QuorumDelegatingLog(LogPersistenceService persistenceService,
+  public QuorumDelegatingLog(LogPersistenceService<?> persistenceService,
                              KeySerializingExecutor taskExecutor,
                              OLogEntryOracleFactory OLogEntryOracleFactory,
                              PersistenceNavigatorFactory persistenceNavigatorFactory
@@ -77,22 +78,21 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     public volatile boolean opened;
 
     private final SequentialEntryCodec<OLogEntry> entryCodec = new OLogEntry.Codec();
-    private final BytePersistence persistence;
     private final PersistenceNavigator navigator;
     private final OLogHeader header;
     private final long headerSize;
 
     private long expectedNextSequenceNumber;
 
-    public PerQuorum(String quorumId) throws IOException {
-      persistence = createOrOpenBytePersistence(quorumId);
+    public PerQuorum(String quorumId)
+    throws IOException {
+      BytePersistence persistence = persistenceService.getCurrent(quorumId);
 
-      if (persistence.isEmpty()) {
-        header = writeAndReturnEmptyLogHeader();
-        headerSize = persistence.size();
-        persistenceService.append(quorumId, persistence);
+      if (persistence == null) {
+        header = new OLogHeader(0, 0, QuorumConfiguration.EMPTY.toProtostuff());
+        headerSize = addNewPersistenceWithHeader(quorumId, header, persistenceService);
       } else {
-        CountingInputStream input = getCountingInputStream();
+        CountingInputStream input = getCountingInputStream(persistence.getReader());
         header = decodeAndCheckCrc(input, OLogHeader.getSchema());
         headerSize = input.getCount();
       }
@@ -117,23 +117,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       this.expectedNextSequenceNumber = seqNum;
     }
 
-    private BytePersistence createOrOpenBytePersistence(String quorumId) throws IOException {
-      BytePersistence persistence = persistenceService.getCurrent(quorumId);
-      if (persistence == null) {
-        persistence = persistenceService.create(quorumId);
-      }
-      return persistence;
-    }
-
-    private OLogHeader writeAndReturnEmptyLogHeader() throws IOException {
-      OLogHeader header = new OLogHeader(0, 0, QuorumConfiguration.EMPTY.toProtostuff());
-      List<ByteBuffer> buffers = encodeWithLengthAndCrc(OLogHeader.getSchema(), header);
-      persistence.append(Iterables.toArray(buffers, ByteBuffer.class));
-      return header;
-    }
-
-    private CountingInputStream getCountingInputStream() throws IOException {
-      return new CountingInputStream(Channels.newInputStream(persistence.getReader()));
+    private CountingInputStream getCountingInputStream(PersistenceReader reader) throws IOException {
+      return new CountingInputStream(Channels.newInputStream(reader));
     }
 
     private void prepareInMemoryObjects() throws IOException {
@@ -261,6 +246,28 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
         throw new RuntimeException(e);
       }
     });
+  }
+
+  /**
+   * Create and save a new persistence, with the given header, for the given quorum.
+   *
+   * @param quorumId           Quorum ID
+   * @param header             OLogHeader to be written to the beginning of the new persistence
+   * @param persistenceService The LogPersistenceService, included as a parameter here in order to
+   *                           capture a wildcard
+   * @param <P>                Captured wildcard; the type of the BytePersistence to create and write
+   * @return The length of the written header
+   * @throws IOException
+   */
+  private <P extends BytePersistence> long addNewPersistenceWithHeader(String quorumId,
+                                                                       OLogHeader header,
+                                                                       LogPersistenceService<P> persistenceService)
+      throws IOException {
+    P persistence = persistenceService.create(quorumId);
+    List<ByteBuffer> buffers = encodeWithLengthAndCrc(OLogHeader.getSchema(), header);
+    persistence.append(Iterables.toArray(buffers, ByteBuffer.class));
+    persistenceService.append(quorumId, persistence);
+    return persistence.size();
   }
 
   private void updateOracleWithNewEntries(List<OLogEntry> entries, String quorumId) {
