@@ -95,6 +95,10 @@ public class QuorumDelegatingLogUnitTest {
       allowing(OLogEntryOracleFactory).create();
       will(returnValue(oLogEntryOracle));
 
+      atMost(1).of(oLogEntryOracle).notifyLogging(with(any(OLogEntry.class)));
+
+      allowing(oLogEntryOracle).getGreatestSeqNum();
+
       allowing(persistenceNavigator).getStreamAtFirstEntry();
       will(returnValue(aZeroLengthInputStream()));
     }});

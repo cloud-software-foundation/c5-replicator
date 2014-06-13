@@ -27,11 +27,14 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.CountingInputStream;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,11 +51,14 @@ import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
 
 /**
- * OLog that delegates each quorum's logging tasks to a separate SequentialLog for that quorum,
- * executing the tasks on a KeySerializingExecutor, with quorumId as the key. It is safe for use
+ * OLog that delegates each quorum's logging tasks to a separate log record for that quorum, executing
+ * any blocking tasks on a KeySerializingExecutor, with quorumId as the key. It is safe for use
  * by multiple threads, but each quorum's sequence numbers must be ascending with no gaps within
  * that quorum; so having multiple unsynchronized threads writing for the same quorum is unlikely
  * to work.
+ * <p>
+ * Each quorum's log record is a sequence of SequentialLogs, each based on its own persistence (e.g.,
+ * a file) served from the LogPersistenceService injected on creation.
  */
 public class QuorumDelegatingLog implements OLog, AutoCloseable {
   private final LogPersistenceService<?> persistenceService;
@@ -73,35 +79,30 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     this.persistenceNavigatorFactory = persistenceNavigatorFactory;
   }
 
+  private static class SequentialLogWithHeader {
+    public final SequentialLog<OLogEntry> log;
+    public final OLogHeader header;
+
+    private SequentialLogWithHeader(SequentialLog<OLogEntry> log, OLogHeader header) {
+      this.log = log;
+      this.header = header;
+    }
+  }
+
   private class PerQuorum {
-    public final SequentialLog<OLogEntry> quorumLog;
+    private final String quorumId;
+    private final SequentialEntryCodec<OLogEntry> codec = new OLogEntry.Codec();
+    private final Deque<SequentialLogWithHeader> logDeque = new LinkedList<>();
+
+    private volatile long expectedNextSequenceNumber = 1;
     public final OLogEntryOracle oLogEntryOracle = OLogEntryOracleFactory.create();
-    public volatile boolean opened;
 
-    private final SequentialEntryCodec<OLogEntry> entryCodec = new OLogEntry.Codec();
-    private final PersistenceNavigator navigator;
-    private final OLogHeader header;
-    private final long headerSize;
+    public PerQuorum(String quorumId) {
+      this.quorumId = quorumId;
+    }
 
-    private volatile long expectedNextSequenceNumber;
-
-    public PerQuorum(String quorumId)
-    throws IOException {
-      BytePersistence persistence = persistenceService.getCurrent(quorumId);
-
-      if (persistence == null) {
-        header = new OLogHeader(0, 0, QuorumConfiguration.EMPTY.toProtostuff());
-        headerSize = addNewPersistenceWithHeader(quorumId, header, persistenceService);
-      } else {
-        CountingInputStream input = getCountingInputStream(persistence.getReader());
-        header = decodeAndCheckCrc(input, OLogHeader.getSchema());
-        headerSize = input.getCount();
-      }
-
-      navigator = persistenceNavigatorFactory.create(persistence, entryCodec, headerSize);
-      quorumLog = new EncodedSequentialLog<>(persistence, entryCodec, navigator);
-      prepareInMemoryObjects();
-      opened = true;
+    public void open() throws IOException {
+      loadCurrentOrNewLog();
     }
 
     public void ensureEntriesAreConsecutive(List<OLogEntry> entries) {
@@ -123,24 +124,116 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       return expectedNextSequenceNumber;
     }
 
-    private CountingInputStream getCountingInputStream(PersistenceReader reader) throws IOException {
+    @NotNull
+    public SequentialLogWithHeader currentLogWithHeader() throws IOException {
+      if (logDeque.isEmpty()) {
+        loadCurrentOrNewLog();
+      }
+      return logDeque.peek();
+    }
+
+    public void roll(OLogHeader newLogHeader) throws IOException {
+      SequentialLogWithHeader newLog = writeNewLog(persistenceService, newLogHeader);
+      logDeque.push(newLog);
+    }
+
+    public void deleteCurrentLog() throws IOException {
+      persistenceService.truncate(quorumId);
+      logDeque.pop();
+    }
+
+    public void close() throws IOException {
+      // TODO if one log fails to close, it won't attempt to close any after that one.
+      for (SequentialLogWithHeader logWithHeader : logDeque) {
+        logWithHeader.log.close();
+      }
+    }
+
+    private CountingInputStream getCountingInputStream(PersistenceReader reader) {
       return new CountingInputStream(Channels.newInputStream(reader));
     }
 
-    private void prepareInMemoryObjects() throws IOException {
-      setExpectedNextSequenceNumber(header.getBaseSeqNum() + 1);
+    private void loadCurrentOrNewLog() throws IOException {
+      final BytePersistence persistence = persistenceService.getCurrent(quorumId);
+      final SequentialLogWithHeader logWithHeader;
+
+      if (persistence == null) {
+        logWithHeader = writeNewLog(persistenceService, newQuorumHeader());
+      } else {
+        logWithHeader = readLogFromPersistence(persistence);
+      }
+
+      logDeque.push(logWithHeader);
+      prepareLogOracle(logWithHeader);
+      increaseExpectedNextSeqNumTo(oLogEntryOracle.getGreatestSeqNum() + 1);
+    }
+
+    /**
+     * Create a new log and header and write them to a new persistence. The header corresponds to the
+     * current position and state of the current log (if there is one).
+     *
+     * @param persistenceService The LogPersistenceService, included as a parameter here in order to
+     *                           capture a wildcard
+     * @param <P>                Captured wildcard; the type of the BytePersistence to create and write
+     * @throws IOException
+     */
+    private <P extends BytePersistence> SequentialLogWithHeader writeNewLog(LogPersistenceService<P> persistenceService,
+                                                                            OLogHeader header) throws IOException {
+      final P persistence = persistenceService.create(quorumId);
+      final List<ByteBuffer> serializedHeader = encodeWithLengthAndCrc(OLogHeader.getSchema(), header);
+
+      persistence.append(Iterables.toArray(serializedHeader, ByteBuffer.class));
+      persistenceService.append(quorumId, persistence);
+
+      final long headerSize = persistence.size();
+
+      return createSequentialLogWithHeader(persistence, header, headerSize);
+    }
+
+    private SequentialLogWithHeader readLogFromPersistence(BytePersistence persistence) throws IOException {
+      CountingInputStream input = getCountingInputStream(persistence.getReader());
+      final OLogHeader header = decodeAndCheckCrc(input, OLogHeader.getSchema());
+      final long headerSize = input.getCount();
+
+      return createSequentialLogWithHeader(persistence, header, headerSize);
+    }
+
+    private SequentialLogWithHeader createSequentialLogWithHeader(BytePersistence persistence,
+                                                                  OLogHeader header, long headerSize)
+        throws IOException {
+      final PersistenceNavigator navigator = persistenceNavigatorFactory.create(persistence, codec, headerSize);
       navigator.addToIndex(header.getBaseSeqNum() + 1, headerSize);
-      quorumLog.forEach((entry) -> {
-        oLogEntryOracle.notifyLogging(entry);
-        setExpectedNextSequenceNumber(entry.getSeqNum() + 1);
-      });
+      final SequentialLog<OLogEntry> log = new EncodedSequentialLog<>(persistence, codec, navigator);
+      return new SequentialLogWithHeader(log, header);
+    }
+
+    private void prepareLogOracle(SequentialLogWithHeader logWithHeader) throws IOException {
+      SequentialLog<OLogEntry> log = logWithHeader.log;
+      final OLogHeader header = logWithHeader.header;
+
+      oLogEntryOracle.notifyLogging(new OLogEntry(header.getBaseSeqNum(), header.getBaseTerm(),
+          new OLogProtostuffContent<>(header.getBaseConfiguration())));
+      // TODO it isn't necessary to read the content of every entry; only those which refer to configurations.
+      // TODO Also should the navigator be updated on the last entry?
+      log.forEach(oLogEntryOracle::notifyLogging);
+    }
+
+    private void increaseExpectedNextSeqNumTo(long seqNum) {
+      if (seqNum > expectedNextSequenceNumber) {
+        setExpectedNextSequenceNumber(seqNum);
+      }
+    }
+
+    private OLogHeader newQuorumHeader() {
+      return new OLogHeader(0, 0, QuorumConfiguration.EMPTY.toProtostuff());
     }
   }
 
   @Override
   public ListenableFuture<Void> openAsync(String quorumId) {
+    quorumMap.computeIfAbsent(quorumId, q -> new PerQuorum(quorumId));
     return submitQuorumTask(quorumId, () -> {
-      createAndPrepareQuorumStructures(quorumId);
+      getQuorumStructure(quorumId).open();
       return null;
     });
   }
@@ -155,7 +248,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     // TODO group commit / sync
 
     return submitQuorumTask(quorumId, () -> {
-      quorumLog(quorumId).append(entries);
+      currentLog(quorumId).append(entries);
       return true;
     });
   }
@@ -168,15 +261,22 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       return Futures.immediateFuture(new ArrayList<>());
     }
 
-    return submitQuorumTask(quorumId, () -> quorumLog(quorumId).subSequence(start, end));
+    // TODO getting entries from a previous (rolled) log
+
+    return submitQuorumTask(quorumId, () -> currentLog(quorumId).subSequence(start, end));
   }
 
   @Override
   public ListenableFuture<Boolean> truncateLog(long seqNum, String quorumId) {
     getQuorumStructure(quorumId).setExpectedNextSequenceNumber(seqNum);
     oLogEntryOracle(quorumId).notifyTruncation(seqNum);
+
     return submitQuorumTask(quorumId, () -> {
-      quorumLog(quorumId).truncate(seqNum);
+      while (seqNumPrecedesLog(seqNum, getQuorumStructure(quorumId).currentLogWithHeader())) {
+        getQuorumStructure(quorumId).deleteCurrentLog();
+      }
+
+      currentLog(quorumId).truncate(seqNum);
       return true;
     });
   }
@@ -203,7 +303,12 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   @Override
   public ListenableFuture<Void> roll(String quorumId) throws IOException {
-    return null;
+    final OLogHeader newLogHeader = buildRollHeader(quorumId);
+
+    return submitQuorumTask(quorumId, () -> {
+      getQuorumStructure(quorumId).roll(newLogHeader);
+      return null;
+    });
   }
 
   @Override
@@ -214,8 +319,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       throw new RuntimeException(e);
     }
 
-    for (PerQuorum quorum : quorumMap.values()) {
-      quorum.quorumLog.close();
+    for (PerQuorum quorumStructure : quorumMap.values()) {
+      quorumStructure.close();
     }
   }
 
@@ -227,8 +332,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     return ImmutableList.copyOf(entries);
   }
 
-  private SequentialLog<OLogEntry> quorumLog(String quorumId) {
-    return getQuorumStructure(quorumId).quorumLog;
+  private SequentialLog<OLogEntry> currentLog(String quorumId) throws IOException {
+    return getQuorumStructure(quorumId).currentLogWithHeader().log;
   }
 
   private OLogEntryOracle oLogEntryOracle(String quorumId) {
@@ -237,43 +342,10 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
   private PerQuorum getQuorumStructure(String quorumId) {
     PerQuorum perQuorum = quorumMap.get(quorumId);
-    if (perQuorum == null || !perQuorum.opened) {
+    if (perQuorum == null) {
       quorumNotOpen(quorumId);
     }
     return perQuorum;
-  }
-
-  private void createAndPrepareQuorumStructures(String quorumId) {
-    quorumMap.computeIfAbsent(quorumId, q -> {
-      try {
-        return new PerQuorum(quorumId);
-      } catch (IOException e) {
-        // Translate exception because computeIfAbsent 's Function declares no checked exception
-        throw new RuntimeException(e);
-      }
-    });
-  }
-
-  /**
-   * Create and save a new persistence, with the given header, for the given quorum.
-   *
-   * @param quorumId           Quorum ID
-   * @param header             OLogHeader to be written to the beginning of the new persistence
-   * @param persistenceService The LogPersistenceService, included as a parameter here in order to
-   *                           capture a wildcard
-   * @param <P>                Captured wildcard; the type of the BytePersistence to create and write
-   * @return The length of the written header
-   * @throws IOException
-   */
-  private <P extends BytePersistence> long addNewPersistenceWithHeader(String quorumId,
-                                                                       OLogHeader header,
-                                                                       LogPersistenceService<P> persistenceService)
-      throws IOException {
-    P persistence = persistenceService.create(quorumId);
-    List<ByteBuffer> buffers = encodeWithLengthAndCrc(OLogHeader.getSchema(), header);
-    persistence.append(Iterables.toArray(buffers, ByteBuffer.class));
-    persistenceService.append(quorumId, persistence);
-    return persistence.size();
   }
 
   private void updateOracleWithNewEntries(List<OLogEntry> entries, String quorumId) {
@@ -281,6 +353,18 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     for (OLogEntry e : entries) {
       oLogEntryOracle.notifyLogging(e);
     }
+  }
+
+  private OLogHeader buildRollHeader(String quorumId) {
+    final long baseTerm = getLastTerm(quorumId);
+    final long baseSeqNum = getNextSeqNum(quorumId) - 1;
+    final QuorumConfiguration baseConfiguration = getLastQuorumConfig(quorumId).quorumConfiguration;
+
+    return new OLogHeader(baseTerm, baseSeqNum, baseConfiguration.toProtostuff());
+  }
+
+  private boolean seqNumPrecedesLog(long seqNum, @NotNull SequentialLogWithHeader logWithHeader) {
+    return seqNum <= logWithHeader.header.getBaseSeqNum();
   }
 
   private void quorumNotOpen(String quorumId) {
