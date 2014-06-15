@@ -35,6 +35,8 @@ public class NavigableMapOLogEntryOracle implements OLogEntryOracle {
   private final NavigableMap<Long, Long> termMap = new TreeMap<>();
   private final NavigableMap<Long, QuorumConfiguration> configMap = new TreeMap<>();
 
+  private long greatestSeqNum = 0;
+
   @Override
   public void notifyLogging(OLogEntry entry) {
     final long lastTerm = getLastTerm();
@@ -42,6 +44,8 @@ public class NavigableMapOLogEntryOracle implements OLogEntryOracle {
     final long entrySeqNum = entry.getSeqNum();
 
     ensureNondecreasingTerm(entryTerm, lastTerm);
+
+    greatestSeqNum = Math.max(greatestSeqNum, entrySeqNum);
 
     if (entryTerm > lastTerm) {
       termMap.put(entrySeqNum, entryTerm);
@@ -57,6 +61,12 @@ public class NavigableMapOLogEntryOracle implements OLogEntryOracle {
   public void notifyTruncation(long seqNum) {
     termMap.tailMap(seqNum, true).clear();
     configMap.tailMap(seqNum, true).clear();
+    greatestSeqNum = seqNum - 1;
+  }
+
+  @Override
+  public long getGreatestSeqNum() {
+    return greatestSeqNum;
   }
 
   @Override

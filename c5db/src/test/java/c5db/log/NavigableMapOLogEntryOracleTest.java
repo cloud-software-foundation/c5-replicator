@@ -93,6 +93,31 @@ public class NavigableMapOLogEntryOracleTest {
     assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(secondConfig, 2))));
   }
 
+  @Test
+  public void reportsAGreatestSeqNumOfZeroWhenNothingHasBeenLogged() throws Exception {
+    assertThat(oracle.getGreatestSeqNum(), is(equalTo(0L)));
+  }
+
+  @Test
+  public void reportsTheGreatestSeqNumLogged() throws Exception {
+    havingLogged(
+        entries()
+            .term(8).indexes(1, 2, 3));
+    assertThat(oracle.getGreatestSeqNum(), is(equalTo(3L)));
+  }
+
+  @Test
+  public void takesTruncationIntoAccountWhenReportingTheGreatestSeqNumLogged() throws Exception {
+    havingLogged(
+        entries()
+            .term(8).indexes(1, 2, 3));
+
+    havingTruncatedToIndex(2);
+    assertThat(oracle.getGreatestSeqNum(), is(equalTo(1L)));
+
+    havingTruncatedToIndex(1);
+    assertThat(oracle.getGreatestSeqNum(), is(equalTo(0L)));
+  }
 
   private void havingLogged(LogTestUtil.LogSequenceBuilder sequenceBuilder) {
     for (LogEntry entry : sequenceBuilder.build()) {

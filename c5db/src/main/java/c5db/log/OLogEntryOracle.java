@@ -36,9 +36,19 @@ public interface OLogEntryOracle {
    * This method removes information from the map. It must be called when the log
    * has truncated some entries.
    *
-   * @param seqNum Index to truncate back to, inclusive.
+   * @param seqNum Log sequence number to truncate back to, inclusive.
    */
   void notifyTruncation(long seqNum);
+
+  /**
+   * Return the greatest sequence number of entries logged. If no entries have
+   * been logged, return zero. Immediately after notifyTruncation is called, the
+   * greatest sequence number will be one less than the sequence number passed to
+   * notifyTruncation.
+   *
+   * @return The greatest sequence known to the oracle, or zero if there is none.
+   */
+  long getGreatestSeqNum();
 
   /**
    * Get the last term logged, or zero if there is none.
