@@ -34,6 +34,7 @@ import java.nio.channels.ReadableByteChannel;
  */
 class ByteArrayPersistence implements LogPersistenceService.BytePersistence {
   private ByteArrayOutputStream stream;
+  private volatile boolean closed;
 
   public ByteArrayPersistence() {
     stream = new ByteArrayOutputStream();
@@ -58,6 +59,7 @@ class ByteArrayPersistence implements LogPersistenceService.BytePersistence {
 
   @Override
   public void append(ByteBuffer[] buffers) throws IOException {
+    ensureNotClosed();
     for (ByteBuffer buffer : buffers) {
       byte[] bytes = new byte[buffer.remaining()];
       buffer.get(bytes);
@@ -72,6 +74,7 @@ class ByteArrayPersistence implements LogPersistenceService.BytePersistence {
 
   @Override
   public void truncate(long size) throws IOException {
+    ensureNotClosed();
     int intSize = Ints.checkedCast(size);
     byte[] bytes = stream.toByteArray();
     stream = new ByteArrayOutputStream(intSize);
@@ -79,14 +82,15 @@ class ByteArrayPersistence implements LogPersistenceService.BytePersistence {
   }
 
   @Override
-  public void sync() {
-    // Not necessary to do anything here
+  public void sync() throws IOException {
+    ensureNotClosed();
   }
 
   @Override
   public void close() throws IOException {
     // With ByteArrayOutputStream, this is actually a no-op:
     stream.close();
+    closed = true;
   }
 
 
@@ -127,6 +131,12 @@ class ByteArrayPersistence implements LogPersistenceService.BytePersistence {
     @Override
     public void close() throws IOException {
       channel.close();
+    }
+  }
+
+  private void ensureNotClosed() throws IOException {
+    if (closed) {
+      throw new IOException("attempted to use ByteArrayPersistence, but it is closed");
     }
   }
 }

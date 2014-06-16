@@ -57,6 +57,14 @@ public class LogFileServiceTest {
     logFileService = new LogFileService(testDirectory);
   }
 
+  @Test(expected = IOException.class)
+  public void throwsAnIOExceptionIfAttemptingToAppendToTheFileAfterClosingIt() throws Exception {
+    try (FilePersistence persistence = logFileService.create(QUORUM_ID)) {
+      persistence.close();
+      persistence.append(serializedHeader(anOLogHeader()));
+    }
+  }
+
   @Test
   public void returnsNullWhenCallingGetCurrentWhenThereAreNoLogs() throws Exception {
     assertThat(logFileService.getCurrent(QUORUM_ID), nullValue());

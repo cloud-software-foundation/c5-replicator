@@ -121,7 +121,7 @@ public interface LogPersistenceService<P extends LogPersistenceService.BytePersi
      * Append data.
      *
      * @param buffers Data to append.
-     * @throws IOException
+     * IOException if the persistence is closed, or if the underlying object is inaccessible.
      */
     void append(ByteBuffer[] buffers) throws IOException;
 
@@ -140,14 +140,14 @@ public interface LogPersistenceService<P extends LogPersistenceService.BytePersi
      * @param size New size of the data, equal to the position/address of the next
      *             byte to be appended after the truncation. After calling this method,
      *             the size() method will return this value of size.
-     * @throws IOException
+     * @throws IOException if the persistence is closed, or if the underlying object is inaccessible.
      */
     void truncate(long size) throws IOException;
 
     /**
      * Sync previous operations to the underlying medium.
      *
-     * @throws IOException
+     * @throws IOException if the persistence is closed, or if the underlying object is inaccessible.
      */
     void sync() throws IOException;
 
