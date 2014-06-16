@@ -75,7 +75,7 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
       return;
     }
 
-    flushAllQueues();
+    flushAllQueues(timeout, unit);
     shutdownInternalExecutorService(timeout, unit);
   }
 
@@ -89,14 +89,14 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
   /**
    * Wait for all tasks on all queues to complete
    */
-  private void flushAllQueues() throws InterruptedException {
+  private void flushAllQueues(long timeout, TimeUnit unit) throws InterruptedException {
     synchronized (keyQueues) {
       final CountDownLatch submittedAllQueuedTasks = new CountDownLatch(keyQueues.size());
 
       for (EmptyCheckingQueue<Runnable> queue : keyQueues.values()) {
         enqueueOrRunTask(submittedAllQueuedTasks::countDown, queue);
       }
-      submittedAllQueuedTasks.await();
+      submittedAllQueuedTasks.await(timeout, unit);
     }
   }
 
