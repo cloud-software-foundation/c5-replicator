@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.C5ServerConstants;
 import c5db.generated.OLogHeader;
 import c5db.replication.QuorumConfiguration;
 import c5db.util.KeySerializingExecutor;
@@ -202,7 +203,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   @Override
   public void close() throws IOException {
     try {
-      taskExecutor.shutdownAndAwaitTermination(15, TimeUnit.SECONDS);
+      taskExecutor.shutdownAndAwaitTermination(C5ServerConstants.WAL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);
     }
