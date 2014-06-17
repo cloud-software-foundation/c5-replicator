@@ -135,7 +135,7 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
         }
       }
     } catch (EOFException e) {
-      throw new LogEntryNotFound(e);
+      throw new LogEntryNotFound("EOF reached before finding requested seqNum (" + seqNum + ")");
     }
   }
 

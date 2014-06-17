@@ -64,7 +64,8 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
         seqNum = entry.getSeqNum();
       } while (seqNum < end - 1);
     } catch (EOFException e) {
-      throw new LogEntryNotFound(e);
+      throw new LogEntryNotFound("EOF reached before finding all requested entries: seqNum range ["
+          + start + ", " + end + ")");
     }
 
     ensureAscendingWithNoGaps(readEntries);
