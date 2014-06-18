@@ -17,10 +17,14 @@
 
 package c5db.log;
 
+import c5db.util.CheckedSupplier;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.jmock.lib.concurrent.Synchroniser;
@@ -31,8 +35,12 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
@@ -52,9 +60,6 @@ public class QuorumDelegatingLogUnitTest {
     setThreadingPolicy(new Synchroniser());
   }};
 
-  private final LogPersistenceService persistenceService = context.mock(LogPersistenceService.class);
-  private final BytePersistence bytePersistence = context.mock(BytePersistence.class);
-
   private final KeySerializingExecutor serializingExecutor =
       new WrappingKeySerializingExecutor(MoreExecutors.sameThreadExecutor());
 
@@ -66,7 +71,7 @@ public class QuorumDelegatingLogUnitTest {
 
 
   private final QuorumDelegatingLog oLog = new QuorumDelegatingLog(
-      persistenceService,
+      new ArrayPersistenceService(),
       serializingExecutor,
       OLogEntryOracleFactory,
       navigatorFactory);
@@ -84,14 +89,6 @@ public class QuorumDelegatingLogUnitTest {
 
       allowing(persistenceNavigator).getStreamAtFirstEntry();
       will(returnValue(aZeroLengthInputStream()));
-
-      allowing(bytePersistence).isEmpty();
-      will(returnValue(true));
-
-      allowing(bytePersistence).size();
-      will(returnValue(0L));
-
-      allowing(bytePersistence).close();
     }});
   }
 
@@ -120,13 +117,6 @@ public class QuorumDelegatingLogUnitTest {
       allowing(oLogEntryOracle).notifyLogging(with(any(OLogEntry.class)));
       allowing(persistenceNavigator).notifyLogging(with(any(Long.class)), with(any(Long.class)));
       allowing(persistenceNavigator).addToIndex(with(any(Long.class)), with(any(Long.class)));
-      allowing(bytePersistence).append(with(any(ByteBuffer[].class)));
-
-      oneOf(persistenceService).getCurrent(quorumA);
-      will(returnValue(bytePersistence));
-
-      oneOf(persistenceService).getCurrent(quorumB);
-      will(returnValue(bytePersistence));
     }});
 
     oLog.openAsync(quorumA).get();
@@ -143,11 +133,6 @@ public class QuorumDelegatingLogUnitTest {
 
     context.checking(new Expectations() {{
       ignoring(persistenceNavigator);
-
-      allowing(persistenceService).getCurrent(quorumId);
-      will(returnValue(bytePersistence));
-
-      allowing(bytePersistence).append(with(any(ByteBuffer[].class)));
 
       oneOf(oLogEntryOracle).notifyLogging(entry);
     }});
@@ -167,5 +152,43 @@ public class QuorumDelegatingLogUnitTest {
         return -1;
       }
     };
+  }
+
+  /**
+   * In-memory LogPersistenceService to simplify these tests, rather than use mocks that return mocks.
+   */
+  private static class ArrayPersistenceService implements LogPersistenceService<ByteArrayPersistence> {
+    private final Map<String, Deque<ByteArrayPersistence>> quorumMap = new HashMap<>();
+
+    @Nullable
+    @Override
+    public ByteArrayPersistence getCurrent(String quorumId) throws IOException {
+      quorumMap.putIfAbsent(quorumId, new ArrayDeque<>());
+      return quorumMap.get(quorumId).peek();
+    }
+
+    @NotNull
+    @Override
+    public ByteArrayPersistence create(String quorumId) throws IOException {
+      return new ByteArrayPersistence();
+    }
+
+    @Override
+    public void append(String quorumId, @NotNull ByteArrayPersistence persistence) throws IOException {
+      quorumMap.putIfAbsent(quorumId, new ArrayDeque<>());
+      quorumMap.get(quorumId).push(persistence);
+    }
+
+    @Override
+    public void truncate(String quorumId) throws IOException {
+      quorumMap.get(quorumId).pop();
+    }
+
+    @Override
+    public Iterator<CheckedSupplier<ByteArrayPersistence, IOException>> iterator(String quorumId) {
+      return Iterators.transform(
+          quorumMap.get(quorumId).iterator(),
+          (persistence) -> (() -> persistence));
+    }
   }
 }

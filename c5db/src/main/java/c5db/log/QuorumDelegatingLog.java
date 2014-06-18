@@ -90,6 +90,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       if (persistence.isEmpty()) {
         header = writeAndReturnEmptyLogHeader();
         headerSize = persistence.size();
+        persistenceService.append(quorumId, persistence);
       } else {
         CountingInputStream input = getCountingInputStream();
         header = decodeAndCheckCrc(input, OLogHeader.getSchema());
@@ -117,7 +118,11 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
 
     private BytePersistence createOrOpenBytePersistence(String quorumId) throws IOException {
-      return persistenceService.getCurrent(quorumId);
+      BytePersistence persistence = persistenceService.getCurrent(quorumId);
+      if (persistence == null) {
+        persistence = persistenceService.create(quorumId);
+      }
+      return persistence;
     }
 
     private OLogHeader writeAndReturnEmptyLogHeader() throws IOException {

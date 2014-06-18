@@ -17,10 +17,10 @@
 
 package c5db.log;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -32,12 +32,12 @@ import static java.nio.file.StandardOpenOption.READ;
  */
 public class FilePersistence implements BytePersistence {
   private final FileChannel appendChannel;
-  final File logFile;
+  final Path path;
   private long filePosition;
 
-  public FilePersistence(File logFile) throws IOException {
-    this.logFile = logFile;
-    appendChannel = FileChannel.open(logFile.toPath(), CREATE, APPEND);
+  public FilePersistence(Path path) throws IOException {
+    this.path = path;
+    appendChannel = FileChannel.open(path, CREATE, APPEND);
     filePosition = appendChannel.position();
   }
 
@@ -59,7 +59,7 @@ public class FilePersistence implements BytePersistence {
 
   @Override
   public LogPersistenceService.PersistenceReader getReader() throws IOException {
-    return new NioReader(FileChannel.open(logFile.toPath(), READ));
+    return new NioReader(FileChannel.open(path, READ));
   }
 
   @Override

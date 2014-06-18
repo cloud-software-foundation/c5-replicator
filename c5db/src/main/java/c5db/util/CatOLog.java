@@ -76,7 +76,7 @@ public class CatOLog {
   private static void openFileAndParseEntries(File inputLogFile,
                                               HeaderWithCrcValidity doWithHeader,
                                               EntryWithAddress doForEach) throws IOException {
-    try (BytePersistence persistence = new FilePersistence(inputLogFile);
+    try (BytePersistence persistence = new FilePersistence(inputLogFile.toPath());
          PersistenceReader reader = persistence.getReader();
          InputStream inputStream = Channels.newInputStream(reader)) {
 

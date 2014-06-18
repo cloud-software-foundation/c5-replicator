@@ -21,25 +21,25 @@ import c5db.C5ServerConstants;
 import c5db.util.CheckedSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 /**
  * LogPersistenceService using FilePersistence objects (Files and FileChannels).
  */
 public class LogFileService implements LogPersistenceService<FilePersistence> {
-  private static final Logger LOG = LoggerFactory.getLogger(LogFileService.class);
-
-  private final Path walDir;
+  private final Path walRootDir;
   private final Path archiveDir;
 
   public LogFileService(Path basePath) throws IOException {
-    this.walDir = basePath.resolve(C5ServerConstants.WAL_DIR);
+    this.walRootDir = basePath.resolve(C5ServerConstants.WAL_ROOT_DIRECTORY_NAME);
     this.archiveDir = basePath.resolve(C5ServerConstants.ARCHIVE_DIR);
 
     createDirectoryStructure();
@@ -48,28 +48,67 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   @Nullable
   @Override
   public FilePersistence getCurrent(String quorumId) throws IOException {
-    return null;
+    final Path currentLink = getCurrentLink(quorumId);
+    if (currentLink == null) {
+      return null;
+    } else {
+      return new FilePersistence(Files.readSymbolicLink(currentLink));
+    }
   }
 
   @NotNull
   @Override
   public FilePersistence create(String quorumId) throws IOException {
-    return null;
+    return new FilePersistence(getNewLogFilePath(quorumId));
   }
 
   @Override
   public void append(String quorumId, @NotNull FilePersistence persistence) throws IOException {
+    final Path currentLink = getCurrentLink(quorumId);
+    final long linkId;
 
+    if (currentLink == null) {
+      linkId = 1;
+    } else {
+      linkId = linkIdOfFile(currentLink.toFile()) + 1;
+    }
+
+    Files.createSymbolicLink(pathForLinkId(linkId, quorumId), persistence.path);
   }
 
   @Override
   public void truncate(String quorumId) throws IOException {
-
+    Files.delete(getCurrentLink(quorumId));
   }
 
   @Override
   public Iterator<CheckedSupplier<FilePersistence, IOException>> iterator(String quorumId) {
-    return null;
+    return new Iterator<CheckedSupplier<FilePersistence, IOException>>() {
+      Iterator<Path> linkPathIterator; // Initialization requires IO, so do it lazily
+
+      @Override
+      public boolean hasNext() {
+        initializeUnderlyingIteratorIfNeeded();
+        return linkPathIterator.hasNext();
+      }
+
+      @Override
+      public CheckedSupplier<FilePersistence, IOException> next() {
+        initializeUnderlyingIteratorIfNeeded();
+        Path linkPath = linkPathIterator.next();
+        return () -> new FilePersistence(Files.readSymbolicLink(linkPath));
+      }
+
+      private void initializeUnderlyingIteratorIfNeeded() {
+        try {
+          if (linkPathIterator == null) {
+            linkPathIterator = getLinkPathMap(quorumId).descendingMap().values().iterator();
+          }
+        } catch (IOException e) {
+          throw new IteratorIOException(e);
+        }
+      }
+    };
   }
 
   /**
@@ -78,12 +117,12 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
    * @throws IOException
    */
   public void moveLogsToArchive() throws IOException {
-    for (File file : allFilesInDirectory(walDir)) {
+    for (File file : allFilesInDirectory(walRootDir)) {
       boolean success = file.renameTo(archiveDir
           .resolve(file.getName())
           .toFile());
       if (!success) {
-        String err = "Unable to move: " + file.getAbsolutePath() + " to " + walDir;
+        String err = "Unable to move: " + file.getAbsolutePath() + " to " + walRootDir;
         throw new IOException(err);
       }
     }
@@ -98,7 +137,6 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   public void clearOldArchivedLogs(long timestamp) throws IOException {
     for (File file : allFilesInDirectory(archiveDir)) {
       if (timestamp == 0 || file.lastModified() > timestamp) {
-        LOG.debug("Removing old log file" + file);
         boolean success = file.delete();
         if (!success) {
           throw new IOException("Unable to delete file:" + file);
@@ -107,66 +145,68 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
     }
   }
 
-
-  /**
-   * Finding an existing write-ahead log file to use for the specified quorum, or create
-   * a new one if an old one isn't found.
-   */
-  private File prepareNewLogFileOrFindExisting(String quorumId) {
-    File logFile = findExistingLogFile(quorumId);
-    if (logFile == null) {
-      logFile = prepareNewLogFile(quorumId);
-      assert logFile != null;
-    }
-    return logFile;
+  private Path getNewLogFilePath(String quorumId) throws IOException {
+    String fileName = String.valueOf(System.nanoTime());
+    createQuorumDirectoryIfNeeded(quorumId);
+    return logFileDir(quorumId).resolve(fileName);
   }
 
-  private File findExistingLogFile(String quorumId) {
-    for (File file : allFilesInDirectory(walDir)) {
-      if (file.getName().startsWith(logFilePrefix(quorumId))) {
-        LOG.info("Existing WAL found {} ; using it", file);
-        return file;
+  @Nullable
+  private Path getCurrentLink(String quorumId) throws IOException {
+    Map.Entry<Long, Path> lastEntry = getLinkPathMap(quorumId).lastEntry();
+    if (lastEntry == null) {
+      return null;
+    } else {
+      return lastEntry.getValue();
+    }
+  }
+
+  private NavigableMap<Long, Path> getLinkPathMap(String quorumId) throws IOException {
+    NavigableMap<Long, Path> linkPathMap = new TreeMap<>();
+
+    for (File file : allFilesInDirectory(quorumDir(quorumId))) {
+      if (!Files.isSymbolicLink(file.toPath())) {
+        continue;
       }
+
+      long fileId = linkIdOfFile(file);
+      linkPathMap.put(fileId, file.toPath());
     }
-    return null;
+
+    return linkPathMap;
   }
 
-  private File prepareNewLogFile(String quorumId) {
-    long fileNum = System.nanoTime();
-    return walDir.resolve(logFilePrefix(quorumId) + fileNum).toFile();
+  private long linkIdOfFile(File file) {
+    return Long.parseLong(file.getName());
   }
 
-  private static String logFilePrefix(String quorumId) {
-    return C5ServerConstants.LOG_NAME + "-" + quorumId + "-";
+  private Path pathForLinkId(long linkId, String quorumId) {
+    return quorumDir(quorumId).resolve(String.valueOf(linkId));
+  }
+
+  private Path quorumDir(String quorumId) {
+    return walRootDir.resolve(quorumId);
+  }
+
+  private Path logFileDir(String quorumId) {
+    return quorumDir(quorumId).resolve(C5ServerConstants.WAL_LOG_FILE_SUBDIRECTORY_NAME);
   }
 
   private void createDirectoryStructure() throws IOException {
-    createDirsIfNecessary(walDir);
-    createDirsIfNecessary(archiveDir);
+    Files.createDirectories(walRootDir);
   }
 
-  private static File[] allFilesInDirectory(Path dirPath) {
+  private void createQuorumDirectoryIfNeeded(String quorumId) throws IOException {
+    Files.createDirectories(quorumDir(quorumId));
+    Files.createDirectories(logFileDir(quorumId));
+  }
+
+  private static File[] allFilesInDirectory(Path dirPath) throws IOException {
     File[] files = dirPath.toFile().listFiles();
     if (files == null) {
       return new File[]{};
     } else {
       return files;
-    }
-  }
-
-  /**
-   * Create the directory at dirPath if it does not already exist.
-   *
-   * @param dirPath Path to directory to create.
-   * @throws IOException
-   */
-  private static void createDirsIfNecessary(Path dirPath) throws IOException {
-    if (!dirPath.toFile().exists()) {
-      boolean success = dirPath.toFile().mkdirs();
-      if (!success) {
-        LOG.error("Creation of path {} failed", dirPath);
-        throw new IOException("createDirsIfNecessary");
-      }
     }
   }
 }
