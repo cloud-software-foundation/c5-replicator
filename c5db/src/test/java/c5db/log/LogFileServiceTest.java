@@ -158,8 +158,9 @@ public class LogFileServiceTest {
   }
 
   private static OLogHeader deserializedHeader(BytePersistence persistence) throws Exception {
-    InputStream input = Channels.newInputStream(persistence.getReader());
-    return decodeAndCheckCrc(input, OLogHeader.getSchema());
+    try (InputStream input = Channels.newInputStream(persistence.getReader())) {
+      return decodeAndCheckCrc(input, OLogHeader.getSchema());
+    }
   }
 
   private static QuorumConfigurationMessage configurationOf(long... peerIds) {

@@ -82,8 +82,9 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
       return null;
     }
 
-    InputStream inputStream = persistenceNavigator.getStreamAtLastEntry();
-    return codec.decode(inputStream);
+    try (InputStream inputStream = persistenceNavigator.getStreamAtLastEntry()) {
+      return codec.decode(inputStream);
+    }
   }
 
   @Override

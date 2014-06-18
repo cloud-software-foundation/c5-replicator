@@ -214,11 +214,12 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
 
     private SequentialLogWithHeader readLogFromPersistence(BytePersistence persistence) throws IOException {
-      CountingInputStream input = getCountingInputStream(persistence.getReader());
-      final OLogHeader header = decodeAndCheckCrc(input, OLogHeader.getSchema());
-      final long headerSize = input.getCount();
+      try (CountingInputStream input = getCountingInputStream(persistence.getReader())) {
+        final OLogHeader header = decodeAndCheckCrc(input, OLogHeader.getSchema());
+        final long headerSize = input.getCount();
 
-      return createSequentialLogWithHeader(persistence, header, headerSize);
+        return createSequentialLogWithHeader(persistence, header, headerSize);
+      }
     }
 
     private SequentialLogWithHeader createSequentialLogWithHeader(BytePersistence persistence,
