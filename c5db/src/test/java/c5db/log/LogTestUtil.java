@@ -55,16 +55,16 @@ public class LogTestUtil {
     return Lists.newArrayList(makeEntry(seqNum, term, data));
   }
 
-  public static LogEntry makeProtostuffEntry(long seqNum, long term, String stringData) {
-    return makeEntry(seqNum, term, stringData).toProtostuff();
+  public static LogEntry makeProtostuffEntry(long index, long term, String stringData) {
+    return makeEntry(index, term, stringData).toProtostuff();
   }
 
-  public static LogEntry makeProtostuffEntry(long seqNum, long term, ByteBuffer data) {
-    return makeEntry(seqNum, term, data).toProtostuff();
+  public static LogEntry makeProtostuffEntry(long index, long term, ByteBuffer data) {
+    return makeEntry(index, term, data).toProtostuff();
   }
 
-  public static LogEntry makeConfigurationEntry(long seqNum, long term, QuorumConfiguration configuration) {
-    return new LogEntry(term, seqNum, new ArrayList<>(), configuration.toProtostuff());
+  public static LogEntry makeConfigurationEntry(long index, long term, QuorumConfiguration configuration) {
+    return new LogEntry(term, index, new ArrayList<>(), configuration.toProtostuff());
   }
 
   public static long seqNum(long seqNum) {
@@ -118,8 +118,8 @@ public class LogTestUtil {
       return this;
     }
 
-    public LogSequenceBuilder indexes(long... indexList) {
-      for (long index : indexList) {
+    public LogSequenceBuilder indexes(long... indexes) {
+      for (long index : indexes) {
         logSequence.add(makeProtostuffEntry(index, term, someData()));
       }
       return this;
@@ -128,6 +128,16 @@ public class LogTestUtil {
     public LogSequenceBuilder configurationAndIndex(QuorumConfiguration configuration, long index) {
       logSequence.add(new LogEntry(term, index, new ArrayList<>(), configuration.toProtostuff()));
       return this;
+    }
+
+    // Alternate name for code clarity in certain places
+    public LogSequenceBuilder seqNums(long... seqNums) {
+      return indexes(seqNums);
+    }
+
+    // Alternate name for code clarity in certain places
+    public LogSequenceBuilder configurationAndSeqNum(QuorumConfiguration configuration, long seqNum) {
+      return configurationAndIndex(configuration, seqNum);
     }
 
     public List<LogEntry> build() {

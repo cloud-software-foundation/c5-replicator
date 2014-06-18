@@ -83,7 +83,7 @@ public class InMemoryPersistenceNavigatorTest {
   }
 
   @Test(expected = Exception.class)
-  public void throwsAnExceptionIfAskedToTruncateToIndexZero() throws Exception {
+  public void throwsAnExceptionIfAskedToTruncateToSeqNumZero() throws Exception {
     navigator.notifyTruncation(0);
   }
 

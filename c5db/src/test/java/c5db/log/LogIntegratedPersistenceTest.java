@@ -45,8 +45,8 @@ import static org.hamcrest.Matchers.equalTo;
  * persisted information can be reconstructed from the information left on disk, so that a replicator
  * can pick up where it left off after a crash.
  */
-public class OLogIntegratedPersistenceTest {
-  private static final String QUORUM_ID = "OLogIntegratedPersistenceTest";
+public class LogIntegratedPersistenceTest {
+  private static final String QUORUM_ID = "LogIntegratedPersistenceTest";
   private static final int NUM_THREADS = 3;
 
   private final Path testDirectory = (new C5CommonTestUtil()).getDataTestDir("olog");

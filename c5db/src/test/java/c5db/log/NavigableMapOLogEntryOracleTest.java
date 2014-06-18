@@ -39,8 +39,8 @@ public class NavigableMapOLogEntryOracleTest {
   public void returnsTheElectionTermAtAGivenSeqNum() throws Exception {
     havingLogged(
         entries()
-            .term(17).indexes(5, 6, 7)
-            .term(18).indexes(8, 9, 10));
+            .term(17).seqNums(5, 6, 7)
+            .term(18).seqNums(8, 9, 10));
 
     assertThat(oracle.getTermAtSeqNum(4), is(equalTo(0L)));
     assertThat(oracle.getTermAtSeqNum(5), is(equalTo(17L)));
@@ -51,11 +51,11 @@ public class NavigableMapOLogEntryOracleTest {
   public void handlesTruncationsAndUpdatesTermInformationAccordingly() throws Exception {
     havingLogged(
         entries()
-            .term(7).indexes(1, 2));
-    havingTruncatedToIndex(2);
+            .term(7).seqNums(1, 2));
+    havingTruncatedToSeqNum(2);
     havingLogged(
         entries()
-            .term(8).indexes(2));
+            .term(8).seqNums(2));
 
     assertThat(oracle.getTermAtSeqNum(1), is(equalTo(7L)));
     assertThat(oracle.getTermAtSeqNum(2), is(equalTo(8L)));
@@ -66,31 +66,31 @@ public class NavigableMapOLogEntryOracleTest {
     havingLogged(
         entries()
             .term(999)
-            .indexes(5)
-            .configurationAndIndex(firstConfig, 6)
-            .indexes(7, 8, 9));
-    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(firstConfig, 6))));
+            .seqNums(5)
+            .configurationAndSeqNum(firstConfig, 6)
+            .seqNums(7, 8, 9));
+    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndSeqNum(firstConfig, 6))));
 
     havingLogged(
         entries()
             .term(999)
-            .configurationAndIndex(secondConfig, 10));
+            .configurationAndSeqNum(secondConfig, 10));
 
-    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(secondConfig, 10))));
+    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndSeqNum(secondConfig, 10))));
   }
 
   @Test
   public void handlesTruncationsAndUpdatesQuorumConfigurationInformationAccordingly() throws Exception {
     havingLogged(
         entries()
-            .term(7).configurationAndIndex(firstConfig, 1));
-    havingTruncatedToIndex(1);
-    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(EMPTY, 0))));
+            .term(7).configurationAndSeqNum(firstConfig, 1));
+    havingTruncatedToSeqNum(1);
+    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndSeqNum(EMPTY, 0))));
 
     havingLogged(
         entries()
-            .term(8).configurationAndIndex(secondConfig, 2));
-    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndIndex(secondConfig, 2))));
+            .term(8).configurationAndSeqNum(secondConfig, 2));
+    assertThat(oracle.getLastQuorumConfig(), is(equalTo(configurationAndSeqNum(secondConfig, 2))));
   }
 
   @Test
@@ -102,7 +102,7 @@ public class NavigableMapOLogEntryOracleTest {
   public void reportsTheGreatestSeqNumLogged() throws Exception {
     havingLogged(
         entries()
-            .term(8).indexes(1, 2, 3));
+            .term(8).seqNums(1, 2, 3));
     assertThat(oracle.getGreatestSeqNum(), is(equalTo(3L)));
   }
 
@@ -110,12 +110,12 @@ public class NavigableMapOLogEntryOracleTest {
   public void takesTruncationIntoAccountWhenReportingTheGreatestSeqNumLogged() throws Exception {
     havingLogged(
         entries()
-            .term(8).indexes(1, 2, 3));
+            .term(8).seqNums(1, 2, 3));
 
-    havingTruncatedToIndex(2);
+    havingTruncatedToSeqNum(2);
     assertThat(oracle.getGreatestSeqNum(), is(equalTo(1L)));
 
-    havingTruncatedToIndex(1);
+    havingTruncatedToSeqNum(1);
     assertThat(oracle.getGreatestSeqNum(), is(equalTo(0L)));
   }
 
@@ -126,12 +126,12 @@ public class NavigableMapOLogEntryOracleTest {
     }
   }
 
-  private void havingTruncatedToIndex(long index) {
-    oracle.notifyTruncation(index);
+  private void havingTruncatedToSeqNum(long seqNum) {
+    oracle.notifyTruncation(seqNum);
   }
 
-  private QuorumConfigurationWithSeqNum configurationAndIndex(QuorumConfiguration quorumConfiguration,
-                                                              long index) {
-    return new QuorumConfigurationWithSeqNum(quorumConfiguration, index);
+  private QuorumConfigurationWithSeqNum configurationAndSeqNum(QuorumConfiguration quorumConfiguration,
+                                                               long seqNum) {
+    return new QuorumConfigurationWithSeqNum(quorumConfiguration, seqNum);
   }
 }
