@@ -20,10 +20,13 @@ package c5db.log;
 import c5db.C5ServerConstants;
 import c5db.generated.OLogHeader;
 import c5db.replication.QuorumConfiguration;
+import c5db.util.C5Iterators;
 import c5db.util.CheckedSupplier;
 import c5db.util.KeySerializingExecutor;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
 import com.google.common.io.CountingInputStream;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,6 +37,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +53,8 @@ import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 import static c5db.log.LogPersistenceService.PersistenceReader;
 import static c5db.log.OLogEntryOracle.OLogEntryOracleFactory;
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
+import static c5db.log.SequentialLog.LogEntryNotFound;
+import static c5db.log.SequentialLog.LogEntryNotInSequence;
 
 /**
  * OLog that delegates each quorum's logging tasks to a separate log record for that quorum, executing
@@ -140,6 +146,23 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     public void deleteCurrentLog() throws IOException {
       persistenceService.truncate(quorumId);
       logDeque.pop();
+    }
+
+    public Iterator<SequentialLogWithHeader> getLogIterator() {
+      final Iterator<SequentialLogWithHeader> dequeIterator = logDeque.iterator();
+      final int dequeSize = logDeque.size();
+
+      // First return the log(s) already in memory, then read additional logs from the persistence.
+      return Iterators.concat(
+          dequeIterator,
+          Iterators.transform(C5Iterators.advanced(persistenceService.iterator(quorumId), dequeSize),
+              (persistenceSupplier) -> {
+                try {
+                  return readLogFromPersistence(persistenceSupplier.get());
+                } catch (IOException e) {
+                  throw new LogPersistenceService.IteratorIOException(e);
+                }
+              }));
     }
 
     public void close() throws IOException {
@@ -261,9 +284,13 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       return Futures.immediateFuture(new ArrayList<>());
     }
 
-    // TODO getting entries from a previous (rolled) log
-
-    return submitQuorumTask(quorumId, () -> currentLog(quorumId).subSequence(start, end));
+    return submitQuorumTask(quorumId, () -> {
+      if (!seqNumPrecedesLog(start, getQuorumStructure(quorumId).currentLogWithHeader())) {
+        return currentLog(quorumId).subSequence(start, end);
+      } else {
+        return multiLogGet(start, end, quorumId);
+      }
+    });
   }
 
   @Override
@@ -330,6 +357,30 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
 
     return ImmutableList.copyOf(entries);
+  }
+
+  private List<OLogEntry> multiLogGet(long start, long end, String quorumId)
+      throws IOException, LogEntryNotFound, LogEntryNotInSequence {
+    final Iterator<SequentialLogWithHeader> logIterator = getQuorumStructure(quorumId).getLogIterator();
+    final Deque<List<OLogEntry>> entries = new LinkedList<>();
+
+    long remainingEnd = end;
+
+    while (remainingEnd > start) {
+      if (!logIterator.hasNext()) {
+        throw new LogEntryNotFound("Unable to locate a log containing the requested entries");
+      }
+
+      SequentialLogWithHeader logWithHeader = logIterator.next();
+      long firstSeqNumInLog = logWithHeader.header.getBaseSeqNum() + 1;
+
+      if (remainingEnd > firstSeqNumInLog) {
+        entries.push(logWithHeader.log.subSequence(Math.max(firstSeqNumInLog, start), remainingEnd));
+        remainingEnd = firstSeqNumInLog;
+      }
+    }
+
+    return Lists.newArrayList(Iterables.concat(entries));
   }
 
   private SequentialLog<OLogEntry> currentLog(String quorumId) throws IOException {
