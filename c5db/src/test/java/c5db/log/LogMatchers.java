@@ -17,6 +17,8 @@
 
 package c5db.log;
 
+import c5db.generated.OLogHeader;
+import c5db.replication.QuorumConfiguration;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
@@ -49,6 +51,23 @@ public class LogMatchers {
       public void describeTo(Description description) {
         description.appendText("a list of OLogEntry with consecutive sequence numbers from ")
             .appendValue(start).appendText(" inclusive to ").appendValue(end).appendText(" exclusive");
+      }
+    };
+  }
+
+  static Matcher<OLogHeader> equalToHeader(OLogHeader header) {
+    return new TypeSafeMatcher<OLogHeader>() {
+      @Override
+      protected boolean matchesSafely(OLogHeader item) {
+        return item.getBaseSeqNum() == header.getBaseSeqNum()
+            && item.getBaseTerm() == header.getBaseTerm()
+            && QuorumConfiguration.fromProtostuff(item.getBaseConfiguration())
+            .equals(QuorumConfiguration.fromProtostuff(header.getBaseConfiguration()));
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText(" equal to ").appendValue(header);
       }
     };
   }
