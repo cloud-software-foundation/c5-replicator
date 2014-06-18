@@ -117,7 +117,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
 
     private BytePersistence createOrOpenBytePersistence(String quorumId) throws IOException {
-      return persistenceService.getPersistence(quorumId);
+      return persistenceService.getCurrent(quorumId);
     }
 
     private OLogHeader writeAndReturnEmptyLogHeader() throws IOException {

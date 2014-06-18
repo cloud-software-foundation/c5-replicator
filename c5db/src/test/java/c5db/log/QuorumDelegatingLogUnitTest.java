@@ -122,10 +122,10 @@ public class QuorumDelegatingLogUnitTest {
       allowing(persistenceNavigator).addToIndex(with(any(Long.class)), with(any(Long.class)));
       allowing(bytePersistence).append(with(any(ByteBuffer[].class)));
 
-      oneOf(persistenceService).getPersistence(quorumA);
+      oneOf(persistenceService).getCurrent(quorumA);
       will(returnValue(bytePersistence));
 
-      oneOf(persistenceService).getPersistence(quorumB);
+      oneOf(persistenceService).getCurrent(quorumB);
       will(returnValue(bytePersistence));
     }});
 
@@ -144,7 +144,7 @@ public class QuorumDelegatingLogUnitTest {
     context.checking(new Expectations() {{
       ignoring(persistenceNavigator);
 
-      allowing(persistenceService).getPersistence(quorumId);
+      allowing(persistenceService).getCurrent(quorumId);
       will(returnValue(bytePersistence));
 
       allowing(bytePersistence).append(with(any(ByteBuffer[].class)));

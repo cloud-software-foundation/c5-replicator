@@ -17,26 +17,84 @@
 
 package c5db.log;
 
+import c5db.util.CheckedSupplier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
+import java.util.Iterator;
 
 import static c5db.log.SequentialLog.LogEntryNotFound;
 
 /**
- * Service to handle persistence for different quorums' logs.
+ * Service to handle persistence for different quorums' logs. Each quorum's log is
+ * represented by a list of persisted data stores. Apart from administrative actions,
+ * such as deleting old and unneeded log records, stores may only be added to or
+ * removed from the end of the list. At any given time, the "current" data store
+ * is the most recent one, at the end of the list. Data stores are accessed and
+ * manipulated via returned BytePersistence instances.
  */
-public interface LogPersistenceService {
+public interface LogPersistenceService<P extends LogPersistenceService.BytePersistence> {
   /**
-   * Create a new persistent data store for this quorum's log, or find an existing one,
-   * and return an object representing it.
+   * Return a persistence instance referring to the latest (most recent) data
+   * store persisted for the given quorum. If there is none, return null.
    *
    * @param quorumId ID of the quorum.
-   * @return A new, open BytePersistence instance.
+   * @return A new, open BytePersistence pointing to the latest log data store
+   * for the given quorum, or null if there is none.
    * @throws IOException
    */
-  BytePersistence getPersistence(String quorumId) throws IOException;
+  @Nullable
+  P getCurrent(String quorumId) throws IOException;
+
+  /**
+   * Create a new, empty data store, and return an object representing it. The store
+   * is temporary; if not appended to the log, it will not persist.
+   *
+   * @param quorumId ID of the quorum.
+   * @return A new, open persistence instance.
+   * @throws IOException
+   */
+  @NotNull
+  P create(String quorumId) throws IOException;
+
+  /**
+   * Atomically add the given persistence to the log for the given quorum. After this
+   * method call, getCurrentPersistence will return an instance referring to the same
+   * underlying data store as the given instance (but not necessarily the same instance).
+   *
+   * @param quorumId    Quorum ID.
+   * @param persistence The persistence to append to the log, making it current.
+   * @throws IOException
+   */
+  void append(String quorumId, @NotNull P persistence) throws IOException;
+
+  /**
+   * Atomically remove and delete the data store underlying the "current" persistence
+   * for the given quorum, in effect truncating its contents from the log record, and
+   * rendering any instances referring to this data store invalid.
+   *
+   * @param quorumId Quorum ID.
+   * @throws IOException
+   */
+  void truncate(String quorumId) throws IOException;
+
+  /**
+   * Return an iterator over the data stores for this quorum, in order from most recent
+   * to least recent. The iterator will not perform any IO (or blocking operations) until
+   * it is actually used (either invoking next() or hasNext()). The first element returned
+   * will be a Supplier that returns the element returned by getCurrent. The user is
+   * responsible for closing any BytePersistence objects returned by the Suppliers.
+   * <p>
+   * If an IOException occurs during the (lazy) initialization of the iterator, it will
+   * throw a {@link c5db.log.LogPersistenceService.IteratorIOException}.
+   *
+   * @return A new Iterator.
+   */
+  Iterator<CheckedSupplier<P, IOException>> iterator(String quorumId);
 
   /**
    * Represents a single store of persisted log data; a file-like abstraction.
@@ -188,5 +246,11 @@ public interface LogPersistenceService {
 
   interface PersistenceNavigatorFactory {
     PersistenceNavigator create(BytePersistence persistence, SequentialEntryCodec<?> encoding, long offset);
+  }
+
+  class IteratorIOException extends RuntimeException {
+    public IteratorIOException(Throwable cause) {
+      super(cause);
+    }
   }
 }

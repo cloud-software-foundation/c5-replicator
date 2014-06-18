@@ -19,6 +19,7 @@ package c5db.util;
 
 import c5db.generated.OLogHeader;
 import c5db.log.EntryEncodingUtil;
+import c5db.log.FilePersistence;
 import c5db.log.OLogEntryDescription;
 import c5db.log.SequentialEntryCodec;
 import c5db.replication.generated.QuorumConfigurationMessage;
@@ -35,7 +36,6 @@ import java.util.List;
 import java.util.Locale;
 
 import static c5db.log.EntryEncodingUtil.decodeAndCheckCrc;
-import static c5db.log.LogFileService.FilePersistence;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceReader;
 

@@ -18,120 +18,25 @@
 package c5db.log;
 
 import c5db.C5ServerConstants;
+import c5db.util.CheckedSupplier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-
-import static java.nio.file.StandardOpenOption.APPEND;
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.READ;
+import java.util.Iterator;
 
 /**
- * LogPersistenceService using Files and FileChannels.
+ * LogPersistenceService using FilePersistence objects (Files and FileChannels).
  */
-public class LogFileService implements LogPersistenceService {
+public class LogFileService implements LogPersistenceService<FilePersistence> {
   private static final Logger LOG = LoggerFactory.getLogger(LogFileService.class);
 
   private final Path walDir;
   private final Path archiveDir;
-
-  public static class FilePersistence implements BytePersistence {
-    private final FileChannel appendChannel;
-    private final File logFile;
-    private long filePosition;
-
-    public FilePersistence(File logFile) throws IOException {
-      this.logFile = logFile;
-      appendChannel = FileChannel.open(logFile.toPath(), CREATE, APPEND);
-      filePosition = appendChannel.position();
-    }
-
-    @Override
-    public boolean isEmpty() throws IOException {
-      return filePosition == 0;
-    }
-
-    @Override
-    public long size() throws IOException {
-      return filePosition;
-    }
-
-    @Override
-    public void append(ByteBuffer[] buffers) throws IOException {
-      appendChannel.write(buffers);
-      filePosition += totalBytesToBeWritten(buffers);
-    }
-
-    @Override
-    public PersistenceReader getReader() throws IOException {
-      return new NioReader(FileChannel.open(logFile.toPath(), READ));
-    }
-
-    @Override
-    public void truncate(long size) throws IOException {
-      if (size > this.size()) {
-        throw new IllegalArgumentException("Truncation may not grow the file");
-      }
-      appendChannel.truncate(size);
-      filePosition = size;
-    }
-
-    @Override
-    public void sync() throws IOException {
-      appendChannel.force(true);
-    }
-
-    @Override
-    public void close() throws IOException {
-      appendChannel.close();
-    }
-
-    // TODO This should be done once, in one central place
-    private long totalBytesToBeWritten(ByteBuffer[] buffers) {
-      long sum = 0;
-      for (ByteBuffer b : buffers) {
-        sum += b.position();
-      }
-      return sum;
-    }
-  }
-
-  private static class NioReader implements PersistenceReader {
-    private final FileChannel fileChannel;
-
-    public NioReader(FileChannel fileChannel) {
-      this.fileChannel = fileChannel;
-    }
-
-    @Override
-    public long position() throws IOException {
-      return fileChannel.position();
-    }
-
-    public void position(long newPos) throws IOException {
-      fileChannel.position(newPos);
-    }
-
-    @Override
-    public int read(ByteBuffer dst) throws IOException {
-      return fileChannel.read(dst);
-    }
-
-    @Override
-    public boolean isOpen() {
-      return fileChannel.isOpen();
-    }
-
-    @Override
-    public void close() throws IOException {
-      fileChannel.close();
-    }
-  }
 
   public LogFileService(Path basePath) throws IOException {
     this.walDir = basePath.resolve(C5ServerConstants.WAL_DIR);
@@ -140,10 +45,31 @@ public class LogFileService implements LogPersistenceService {
     createDirectoryStructure();
   }
 
+  @Nullable
   @Override
-  public BytePersistence getPersistence(String quorumId) throws IOException {
-    File logFile = prepareNewLogFileOrFindExisting(quorumId);
-    return new FilePersistence(logFile);
+  public FilePersistence getCurrent(String quorumId) throws IOException {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public FilePersistence create(String quorumId) throws IOException {
+    return null;
+  }
+
+  @Override
+  public void append(String quorumId, @NotNull FilePersistence persistence) throws IOException {
+
+  }
+
+  @Override
+  public void truncate(String quorumId) throws IOException {
+
+  }
+
+  @Override
+  public Iterator<CheckedSupplier<FilePersistence, IOException>> iterator(String quorumId) {
+    return null;
   }
 
   /**
