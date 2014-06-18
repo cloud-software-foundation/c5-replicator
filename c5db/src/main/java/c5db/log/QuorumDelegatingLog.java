@@ -85,6 +85,105 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     this.persistenceNavigatorFactory = persistenceNavigatorFactory;
   }
 
+  @Override
+  public ListenableFuture<Void> openAsync(String quorumId) {
+    quorumMap.computeIfAbsent(quorumId, q -> new PerQuorum(quorumId));
+    return submitQuorumTask(quorumId, () -> {
+      getQuorumStructure(quorumId).open();
+      return null;
+    });
+  }
+
+  @Override
+  public ListenableFuture<Boolean> logEntry(List<OLogEntry> passedInEntries, String quorumId) {
+    List<OLogEntry> entries = validateAndMakeDefensiveCopy(passedInEntries);
+
+    getQuorumStructure(quorumId).ensureEntriesAreConsecutive(entries);
+    updateOracleWithNewEntries(entries, quorumId);
+
+    // TODO group commit / sync
+
+    return submitQuorumTask(quorumId, () -> {
+      currentLog(quorumId).append(entries);
+      return true;
+    });
+  }
+
+  @Override
+  public ListenableFuture<List<OLogEntry>> getLogEntries(long start, long end, String quorumId) {
+    if (end < start) {
+      throw new IllegalArgumentException("getLogEntries: end < start");
+    } else if (end == start) {
+      return Futures.immediateFuture(new ArrayList<>());
+    }
+
+    return submitQuorumTask(quorumId, () -> {
+      if (!seqNumPrecedesLog(start, getQuorumStructure(quorumId).currentLogWithHeader())) {
+        return currentLog(quorumId).subSequence(start, end);
+      } else {
+        return multiLogGet(start, end, quorumId);
+      }
+    });
+  }
+
+  @Override
+  public ListenableFuture<Boolean> truncateLog(long seqNum, String quorumId) {
+    getQuorumStructure(quorumId).setExpectedNextSequenceNumber(seqNum);
+    oLogEntryOracle(quorumId).notifyTruncation(seqNum);
+
+    return submitQuorumTask(quorumId, () -> {
+      while (seqNumPrecedesLog(seqNum, getQuorumStructure(quorumId).currentLogWithHeader())) {
+        getQuorumStructure(quorumId).deleteCurrentLog();
+      }
+
+      currentLog(quorumId).truncate(seqNum);
+      return true;
+    });
+  }
+
+  @Override
+  public long getNextSeqNum(String quorumId) {
+    return getQuorumStructure(quorumId).getExpectedNextSequenceNumber();
+  }
+
+  @Override
+  public long getLastTerm(String quorumId) {
+    return oLogEntryOracle(quorumId).getLastTerm();
+  }
+
+  @Override
+  public long getLogTerm(long seqNum, String quorumId) {
+    return oLogEntryOracle(quorumId).getTermAtSeqNum(seqNum);
+  }
+
+  @Override
+  public QuorumConfigurationWithSeqNum getLastQuorumConfig(String quorumId) {
+    return oLogEntryOracle(quorumId).getLastQuorumConfig();
+  }
+
+  @Override
+  public ListenableFuture<Void> roll(String quorumId) throws IOException {
+    final OLogHeader newLogHeader = buildRollHeader(quorumId);
+
+    return submitQuorumTask(quorumId, () -> {
+      getQuorumStructure(quorumId).roll(newLogHeader);
+      return null;
+    });
+  }
+
+  @Override
+  public void close() throws IOException {
+    try {
+      taskExecutor.shutdownAndAwaitTermination(C5ServerConstants.WAL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    } catch (InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
+
+    for (PerQuorum quorumStructure : quorumMap.values()) {
+      quorumStructure.close();
+    }
+  }
+
   private static class SequentialLogWithHeader {
     public final SequentialLog<OLogEntry> log;
     public final OLogHeader header;
@@ -250,105 +349,6 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
 
     private OLogHeader newQuorumHeader() {
       return new OLogHeader(0, 0, QuorumConfiguration.EMPTY.toProtostuff());
-    }
-  }
-
-  @Override
-  public ListenableFuture<Void> openAsync(String quorumId) {
-    quorumMap.computeIfAbsent(quorumId, q -> new PerQuorum(quorumId));
-    return submitQuorumTask(quorumId, () -> {
-      getQuorumStructure(quorumId).open();
-      return null;
-    });
-  }
-
-  @Override
-  public ListenableFuture<Boolean> logEntry(List<OLogEntry> passedInEntries, String quorumId) {
-    List<OLogEntry> entries = validateAndMakeDefensiveCopy(passedInEntries);
-
-    getQuorumStructure(quorumId).ensureEntriesAreConsecutive(entries);
-    updateOracleWithNewEntries(entries, quorumId);
-
-    // TODO group commit / sync
-
-    return submitQuorumTask(quorumId, () -> {
-      currentLog(quorumId).append(entries);
-      return true;
-    });
-  }
-
-  @Override
-  public ListenableFuture<List<OLogEntry>> getLogEntries(long start, long end, String quorumId) {
-    if (end < start) {
-      throw new IllegalArgumentException("getLogEntries: end < start");
-    } else if (end == start) {
-      return Futures.immediateFuture(new ArrayList<>());
-    }
-
-    return submitQuorumTask(quorumId, () -> {
-      if (!seqNumPrecedesLog(start, getQuorumStructure(quorumId).currentLogWithHeader())) {
-        return currentLog(quorumId).subSequence(start, end);
-      } else {
-        return multiLogGet(start, end, quorumId);
-      }
-    });
-  }
-
-  @Override
-  public ListenableFuture<Boolean> truncateLog(long seqNum, String quorumId) {
-    getQuorumStructure(quorumId).setExpectedNextSequenceNumber(seqNum);
-    oLogEntryOracle(quorumId).notifyTruncation(seqNum);
-
-    return submitQuorumTask(quorumId, () -> {
-      while (seqNumPrecedesLog(seqNum, getQuorumStructure(quorumId).currentLogWithHeader())) {
-        getQuorumStructure(quorumId).deleteCurrentLog();
-      }
-
-      currentLog(quorumId).truncate(seqNum);
-      return true;
-    });
-  }
-
-  @Override
-  public long getNextSeqNum(String quorumId) {
-    return getQuorumStructure(quorumId).getExpectedNextSequenceNumber();
-  }
-
-  @Override
-  public long getLastTerm(String quorumId) {
-    return oLogEntryOracle(quorumId).getLastTerm();
-  }
-
-  @Override
-  public long getLogTerm(long seqNum, String quorumId) {
-    return oLogEntryOracle(quorumId).getTermAtSeqNum(seqNum);
-  }
-
-  @Override
-  public QuorumConfigurationWithSeqNum getLastQuorumConfig(String quorumId) {
-    return oLogEntryOracle(quorumId).getLastQuorumConfig();
-  }
-
-  @Override
-  public ListenableFuture<Void> roll(String quorumId) throws IOException {
-    final OLogHeader newLogHeader = buildRollHeader(quorumId);
-
-    return submitQuorumTask(quorumId, () -> {
-      getQuorumStructure(quorumId).roll(newLogHeader);
-      return null;
-    });
-  }
-
-  @Override
-  public void close() throws IOException {
-    try {
-      taskExecutor.shutdownAndAwaitTermination(C5ServerConstants.WAL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    } catch (InterruptedException | TimeoutException e) {
-      throw new RuntimeException(e);
-    }
-
-    for (PerQuorum quorumStructure : quorumMap.values()) {
-      quorumStructure.close();
     }
   }
 
