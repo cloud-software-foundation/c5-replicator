@@ -66,7 +66,7 @@ public class EntryEncodingUtil {
     try {
       schema.writeTo(lcpo, message);
 
-      final int length = (int) lcpo.buffer.size();
+      final int length = Ints.checkedCast(lcpo.buffer.size());
       final LinkBuffer lengthBuf = new LinkBuffer().writeVarInt32(length);
 
       return appendCrcToBufferList(

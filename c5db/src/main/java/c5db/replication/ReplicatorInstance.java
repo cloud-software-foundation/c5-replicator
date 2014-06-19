@@ -1280,8 +1280,6 @@ public class ReplicatorInstance implements Replicator {
 
     setLastCommittedIndex(newCommitIndex);
     logger.trace("discovered new visible entry {}", lastCommittedIndex);
-
-    // TODO take action and notify clients (pending new system frameworks)
   }
 
   private void setLastCommittedIndex(long newLastCommittedIndex) {
@@ -1291,12 +1289,24 @@ public class ReplicatorInstance implements Replicator {
     } else if (newLastCommittedIndex > lastCommittedIndex) {
       long oldLastCommittedIndex = lastCommittedIndex;
       lastCommittedIndex = newLastCommittedIndex;
-      notifyLastCommitted(oldLastCommittedIndex);
+      issueCommitNotifications(oldLastCommittedIndex);
     }
   }
 
-  private void notifyLastCommitted(long old) {
-    commitNoticeChannel.publish(new IndexCommitNotice(myId, old + 1, lastCommittedIndex, currentTerm));
+  private void issueCommitNotifications(long oldLastCommittedIndex) {
+    // TODO inefficient, because it calls getLogTerm once for every index. Possible optimization here.
+    final long firstCommittedIndex = oldLastCommittedIndex + 1;
+    long firstIndexOfTerm = firstCommittedIndex;
+    long nextTerm = log.getLogTerm(firstCommittedIndex);
+
+    for (long index = firstCommittedIndex; index <= lastCommittedIndex; index++) {
+      long currentTerm = nextTerm;
+      if (index == lastCommittedIndex
+          || (nextTerm = log.getLogTerm(index + 1)) != currentTerm) {
+        commitNoticeChannel.publish(new IndexCommitNotice(myId, firstIndexOfTerm, index, currentTerm));
+        firstIndexOfTerm = index + 1;
+      }
+    }
   }
 
   private void onCommit(IndexCommitNotice notice) {
