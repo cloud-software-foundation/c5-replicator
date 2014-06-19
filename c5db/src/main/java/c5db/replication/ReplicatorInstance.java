@@ -255,7 +255,7 @@ public class ReplicatorInstance implements Replicator {
   }
 
   @Override
-  public ListenableFuture<Long> changeQuorum(Collection<Long> newPeers) throws InterruptedException {
+  public ListenableFuture<ReplicatorReceipt> changeQuorum(Collection<Long> newPeers) throws InterruptedException {
     if (!isLeader()) {
       logger.debug("attempted to changeQuorum on a non-leader");
       return null;
@@ -266,7 +266,7 @@ public class ReplicatorInstance implements Replicator {
   }
 
   @Override
-  public ListenableFuture<Long> logData(List<ByteBuffer> data) throws InterruptedException {
+  public ListenableFuture<ReplicatorReceipt> logData(List<ByteBuffer> data) throws InterruptedException {
     if (!isLeader()) {
       logger.debug("attempted to logData on a non-leader");
       return null;
@@ -276,7 +276,7 @@ public class ReplicatorInstance implements Replicator {
     logRequests.put(req);
 
     // TODO return the durable notification future?
-    return req.logNumberNotification;
+    return req.logReceiptFuture;
   }
 
   @Override
@@ -314,10 +314,14 @@ public class ReplicatorInstance implements Replicator {
     return stateMemoryChannel;
   }
 
-
   @Override
   public Channel<ReplicatorInstanceEvent> getEventChannel() {
     return this.eventChannel;
+  }
+
+  @Override
+  public Channel<IndexCommitNotice> getCommitNoticeChannel() {
+    return commitNoticeChannel;
   }
 
   public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
@@ -340,11 +344,11 @@ public class ReplicatorInstance implements Replicator {
    * that's already part of an active quorum.
    *
    * @param peerIds Collection of peers in the new quorum.
-   * @return A future which will return the log entry index of the new quorum's configuration
-   * entry, when it is known. The actual completion of the bootstrap will be signaled by the
-   * commitment of the log entry at the returned index.
+   * @return A future which will return the receipt for the new quorum's configuration
+   * entry, when the log index is known. The actual completion of the bootstrap will be
+   * signaled by the commitment of the log entry described by the returned receipt.
    */
-  public ListenableFuture<Long> bootstrapQuorum(Collection<Long> peerIds) {
+  public ListenableFuture<ReplicatorReceipt> bootstrapQuorum(Collection<Long> peerIds) {
     assert peerIds.size() > 0;
 
     if (!quorumConfig.isEmpty() || myState != State.FOLLOWER || log.getLastIndex() != 0) {
@@ -353,11 +357,11 @@ public class ReplicatorInstance implements Replicator {
 
     // Choose the peer with the least id.
     if (Collections.min(peerIds) != myId) {
-      return Futures.immediateFuture(0L);
+      return Futures.immediateFuture(new ReplicatorReceipt(0L, 0L));
     }
 
     final QuorumConfiguration config = QuorumConfiguration.of(peerIds);
-    final SettableFuture<Long> logIndexFuture = SettableFuture.create();
+    final SettableFuture<ReplicatorReceipt> logIndexFuture = SettableFuture.create();
 
     fiber.execute(() -> {
       try {
@@ -401,11 +405,11 @@ public class ReplicatorInstance implements Replicator {
    *
    * @return A future which will return the log index of the quorum configuration entry,
    */
-  private ListenableFuture<Long> putQuorumChangeRequest(QuorumConfiguration quorumConfig)
+  private ListenableFuture<ReplicatorReceipt> putQuorumChangeRequest(QuorumConfiguration quorumConfig)
       throws InterruptedException {
     InternalReplicationRequest req = InternalReplicationRequest.toChangeConfig(quorumConfig);
     logRequests.put(req);
-    return req.logNumberNotification;
+    return req.logReceiptFuture;
   }
 
   /**
@@ -416,7 +420,7 @@ public class ReplicatorInstance implements Replicator {
    */
   @FiberOnly
   @Nullable
-  private ListenableFuture<Long> offerQuorumChangeRequest(QuorumConfiguration quorumConfig) {
+  private ListenableFuture<ReplicatorReceipt> offerQuorumChangeRequest(QuorumConfiguration quorumConfig) {
     if (this.quorumConfig.equals(quorumConfig)) {
       logger.warn("got a request to change quorum to but I'm already in that quorum config {} ", quorumConfig);
       return null;
@@ -424,7 +428,7 @@ public class ReplicatorInstance implements Replicator {
 
     InternalReplicationRequest req = InternalReplicationRequest.toChangeConfig(quorumConfig);
     if (logRequests.offer(req)) {
-      return req.logNumberNotification;
+      return req.logReceiptFuture;
     } else {
       logger.warn("change request could not be submitted because log request queue was full {}", quorumConfig);
       return null;
@@ -1151,7 +1155,7 @@ public class ReplicatorInstance implements Replicator {
       }
 
       // let the client know what our id is
-      logReq.logNumberNotification.set(idAssigner);
+      logReq.logReceiptFuture.set(new ReplicatorReceipt(currentTerm, idAssigner));
 
       idAssigner++;
     }

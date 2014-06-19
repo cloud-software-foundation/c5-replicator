@@ -30,7 +30,7 @@ import java.util.List;
 class InternalReplicationRequest {
   public final List<ByteBuffer> data;
   public final QuorumConfiguration config;
-  public final SettableFuture<Long> logNumberNotification;
+  public final SettableFuture<ReplicatorReceipt> logReceiptFuture;
 
   public static InternalReplicationRequest toLogData(List<ByteBuffer> data) {
     return new InternalReplicationRequest(data, null);
@@ -47,6 +47,6 @@ class InternalReplicationRequest {
   private InternalReplicationRequest(List<ByteBuffer> data, QuorumConfiguration config) {
     this.data = data;
     this.config = config;
-    this.logNumberNotification = SettableFuture.create();
+    this.logReceiptFuture = SettableFuture.create();
   }
 }

@@ -159,7 +159,8 @@ public class InRamSim {
   private final Set<Long> offlinePeers = new HashSet<>();
   private final Map<Long, ReplicatorInstance> replicators = new HashMap<>();
   private final Map<Long, ReplicatorLog> replicatorLogs = new HashMap<>();
-  private final List<WireObstruction> wireObstructions = Collections.synchronizedList(new ArrayList<>());
+  private final List<WireObstruction> wireObstructions
+      = Collections.<WireObstruction>synchronizedList(new ArrayList<>());
   private final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
   private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
   private final Fiber rpcFiber;
@@ -363,12 +364,12 @@ public class InRamSim {
     rpcFiber.start();
 
     // bootstrap ALL the replicators, collect their futures and skip the null ones.
-    List<ListenableFuture<Long>> futures = replicators.values()
+    List<ListenableFuture<ReplicatorReceipt>> futures = replicators.values()
         .stream().map(repl -> repl.bootstrapQuorum(peerIds))
         .filter(future -> future != null)
         .collect(Collectors.toList());
 
-    for (ListenableFuture<Long> aFuture : futures) {
+    for (ListenableFuture<ReplicatorReceipt> aFuture : futures) {
       LOG.info("Waiting for bootstrap");
       aFuture.get(4, TimeUnit.SECONDS);
     }

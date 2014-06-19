@@ -291,18 +291,20 @@ public class InRamTest {
   }
 
   @Test
-  public void theFutureReturnedByAQuorumChangeRequestWillReturnTheLogIndexOfTheTransitionalConfigurationEntry()
+  public void theFutureReturnedByAQuorumChangeRequestWillReturnTheReceiptOfTheTransitionalConfigurationEntry()
       throws Exception {
     final Set<Long> newPeerIds = smallerPeerSetWithOneInCommonWithInitialSet();
     final long lastIndexBeforeQuorumChange = 4;
 
     havingElectedALeaderAtOrAfter(term(1));
+    final long electionTerm = currentTerm();
 
     sim.createAndStartReplicators(newPeerIds);
     leader().logDataUpToIndex(lastIndexBeforeQuorumChange);
 
     assertThat(leader().changeQuorum(newPeerIds),
-        resultsIn(equalTo(lastIndexBeforeQuorumChange + 1)));
+        resultsIn(equalTo(
+            new ReplicatorReceipt(electionTerm, lastIndexBeforeQuorumChange + 1))));
   }
 
   @Test
@@ -530,7 +532,7 @@ public class InRamTest {
     }
 
     public LeaderController log(List<ByteBuffer> buffers) throws Exception {
-      lastIndexLogged = currentLeaderInstance().logData(buffers).get();
+      lastIndexLogged = currentLeaderInstance().logData(buffers).get().seqNum;
       return this;
     }
 
@@ -572,7 +574,7 @@ public class InRamTest {
       return instance.getQuorumConfiguration();
     }
 
-    public ListenableFuture<Long> changeQuorum(Collection<Long> newPeerIds) throws Exception {
+    public ListenableFuture<ReplicatorReceipt> changeQuorum(Collection<Long> newPeerIds) throws Exception {
       return instance.changeQuorum(newPeerIds);
     }
 

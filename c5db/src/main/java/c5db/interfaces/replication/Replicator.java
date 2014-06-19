@@ -18,6 +18,7 @@
 package c5db.interfaces.replication;
 
 import c5db.replication.QuorumConfiguration;
+import c5db.replication.ReplicatorReceipt;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.jetlang.channels.Channel;
 
@@ -38,24 +39,25 @@ public interface Replicator {
    * the current quorum).
    *
    * @param newPeers The collection of peer IDs in the new quorum.
-   * @return a future which will return the log entry index of the transitional quorum
-   * configuration entry, when it is known. The transitional quorum configuration combines
-   * the current group of peers with the given collection of new peers. When that transitional
-   * configuration is committed, the quorum configuration is guaranteed to go through; prior
-   * to that commit, it is possible that a fault will cancel the quorum change operation.
+   * @return a future which will return the replicator receipt for logging the transitional
+   * quorum configuration entry, when the entry's index known. The transitional quorum
+   * configuration combines the current group of peers with the given collection of new peers.
+   * When that transitional configuration is committed, the quorum configuration is guaranteed
+   * to go through; prior to that commit, it is possible that a fault will cancel the quorum
+   * change operation.
    * <p>
    * The actual completion of the quorum change will be signaled by the commitment of the
    * quorum consisting of the given peers.
    */
-  ListenableFuture<Long> changeQuorum(Collection<Long> newPeers) throws InterruptedException;
+  ListenableFuture<ReplicatorReceipt> changeQuorum(Collection<Long> newPeers) throws InterruptedException;
 
   /**
-   * Log a datum
+   * Submit data to be replicated.
    *
    * @param data Some data to log.
-   * @return a listenable for the index number OR null if we aren't the leader.
+   * @return a listenable for a receipt for the log request, OR null if we aren't the leader.
    */
-  ListenableFuture<Long> logData(List<ByteBuffer> data) throws InterruptedException;
+  ListenableFuture<ReplicatorReceipt> logData(List<ByteBuffer> data) throws InterruptedException;
 
   long getId();
 
@@ -75,5 +77,11 @@ public interface Replicator {
 
   public Channel<ReplicatorInstanceEvent> getEventChannel();
 
-//  public ImmutableList<Long> getQuorum();
+  /**
+   * Get the Replicator's commit notice channel. By matching these issued IndexCommitNotices
+   * against the ReplicatorReceipts returned when logging entries or changing quorums, users
+   * of the Replicator can determine whether those submissions were successfully replicated
+   * to the quorum.
+   */
+  public Channel<IndexCommitNotice> getCommitNoticeChannel();
 }

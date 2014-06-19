@@ -331,7 +331,7 @@ public class ReplicatorLeaderTest {
 
   private class LeaderController {
     private LeaderController logSomeData() throws Exception {
-      lastIndex = replicatorInstance.logData(TEST_DATUM).get();
+      lastIndex = replicatorInstance.logData(TEST_DATUM).get().seqNum;
 
       // Wait for the leader to send this entry so that later entries don't get batched together into the
       // same append message -- this enables the AppendEntries reply to have more granularity about which
