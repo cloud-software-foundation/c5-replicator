@@ -23,6 +23,7 @@ import c5db.log.FilePersistence;
 import c5db.log.OLogEntryDescription;
 import c5db.log.SequentialEntryCodec;
 import c5db.replication.generated.QuorumConfigurationMessage;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 
 import java.io.EOFException;
@@ -130,8 +131,8 @@ public class CatOLog {
 
     formatter.format(" [term: %" + LONG_DIGITS + "d]", entry.getElectionTerm());
     formatter.format(" [seq: %" + LONG_DIGITS + "d]", entry.getSeqNum());
-    formatter.format(" [content length: %" + INT_DIGITS + "d]", entry.getContentLength());
-    formatter.format(" [type: %s]", entry.getType());
+
+    formatContent(formatter, entry);
 
     if (!entry.isHeaderCrcValid()) {
       formatter.format(" <invalid header CRC>");
@@ -144,11 +145,26 @@ public class CatOLog {
     return formatter.toString();
   }
 
+  private static void formatContent(Formatter formatter, OLogEntryDescription entry) {
+    switch (entry.getType()) {
+      case QUORUM_CONFIGURATION:
+        formatter.format(" [quorum configuration: ");
+        formatConfiguration(formatter, entry.getQuorumConfiguration().toProtostuff());
+        formatter.format("]");
+        break;
+      case DATA:
+        formatter.format(" [content length: %" + INT_DIGITS + "d]", entry.getContentLength());
+        break;
+      default:
+        throw new AssertionError("Unhandled enum value in CatOLog#formatContent");
+    }
+  }
+
   private static void formatConfiguration(Formatter formatter, QuorumConfigurationMessage message) {
     formatter.format("(");
     if (message.getTransitional()) {
       formatPeerIdList(formatter, message.getPrevPeersList());
-      formatter.format("-> ");
+      formatter.format(" -> ");
       formatPeerIdList(formatter, message.getNextPeersList());
     } else {
       formatPeerIdList(formatter, message.getAllPeersList());
@@ -157,7 +173,8 @@ public class CatOLog {
   }
 
   private static void formatPeerIdList(Formatter formatter, List<Long> peerIdList) {
-    peerIdList.forEach((peerId) -> formatter.format("%" + LONG_DIGITS + "d ", peerId));
+    Joiner joiner = Joiner.on(", ");
+    formatter.format(joiner.join(peerIdList));
   }
 
   private static void decodeAndUseLogHeader(InputStream inputStream, HeaderWithCrcValidity doWithHeader)
