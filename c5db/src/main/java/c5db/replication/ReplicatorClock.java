@@ -21,7 +21,7 @@ package c5db.replication;
  * Information used by a {@link c5db.replication.ReplicatorInstance} to configure itself; for instance,
  * tunable timing-related parameters.
  */
-public interface ReplicatorInformation {
+public interface ReplicatorClock {
   public long currentTimeMillis();
 
   /**

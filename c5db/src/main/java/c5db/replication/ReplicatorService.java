@@ -155,7 +155,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 server.getNodeId(),
                 quorumId,
                 logMooring,
-                new Info(),
+                new SystemTimeReplicatorClock(),
                 persister,
                 outgoingRequests,
                 replicatorStateChanges,
@@ -185,7 +185,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   }
 
   // TODO this should be actually via whatever configuration system we end up using.
-  private static class Info implements ReplicatorInformation {
+  private static class SystemTimeReplicatorClock implements ReplicatorClock {
 
     @Override
     public long currentTimeMillis() {

@@ -106,8 +106,8 @@ public class ReplicatorLeaderTest {
     sendRpcChannel.subscribe(rpcFiber, requestLog::publish);
 
     Fiber replicatorFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor), "replicatorFiber-Thread", true);
-    InRamSim.Info info = new InRamSim.Info(0, 1000);
-    info.startTimeout();
+    InRamSim.StoppableClock clock = new InRamSim.StoppableClock(0, 1000);
+    clock.startTimeout();
 
     log.logEntries(
         Lists.newArrayList(
@@ -118,7 +118,7 @@ public class ReplicatorLeaderTest {
         LEADER_ID,
         QUORUM_ID,
         log,
-        info,
+        clock,
         new InRamSim.Persister(),
         sendRpcChannel,
         new MemoryChannel<>(),

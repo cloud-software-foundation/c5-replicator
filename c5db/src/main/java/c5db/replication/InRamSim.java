@@ -65,7 +65,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class InRamSim {
   private static final Logger LOG = LoggerFactory.getLogger("InRamSim");
 
-  public static class Info implements ReplicatorInformation {
+  public static class StoppableClock implements ReplicatorClock {
     private final long electionTimeout;
     private final StopWatch stopWatch = new StopWatch();
     private boolean suspended = true; // field needed because StopWatch doesn't have a way to check its state
@@ -73,7 +73,7 @@ public class InRamSim {
     private long offset;
 
 
-    public Info(long offset, long electionTimeout) {
+    public StoppableClock(long offset, long electionTimeout) {
       this.offset = offset;
       this.electionTimeout = electionTimeout;
       stopWatch.start();
@@ -202,7 +202,7 @@ public class InRamSim {
           peerId,
           "foobar",
           log,
-          new Info(plusMillis, electionTimeout),
+          new StoppableClock(plusMillis, electionTimeout),
           new Persister(),
           rpcChannel,
           stateChanges,
@@ -232,7 +232,7 @@ public class InRamSim {
         peerId,
         "foobar",
         log,
-        oldRepl.info,
+        oldRepl.clock,
         oldRepl.persister,
         rpcChannel,
         stateChanges,
@@ -306,24 +306,24 @@ public class InRamSim {
 
   public void stopAllTimeouts() {
     for (ReplicatorInstance repl : replicators.values()) {
-      ((Info) repl.info).stopTimeout();
+      ((StoppableClock) repl.clock).stopTimeout();
     }
   }
 
   public void startAllTimeouts() {
     for (ReplicatorInstance repl : replicators.values()) {
-      ((Info) repl.info).startTimeout();
+      ((StoppableClock) repl.clock).startTimeout();
     }
   }
 
   @SuppressWarnings("UnusedDeclaration")
   public void stopTimeout(long peerId) {
     assert replicators.containsKey(peerId);
-    ((Info) replicators.get(peerId).info).stopTimeout();
+    ((StoppableClock) replicators.get(peerId).clock).stopTimeout();
   }
 
   public void startTimeout(long peerId) {
-    ((Info) replicators.get(peerId).info).startTimeout();
+    ((StoppableClock) replicators.get(peerId).clock).startTimeout();
   }
 
   private void messageForwarder(final Request<RpcRequest, RpcWireReply> origMsg) {
