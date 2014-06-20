@@ -36,6 +36,7 @@ import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
 import c5db.util.C5Futures;
 import c5db.util.FiberOnly;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -57,7 +58,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -345,49 +345,40 @@ public class ReplicatorInstance implements Replicator {
    * configuration and elect a leader.
    * <p>
    * Before a quorum (a group of cooperating replicators) may process replication requests
-   * it must elect a leader. But a leader cannot elect itself unless it's aware of its peers,
-   * which requires it to log a quorum configuration entry containing that peer set. This
-   * method chooses a replicator, promotes it to leader, and has it log that first entry.
-   * Because it creates a leader without an election, it's dangerous to call on any peer
-   * that's already part of an active quorum.
+   * it must elect a leader. But a leader cannot be elected unless all peers are aware of
+   * the members of the quorum, which in turn requires all to log a quorum configuration
+   * entry.
+   * <p>
+   * This method logs that first entry. Unlike normal logging, it is not directed by a
+   * leader; however, the logged entry cannot be confirmed until a leader is chosen. The
+   * method should be called on every peer in the quorum being established. (Only a majority
+   * need to successfully log the entry in order for the quorum establishment to go through).
    *
    * @param peerIds Collection of peers in the new quorum.
-   * @return A future which will return the receipt for the new quorum's configuration
-   * entry, when the log index is known. The actual completion of the bootstrap will be
+   * @return A future which will return when the peer has . The actual completion of the bootstrap will be
    * signaled by a ReplicatorInstanceEvent with the appropriate quorum configuration.
    */
-  public ListenableFuture<ReplicatorReceipt> bootstrapQuorum(Collection<Long> peerIds) {
+  public ListenableFuture<Void> bootstrapQuorum(Collection<Long> peerIds) {
     assert peerIds.size() > 0;
 
-    if (!quorumConfig.isEmpty() || myState != State.FOLLOWER || log.getLastIndex() != 0) {
+    if (!quorumConfig.isEmpty() || myState != State.FOLLOWER || log.getLastIndex() != 0 || currentTerm != 0) {
       throw new IllegalQuorumBootstrapException("Replicator is already part of an active quorum");
     }
 
-    // Choose the peer with the least id.
-    if (Collections.min(peerIds) != myId) {
-      return Futures.immediateFuture(new ReplicatorReceipt(0L, 0L));
-    }
+    SettableFuture<Void> quorumPersistedFuture = SettableFuture.create();
 
-    final QuorumConfiguration config = QuorumConfiguration.of(peerIds);
-    final SettableFuture<ReplicatorReceipt> logIndexFuture = SettableFuture.create();
+    long seqNum = 1;
+    QuorumConfiguration config = QuorumConfiguration.of(peerIds);
+    LogEntry configEntry = InternalReplicationRequest.toChangeConfig(config).getEntry(0, seqNum);
+    AppendEntries message = new AppendEntries(0, 0, 0, 0, Lists.newArrayList(configEntry), 0);
+    RpcWireRequest request = new RpcWireRequest(myId, quorumId, message);
 
-    fiber.execute(() -> {
-      try {
-        setCurrentTerm(currentTerm + 1);
-        becomeLeader();
-        C5Futures.addCallback(
-            offerQuorumChangeRequest(config),
-            logIndexFuture::set,
-            logIndexFuture::setException,
-            fiber);
-      } catch (Throwable t) {
-        logger.error("error trying to bootstrap quorum", t);
-      }
-    });
+    // Send the append entries message to our own incoming message channel; we will receive it
+    // and log the quorum configuration entry as usual.
+    AsyncRequest.withOneReply(fiber, getIncomingChannel(), request, msg -> quorumPersistedFuture.set(null));
 
-    return logIndexFuture;
+    return quorumPersistedFuture;
   }
-
 
   void failReplicatorInstance(Throwable e) {
     eventChannel.publish(

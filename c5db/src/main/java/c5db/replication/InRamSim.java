@@ -364,12 +364,12 @@ public class InRamSim {
     rpcFiber.start();
 
     // bootstrap ALL the replicators, collect their futures and skip the null ones.
-    List<ListenableFuture<ReplicatorReceipt>> futures = replicators.values()
+    List<ListenableFuture<Void>> futures = replicators.values()
         .stream().map(repl -> repl.bootstrapQuorum(peerIds))
         .filter(future -> future != null)
         .collect(Collectors.toList());
 
-    for (ListenableFuture<ReplicatorReceipt> aFuture : futures) {
+    for (ListenableFuture<Void> aFuture : futures) {
       LOG.info("Waiting for bootstrap");
       aFuture.get(4, TimeUnit.SECONDS);
     }

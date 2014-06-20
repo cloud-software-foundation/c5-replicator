@@ -163,7 +163,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
             );
         if (logMooring.getLastIndex() == 0) {
           instance.bootstrapQuorum(peers);
-    	}
+        }
         throwableChannel.subscribe(fiber, instance::failReplicatorInstance);
         replicatorInstances.put(quorumId, instance);
         future.set(instance);
