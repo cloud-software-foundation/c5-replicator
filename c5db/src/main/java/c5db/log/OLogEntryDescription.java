@@ -19,6 +19,8 @@ package c5db.log;
 
 import c5db.generated.OLogContentType;
 import c5db.generated.OLogEntryHeader;
+import c5db.replication.QuorumConfiguration;
+import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.math.IntMath;
 import io.protostuff.Schema;
 
@@ -38,12 +40,16 @@ public final class OLogEntryDescription extends SequentialEntry {
   private final boolean headerCrcIsValid;
   private final boolean contentCrcIsValid;
 
+  // Only used for type == QUORUM_CONFIGURATION
+  private final QuorumConfiguration quorumConfiguration;
+
   public OLogEntryDescription(long seqNum,
                               long electionTerm,
                               int contentLength,
                               OLogContentType type,
                               boolean headerCrcIsValid,
-                              boolean contentCrcIsValid) {
+                              boolean contentCrcIsValid,
+                              QuorumConfiguration quorumConfiguration) {
     super(seqNum);
 
     this.electionTerm = electionTerm;
@@ -51,6 +57,7 @@ public final class OLogEntryDescription extends SequentialEntry {
     this.type = type;
     this.headerCrcIsValid = headerCrcIsValid;
     this.contentCrcIsValid = contentCrcIsValid;
+    this.quorumConfiguration = quorumConfiguration;
   }
 
   public long getElectionTerm() {
@@ -73,6 +80,10 @@ public final class OLogEntryDescription extends SequentialEntry {
     return contentCrcIsValid;
   }
 
+  public QuorumConfiguration getQuorumConfiguration() {
+    return quorumConfiguration;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -89,7 +100,9 @@ public final class OLogEntryDescription extends SequentialEntry {
         && contentLength == that.contentLength
         && type == that.type
         && contentCrcIsValid == that.contentCrcIsValid
-        && headerCrcIsValid == that.headerCrcIsValid;
+        && headerCrcIsValid == that.headerCrcIsValid
+        && (quorumConfiguration == that.quorumConfiguration
+        || quorumConfiguration.equals(that.quorumConfiguration));
   }
 
   @Override
@@ -100,6 +113,7 @@ public final class OLogEntryDescription extends SequentialEntry {
     result = 31 * result + type.hashCode();
     result = 31 * result + (headerCrcIsValid ? 1 : 0);
     result = 31 * result + (contentCrcIsValid ? 1 : 0);
+    result = 31 * result + quorumConfiguration.hashCode();
     return result;
   }
 
@@ -111,7 +125,8 @@ public final class OLogEntryDescription extends SequentialEntry {
         ", contentLength=" + contentLength +
         ", type=" + type +
         ", headerCrcIsValid=" + headerCrcIsValid +
-        ", contentCrcIsValid=" + contentCrcIsValid;
+        ", contentCrcIsValid=" + contentCrcIsValid +
+        ", quorumConfiguration=" + quorumConfiguration;
   }
 
   public static class Codec implements SequentialEntryCodec<OLogEntryDescription> {
@@ -131,10 +146,17 @@ public final class OLogEntryDescription extends SequentialEntry {
       final OLogEntryHeader header = decodeAndCheckCrc(inputStream, SCHEMA);
 
       boolean contentCrcIsValid = true;
+      ByteBuffer contentBuffer = null;
+      QuorumConfiguration quorumConfiguration = null;
+
       try {
-        getAndCheckContent(inputStream, header.getContentLength());
+        contentBuffer = getAndCheckContent(inputStream, header.getContentLength());
       } catch (CrcError e) {
         contentCrcIsValid = false;
+      }
+
+      if (contentBuffer != null && header.getType() == OLogContentType.QUORUM_CONFIGURATION) {
+        quorumConfiguration = deserializeQuorumConfiguration(header, contentBuffer);
       }
 
       return new OLogEntryDescription(
@@ -143,7 +165,8 @@ public final class OLogEntryDescription extends SequentialEntry {
           header.getContentLength(),
           header.getType(),
           true,
-          contentCrcIsValid);
+          contentCrcIsValid,
+          quorumConfiguration);
     }
 
     @Override
@@ -155,6 +178,16 @@ public final class OLogEntryDescription extends SequentialEntry {
 
     private void skipContent(InputStream inputStream, int contentLength) throws IOException {
       skip(inputStream, IntMath.checkedAdd(contentLength, CRC_BYTES));
+    }
+
+    private QuorumConfiguration deserializeQuorumConfiguration(OLogEntryHeader header, ByteBuffer buffer) {
+      assert header.getType() == OLogContentType.QUORUM_CONFIGURATION;
+
+      OLogContent content = OLogContent.deserialize(buffer, OLogContentType.QUORUM_CONFIGURATION);
+      OLogEntry entry = new OLogEntry(0, 0, content);
+      QuorumConfigurationMessage quorumConfigurationMessage = entry.toProtostuff().getQuorumConfiguration();
+
+      return QuorumConfiguration.fromProtostuff(quorumConfigurationMessage);
     }
   }
 }

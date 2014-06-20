@@ -18,7 +18,9 @@
 package c5db.log;
 
 import c5db.generated.OLogContentType;
+import c5db.replication.QuorumConfiguration;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static c5db.log.EntryEncodingUtil.sumRemaining;
+import static c5db.log.LogTestUtil.makeConfigurationEntry;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
@@ -61,8 +64,17 @@ public class OLogEntryDescriptionTest {
             rawData.remaining(),
             OLogContentType.DATA,
             true,
-            true)
+            true,
+            null)
     )));
+  }
+
+  @Test
+  public void returnsTheCorrectQuorumConfigurationForSuchAnEntry() throws Exception {
+    QuorumConfiguration config = aQuorumConfiguration();
+    log.append(singleEntryListForConfiguration(config));
+
+    assertThat(descriptionLog.getLastEntry().getQuorumConfiguration(), is(equalTo(config)));
   }
 
   @Test
@@ -81,7 +93,8 @@ public class OLogEntryDescriptionTest {
             rawData.remaining(),
             OLogContentType.DATA,
             true,
-            false)
+            false,
+            null)
     )));
   }
 
@@ -99,10 +112,19 @@ public class OLogEntryDescriptionTest {
   private List<OLogEntryDescription> descriptionsCorrespondingTo(List<OLogEntry> entries) {
     return Lists.transform(entries, (entry) ->
         new OLogEntryDescription(entry.getSeqNum(), entry.getElectionTerm(), entryDataContentLength(entry),
-            entry.getContent().getType(), true, true));
+            entry.getContent().getType(), true, true, null));
   }
 
   private int entryDataContentLength(OLogEntry entry) {
     return sumRemaining(entry.getContent().serialize());
+  }
+
+  private QuorumConfiguration aQuorumConfiguration() {
+    return QuorumConfiguration.of(Sets.newHashSet(1L, 2L, 3L))
+        .getTransitionalConfiguration(Sets.newHashSet(4L, 5L, 6L));
+  }
+
+  private List<OLogEntry> singleEntryListForConfiguration(QuorumConfiguration configuration) {
+    return Lists.newArrayList(OLogEntry.fromProtostuff(makeConfigurationEntry(0, 0, configuration)));
   }
 }
