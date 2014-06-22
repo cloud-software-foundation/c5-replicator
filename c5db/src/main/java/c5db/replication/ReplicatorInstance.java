@@ -62,7 +62,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -151,10 +150,8 @@ public class ReplicatorInstance implements Replicator {
     this.persister = persister;
     this.eventChannel = eventChannel;
     this.commitNoticeChannel = commitNoticeChannel;
-    Random r = new Random();
-    this.myElectionTimeout = r.nextInt((int) clock.electionTimeout()) + clock.electionTimeout();
+    this.myElectionTimeout = clock.electionTimeout();
     this.lastRPC = clock.currentTimeMillis();
-    this.lastCommittedIndex = 0;
 
     refreshQuorumConfigurationFromLog();
 
@@ -187,8 +184,6 @@ public class ReplicatorInstance implements Replicator {
 
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, clock.electionCheckRate(),
         clock.electionCheckRate(), TimeUnit.MILLISECONDS);
-
-    logger.debug("primed");
   }
 
   /**
@@ -226,8 +221,6 @@ public class ReplicatorInstance implements Replicator {
     incomingChannel.subscribe(fiber, this::onIncomingMessage);
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection,
         clock.electionCheckRate(), clock.electionCheckRate(), TimeUnit.MILLISECONDS);
-
-    logger.debug("primed");
 
     this.currentTerm = term;
     this.myState = state;

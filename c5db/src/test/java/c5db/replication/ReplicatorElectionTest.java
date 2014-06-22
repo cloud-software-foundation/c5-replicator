@@ -253,7 +253,7 @@ public class ReplicatorElectionTest {
 
     receiveAnAppendMessage();
 
-    clock.advanceTime(ELECTION_TIMEOUT_MILLIS - 1);
+    clock.advanceTime(clock.electionTimeout() - 1);
 
     havingReceived(
         aPreElectionPollRequestWithSameLastIndexAndTermFrom(chooseOne(otherPeers(configuration))),

@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -74,8 +75,9 @@ public class InRamSim {
 
 
     public StoppableClock(long offset, long electionTimeout) {
+      Random r = new Random();
       this.offset = offset;
-      this.electionTimeout = electionTimeout;
+      this.electionTimeout = r.nextInt((int) electionTimeout) + electionTimeout;
       stopWatch.start();
       stopWatch.suspend();
     }

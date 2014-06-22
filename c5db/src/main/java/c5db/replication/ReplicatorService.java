@@ -17,6 +17,7 @@
 
 package c5db.replication;
 
+import c5db.C5ServerConstants;
 import c5db.codec.ProtostuffDecoder;
 import c5db.codec.ProtostuffEncoder;
 import c5db.interfaces.C5Module;
@@ -79,6 +80,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -186,6 +188,13 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   // TODO this should be actually via whatever configuration system we end up using.
   private static class SystemTimeReplicatorClock implements ReplicatorClock {
+    private final long electionTimeout;
+
+    private SystemTimeReplicatorClock() {
+      Random r = new Random();
+      int baseElectionTimeout = C5ServerConstants.REPLICATOR_BASE_ELECTION_TIMEOUT_MILLISECONDS;
+      this.electionTimeout = r.nextInt(baseElectionTimeout) + baseElectionTimeout;
+    }
 
     @Override
     public long currentTimeMillis() {
@@ -199,7 +208,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
     @Override
     public long electionTimeout() {
-      return 1000;
+      return electionTimeout;
     }
 
     @Override
