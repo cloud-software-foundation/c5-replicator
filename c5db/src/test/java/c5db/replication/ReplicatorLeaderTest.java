@@ -100,7 +100,7 @@ public class ReplicatorLeaderTest {
   private long lastIndex;
 
   @Before
-  public final void createLeaderAndSetupFibersAndChannels() {
+  public final void createLeaderAndSetupFibersAndChannels() throws Exception {
     sendRpcChannel.subscribe(rpcFiber, (request) -> System.out.println(request.getRequest()));
     sendRpcChannel.subscribe(rpcFiber, this::routeOutboundRequests);
     sendRpcChannel.subscribe(rpcFiber, requestLog::publish);
@@ -114,6 +114,9 @@ public class ReplicatorLeaderTest {
             new LogEntry(CURRENT_TERM, 1, new ArrayList<>(), QuorumConfiguration.of(PEER_ID_LIST).toProtostuff())));
     lastIndex = 1;
 
+    ReplicatorInfoPersistence persister = new InRamSim.Persister();
+    persister.writeCurrentTermAndVotedFor(QUORUM_ID, CURRENT_TERM, LEADER_ID);
+
     replicatorInstance = new ReplicatorInstance(replicatorFiber,
         LEADER_ID,
         QUORUM_ID,
@@ -123,10 +126,8 @@ public class ReplicatorLeaderTest {
         sendRpcChannel,
         new MemoryChannel<>(),
         commitNotices,
-        CURRENT_TERM,
         State.LEADER,
         seqNum(1),
-        LEADER_ID,
         LEADER_ID);
     replicatorInstance.start();
     rpcFiber.start();

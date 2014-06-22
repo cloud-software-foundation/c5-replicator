@@ -39,7 +39,6 @@ import org.jetlang.core.RunnableExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
 import org.jmock.Expectations;
-import org.jmock.States;
 import org.jmock.integration.junit4.JUnitRuleMockery;
 import org.jmock.lib.concurrent.Synchroniser;
 import org.junit.After;
@@ -87,7 +86,6 @@ public class ReplicatorAppendEntriesTest {
   public JUnitRuleMockery context = new JUnitRuleMockery() {{
     setThreadingPolicy(new Synchroniser());
   }};
-  private final States testState = context.states("test");
   private final ReplicatorInfoPersistence persistence = context.mock(ReplicatorInfoPersistence.class);
 
   // Use this field to express expectations on the replicator's log
@@ -102,8 +100,11 @@ public class ReplicatorAppendEntriesTest {
   @Before
   public void setOverallTestExpectations() throws Exception {
     context.checking(new Expectations() {{
-      oneOf(persistence).writeCurrentTermAndVotedFor(QUORUM_ID, CURRENT_TERM, LEADER_ID);
-      when(testState.isNot("fully-set-up"));
+      allowing(persistence).readCurrentTerm(QUORUM_ID);
+      will(returnValue(CURRENT_TERM));
+
+      allowing(persistence).readVotedFor(QUORUM_ID);
+      will(returnValue(LEADER_ID));
 
       /* Place no constraint on the replicator's usage of these synchronous getters.
        * The replicator uses a Proxy ReplicatorLog which allows us to use jmock
@@ -122,7 +123,6 @@ public class ReplicatorAppendEntriesTest {
     replicatorInstance = makeTestInstance();
     replicatorInstance.start();
     rpcFiber.start();
-    testState.become("fully-set-up");
   }
 
   @After
@@ -381,7 +381,7 @@ public class ReplicatorAppendEntriesTest {
   private final ChannelHistoryMonitor<IndexCommitNotice> commitMonitor =
       new ChannelHistoryMonitor<>(commitNotices, rpcFiber);
 
-  private ReplicatorInstance makeTestInstance() {
+  private ReplicatorInstance makeTestInstance() throws Exception {
     long thisReplicatorId = 1;
     long lastCommittedIndex = 0;
     ReplicatorClock info = new InRamSim.StoppableClock(0, Integer.MAX_VALUE / 2L);
@@ -396,10 +396,8 @@ public class ReplicatorAppendEntriesTest {
         new MemoryRequestChannel<>(),
         new MemoryChannel<>(),
         commitNotices,
-        CURRENT_TERM,
         State.FOLLOWER,
         lastCommittedIndex,
-        LEADER_ID,
         LEADER_ID);
   }
 

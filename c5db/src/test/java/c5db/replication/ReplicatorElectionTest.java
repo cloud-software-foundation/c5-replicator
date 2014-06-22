@@ -117,8 +117,10 @@ public class ReplicatorElectionTest {
   @Before
   public final void setupFibersAndChannels() throws Exception {
     context.checking(new Expectations() {{
-      oneOf(persistence).writeCurrentTermAndVotedFor(
-          with(equalTo(QUORUM_ID)), with(equalTo(CURRENT_TERM)), with(anyVotedFor()));
+      oneOf(persistence).readCurrentTerm(QUORUM_ID);
+      will(returnValue(CURRENT_TERM));
+
+      oneOf(persistence).readVotedFor(QUORUM_ID);
     }});
 
     sendRpcChannel.subscribe(rpcFiber, requestChannel::publish);
@@ -302,9 +304,8 @@ public class ReplicatorElectionTest {
   }
 
 
-  private void whenTheReplicatorIsInState(Replicator.State state) {
+  private void whenTheReplicatorIsInState(Replicator.State state) throws Exception {
     final long leaderId = 0;
-    final long votedFor = 0;
     final Fiber replicatorFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor),
         "replicatorFiber-Thread", true);
 
@@ -317,11 +318,9 @@ public class ReplicatorElectionTest {
         sendRpcChannel,
         eventChannel,
         commitNotices,
-        CURRENT_TERM,
         state,
         lastCommittedIndex(0),
-        leaderId,
-        votedFor);
+        leaderId);
 
     sendRpcChannel.subscribe(rpcFiber, (request) -> {
       if (request.getRequest().to == MY_ID) {

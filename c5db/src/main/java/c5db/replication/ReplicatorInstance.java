@@ -198,11 +198,9 @@ public class ReplicatorInstance implements Replicator {
                      RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
                      final Channel<ReplicatorInstanceEvent> eventChannel,
                      final Channel<IndexCommitNotice> commitNoticeChannel,
-                     long term,
                      State state,
                      long lastCommittedIndex,
-                     long leaderId,
-                     long votedFor) {
+                     long leaderId) {
 
     this.fiber = fiber;
     this.myId = myId;
@@ -222,19 +220,30 @@ public class ReplicatorInstance implements Replicator {
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection,
         clock.electionCheckRate(), clock.electionCheckRate(), TimeUnit.MILLISECONDS);
 
-    this.currentTerm = term;
     this.myState = state;
     this.lastCommittedIndex = lastCommittedIndex;
     this.whosLeader = leaderId;
-    this.votedFor = votedFor;
 
     refreshQuorumConfigurationFromLog();
 
-    try {
-      persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
-    } catch (IOException e) {
-      failReplicatorInstance(e);
-    }
+    fiber.execute(() -> {
+      try {
+        readPersistentData();
+        // indicate we are running!
+        eventChannel.publish(
+            new ReplicatorInstanceEvent(
+                ReplicatorInstanceEvent.EventType.QUORUM_START,
+                ReplicatorInstance.this,
+                0,
+                0,
+                clock.currentTimeMillis(),
+                null, null)
+        );
+      } catch (IOException e) {
+        logger.error("error during persistent data init", e);
+        failReplicatorInstance(e);
+      }
+    });
 
     if (state == State.LEADER) {
       becomeLeader();
