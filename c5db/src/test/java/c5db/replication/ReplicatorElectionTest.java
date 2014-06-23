@@ -305,7 +305,6 @@ public class ReplicatorElectionTest {
 
 
   private void whenTheReplicatorIsInState(Replicator.State state) throws Exception {
-    final long leaderId = 0;
     final Fiber replicatorFiber = new ThreadFiber(new RunnableExecutorImpl(batchExecutor),
         "replicatorFiber-Thread", true);
 
@@ -318,9 +317,7 @@ public class ReplicatorElectionTest {
         sendRpcChannel,
         eventChannel,
         commitNotices,
-        state,
-        lastCommittedIndex(0),
-        leaderId);
+        state);
 
     sendRpcChannel.subscribe(rpcFiber, (request) -> {
       if (request.getRequest().to == MY_ID) {

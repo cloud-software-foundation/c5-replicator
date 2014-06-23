@@ -383,7 +383,6 @@ public class ReplicatorAppendEntriesTest {
 
   private ReplicatorInstance makeTestInstance() throws Exception {
     long thisReplicatorId = 1;
-    long lastCommittedIndex = 0;
     ReplicatorClock info = new InRamSim.StoppableClock(0, Integer.MAX_VALUE / 2L);
     ReplicatorLog proxyLog = getReplicatorLogWhichInvokesMock();
 
@@ -396,9 +395,7 @@ public class ReplicatorAppendEntriesTest {
         new MemoryRequestChannel<>(),
         new MemoryChannel<>(),
         commitNotices,
-        State.FOLLOWER,
-        lastCommittedIndex,
-        LEADER_ID);
+        State.FOLLOWER);
   }
 
   private ReplicatorLog getReplicatorLogWhichInvokesMock() {

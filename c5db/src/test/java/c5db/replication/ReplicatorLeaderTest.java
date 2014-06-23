@@ -60,7 +60,6 @@ import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.RpcMatchers.RequestMatcher;
 import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
 import static c5db.interfaces.replication.Replicator.State;
-import static c5db.log.LogTestUtil.seqNum;
 import static c5db.log.LogTestUtil.someData;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
@@ -126,9 +125,7 @@ public class ReplicatorLeaderTest {
         sendRpcChannel,
         new MemoryChannel<>(),
         commitNotices,
-        State.LEADER,
-        seqNum(1),
-        LEADER_ID);
+        State.LEADER);
     replicatorInstance.start();
     rpcFiber.start();
   }
