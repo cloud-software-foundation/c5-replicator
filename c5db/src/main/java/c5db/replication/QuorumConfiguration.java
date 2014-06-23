@@ -60,9 +60,11 @@ public final class QuorumConfiguration {
   }
 
   public QuorumConfiguration getTransitionalConfiguration(Collection<Long> newPeerCollection) {
-    assert !isTransitional;
-
-    return new QuorumConfiguration(allPeers, newPeerCollection);
+    if (isTransitional) {
+      return new QuorumConfiguration(prevPeers, newPeerCollection);
+    } else {
+      return new QuorumConfiguration(allPeers, newPeerCollection);
+    }
   }
 
   public QuorumConfiguration getCompletedConfiguration() {
