@@ -161,7 +161,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                 persister,
                 outgoingRequests,
                 replicatorStateChanges,
-                indexCommitNotices
+                indexCommitNotices,
+                Replicator.State.FOLLOWER
             );
         if (logMooring.getLastIndex() == 0) {
           instance.bootstrapQuorum(peers);

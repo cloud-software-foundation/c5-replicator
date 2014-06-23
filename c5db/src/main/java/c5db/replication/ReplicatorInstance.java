@@ -139,7 +139,8 @@ public class ReplicatorInstance implements Replicator {
                             ReplicatorInfoPersistence persister,
                             RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
                             final Channel<ReplicatorInstanceEvent> eventChannel,
-                            final Channel<IndexCommitNotice> commitNoticeChannel) {
+                            final Channel<IndexCommitNotice> commitNoticeChannel,
+                            State initialState) {
     this.fiber = fiber;
     this.myId = myId;
     this.quorumId = quorumId;
@@ -154,25 +155,6 @@ public class ReplicatorInstance implements Replicator {
     this.lastRPC = clock.currentTimeMillis();
 
     refreshQuorumConfigurationFromLog();
-
-    fiber.execute(() -> {
-      try {
-        readPersistentData();
-        // indicate we are running!
-        eventChannel.publish(
-            new ReplicatorInstanceEvent(
-                ReplicatorInstanceEvent.EventType.QUORUM_START,
-                ReplicatorInstance.this,
-                0,
-                0,
-                clock.currentTimeMillis(),
-                null, null)
-        );
-      } catch (IOException e) {
-        logger.error("error during persistent data init", e);
-        failReplicatorInstance(e);
-      }
-    });
 
     commitNoticeChannel.subscribe(
         new ChannelSubscription<>(fiber, this::onCommit,
@@ -183,43 +165,8 @@ public class ReplicatorInstance implements Replicator {
     incomingChannel.subscribe(fiber, this::onIncomingMessage);
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, clock.electionCheckRate(),
         clock.electionCheckRate(), TimeUnit.MILLISECONDS);
-  }
 
-  /**
-   * Initialize object into the specified state, for testing purposes
-   */
-  ReplicatorInstance(final Fiber fiber,
-                     final long myId,
-                     final String quorumId,
-                     ReplicatorLog log,
-                     ReplicatorClock clock,
-                     ReplicatorInfoPersistence persister,
-                     RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
-                     final Channel<ReplicatorInstanceEvent> eventChannel,
-                     final Channel<IndexCommitNotice> commitNoticeChannel,
-                     State state) {
-
-    this.fiber = fiber;
-    this.myId = myId;
-    this.quorumId = quorumId;
-    this.logger = getNewLogger();
-    this.sendRpcChannel = sendRpcChannel;
-    this.log = log;
-    this.clock = clock;
-    this.persister = persister;
-    this.eventChannel = eventChannel;
-    this.commitNoticeChannel = commitNoticeChannel;
-    this.myElectionTimeout = clock.electionTimeout();
-    this.lastRPC = clock.currentTimeMillis();
-
-    commitNoticeChannel.subscribe(fiber, this::onCommit);
-    incomingChannel.subscribe(fiber, this::onIncomingMessage);
-    electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection,
-        clock.electionCheckRate(), clock.electionCheckRate(), TimeUnit.MILLISECONDS);
-
-    this.myState = state;
-
-    refreshQuorumConfigurationFromLog();
+    this.myState = initialState;
 
     fiber.execute(() -> {
       try {
@@ -234,15 +181,15 @@ public class ReplicatorInstance implements Replicator {
                 clock.currentTimeMillis(),
                 null, null)
         );
+
+        if (initialState == State.LEADER) {
+          becomeLeader();
+        }
       } catch (IOException e) {
         logger.error("error during persistent data init", e);
         failReplicatorInstance(e);
       }
     });
-
-    if (state == State.LEADER) {
-      becomeLeader();
-    }
   }
 
   /**

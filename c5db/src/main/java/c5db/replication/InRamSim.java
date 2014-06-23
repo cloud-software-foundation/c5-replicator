@@ -18,6 +18,7 @@
 package c5db.replication;
 
 import c5db.interfaces.replication.IndexCommitNotice;
+import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.InRamLog;
 import c5db.log.ReplicatorLog;
@@ -208,7 +209,8 @@ public class InRamSim {
           new Persister(),
           rpcChannel,
           stateChanges,
-          commitNotices);
+          commitNotices,
+          Replicator.State.FOLLOWER);
       peerIds.add(peerId);
       replicators.put(peerId, rep);
       replicatorLogs.put(peerId, log);
@@ -238,7 +240,8 @@ public class InRamSim {
         oldRepl.persister,
         rpcChannel,
         stateChanges,
-        commitNotices);
+        commitNotices,
+        Replicator.State.FOLLOWER);
     replicators.put(peerId, repl);
     replicatorLogs.put(peerId, log);
     offlinePeers.remove(peerId);
