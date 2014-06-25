@@ -720,7 +720,7 @@ public class InRamTest {
   }
 
   private void updateLastCommit(IndexCommitNotice notice) {
-    long peerId = notice.replicatorId;
+    long peerId = notice.nodeId;
     if (notice.lastIndex > lastCommit.getOrDefault(peerId, 0L)) {
       lastCommit.put(peerId, notice.lastIndex);
     }

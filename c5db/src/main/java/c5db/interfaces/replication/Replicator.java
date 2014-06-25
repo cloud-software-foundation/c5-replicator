@@ -59,6 +59,9 @@ public interface Replicator {
    */
   ListenableFuture<ReplicatorReceipt> logData(List<ByteBuffer> data) throws InterruptedException;
 
+  /**
+   * @return The numerical ID for the server, or node, on which this Replicator resides.
+   */
   long getId();
 
   boolean isLeader();

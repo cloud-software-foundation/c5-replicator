@@ -1312,7 +1312,7 @@ public class ReplicatorInstance implements Replicator {
   private void onCommit(IndexCommitNotice notice) {
     if (notice.firstIndex <= quorumConfigIndex
         && quorumConfigIndex <= notice.lastIndex
-        && myId == notice.replicatorId) {
+        && myId == notice.nodeId) {
       eventChannel.publish(
           new ReplicatorInstanceEvent(
               ReplicatorInstanceEvent.EventType.QUORUM_CONFIGURATION_COMMITTED,

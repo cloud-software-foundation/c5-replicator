@@ -85,7 +85,7 @@ public class IndexCommitMatcher extends TypeSafeMatcher<IndexCommitNotice> {
 
   public IndexCommitMatcher issuedFromPeer(long peerId) {
     return addCriterion(
-        (item) -> item.replicatorId == peerId,
+        (item) -> item.nodeId == peerId,
         (description) ->
             description.appendText(" from peer ").appendValue(peerId));
   }
