@@ -18,8 +18,10 @@
 package c5db.util;
 
 import org.jetlang.core.BatchExecutor;
+import org.jetlang.core.RunnableExecutorImpl;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
+import org.jetlang.fibers.ThreadFiber;
 
 import java.util.function.Consumer;
 
@@ -53,6 +55,8 @@ public class PoolFiberFactoryWithExecutor implements C5FiberFactory {
    */
   @Override
   public Fiber create() {
-    return fiberFactory.create(batchExecutor);
+    // TODO this is a workaround until issue 252 is fixed.
+    return new ThreadFiber(new RunnableExecutorImpl(batchExecutor), null, false);
+    // return fiberFactory.create(batchExecutor);
   }
 }
