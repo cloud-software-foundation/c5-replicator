@@ -19,9 +19,12 @@ package c5db.replication;
 
 import c5db.RpcMatchers;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
+import c5db.replication.generated.LogEntry;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
+
+import java.util.List;
 
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
@@ -233,6 +236,31 @@ class ReplicationMatchers {
         if (matchException != null) {
           description.appendValue(matchException.toString());
         }
+      }
+    };
+  }
+
+  static Matcher<List<LogEntry>> aListOfEntriesWithConsecutiveSeqNums(long start, long end) {
+    return new TypeSafeMatcher<List<LogEntry>>() {
+      @Override
+      protected boolean matchesSafely(List<LogEntry> entries) {
+        if (entries.size() != (end - start)) {
+          return false;
+        }
+        long expectedIndex = start;
+        for (LogEntry entry : entries) {
+          if (entry.getIndex() != expectedIndex) {
+            return false;
+          }
+          expectedIndex++;
+        }
+        return true;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("a list of LogEntry with consecutive indexes from ")
+            .appendValue(start).appendText(" inclusive to ").appendValue(end).appendText(" exclusive");
       }
     };
   }

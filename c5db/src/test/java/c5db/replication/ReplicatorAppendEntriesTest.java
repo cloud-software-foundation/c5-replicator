@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
+import static c5db.FutureMatchers.resultsIn;
 import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.RpcMatchers.ReplyMatcher.anAppendReply;
 import static c5db.interfaces.replication.Replicator.State;
@@ -62,6 +63,7 @@ import static c5db.log.LogTestUtil.aSeqNum;
 import static c5db.log.LogTestUtil.entries;
 import static c5db.log.LogTestUtil.makeProtostuffEntry;
 import static c5db.log.LogTestUtil.someData;
+import static c5db.replication.ReplicationMatchers.aListOfEntriesWithConsecutiveSeqNums;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -87,6 +89,8 @@ public class ReplicatorAppendEntriesTest {
   }};
   private final States testState = context.states("test");
   private final ReplicatorInfoPersistence persistence = context.mock(ReplicatorInfoPersistence.class);
+
+  // Use this field to express expectations on the replicator's log
   private final ReplicatorLog log = context.mock(ReplicatorLog.class);
 
   @Rule
@@ -330,6 +334,48 @@ public class ReplicatorAppendEntriesTest {
     assertThat(replicatorInstance.getQuorumConfiguration(), is(equalTo(configuration)));
   }
 
+  @Test
+  public void processesAppendRequestsAtomically() throws Exception {
+    context.checking(new Expectations() {{
+      oneOf(log).truncateLog(with(any(Long.class)));
+      allowing(log).logEntries(with(anyList()));
+    }});
+
+    havingLogged(
+        entries().term(101).indexes(1, 2, 3, 4));
+
+    // This append request will require a both a log truncation and an append.
+    havingReceived(anAppendEntriesRequest()
+        .withEntries(entries().term(102).indexes(3, 4, 5))
+        .withPrevLogTerm(101).withPrevLogIndex(2));
+
+    // This append will (almost certainly) fail unless the previous append was processed atomically.
+    havingReceived(anAppendEntriesRequest()
+        .withEntries(entries().term(102).indexes(6, 7))
+        .withPrevLogTerm(102).withPrevLogIndex(5));
+
+    assertThat(reply(), is(anAppendReply().withResult(true)));
+    assertThat(internalLog.getLogEntries(1, 8), resultsIn(aListOfEntriesWithConsecutiveSeqNums(1, 8)));
+  }
+
+  @Test
+  public void ignoresEntriesThatAreIdenticalWithThoseAlreadyPresentInTheLog() throws Exception {
+    context.checking(new Expectations() {{
+      never(log).truncateLog(with(any(Long.class)));
+
+      allowing(log).logEntries(with(anyList()));
+    }});
+
+    havingLogged(
+        entries().term(101).indexes(1, 2, 3, 4));
+
+    havingReceived(anAppendEntriesRequest()
+        .withEntries(entries().term(101).indexes(3, 4, 5, 6))
+        .withPrevLogTerm(101).withPrevLogIndex(2));
+
+    assertThat(reply(), is(anAppendReply().withResult(true)));
+    assertThat(internalLog.getLogEntries(1, 6), resultsIn(aListOfEntriesWithConsecutiveSeqNums(1, 6)));
+  }
 
   private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
   private final ChannelHistoryMonitor<IndexCommitNotice> commitMonitor =
