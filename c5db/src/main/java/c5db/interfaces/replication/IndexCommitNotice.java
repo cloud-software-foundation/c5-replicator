@@ -23,15 +23,18 @@ package c5db.interfaces.replication;
  * at once, multiple IndexCommitNotices will be needed -- one for each term.
  */
 public class IndexCommitNotice {
+  public final String quorumId;
   public final long nodeId;
   public final long firstIndex;
   public final long lastIndex;
   public final long term;
 
-  public IndexCommitNotice(long nodeId,
+  public IndexCommitNotice(String quorumId,
+                           long nodeId,
                            long firstIndex,
                            long lastIndex,
                            long term) {
+    this.quorumId = quorumId;
     this.nodeId = nodeId;
     this.firstIndex = firstIndex;
     this.lastIndex = lastIndex;
@@ -41,7 +44,8 @@ public class IndexCommitNotice {
   @Override
   public String toString() {
     return "IndexCommitNotice{" +
-        "nodeId=" + nodeId +
+        "quorumId=" + quorumId +
+        ", nodeId=" + nodeId +
         ", firstIndex=" + firstIndex +
         ", lastIndex=" + lastIndex +
         ", term=" + term +

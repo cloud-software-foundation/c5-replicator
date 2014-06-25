@@ -1303,7 +1303,7 @@ public class ReplicatorInstance implements Replicator {
       long currentTerm = nextTerm;
       if (index == lastCommittedIndex
           || (nextTerm = log.getLogTerm(index + 1)) != currentTerm) {
-        commitNoticeChannel.publish(new IndexCommitNotice(myId, firstIndexOfTerm, index, currentTerm));
+        commitNoticeChannel.publish(new IndexCommitNotice(quorumId, myId, firstIndexOfTerm, index, currentTerm));
         firstIndexOfTerm = index + 1;
       }
     }
