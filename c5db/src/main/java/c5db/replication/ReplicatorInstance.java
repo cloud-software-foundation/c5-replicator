@@ -618,38 +618,24 @@ public class ReplicatorInstance implements Replicator {
 
     // 6. if existing entries conflict with new entries, delete all
     // existing entries starting with first conflicting entry (sec 5.3)
-    // nb: The process in which we fix the local log may involve a async log operation, so that is entirely
-    // hidden up in this future.  Note that the process can fail, so we handle that as well.
-    ListenableFuture<ArrayList<LogEntry>> entriesToCommitFuture = validateAndFixLocalLog(appendMessage);
-    // TODO this method of placing callbacks on the replicator's fiber can cause race conditions
-    // TODO since later-received messages can be handled prior to the callback on earlier-received messages
-    C5Futures.addCallback(entriesToCommitFuture,
-        (entriesToCommit) -> {
-          // 7. Append any new entries not already in the log.
-          ListenableFuture<Boolean> logCommitNotification = log.logEntries(entriesToCommit);
-          refreshQuorumConfigurationFromLog();
+    // nb: The process in which we fix the local log may involve several async log operations, so that is entirely
+    // hidden up in these futures.  Note that the process can fail, so we handle that as well.
+    List<ListenableFuture<Boolean>> logOperationFutures = reconcileAppendMessageWithLocalLog(appendMessage);
+    ListenableFuture<List<Boolean>> bundledLogFuture = Futures.allAsList(logOperationFutures);
 
-          // 8. apply newly committed entries to state machine
+    // wait for the log to commit before returning message.  But do so async.
+    C5Futures.addCallback(bundledLogFuture,
+        (resultList) -> {
+          appendReply(request, true);
 
-          // wait for the log to commit before returning message.  But do so async.
-          C5Futures.addCallback(logCommitNotification,
-              (result) -> {
-                appendReply(request, true);
-
-                // Notify and mark the last committed index.
-                long newCommitIndex = Math.min(appendMessage.getCommitIndex(), log.getLastIndex());
-                setLastCommittedIndex(newCommitIndex);
-              },
-              (Throwable t) -> {
-                // TODO A log commit failure is probably a fatal error. Quit the instance?
-                // TODO better error reporting. A log commit failure will be a serious issue.
-                logger.error("failure appending new entries to log", t);
-                appendReply(request, false);
-              }, fiber);
-
+          // 8. Signal the client of the Replicator that it can apply newly committed entries to state machine
+          long newCommitIndex = Math.min(appendMessage.getCommitIndex(), log.getLastIndex());
+          setLastCommittedIndex(newCommitIndex);
         },
         (Throwable t) -> {
-          logger.error("failure validating and fixing local log", t);
+          // TODO A log commit failure is probably a fatal error. Quit the instance?
+          // TODO better error reporting. A log commit failure will be a serious issue.
+          logger.error("failure reconciling received entries with the local log", t);
           appendReply(request, false);
         }, fiber);
   }
@@ -676,73 +662,55 @@ public class ReplicatorInstance implements Replicator {
     );
   }
 
-  private ListenableFuture<ArrayList<LogEntry>> validateAndFixLocalLog(AppendEntries appendMessage) {
-    final SettableFuture<ArrayList<LogEntry>> future = SettableFuture.create();
-
-    validateAndFixLocalLog0(appendMessage, future);
-    return future;
-  }
-
-  private void validateAndFixLocalLog0(final AppendEntries appendMessage,
-                                       final SettableFuture<ArrayList<LogEntry>> future) {
+  private List<ListenableFuture<Boolean>> reconcileAppendMessageWithLocalLog(AppendEntries appendMessage) {
+    List<ListenableFuture<Boolean>> logOperationFutures = new ArrayList<>();
 
     // 6. if existing entries conflict with new entries, delete all
     // existing entries starting with first conflicting entry (sec 5.3)
 
     long nextIndex = log.getLastIndex() + 1;
 
-    List<LogEntry> entries = appendMessage.getEntriesList();
-    ArrayList<LogEntry> entriesToCommit = new ArrayList<>(entries.size());
-    for (LogEntry entry : entries) {
+    List<LogEntry> entriesFromMessage = appendMessage.getEntriesList();
+    List<LogEntry> entriesToCommit = new ArrayList<>(entriesFromMessage.size());
+
+    for (LogEntry entry : entriesFromMessage) {
       long entryIndex = entry.getIndex();
 
       if (entryIndex == nextIndex) {
-        logger.debug("new log entry for idx {} term {}", entryIndex, entry.getTerm());
-
         entriesToCommit.add(entry);
-
         nextIndex++;
         continue;
       }
 
       if (entryIndex > nextIndex) {
         // ok this entry is still beyond the LAST entry, so we have a problem:
-        logger.error("log entry missing, I expected {} and the next in the message is {}",
-            nextIndex, entryIndex);
-
-        future.setException(new Exception("Log entry missing"));
-        return;
+        logger.error("log entry missing, I expected {} and the next in the message is {}", nextIndex, entryIndex);
+        logOperationFutures.add(Futures.immediateFailedFuture(
+            new Exception("Log entry missing from received entries")));
+        return logOperationFutures;
       }
 
       // at this point entryIndex should be <= log.getLastIndex
       assert entryIndex < nextIndex;
 
       if (log.getLogTerm(entryIndex) != entry.getTerm()) {
-        // This is generally expected to be fairly uncommon.  To prevent busywaiting on the truncate,
-        // we basically just redo some work (that ideally shouldn't be too expensive).
-
-        // So after this point, we basically return immediately, with a callback schedule.
-
+        // This is generally expected to be fairly uncommon.
         // conflict:
         logger.debug("log conflict at idx {} my term: {} term from leader: {}, truncating log after this point",
             entryIndex, log.getLogTerm(entryIndex), entry.getTerm());
 
-        // delete this and all subsequent entries:
-        ListenableFuture<Boolean> truncateResult = log.truncateLog(entryIndex);
-        C5Futures.addCallback(truncateResult,
-            (result) ->
-                // Recurse, which involved a little redo work, but at makes this code easier to reason about.
-                validateAndFixLocalLog0(appendMessage, future),
+        // delete this and all subsequent entries from the local log.
+        logOperationFutures.add(log.truncateLog(entryIndex));
 
-            (Throwable t) -> {
-              failReplicatorInstance(t);
-              future.setException(t); // TODO determine if this is the proper thing to do here?
-            }, fiber);
-
-        return;
+        entriesToCommit.add(entry);
+        nextIndex = entryIndex + 1;
       }
     }
-    future.set(entriesToCommit);
+
+    // 7. Append any new entries not already in the log.
+    logOperationFutures.add(log.logEntries(entriesToCommit));
+    refreshQuorumConfigurationFromLog();
+    return logOperationFutures;
   }
 
   @FiberOnly
