@@ -966,6 +966,7 @@ public class ReplicatorInstance implements Replicator {
   @FiberOnly
   private void consumeQueue() {
     // retrieve as many items as possible. send rpc.
+    // If there are no pending log requests, this method sends out heartbeats.
     final List<InternalReplicationRequest> reqs = new ArrayList<>();
 
     logger.trace("queue consuming");
