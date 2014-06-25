@@ -43,6 +43,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.jetbrains.annotations.Nullable;
 import org.jetlang.channels.AsyncRequest;
 import org.jetlang.channels.Channel;
+import org.jetlang.channels.ChannelSubscription;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
@@ -176,7 +177,12 @@ public class ReplicatorInstance implements Replicator {
       }
     });
 
-    commitNoticeChannel.subscribe(fiber, this::onCommit);
+    commitNoticeChannel.subscribe(
+        new ChannelSubscription<>(fiber, this::onCommit,
+            (notice) ->
+                notice.nodeId == myId
+                    && notice.quorumId.equals(quorumId)));
+
     incomingChannel.subscribe(fiber, this::onIncomingMessage);
 
     electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, info.electionCheckRate(),
@@ -1311,8 +1317,7 @@ public class ReplicatorInstance implements Replicator {
 
   private void onCommit(IndexCommitNotice notice) {
     if (notice.firstIndex <= quorumConfigIndex
-        && quorumConfigIndex <= notice.lastIndex
-        && myId == notice.nodeId) {
+        && quorumConfigIndex <= notice.lastIndex) {
       eventChannel.publish(
           new ReplicatorInstanceEvent(
               ReplicatorInstanceEvent.EventType.QUORUM_CONFIGURATION_COMMITTED,
