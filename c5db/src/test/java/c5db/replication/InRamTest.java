@@ -17,7 +17,6 @@
 
 package c5db.replication;
 
-import c5db.interfaces.replication.IllegalQuorumBootstrapException;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.ReplicatorLog;
@@ -243,14 +242,6 @@ public class InRamTest {
     assertThat(pickFollower().changeQuorum(newPeerIds), nullValue());
   }
 
-  @Test(expected = IllegalQuorumBootstrapException.class)
-  public void aReplicatorThrowsAnExceptionIfAskedToBootstrapItsQuorumAfterItIsAlreadyPartOfAQuorum()
-      throws Exception {
-    havingElectedALeaderAtOrAfter(term(1));
-
-    leader().instance.bootstrapQuorum(largerPeerSetWithSomeInCommonWithInitialSet());
-  }
-
   @Test
   public void aLeaderCanCoordinateAQuorumMembershipChange() throws Exception {
     final Set<Long> newPeerIds = smallerPeerSetWithNoneInCommonWithInitialSet();
@@ -451,6 +442,24 @@ public class InRamTest {
     leader().die();
 
     waitForANewLeader();
+  }
+
+  @Test
+  public void aLateBootstrapCallWillBeDisregarded() throws Exception {
+    havingElectedALeaderAtOrAfter(term(1));
+
+    leader().logDataUpToIndex(2);
+    allPeers((peer) -> assertThat(peer, willCommitEntriesUpTo(lastIndexLogged())));
+
+    // Bootstrap calls to both leader and a non-leader -- both will be no-ops
+    pickNonLeader().instance.bootstrapQuorum(smallerPeerSetWithNoneInCommonWithInitialSet());
+    leader().instance.bootstrapQuorum(smallerPeerSetWithNoneInCommonWithInitialSet());
+
+    // Verify that quorum is still in a working state
+    assertThat(sim.getLog(leader().id).getLastIndex(), is(equalTo(2L)));
+
+    leader().logDataUpToIndex(3);
+    allPeers((peer) -> assertThat(peer, willCommitEntriesUpTo(lastIndexLogged())));
   }
 
   /**

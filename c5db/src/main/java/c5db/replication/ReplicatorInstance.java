@@ -18,7 +18,6 @@
 package c5db.replication;
 
 import c5db.C5ServerConstants;
-import c5db.interfaces.replication.IllegalQuorumBootstrapException;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
@@ -299,15 +298,12 @@ public class ReplicatorInstance implements Replicator {
    * need to successfully log the entry in order for the quorum establishment to go through).
    *
    * @param peerIds Collection of peers in the new quorum.
-   * @return A future which will return when the peer has . The actual completion of the bootstrap will be
-   * signaled by a ReplicatorInstanceEvent with the appropriate quorum configuration.
+   * @return A future which will return when the peer has processed the bootstrap request.
+   * The actual completion of the bootstrap will be signaled by a ReplicatorInstanceEvent
+   * with the appropriate quorum configuration.
    */
   public ListenableFuture<Void> bootstrapQuorum(Collection<Long> peerIds) {
     assert peerIds.size() > 0;
-
-    if (!quorumConfig.isEmpty() || myState != State.FOLLOWER || log.getLastIndex() != 0 || currentTerm != 0) {
-      throw new IllegalQuorumBootstrapException("Replicator is already part of an active quorum");
-    }
 
     SettableFuture<Void> quorumPersistedFuture = SettableFuture.create();
 
