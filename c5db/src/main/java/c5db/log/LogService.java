@@ -74,12 +74,7 @@ public class LogService extends AbstractService implements LogModule {
   }
 
   @Override
-  public OLog getOLogInstance() {
-    return oLog;
-  }
-
-  @Override
-  public Mooring getMooring(String quorumId) throws IOException {
+  public ReplicatorLog getMooring(String quorumId) throws IOException {
     // TODO change this to use futures and fibers to manage the concurrency?
     synchronized (moorings) {
       if (moorings.containsKey(quorumId)) {

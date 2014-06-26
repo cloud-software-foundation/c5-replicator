@@ -17,8 +17,7 @@
 
 package c5db.interfaces;
 
-import c5db.log.Mooring;
-import c5db.log.OLog;
+import c5db.log.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
 
 import java.io.IOException;
@@ -31,7 +30,5 @@ import java.io.IOException;
  */
 @ModuleTypeBinding(ModuleType.Log)
 public interface LogModule extends C5Module {
-  public OLog getOLogInstance();
-
-  public Mooring getMooring(String quorumId) throws IOException;
+  public ReplicatorLog getMooring(String quorumId) throws IOException;
 }
