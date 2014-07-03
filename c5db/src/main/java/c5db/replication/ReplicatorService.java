@@ -92,9 +92,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ReplicatorService extends AbstractService implements ReplicationModule {
   private static final Logger LOG = LoggerFactory.getLogger(ReplicatorService.class);
 
-  private final MemoryChannel<ReplicatorInstanceEvent> replicatorStateChanges = new MemoryChannel<>();
-  private final MemoryChannel<IndexCommitNotice> indexCommitNotices = new MemoryChannel<>();
-
   /**
    * ************* C5Module informational methods ***********************************
    */
@@ -214,29 +211,39 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   private final int port;
   private final C5Server server;
+
   private final Fiber fiber;
+
+  // Netty infrastructure
   private final EventLoopGroup bossGroup;
   private final EventLoopGroup workerGroup;
-
-  private final Map<Long, Channel> connections = new HashMap<>();
-  private final Map<String, ReplicatorInstance> replicatorInstances = new HashMap<>();
   private final ChannelGroup allChannels;
-  // map of message_id -> Request
+  private final ServerBootstrap serverBootstrap = new ServerBootstrap();
+  private final Bootstrap outgoingBootstrap = new Bootstrap();
+
+  // ReplicatorInstances and objects shared among them
+  private final Map<String, ReplicatorInstance> replicatorInstances = new HashMap<>();
+  private final Persister persister;
+  private final RequestChannel<RpcRequest, RpcWireReply> outgoingRequests = new MemoryRequestChannel<>();
+  private final MemoryChannel<ReplicatorInstanceEvent> replicatorStateChanges = new MemoryChannel<>();
+  private final MemoryChannel<IndexCommitNotice> indexCommitNotices = new MemoryChannel<>();
+
+  // Connections to other servers by their node IDs
+  private final Map<Long, Channel> connections = new HashMap<>();
+
+  // Map of message ID -> Request
   // TODO we need a way to remove these after a while, because if we fail to get a reply we will be unhappy.
   private final Map<Long, Request<RpcRequest, RpcWireReply>> outstandingRPCs = new HashMap<>();
+
+  // Map of Session -> message ID
   private final Map<Session, Long> outstandingRPCbySession = new HashMap<>();
 
-  private final RequestChannel<RpcRequest, RpcWireReply> outgoingRequests = new MemoryRequestChannel<>();
-  private final Persister persister;
-
-  private ServerBootstrap serverBootstrap;
-  private Bootstrap outgoingBootstrap;
-
-  // Initialized in the module start, by the time any messages or fiber executions trigger, this should be not-null
+  // Initialized in the module start, by the time any messages or fiber executions trigger, these should be not-null
   private DiscoveryModule discoveryModule = null;
   private LogModule logModule = null;
   private Channel listenChannel;
 
+  // Sequence number for sent messages
   private long messageIdGen = 1;
 
   public ReplicatorService(EventLoopGroup bossGroup,
@@ -248,7 +255,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     this.server = server;
     this.fiber = server.getFiberFactory(this::failModule).create();
     this.allChannels = new DefaultChannelGroup(workerGroup.next());
-
     this.persister = new Persister(server.getConfigDirectory());
   }
 
@@ -352,7 +358,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     // check to see if we have a connection:
     Channel channel = connections.get(to);
     if (channel != null && channel.isOpen()) {
-      sendMessage0(message, channel);
+      sendMessageAsync(message, channel);
       return;
     } else if (channel != null) {
       // stale?
@@ -362,6 +368,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
     NodeInfoRequest nodeInfoRequest = new NodeInfoRequest(to, ModuleType.Replication);
     AsyncRequest.withOneReply(fiber, discoveryModule.getNodeInfo(), nodeInfoRequest, new Callback<NodeInfoReply>() {
+      @SuppressWarnings("RedundantCast")
       @FiberOnly
       @Override
       public void onMessage(NodeInfoReply nodeInfoReply) {
@@ -375,7 +382,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         // what if existing outgoing connection attempt?
         Channel channel = connections.get(to);
         if (channel != null && channel.isOpen()) {
-          sendMessage0(message, channel);
+          sendMessageAsync(message, channel);
           return;
         } else if (channel != null) {
           LOG.debug("Removing stale2 !isOpen channel from connections.get() for peer {}", to);
@@ -392,7 +399,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
             future ->
                 fiber.execute(() -> {
                   // remove only THIS channel. It might have been removed prior so.
-                  //LOG.debug("Close future fired for {} so we are removing it as a connection", to);
                   connections.remove(to, future.channel());
                 }));
 
@@ -400,15 +406,14 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         channelFuture.addListener((ChannelFutureListener)
             future -> {
               if (future.isSuccess()) {
-                //LOG.debug("Connected to peer {}, sending message!", to);
-                sendMessage0(message, future.channel());
+                sendMessageAsync(message, future.channel());
               }
             });
       }
     });
   }
 
-  private void sendMessage0(final Request<RpcRequest, RpcWireReply> message, final Channel channel) {
+  private void sendMessageAsync(final Request<RpcRequest, RpcWireReply> message, final Channel channel) {
     fiber.execute(() -> {
       RpcRequest request = message.getRequest();
       long to = request.to;
@@ -462,7 +467,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
     fiber.execute(() -> {
       // TODO this is a shitty way to do this, more refactoring is necessary.
-      LOG.warn("ReplicatorService now waiting for module dependency on Log & BeaconService");
+      LOG.warn("ReplicatorService now waiting for module dependency on Log & Discovery");
 
       ListenableFuture<C5Module> logListen = server.getModule(ModuleType.Log);
       try {
@@ -473,6 +478,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
       ListenableFuture<C5Module> f = server.getModule(ModuleType.Discovery);
       Futures.addCallback(f, new FutureCallback<C5Module>() {
+        @SuppressWarnings({"RedundantCast", "Convert2MethodRef"})
         @Override
         public void onSuccess(C5Module result) {
           discoveryModule = (DiscoveryModule) result;
@@ -493,7 +499,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
               }
             };
 
-            serverBootstrap = new ServerBootstrap();
             serverBootstrap.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.SO_REUSEADDR, true)
@@ -509,7 +514,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                   }
                 });
 
-            outgoingBootstrap = new Bootstrap();
             outgoingBootstrap.group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.SO_REUSEADDR, true)
@@ -539,7 +543,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
         @Override
         public void onFailure(Throwable t) {
-          LOG.error("ReplicatorService unable to retrieve BeaconService!", t);
+          LOG.error("ReplicatorService unable to retrieve Discovery module!", t);
           notifyFailed(t);
         }
       }, fiber);
