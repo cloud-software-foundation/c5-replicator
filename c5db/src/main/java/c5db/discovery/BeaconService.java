@@ -74,7 +74,7 @@ import java.util.concurrent.TimeUnit;
  * specifically, is what happens when multiple processes bind to 255.255.255.255:PORT
  * and send packets?  Which processes receive such packets?
  * <ul>
- * <li>On Mac OSX 10.8/9, all processes reliably recieve all packets including
+ * <li>On Mac OSX 10.8/9, all processes reliably receive all packets including
  * the originating process</li>
  * <li>On Linux (Ubuntu, modern) a variety of things appear to occur:
  * <ul>
@@ -130,8 +130,8 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         if (servicePort == null) {
           future.set(NodeInfoReply.NO_REPLY);
         } else {
-          List<String> peerAddrs = peer.availability.getAddressesList();
-          future.set(new NodeInfoReply(true, peerAddrs, servicePort));
+          List<String> peerAddresses = peer.availability.getAddressesList();
+          future.set(new NodeInfoReply(true, peerAddresses, servicePort));
         }
       }
     });
@@ -153,9 +153,9 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       return;
     }
 
-    List<String> peerAddrs = peer.availability.getAddressesList();
+    List<String> peerAddresses = peer.availability.getAddressesList();
     // does this module run on that peer?
-    message.reply(new NodeInfoReply(true, peerAddrs, servicePort));
+    message.reply(new NodeInfoReply(true, peerAddresses, servicePort));
   }
 
   @Override
@@ -174,6 +174,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private final Map<ModuleType, Integer> moduleInfo = new HashMap<>();
   private final Map<Long, NodeInfo> peers = new HashMap<>();
   private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
+  private final org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
   private final Fiber fiber;
 
   // These should be final, but they are initialized in doStart().
@@ -182,7 +183,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private Bootstrap bootstrap = null;
   private List<String> localIPs;
 
-  public class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
+  private class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
       LOG.warn("Exception, ignoring datagram", cause);
@@ -197,8 +198,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   /**
    * @param nodeId        the id of this node.
    * @param discoveryPort the port to send discovery beacons on and to listen to
-   * @throws InterruptedException
-   * @throws SocketException
    */
   public BeaconService(long nodeId,
                        int discoveryPort,
@@ -206,7 +205,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                        EventLoopGroup eventLoop,
                        Map<ModuleType, Integer> modules,
                        C5Server theC5Server
-  ) throws InterruptedException, SocketException {
+  ) {
     this.discoveryPort = discoveryPort;
     this.nodeId = nodeId;
     this.fiber = fiber;
@@ -226,7 +225,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     return future;
   }
 
-  org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
 
   @Override
   public org.jetlang.channels.Channel<NewNodeVisible> getNewNodeNotifications() {
@@ -330,15 +328,13 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       } else {
         sendAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
       }
-      //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
+
       try {
         localIPs = getLocalIPs();
       } catch (SocketException e) {
         LOG.error("SocketException:", e);
         notifyFailed(e);
       }
-      //msgBuilder.addAllAddresses(getLocalIPs());
-      //beaconMessage = msgBuilder.build();
 
       // Schedule fiber tasks and subscriptions.
       incomingMessages.subscribe(fiber, this::processWireMessage);
@@ -367,11 +363,11 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private List<String> getLocalIPs() throws SocketException {
     List<String> ips = new LinkedList<>();
     for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
-      NetworkInterface iface = interfaces.nextElement();
-      if (iface.isPointToPoint()) {
+      NetworkInterface networkInterface = interfaces.nextElement();
+      if (networkInterface.isPointToPoint()) {
         continue; //ignore tunnel type interfaces
       }
-      for (Enumeration<InetAddress> addrs = iface.getInetAddresses(); addrs.hasMoreElements(); ) {
+      for (Enumeration<InetAddress> addrs = networkInterface.getInetAddresses(); addrs.hasMoreElements(); ) {
         InetAddress addr = addrs.nextElement();
         if (addr.isLoopbackAddress() || addr.isLinkLocalAddress() || addr.isAnyLocalAddress()) {
           continue;
