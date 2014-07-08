@@ -17,6 +17,7 @@
 
 package c5db.discovery;
 
+import c5db.C5ServerConstants;
 import c5db.codec.UdpProtostuffDecoder;
 import c5db.codec.UdpProtostuffEncoder;
 import c5db.discovery.generated.Availability;
@@ -89,8 +90,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class BeaconService extends AbstractService implements DiscoveryModule {
   private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
-  public static final String LOOPBACK_ADDRESS = "127.0.0.1";
-  public static final String BROADCAST_ADDRESS = "255.255.255.255";
 
   @Override
   public ModuleType getModuleType() {
@@ -327,9 +326,9 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         broadcastChannel = future.channel();
       });
       if (c5Server.isSingleNodeMode()) {
-        sendAddress = new InetSocketAddress(LOOPBACK_ADDRESS, discoveryPort);
+        sendAddress = new InetSocketAddress(C5ServerConstants.LOOPBACK_ADDRESS, discoveryPort);
       } else {
-        sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
+        sendAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
       }
       //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
       try {
