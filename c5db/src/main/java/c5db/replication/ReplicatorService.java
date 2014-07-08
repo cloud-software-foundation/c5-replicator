@@ -36,9 +36,9 @@ import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
+import c5db.util.C5Futures;
 import c5db.util.FiberOnly;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -75,11 +75,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -199,6 +200,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   }
 
   private final int port;
+  private final ModuleServer moduleServer;
   private final C5Server server;
   private final long nodeId;
 
@@ -238,11 +240,15 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   public ReplicatorService(EventLoopGroup bossGroup,
                            EventLoopGroup workerGroup,
-                           int port, C5Server server) {
+                           int port,
+                           ModuleServer moduleServer,
+                           C5Server server) {
     this.bossGroup = bossGroup;
     this.workerGroup = workerGroup;
     this.port = port;
+    this.moduleServer = moduleServer;
     this.server = server;
+
     this.nodeId = server.getNodeId();
     this.fiber = server.getFiberFactory(this::failModule).create();
     this.allChannels = new DefaultChannelGroup(workerGroup.next());
@@ -455,90 +461,68 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     // must start the fiber up early.
     fiber.start();
 
+    C5Futures.addCallback(getDependedOnModules(),
+        (ignore) -> {
+          ChannelInitializer<SocketChannel> initer = new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel ch) throws Exception {
+              ChannelPipeline p = ch.pipeline();
+              p.addLast("frameDecode", new ProtobufVarint32FrameDecoder());
+              p.addLast("pbufDecode", new ProtostuffDecoder<>(ReplicationWireMessage.getSchema()));
 
-    fiber.execute(() -> {
-      // TODO this is a shitty way to do this, more refactoring is necessary.
-      LOG.warn("ReplicatorService now waiting for module dependency on Log & Discovery");
+              p.addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender());
+              p.addLast("pbufEncoder", new ProtostuffEncoder<ReplicationWireMessage>());
 
-      ListenableFuture<C5Module> logListen = server.getModule(ModuleType.Log);
-      try {
-        logModule = (LogModule) logListen.get();
-      } catch (InterruptedException | ExecutionException e) {
-        notifyFailed(e);
-      }
+              p.addLast(new MessageHandler());
+            }
+          };
 
-      ListenableFuture<C5Module> f = server.getModule(ModuleType.Discovery);
-      Futures.addCallback(f, new FutureCallback<C5Module>() {
-        @SuppressWarnings({"RedundantCast", "Convert2MethodRef"})
-        @Override
-        public void onSuccess(C5Module result) {
-          discoveryModule = (DiscoveryModule) result;
+          serverBootstrap.group(bossGroup, workerGroup)
+              .channel(NioServerSocketChannel.class)
+              .option(ChannelOption.SO_REUSEADDR, true)
+              .option(ChannelOption.SO_BACKLOG, 100)
+              .childOption(ChannelOption.TCP_NODELAY, true)
+              .childHandler(initer);
 
-          // finish init:
-          try {
-            ChannelInitializer<SocketChannel> initer = new ChannelInitializer<SocketChannel>() {
-              @Override
-              protected void initChannel(SocketChannel ch) throws Exception {
-                ChannelPipeline p = ch.pipeline();
-                p.addLast("frameDecode", new ProtobufVarint32FrameDecoder());
-                p.addLast("pbufDecode", new ProtostuffDecoder<>(ReplicationWireMessage.getSchema()));
+          //noinspection RedundantCast
+          serverBootstrap.bind(port).addListener((ChannelFutureListener)
+              future -> {
+                if (future.isSuccess()) {
+                  listenChannel = future.channel();
+                } else {
+                  LOG.error("Unable to bind! ", future.cause());
+                }
+              });
 
-                p.addLast("frameEncode", new ProtobufVarint32LengthFieldPrepender());
-                p.addLast("pbufEncoder", new ProtostuffEncoder<ReplicationWireMessage>());
+          outgoingBootstrap.group(workerGroup)
+              .channel(NioSocketChannel.class)
+              .option(ChannelOption.SO_REUSEADDR, true)
+              .option(ChannelOption.TCP_NODELAY, true)
+              .handler(initer);
 
-                p.addLast(new MessageHandler());
-              }
-            };
+          //noinspection Convert2MethodRef
+          outgoingRequests.subscribe(fiber, message -> handleOutgoingMessage(message),
+              // Clean up cancelled requests.
+              message -> handleCancelledSession(message.getSession())
+          );
 
-            serverBootstrap.group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
-                .option(ChannelOption.SO_REUSEADDR, true)
-                .option(ChannelOption.SO_BACKLOG, 100)
-                .childOption(ChannelOption.TCP_NODELAY, true)
-                .childHandler(initer);
-            serverBootstrap.bind(port).addListener((ChannelFutureListener)
-                future -> {
-                  if (future.isSuccess()) {
-                    listenChannel = future.channel();
-                  } else {
-                    LOG.error("Unable to bind! ", future.cause());
-                  }
-                });
+          replicatorStateChanges.subscribe(fiber, message -> {
+            if (message.eventType == ReplicatorInstanceEvent.EventType.QUORUM_FAILURE) {
+              LOG.error("replicator {} indicates failure, removing. Error {}", message.instance,
+                  message.error);
+              replicatorInstances.remove(message.instance.getQuorumId());
+            } else {
+              LOG.debug("replicator indicates state change {}", message);
+            }
+          });
 
-            outgoingBootstrap.group(workerGroup)
-                .channel(NioSocketChannel.class)
-                .option(ChannelOption.SO_REUSEADDR, true)
-                .option(ChannelOption.TCP_NODELAY, true)
-                .handler(initer);
+          notifyStarted();
 
-            outgoingRequests.subscribe(fiber, message -> handleOutgoingMessage(message),
-                // Clean up cancelled requests.
-                message -> handleCancelledSession(message.getSession())
-            );
-
-            replicatorStateChanges.subscribe(fiber, message -> {
-              if (message.eventType == ReplicatorInstanceEvent.EventType.QUORUM_FAILURE) {
-                LOG.error("replicator {} indicates failure, removing. Error {}", message.instance,
-                    message.error);
-                replicatorInstances.remove(message.instance.getQuorumId());
-              } else {
-                LOG.debug("replicator indicates state change {}", message);
-              }
-            });
-
-            notifyStarted();
-          } catch (Exception e) {
-            notifyFailed(e);
-          }
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-          LOG.error("ReplicatorService unable to retrieve Discovery module!", t);
+        },
+        (Throwable t) -> {
+          LOG.error("ReplicatorService unable to retrieve modules!", t);
           notifyFailed(t);
-        }
-      }, fiber);
-    });
+        }, fiber);
   }
 
   protected void failModule(Throwable t) {
@@ -572,5 +556,32 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
       allChannels.close().addListener(listener);
     });
+  }
+
+  private ListenableFuture<Void> getDependedOnModules() {
+    SettableFuture<Void> doneFuture = SettableFuture.create();
+
+    List<ListenableFuture<C5Module>> moduleFutures = new ArrayList<>();
+    moduleFutures.add(moduleServer.getModule(ModuleType.Log));
+    moduleFutures.add(moduleServer.getModule(ModuleType.Discovery));
+
+    ListenableFuture<List<C5Module>> compositeModulesFuture = Futures.allAsList(moduleFutures);
+
+    LOG.warn("ReplicatorService now waiting for module dependency on Log & Discovery");
+
+    C5Futures.addCallback(compositeModulesFuture,
+        (List<C5Module> modules) -> {
+          this.logModule = (LogModule) modules.get(0);
+          this.discoveryModule = (DiscoveryModule) modules.get(1);
+
+          doneFuture.set(null);
+        },
+        this::notifyFailed, fiber);
+
+    return doneFuture;
+  }
+
+  public interface ModuleServer {
+    ListenableFuture<C5Module> getModule(ModuleType moduleType);
   }
 }
