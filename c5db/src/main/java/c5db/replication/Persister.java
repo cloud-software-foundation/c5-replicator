@@ -39,23 +39,23 @@ class Persister implements ReplicatorInfoPersistence {
 
   @Override
   public long readCurrentTerm(String quorumId) throws IOException {
-    return getLongofFile(quorumId, 0);
+    return getLongOfFile(quorumId, 0);
   }
 
   @Override
   public long readVotedFor(String quorumId) throws IOException {
-    return getLongofFile(quorumId, 1);
+    return getLongOfFile(quorumId, 1);
   }
 
-  private long getLongofFile(String quorumId, int whichLine) throws IOException {
-    List<String> datas = configDirectory.readFile(configDirectory.getQuorumRelPath(quorumId),
+  private long getLongOfFile(String quorumId, int whichLine) throws IOException {
+    List<String> data = configDirectory.readFile(configDirectory.getQuorumRelPath(quorumId),
         REPLICATOR_PERSISTER_FILE_NAME);
-    if (datas.size() != 2) {
+    if (data.size() != 2) {
       return 0; // corrupt file?
     }
 
     try {
-      return Long.parseLong(datas.get(whichLine));
+      return Long.parseLong(data.get(whichLine));
     } catch (NumberFormatException e) {
       return 0; // corrupt file sucks?
     }
@@ -63,9 +63,9 @@ class Persister implements ReplicatorInfoPersistence {
 
   @Override
   public void writeCurrentTermAndVotedFor(String quorumId, long currentTerm, long votedFor) throws IOException {
-    List<String> datas = new ArrayList<>(2);
-    datas.add(Long.toString(currentTerm));
-    datas.add(Long.toString(votedFor));
-    configDirectory.writeFile(configDirectory.getQuorumRelPath(quorumId), REPLICATOR_PERSISTER_FILE_NAME, datas);
+    List<String> data = new ArrayList<>(2);
+    data.add(Long.toString(currentTerm));
+    data.add(Long.toString(votedFor));
+    configDirectory.writeFile(configDirectory.getQuorumRelPath(quorumId), REPLICATOR_PERSISTER_FILE_NAME, data);
   }
 }
