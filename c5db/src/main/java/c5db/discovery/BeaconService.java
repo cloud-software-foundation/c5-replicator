@@ -212,6 +212,8 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     moduleInfo.putAll(modules);
     this.c5Server = theC5Server;
     this.eventLoop = eventLoop;
+
+    c5Server.getModuleStateChangeChannel().subscribe(fiber, this::serviceChange);
   }
 
   @Override
@@ -341,8 +343,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       nodeInfoRequests.subscribe(fiber, this::handleNodeInfoRequest);
 
       fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
-
-      c5Server.getModuleStateChangeChannel().subscribe(fiber, this::serviceChange);
 
       fiber.start();
 
