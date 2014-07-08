@@ -128,9 +128,9 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       }
 
       // We need to make sure that it's not coming from another single mode daemon.
-      if (!peers.contains(server.getNodeId()) && !server.isSingleNodeMode()) {
+      if (!peers.contains(nodeId) && !server.isSingleNodeMode()) {
         LOG.error("Creating replicator for {}, peer list did not contain myself", quorumId, peers);
-        peers.add(server.getNodeId());
+        peers.add(nodeId);
       }
       LOG.info("Creating replicator instance for {} peers {}", quorumId, peers);
 
@@ -148,7 +148,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       ReplicatorInstance instance =
           new ReplicatorInstance(
               instanceFiber,
-              server.getNodeId(),
+              nodeId,
               quorumId,
               logMooring,
               new SystemTimeReplicatorClock(),
@@ -211,6 +211,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   private final int port;
   private final C5Server server;
+  private final long nodeId;
 
   private final Fiber fiber;
 
@@ -253,6 +254,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     this.workerGroup = workerGroup;
     this.port = port;
     this.server = server;
+    this.nodeId = server.getNodeId();
     this.fiber = server.getFiberFactory(this::failModule).create();
     this.allChannels = new DefaultChannelGroup(workerGroup.next());
     this.persister = new Persister(server.getConfigDirectory());
@@ -279,8 +281,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   @FiberOnly
   private void handleWireInboundMessage(Channel channel, ReplicationWireMessage msg) {
     long messageId = msg.getMessageId();
-    if (msg.getReceiverId() != this.server.getNodeId()) {
-      LOG.debug("Got messageId {} for {} but I am {}, ignoring!", messageId, msg.getReceiverId(), server.getNodeId());
+    if (msg.getReceiverId() != nodeId) {
+      LOG.debug("Got messageId {} for {} but I am {}, ignoring!", messageId, msg.getReceiverId(), nodeId);
       return;
     }
 
@@ -322,7 +324,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
       ReplicationWireMessage b = reply.getWireMessage(
           msg.getMessageId(),
-          server.getNodeId(),
+          nodeId,
           msg.getSenderId(),
           true
       );
@@ -350,7 +352,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     final RpcRequest request = message.getRequest();
     final long to = request.to;
 
-    if (to == server.getNodeId()) {
+    if (to == nodeId) {
       handleLoopBackMessage(message);
       return;
     }
@@ -426,7 +428,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
       ReplicationWireMessage wireMessage = request.getWireMessage(
           messageId,
-          server.getNodeId(),
+          nodeId,
           to,
           false
       );
@@ -436,7 +438,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   }
 
   private void handleLoopBackMessage(final Request<RpcRequest, RpcWireReply> origMessage) {
-    final long toFrom = server.getNodeId(); // I am me.
+    final long toFrom = nodeId; // I am me.
     final RpcRequest request = origMessage.getRequest();
     final String quorumId = request.quorumId;
 
