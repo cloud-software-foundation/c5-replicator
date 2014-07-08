@@ -75,8 +75,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -118,7 +118,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   @Override
   public ListenableFuture<Replicator> createReplicator(final String quorumId,
-                                                       final List<Long> peers) {
+                                                       final Collection<Long> peers) {
     final SettableFuture<Replicator> future = SettableFuture.create();
     fiber.execute(() -> {
       if (replicatorInstances.containsKey(quorumId)) {
@@ -127,10 +127,9 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         return;
       }
 
-      // We need to make sure that it's not coming from another single mode daemon.
-      if (!peers.contains(nodeId) && !server.isSingleNodeMode()) {
-        LOG.error("Creating replicator for {}, peer list did not contain myself", quorumId, peers);
-        peers.add(nodeId);
+      if (!peers.contains(nodeId)) {
+        LOG.warn("Creating a replicator instance for quorum {} peers {} but it does not contain me ({})",
+            quorumId, peers, nodeId);
       }
       LOG.info("Creating replicator instance for {} peers {}", quorumId, peers);
 
