@@ -36,7 +36,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
@@ -50,7 +49,6 @@ import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
-import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -222,11 +220,8 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   public ListenableFuture<ImmutableMap<Long, NodeInfo>> getState() {
     final SettableFuture<ImmutableMap<Long, NodeInfo>> future = SettableFuture.create();
 
-    fiber.execute(new Runnable() {
-      @Override
-      public void run() {
-        future.set(getCopyOfState());
-      }
+    fiber.execute(() -> {
+      future.set(getCopyOfState());
     });
 
     return future;
@@ -306,95 +301,67 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
   @Override
   protected void doStart() {
-    eventLoop.next().execute(new Runnable() {
-      @Override
-      public void run() {
-        bootstrap = new Bootstrap();
-        bootstrap.group(eventLoop)
-            .channel(NioDatagramChannel.class)
-            .option(ChannelOption.SO_BROADCAST, true)
-            .option(ChannelOption.SO_REUSEADDR, true)
-            .handler(new ChannelInitializer<DatagramChannel>() {
-              @Override
-              protected void initChannel(DatagramChannel ch) throws Exception {
-                ChannelPipeline p = ch.pipeline();
+    eventLoop.next().execute(() -> {
+      bootstrap = new Bootstrap();
+      bootstrap.group(eventLoop)
+          .channel(NioDatagramChannel.class)
+          .option(ChannelOption.SO_BROADCAST, true)
+          .option(ChannelOption.SO_REUSEADDR, true)
+          .handler(new ChannelInitializer<DatagramChannel>() {
+            @Override
+            protected void initChannel(DatagramChannel ch) throws Exception {
+              ChannelPipeline p = ch.pipeline();
 
-                p.addLast("protobufDecoder",
-                    new UdpProtostuffDecoder<>(Availability.getSchema(), false));
+              p.addLast("protobufDecoder",
+                  new UdpProtostuffDecoder<>(Availability.getSchema(), false));
 
-                p.addLast("protobufEncoder",
-                    new UdpProtostuffEncoder<>(Availability.getSchema(), false));
+              p.addLast("protobufEncoder",
+                  new UdpProtostuffEncoder<>(Availability.getSchema(), false));
 
-                p.addLast("beaconMessageHandler", new BeaconMessageHandler());
-              }
-            });
-        // Wait, this is why we are in a new executor...
-        bootstrap.bind(discoveryPort).addListener(new ChannelFutureListener() {
-          @Override
-          public void operationComplete(ChannelFuture future) throws Exception {
-            broadcastChannel = future.channel();
-          }
-        });
-        if (c5Server.isSingleNodeMode()) {
-          sendAddress = new InetSocketAddress(LOOPBACK_ADDRESS, discoveryPort);
-        } else {
-          sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
-        }
-        //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
-        try {
-          localIPs = getLocalIPs();
-        } catch (SocketException e) {
-          LOG.error("SocketException:", e);
-          notifyFailed(e);
-        }
-        //msgBuilder.addAllAddresses(getLocalIPs());
-        //beaconMessage = msgBuilder.build();
-
-        // Schedule fiber tasks and subscriptions.
-        incomingMessages.subscribe(fiber, new Callback<Availability>() {
-          @Override
-          public void onMessage(Availability message) {
-            processWireMessage(message);
-          }
-        });
-        nodeInfoRequests.subscribe(fiber, new Callback<Request<NodeInfoRequest, NodeInfoReply>>() {
-          @Override
-          public void onMessage(Request<NodeInfoRequest, NodeInfoReply> message) {
-            handleNodeInfoRequest(message);
-          }
-        });
-
-        fiber.scheduleAtFixedRate(new Runnable() {
-          @Override
-          public void run() {
-            sendBeacon();
-          }
-        }, 2, 10, TimeUnit.SECONDS);
-
-        c5Server.getModuleStateChangeChannel().subscribe(fiber, new Callback<ModuleStateChange>() {
-          @Override
-          public void onMessage(ModuleStateChange message) {
-            serviceChange(message);
-          }
-        });
-
-        fiber.start();
-
-        notifyStarted();
-
+              p.addLast("beaconMessageHandler", new BeaconMessageHandler());
+            }
+          });
+      // Wait, this is why we are in a new executor...
+      //noinspection RedundantCast
+      bootstrap.bind(discoveryPort).addListener((ChannelFutureListener) future -> {
+        broadcastChannel = future.channel();
+      });
+      if (c5Server.isSingleNodeMode()) {
+        sendAddress = new InetSocketAddress(LOOPBACK_ADDRESS, discoveryPort);
+      } else {
+        sendAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
       }
+      //Availability.Builder msgBuilder = Availability.newBuilder(nodeInfoFragment);
+      try {
+        localIPs = getLocalIPs();
+      } catch (SocketException e) {
+        LOG.error("SocketException:", e);
+        notifyFailed(e);
+      }
+      //msgBuilder.addAllAddresses(getLocalIPs());
+      //beaconMessage = msgBuilder.build();
+
+      // Schedule fiber tasks and subscriptions.
+      incomingMessages.subscribe(fiber, this::processWireMessage);
+      nodeInfoRequests.subscribe(fiber, this::handleNodeInfoRequest);
+
+      fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
+
+      c5Server.getModuleStateChangeChannel().subscribe(fiber, this::serviceChange);
+
+      fiber.start();
+
+      notifyStarted();
+
     });
   }
 
   @Override
   protected void doStop() {
-    eventLoop.next().execute(new Runnable() {
-      @Override
-      public void run() {
-        fiber.dispose();
+    eventLoop.next().execute(() -> {
+      fiber.dispose();
 
-        notifyStopped();
-      }
+      notifyStopped();
     });
   }
 
