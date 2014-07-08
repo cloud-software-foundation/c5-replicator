@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static c5db.C5ServerConstants.REPLICATOR_PERSISTER_FILE_NAME;
+
 /**
  * A small persister that writes files to a directory. Persisting this information is needed to
  * provide crash recovery for {@link c5db.replication.ReplicatorInstance}.
@@ -47,7 +49,7 @@ class Persister implements ReplicatorInfoPersistence {
 
   private long getLongofFile(String quorumId, int whichLine) throws IOException {
     List<String> datas = configDirectory.readFile(configDirectory.getQuorumRelPath(quorumId),
-        ConfigDirectory.persisterFile);
+        REPLICATOR_PERSISTER_FILE_NAME);
     if (datas.size() != 2) {
       return 0; // corrupt file?
     }
@@ -64,6 +66,6 @@ class Persister implements ReplicatorInfoPersistence {
     List<String> datas = new ArrayList<>(2);
     datas.add(Long.toString(currentTerm));
     datas.add(Long.toString(votedFor));
-    configDirectory.writeFile(configDirectory.getQuorumRelPath(quorumId), ConfigDirectory.persisterFile, datas);
+    configDirectory.writeFile(configDirectory.getQuorumRelPath(quorumId), REPLICATOR_PERSISTER_FILE_NAME, datas);
   }
 }
