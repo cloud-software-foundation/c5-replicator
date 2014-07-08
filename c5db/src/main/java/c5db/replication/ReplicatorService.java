@@ -18,10 +18,10 @@
 package c5db.replication;
 
 import c5db.C5ServerConstants;
+import c5db.ConfigDirectory;
 import c5db.codec.ProtostuffDecoder;
 import c5db.codec.ProtostuffEncoder;
 import c5db.interfaces.C5Module;
-import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
@@ -82,12 +82,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 
 /**
  * An implementation of ReplicationModule using instances of ReplicatorInstance to handle each quorum.
  * <p>
- * TODO we don't have a way to actually START a freaking ReplicatorInstance - YET.
  * TODO consider being symmetric in how we handle sent messages.
  */
 public class ReplicatorService extends AbstractService implements ReplicationModule {
@@ -144,7 +144,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       }
 
       MemoryChannel<Throwable> throwableChannel = new MemoryChannel<>();
-      Fiber instanceFiber = server.getFiberFactory(throwableChannel::publish).create();
+      Fiber instanceFiber = fiberFactory.getFiber(throwableChannel::publish);
       ReplicatorInstance instance =
           new ReplicatorInstance(
               instanceFiber,
@@ -201,9 +201,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   private final int port;
   private final ModuleServer moduleServer;
-  private final C5Server server;
+  private final FiberFactory fiberFactory;
   private final long nodeId;
-
   private final Fiber fiber;
 
   // Netty infrastructure
@@ -240,19 +239,21 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   public ReplicatorService(EventLoopGroup bossGroup,
                            EventLoopGroup workerGroup,
+                           long nodeId,
                            int port,
                            ModuleServer moduleServer,
-                           C5Server server) {
+                           FiberFactory fiberFactory,
+                           ConfigDirectory configDirectory) {
     this.bossGroup = bossGroup;
     this.workerGroup = workerGroup;
+    this.nodeId = nodeId;
     this.port = port;
     this.moduleServer = moduleServer;
-    this.server = server;
+    this.fiberFactory = fiberFactory;
 
-    this.nodeId = server.getNodeId();
-    this.fiber = server.getFiberFactory(this::failModule).create();
+    this.fiber = fiberFactory.getFiber(this::failModule);
     this.allChannels = new DefaultChannelGroup(workerGroup.next());
-    this.persister = new Persister(server.getConfigDirectory());
+    this.persister = new Persister(configDirectory);
   }
 
   /**
@@ -583,5 +584,9 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   public interface ModuleServer {
     ListenableFuture<C5Module> getModule(ModuleType moduleType);
+  }
+
+  public interface FiberFactory {
+    Fiber getFiber(Consumer<Throwable> throwableHandler);
   }
 }
