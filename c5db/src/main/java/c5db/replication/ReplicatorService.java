@@ -167,16 +167,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     return future;
   }
 
-  @Override
-  public org.jetlang.channels.Channel<IndexCommitNotice> getIndexCommitNotices() {
-    return indexCommitNotices;
-  }
-
-  @Override
-  public org.jetlang.channels.Channel<ReplicatorInstanceEvent> getReplicatorEventChannel() {
-    return replicatorStateChanges;
-  }
-
   // TODO this should be actually via whatever configuration system we end up using.
   private static class SystemTimeReplicatorClock implements ReplicatorClock {
     private final long electionTimeout;

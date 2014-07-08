@@ -17,12 +17,9 @@
 
 package c5db.interfaces;
 
-import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
-import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.messages.generated.ModuleType;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.jetlang.channels.Channel;
 
 import java.util.Collection;
 
@@ -77,14 +74,5 @@ public interface ReplicationModule extends C5Module {
    */
   ListenableFuture<Replicator> createReplicator(String quorumId,
                                                 Collection<Long> peers);
-
-  public Channel<IndexCommitNotice> getIndexCommitNotices();
-
-  /**
-   * When a replicator changes state (eg: goes from
-   *
-   * @return
-   */
-  public Channel<ReplicatorInstanceEvent> getReplicatorEventChannel();
 
 }
