@@ -171,6 +171,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private final long nodeId;
   private final int discoveryPort;
   private final EventLoopGroup eventLoopGroup;
+  private final InetSocketAddress broadcastAddress;
   private final Map<ModuleType, Integer> modulePorts = new HashMap<>();
   private final Map<Long, NodeInfo> peerNodeInfoMap = new HashMap<>();
   private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
@@ -179,7 +180,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
   // These should be final, but they are initialized in doStart().
   private Channel broadcastChannel = null;
-  private InetSocketAddress broadcastAddress = null;
   private Bootstrap bootstrap = null;
   private List<String> localIPs;
 
@@ -212,6 +212,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     this.modulePorts.putAll(modulePorts);
     this.c5Server = theC5Server;
     this.eventLoopGroup = eventLoopGroup;
+    this.broadcastAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
 
     c5Server.getModuleStateChangeChannel().subscribe(fiber, this::serviceChange);
   }
@@ -325,11 +326,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       bootstrap.bind(discoveryPort).addListener((ChannelFutureListener) future -> {
         broadcastChannel = future.channel();
       });
-      if (c5Server.isSingleNodeMode()) {
-        broadcastAddress = new InetSocketAddress(C5ServerConstants.LOOPBACK_ADDRESS, discoveryPort);
-      } else {
-        broadcastAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
-      }
 
       try {
         localIPs = getLocalIPs();
