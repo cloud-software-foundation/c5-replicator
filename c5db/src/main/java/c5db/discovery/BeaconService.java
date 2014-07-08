@@ -122,7 +122,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   public ListenableFuture<NodeInfoReply> getNodeInfo(long nodeId, ModuleType module) {
     SettableFuture<NodeInfoReply> future = SettableFuture.create();
     fiber.execute(() -> {
-      NodeInfo peer = peers.get(nodeId);
+      NodeInfo peer = peerNodeInfoMap.get(nodeId);
       if (peer == null) {
         future.set(NodeInfoReply.NO_REPLY);
       } else {
@@ -141,7 +141,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   @FiberOnly
   private void handleNodeInfoRequest(Request<NodeInfoRequest, NodeInfoReply> message) {
     NodeInfoRequest req = message.getRequest();
-    NodeInfo peer = peers.get(req.nodeId);
+    NodeInfo peer = peerNodeInfoMap.get(req.nodeId);
     if (peer == null) {
       message.reply(NodeInfoReply.NO_REPLY);
       return;
@@ -170,16 +170,16 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private final C5Server c5Server;
   private final long nodeId;
   private final int discoveryPort;
-  private final EventLoopGroup eventLoop;
-  private final Map<ModuleType, Integer> moduleInfo = new HashMap<>();
-  private final Map<Long, NodeInfo> peers = new HashMap<>();
+  private final EventLoopGroup eventLoopGroup;
+  private final Map<ModuleType, Integer> modulePorts = new HashMap<>();
+  private final Map<Long, NodeInfo> peerNodeInfoMap = new HashMap<>();
   private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
   private final org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
   private final Fiber fiber;
 
   // These should be final, but they are initialized in doStart().
   private Channel broadcastChannel = null;
-  private InetSocketAddress sendAddress = null;
+  private InetSocketAddress broadcastAddress = null;
   private Bootstrap bootstrap = null;
   private List<String> localIPs;
 
@@ -202,16 +202,16 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   public BeaconService(long nodeId,
                        int discoveryPort,
                        final Fiber fiber,
-                       EventLoopGroup eventLoop,
-                       Map<ModuleType, Integer> modules,
+                       EventLoopGroup eventLoopGroup,
+                       Map<ModuleType, Integer> modulePorts,
                        C5Server theC5Server
   ) {
     this.discoveryPort = discoveryPort;
     this.nodeId = nodeId;
     this.fiber = fiber;
-    moduleInfo.putAll(modules);
+    this.modulePorts.putAll(modulePorts);
     this.c5Server = theC5Server;
-    this.eventLoop = eventLoop;
+    this.eventLoopGroup = eventLoopGroup;
 
     c5Server.getModuleStateChangeChannel().subscribe(fiber, this::serviceChange);
   }
@@ -234,7 +234,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   }
 
   private ImmutableMap<Long, NodeInfo> getCopyOfState() {
-    return ImmutableMap.copyOf(peers);
+    return ImmutableMap.copyOf(peerNodeInfoMap);
   }
 
   @FiberOnly
@@ -243,20 +243,20 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       LOG.debug("Channel not available yet, deferring beacon send");
       return;
     }
-    LOG.trace("Sending beacon broadcast message to {}", sendAddress);
+    LOG.trace("Sending beacon broadcast message to {}", broadcastAddress);
 
-    List<ModuleDescriptor> msgModules = new ArrayList<>(moduleInfo.size());
-    for (ModuleType moduleType : moduleInfo.keySet()) {
+    List<ModuleDescriptor> msgModules = new ArrayList<>(modulePorts.size());
+    for (ModuleType moduleType : modulePorts.keySet()) {
       msgModules.add(
           new ModuleDescriptor(moduleType,
-              moduleInfo.get(moduleType))
+              modulePorts.get(moduleType))
       );
     }
 
     Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
 
     broadcastChannel.writeAndFlush(new
-        UdpProtostuffEncoder.UdpProtostuffMessage<>(sendAddress, beaconMessage));
+        UdpProtostuffEncoder.UdpProtostuffMessage<>(broadcastAddress, beaconMessage));
 
     // Fix issue #76, feed back the beacon Message to our own database:
     processWireMessage(beaconMessage);
@@ -273,11 +273,11 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     // Always just overwrite what was already there for now.
     // TODO consider a more sophisticated merge strategy?
     NodeInfo nodeInfo = new NodeInfo(message);
-    if (!peers.containsKey(message.getNodeId())) {
+    if (!peerNodeInfoMap.containsKey(message.getNodeId())) {
       getNewNodeNotifications().publish(new NewNodeVisible(message.getNodeId(), nodeInfo));
     }
 
-    peers.put(message.getNodeId(), nodeInfo);
+    peerNodeInfoMap.put(message.getNodeId(), nodeInfo);
   }
 
   @FiberOnly
@@ -286,13 +286,13 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       LOG.debug("BeaconService adding running module {} on port {}",
           message.module.getModuleType(),
           message.module.port());
-      moduleInfo.put(message.module.getModuleType(), message.module.port());
+      modulePorts.put(message.module.getModuleType(), message.module.port());
     } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
       LOG.debug("BeaconService removed module {} on port {} with state {}",
           message.module.getModuleType(),
           message.module.port(),
           message.state);
-      moduleInfo.remove(message.module.getModuleType());
+      modulePorts.remove(message.module.getModuleType());
     } else {
       LOG.debug("BeaconService got unknown state module change {}", message);
     }
@@ -300,9 +300,9 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
   @Override
   protected void doStart() {
-    eventLoop.next().execute(() -> {
+    eventLoopGroup.next().execute(() -> {
       bootstrap = new Bootstrap();
-      bootstrap.group(eventLoop)
+      bootstrap.group(eventLoopGroup)
           .channel(NioDatagramChannel.class)
           .option(ChannelOption.SO_BROADCAST, true)
           .option(ChannelOption.SO_REUSEADDR, true)
@@ -326,9 +326,9 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         broadcastChannel = future.channel();
       });
       if (c5Server.isSingleNodeMode()) {
-        sendAddress = new InetSocketAddress(C5ServerConstants.LOOPBACK_ADDRESS, discoveryPort);
+        broadcastAddress = new InetSocketAddress(C5ServerConstants.LOOPBACK_ADDRESS, discoveryPort);
       } else {
-        sendAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
+        broadcastAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
       }
 
       try {
@@ -353,7 +353,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
   @Override
   protected void doStop() {
-    eventLoop.next().execute(() -> {
+    eventLoopGroup.next().execute(() -> {
       fiber.dispose();
 
       notifyStopped();
