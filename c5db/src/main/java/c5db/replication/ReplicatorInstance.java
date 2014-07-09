@@ -80,7 +80,7 @@ public class ReplicatorInstance implements Replicator {
   private final Channel<State> stateMemoryChannel = new MemoryChannel<>();
   private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
   private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
-  private final Channel<ReplicatorInstanceEvent> stateChangeChannel;
+  private final Channel<ReplicatorInstanceEvent> eventChannel;
   private final Channel<IndexCommitNotice> commitNoticeChannel;
 
   private final Fiber fiber;
@@ -138,7 +138,7 @@ public class ReplicatorInstance implements Replicator {
                             ReplicatorInformation info,
                             ReplicatorInfoPersistence persister,
                             RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
-                            final Channel<ReplicatorInstanceEvent> stateChangeChannel,
+                            final Channel<ReplicatorInstanceEvent> eventChannel,
                             final Channel<IndexCommitNotice> commitNoticeChannel) {
     this.fiber = fiber;
     this.myId = myId;
@@ -148,7 +148,7 @@ public class ReplicatorInstance implements Replicator {
     this.log = log;
     this.info = info;
     this.persister = persister;
-    this.stateChangeChannel = stateChangeChannel;
+    this.eventChannel = eventChannel;
     this.commitNoticeChannel = commitNoticeChannel;
     Random r = new Random();
     this.myElectionTimeout = r.nextInt((int) info.electionTimeout()) + info.electionTimeout();
@@ -161,7 +161,7 @@ public class ReplicatorInstance implements Replicator {
       try {
         readPersistentData();
         // indicate we are running!
-        stateChangeChannel.publish(
+        eventChannel.publish(
             new ReplicatorInstanceEvent(
                 ReplicatorInstanceEvent.EventType.QUORUM_START,
                 ReplicatorInstance.this,
@@ -194,7 +194,7 @@ public class ReplicatorInstance implements Replicator {
                      ReplicatorInformation info,
                      ReplicatorInfoPersistence persister,
                      RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel,
-                     final Channel<ReplicatorInstanceEvent> stateChangeChannel,
+                     final Channel<ReplicatorInstanceEvent> eventChannel,
                      final Channel<IndexCommitNotice> commitNoticeChannel,
                      long term,
                      State state,
@@ -210,7 +210,7 @@ public class ReplicatorInstance implements Replicator {
     this.log = log;
     this.info = info;
     this.persister = persister;
-    this.stateChangeChannel = stateChangeChannel;
+    this.eventChannel = eventChannel;
     this.commitNoticeChannel = commitNoticeChannel;
     this.myElectionTimeout = info.electionTimeout();
     this.lastRPC = info.currentTimeMillis();
@@ -316,8 +316,8 @@ public class ReplicatorInstance implements Replicator {
 
 
   @Override
-  public Channel<ReplicatorInstanceEvent> getStateChangeChannel() {
-    return this.stateChangeChannel;
+  public Channel<ReplicatorInstanceEvent> getEventChannel() {
+    return this.eventChannel;
   }
 
   public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
@@ -378,7 +378,7 @@ public class ReplicatorInstance implements Replicator {
 
 
   void failReplicatorInstance(Throwable e) {
-    stateChangeChannel.publish(
+    eventChannel.publish(
         new ReplicatorInstanceEvent(
             ReplicatorInstanceEvent.EventType.QUORUM_FAILURE,
             this,
@@ -415,7 +415,8 @@ public class ReplicatorInstance implements Replicator {
    * or null if it was not possible to submit the request without blocking.
    */
   @FiberOnly
-  private @Nullable ListenableFuture<Long> offerQuorumChangeRequest(QuorumConfiguration quorumConfig) {
+  @Nullable
+  private ListenableFuture<Long> offerQuorumChangeRequest(QuorumConfiguration quorumConfig) {
     if (this.quorumConfig.equals(quorumConfig)) {
       logger.warn("got a request to change quorum to but I'm already in that quorum config {} ", quorumConfig);
       return null;
@@ -651,7 +652,7 @@ public class ReplicatorInstance implements Replicator {
     logger.debug("discovered new leader: {}", theLeader);
     whosLeader = theLeader;
 
-    stateChangeChannel.publish(
+    eventChannel.publish(
         new ReplicatorInstanceEvent(
             ReplicatorInstanceEvent.EventType.LEADER_ELECTED,
             this,
@@ -751,7 +752,7 @@ public class ReplicatorInstance implements Replicator {
 
   @FiberOnly
   private void doPreElection() {
-    stateChangeChannel.publish(
+    eventChannel.publish(
         new ReplicatorInstanceEvent(
             ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT,
             this,
@@ -846,7 +847,7 @@ public class ReplicatorInstance implements Replicator {
 
   @FiberOnly
   private void doElection() {
-    stateChangeChannel.publish(
+    eventChannel.publish(
         new ReplicatorInstanceEvent(
             ReplicatorInstanceEvent.EventType.ELECTION_STARTED,
             this,
@@ -980,7 +981,7 @@ public class ReplicatorInstance implements Replicator {
     setState(State.FOLLOWER);
 
     if (wasLeader) {
-      stateChangeChannel.publish(
+      eventChannel.publish(
           new ReplicatorInstanceEvent(
               ReplicatorInstanceEvent.EventType.LEADER_DEPOSED,
               this,
@@ -1020,7 +1021,7 @@ public class ReplicatorInstance implements Replicator {
     // none so far!
     myFirstIndexAsLeader = 0;
 
-    stateChangeChannel.publish(
+    eventChannel.publish(
         new ReplicatorInstanceEvent(
             ReplicatorInstanceEvent.EventType.LEADER_ELECTED,
             this,
