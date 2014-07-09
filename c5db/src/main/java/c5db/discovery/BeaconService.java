@@ -181,6 +181,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private Bootstrap bootstrap = null;
   private List<String> localIPs;
 
+  // This field is updated when modules' availability changes
   private ImmutableMap<ModuleType, Integer> modulePorts;
 
   private class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
@@ -196,21 +197,26 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   }
 
   /**
-   * @param nodeId        the id of this node.
-   * @param discoveryPort the port to send discovery beacons on and to listen to
+   * @param nodeId         the id of this node.
+   * @param discoveryPort  the port to send discovery beacon messages on, and to listen to
+   *                       for messages from others
+   * @param fiber          A started fiber; the caller is responsible for its disposal
+   * @param eventLoopGroup An EventLoopGroup that's not shut down.
+   * @param initialModulePorts    An initial lookup of ports by module type; can be empty
+   * @param moduleServer   A module server, used to receive module availability updates
    */
   public BeaconService(long nodeId,
                        int discoveryPort,
                        final Fiber fiber,
                        EventLoopGroup eventLoopGroup,
-                       ImmutableMap<ModuleType, Integer> modulePorts,
+                       ImmutableMap<ModuleType, Integer> initialModulePorts,
                        ModuleServer moduleServer
   ) {
     this.discoveryPort = discoveryPort;
     this.nodeId = nodeId;
     this.fiber = fiber;
     this.eventLoopGroup = eventLoopGroup;
-    this.modulePorts = modulePorts;
+    this.modulePorts = initialModulePorts;
     this.broadcastAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
 
     moduleServer.availableModulePortsChannel().subscribe(fiber, this::updateCurrentModulePorts);
@@ -321,8 +327,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
       fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
 
-      fiber.start();
-
       notifyStarted();
 
     });
@@ -330,11 +334,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
   @Override
   protected void doStop() {
-    eventLoopGroup.next().execute(() -> {
-      fiber.dispose();
-
-      notifyStopped();
-    });
+    eventLoopGroup.next().execute(this::notifyStopped);
   }
 
   @FiberOnly
