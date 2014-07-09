@@ -22,8 +22,8 @@ import c5db.codec.UdpProtostuffDecoder;
 import c5db.codec.UdpProtostuffEncoder;
 import c5db.discovery.generated.Availability;
 import c5db.discovery.generated.ModuleDescriptor;
-import c5db.interfaces.C5Server;
 import c5db.interfaces.DiscoveryModule;
+import c5db.interfaces.ModuleServer;
 import c5db.interfaces.discovery.NewNodeVisible;
 import c5db.interfaces.discovery.NodeInfo;
 import c5db.interfaces.discovery.NodeInfoReply;
@@ -167,7 +167,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   }
 
   // For main system modules/pubsub stuff.
-  private final C5Server c5Server;
   private final long nodeId;
   private final int discoveryPort;
   private final EventLoopGroup eventLoopGroup;
@@ -204,17 +203,16 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                        final Fiber fiber,
                        EventLoopGroup eventLoopGroup,
                        Map<ModuleType, Integer> modulePorts,
-                       C5Server theC5Server
+                       ModuleServer moduleServer
   ) {
     this.discoveryPort = discoveryPort;
     this.nodeId = nodeId;
     this.fiber = fiber;
     this.modulePorts.putAll(modulePorts);
-    this.c5Server = theC5Server;
     this.eventLoopGroup = eventLoopGroup;
     this.broadcastAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
 
-    c5Server.getModuleStateChangeChannel().subscribe(fiber, this::serviceChange);
+    moduleServer.getModuleStateChangeChannel().subscribe(fiber, this::serviceChange);
   }
 
   @Override

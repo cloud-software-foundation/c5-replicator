@@ -24,6 +24,7 @@ import c5db.codec.ProtostuffEncoder;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
+import c5db.interfaces.ModuleServer;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.discovery.NodeInfoReply;
 import c5db.interfaces.discovery.NodeInfoRequest;
@@ -580,10 +581,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         this::notifyFailed, fiber);
 
     return doneFuture;
-  }
-
-  public interface ModuleServer {
-    ListenableFuture<C5Module> getModule(ModuleType moduleType);
   }
 
   public interface FiberFactory {
