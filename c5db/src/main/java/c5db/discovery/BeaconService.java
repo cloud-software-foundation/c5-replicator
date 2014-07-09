@@ -28,7 +28,6 @@ import c5db.interfaces.discovery.NewNodeVisible;
 import c5db.interfaces.discovery.NodeInfo;
 import c5db.interfaces.discovery.NodeInfoReply;
 import c5db.interfaces.discovery.NodeInfoRequest;
-import c5db.interfaces.server.ModuleStateChange;
 import c5db.messages.generated.ModuleType;
 import c5db.util.FiberOnly;
 import com.google.common.collect.ImmutableMap;
@@ -171,7 +170,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private final int discoveryPort;
   private final EventLoopGroup eventLoopGroup;
   private final InetSocketAddress broadcastAddress;
-  private final Map<ModuleType, Integer> modulePorts = new HashMap<>();
   private final Map<Long, NodeInfo> peerNodeInfoMap = new HashMap<>();
   private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
   private final org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
@@ -181,6 +179,8 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private Channel broadcastChannel = null;
   private Bootstrap bootstrap = null;
   private List<String> localIPs;
+
+  private ImmutableMap<ModuleType, Integer> modulePorts;
 
   private class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
     @Override
@@ -202,17 +202,17 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
                        int discoveryPort,
                        final Fiber fiber,
                        EventLoopGroup eventLoopGroup,
-                       Map<ModuleType, Integer> modulePorts,
+                       ImmutableMap<ModuleType, Integer> modulePorts,
                        ModuleServer moduleServer
   ) {
     this.discoveryPort = discoveryPort;
     this.nodeId = nodeId;
     this.fiber = fiber;
-    this.modulePorts.putAll(modulePorts);
     this.eventLoopGroup = eventLoopGroup;
+    this.modulePorts = modulePorts;
     this.broadcastAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
 
-    moduleServer.getModuleStateChangeChannel().subscribe(fiber, this::serviceChange);
+    moduleServer.availableModulePortsChannel().subscribe(fiber, this::updateCurrentModulePorts);
   }
 
   @Override
@@ -279,24 +279,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     peerNodeInfoMap.put(message.getNodeId(), nodeInfo);
   }
 
-  @FiberOnly
-  private void serviceChange(ModuleStateChange message) {
-    if (message.state == State.RUNNING) {
-      LOG.debug("BeaconService adding running module {} on port {}",
-          message.module.getModuleType(),
-          message.module.port());
-      modulePorts.put(message.module.getModuleType(), message.module.port());
-    } else if (message.state == State.STOPPING || message.state == State.FAILED || message.state == State.TERMINATED) {
-      LOG.debug("BeaconService removed module {} on port {} with state {}",
-          message.module.getModuleType(),
-          message.module.port(),
-          message.state);
-      modulePorts.remove(message.module.getModuleType());
-    } else {
-      LOG.debug("BeaconService got unknown state module change {}", message);
-    }
-  }
-
   @Override
   protected void doStart() {
     eventLoopGroup.next().execute(() -> {
@@ -352,6 +334,11 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
       notifyStopped();
     });
+  }
+
+  @FiberOnly
+  private void updateCurrentModulePorts(ImmutableMap<ModuleType, Integer> modulePorts) {
+    this.modulePorts = modulePorts;
   }
 
   private List<String> getLocalIPs() throws SocketException {

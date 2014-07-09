@@ -17,11 +17,10 @@
 
 package c5db.interfaces;
 
-import c5db.interfaces.server.ModuleStateChange;
 import c5db.messages.generated.ModuleType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.jetlang.channels.Channel;
+import org.jetlang.channels.Subscriber;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -52,7 +51,14 @@ public interface ModuleServer {
    */
   ListenableFuture<C5Module> getModule(ModuleType moduleType);
 
-  Channel<ModuleStateChange> getModuleStateChangeChannel();
+  /**
+   * Each time a module comes online or goes offline, the module server will emit
+   * a complete map of the currently online modules, mapping them to their associated
+   * ports.
+   *
+   * @return A Subscriber the caller may subscribe to to receive such maps.
+   */
+  Subscriber<ImmutableMap<ModuleType, Integer>> availableModulePortsChannel();
 
   ImmutableMap<ModuleType, C5Module> getModules() throws ExecutionException, InterruptedException, TimeoutException;
 }
