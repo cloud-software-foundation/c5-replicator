@@ -48,6 +48,7 @@ import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
+import org.jetlang.channels.Subscriber;
 import org.jetlang.core.Disposable;
 import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
@@ -261,17 +262,17 @@ public class ReplicatorInstance implements Replicator {
   }
 
   @Override
-  public Channel<State> getStateChannel() {
+  public Subscriber<State> getStateChannel() {
     return stateMemoryChannel;
   }
 
   @Override
-  public Channel<ReplicatorInstanceEvent> getEventChannel() {
+  public Subscriber<ReplicatorInstanceEvent> getEventChannel() {
     return this.eventChannel;
   }
 
   @Override
-  public Channel<IndexCommitNotice> getCommitNoticeChannel() {
+  public Subscriber<IndexCommitNotice> getCommitNoticeChannel() {
     return commitNoticeChannel;
   }
 

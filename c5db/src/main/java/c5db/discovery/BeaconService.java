@@ -49,6 +49,7 @@ import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
+import org.jetlang.channels.Subscriber;
 import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +69,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Uses broadcast UDP packets to discover 'adjacent' nodes in the cluster. Maintains
  * a state table for them, and provides information to other modules as they request it.
- * <p/>
+ * <p>
  * Currently UDP broadcast has some issues on Mac OSX vs Linux.  The big question,
  * specifically, is what happens when multiple processes bind to 255.255.255.255:PORT
  * and send packets?  Which processes receive such packets?
@@ -83,7 +84,7 @@ import java.util.concurrent.TimeUnit;
  * <li>Please fill this doc in!</li>
  * </ul></li>
  * </ul>
- * <p/>
+ * <p>
  * The beacon service needs to be refactored and different discovery methods need to be
  * pluggable but all behind the discovery module interface.
  */
@@ -228,7 +229,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
 
   @Override
-  public org.jetlang.channels.Channel<NewNodeVisible> getNewNodeNotifications() {
+  public Subscriber<NewNodeVisible> getNewNodeNotifications() {
     return newNodeVisibleChannel;
   }
 
@@ -273,7 +274,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     // TODO consider a more sophisticated merge strategy?
     NodeInfo nodeInfo = new NodeInfo(message);
     if (!peerNodeInfoMap.containsKey(message.getNodeId())) {
-      getNewNodeNotifications().publish(new NewNodeVisible(message.getNodeId(), nodeInfo));
+      newNodeVisibleChannel.publish(new NewNodeVisible(message.getNodeId(), nodeInfo));
     }
 
     peerNodeInfoMap.put(message.getNodeId(), nodeInfo);

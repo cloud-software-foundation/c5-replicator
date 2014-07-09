@@ -20,7 +20,7 @@ package c5db.interfaces.replication;
 import c5db.replication.QuorumConfiguration;
 import c5db.replication.ReplicatorReceipt;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.jetlang.channels.Channel;
+import org.jetlang.channels.Subscriber;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -68,7 +68,7 @@ public interface Replicator {
 
   void start();
 
-  Channel<State> getStateChannel();
+  Subscriber<State> getStateChannel();
 
   // What state is this instance in?
   public enum State {
@@ -78,7 +78,7 @@ public interface Replicator {
     LEADER,
   }
 
-  public Channel<ReplicatorInstanceEvent> getEventChannel();
+  public Subscriber<ReplicatorInstanceEvent> getEventChannel();
 
   /**
    * Get the Replicator's commit notice channel. By matching these issued IndexCommitNotices
@@ -86,5 +86,5 @@ public interface Replicator {
    * of the Replicator can determine whether those submissions were successfully replicated
    * to the quorum.
    */
-  public Channel<IndexCommitNotice> getCommitNoticeChannel();
+  public Subscriber<IndexCommitNotice> getCommitNoticeChannel();
 }

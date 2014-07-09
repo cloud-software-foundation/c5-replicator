@@ -24,14 +24,14 @@ import c5db.interfaces.discovery.NodeInfoRequest;
 import c5db.messages.generated.ModuleType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.jetlang.channels.Channel;
 import org.jetlang.channels.RequestChannel;
+import org.jetlang.channels.Subscriber;
 
 /**
  * The discovery module is responsible for determining who the peers in a cluster are.  It
  * additionally provides the ability to translate node ids into network addresses (yes plural,
  * since machines sometimes have multiple network interfaces).
- * <p/>
+ * <p>
  */
 @ModuleTypeBinding(ModuleType.Discovery)
 public interface DiscoveryModule extends C5Module {
@@ -41,5 +41,5 @@ public interface DiscoveryModule extends C5Module {
 
   ListenableFuture<ImmutableMap<Long, NodeInfo>> getState();
 
-  Channel<NewNodeVisible> getNewNodeNotifications();
+  Subscriber<NewNodeVisible> getNewNodeNotifications();
 }

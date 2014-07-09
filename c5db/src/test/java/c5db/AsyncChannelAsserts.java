@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
-import org.jetlang.channels.Channel;
 import org.jetlang.channels.Subscriber;
 import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.RunnableExecutor;
@@ -68,7 +67,7 @@ public class AsyncChannelAsserts {
     }
   }
 
-  public static <T> ChannelListener<T> listenTo(Channel<T> channel) {
+  public static <T> ChannelListener<T> listenTo(Subscriber<T> channel) {
     List<Throwable> throwables = new ArrayList<>();
     BatchExecutor exceptionHandlingBatchExecutor = new ExceptionHandlingBatchExecutor(throwables::add);
     RunnableExecutor runnableExecutor = new RunnableExecutorImpl(exceptionHandlingBatchExecutor);
@@ -165,7 +164,7 @@ public class AsyncChannelAsserts {
    * @param <T> Type of channel object
    */
   public static class ChannelHistoryMonitor<T> {
-    private final List<T> messageLog = Collections.synchronizedList(new ArrayList<>());
+    private final List<T> messageLog = Collections.<T>synchronizedList(new ArrayList<>());
     private final Map<Matcher<? super T>, SettableFuture<T>> waitingToMatch = new HashMap<>();
     private final Fiber fiber;
     private static final int WAIT_TIMEOUT = 5; // seconds

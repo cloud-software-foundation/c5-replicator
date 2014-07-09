@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
+import org.jetlang.channels.Subscriber;
 import org.jetlang.fibers.Fiber;
 
 import java.nio.ByteBuffer;
@@ -98,17 +99,17 @@ public class SingleNodeFakeReplicator implements Replicator {
   }
 
   @Override
-  public Channel<State> getStateChannel() {
+  public Subscriber<State> getStateChannel() {
     return stateChannel;
   }
 
   @Override
-  public Channel<ReplicatorInstanceEvent> getEventChannel() {
+  public Subscriber<ReplicatorInstanceEvent> getEventChannel() {
     return eventChannel;
   }
 
   @Override
-  public Channel<IndexCommitNotice> getCommitNoticeChannel() {
+  public Subscriber<IndexCommitNotice> getCommitNoticeChannel() {
     return commitNoticeChannel;
   }
 
