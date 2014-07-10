@@ -155,7 +155,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
               new SystemTimeReplicatorClock(),
               persister,
               outgoingRequests,
-              replicatorStateChanges,
+              replicatorEventChannel,
               indexCommitNotices,
               Replicator.State.FOLLOWER
           );
@@ -204,7 +204,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   private final ModuleServer moduleServer;
   private final FiberFactory fiberFactory;
   private final long nodeId;
-  private final Fiber fiber;
 
   // Netty infrastructure
   private final EventLoopGroup bossGroup;
@@ -217,7 +216,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   private final Map<String, ReplicatorInstance> replicatorInstances = new HashMap<>();
   private final Persister persister;
   private final RequestChannel<RpcRequest, RpcWireReply> outgoingRequests = new MemoryRequestChannel<>();
-  private final MemoryChannel<ReplicatorInstanceEvent> replicatorStateChanges = new MemoryChannel<>();
+  private final MemoryChannel<ReplicatorInstanceEvent> replicatorEventChannel = new MemoryChannel<>();
   private final MemoryChannel<IndexCommitNotice> indexCommitNotices = new MemoryChannel<>();
 
   // Connections to other servers by their node IDs
@@ -234,10 +233,15 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   private DiscoveryModule discoveryModule = null;
   private LogModule logModule = null;
   private Channel listenChannel;
+  private Fiber fiber;
 
   // Sequence number for sent messages
   private long messageIdGen = 1;
 
+  /**
+   * ReplicatorService creates and starts fibers; it must be stopped (or failed) in
+   * order to dispose them.
+   */
   public ReplicatorService(EventLoopGroup bossGroup,
                            EventLoopGroup workerGroup,
                            long nodeId,
@@ -252,7 +256,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     this.moduleServer = moduleServer;
     this.fiberFactory = fiberFactory;
 
-    this.fiber = fiberFactory.getFiber(this::failModule);
     this.allChannels = new DefaultChannelGroup(workerGroup.next());
     this.persister = new Persister(configDirectory);
   }
@@ -461,6 +464,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   @Override
   protected void doStart() {
     // must start the fiber up early.
+    fiber = fiberFactory.getFiber(this::failModule);
+    setupEventChannelSubscription();
     fiber.start();
 
     C5Futures.addCallback(getDependedOnModules(),
@@ -508,16 +513,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
               message -> handleCancelledSession(message.getSession())
           );
 
-          replicatorStateChanges.subscribe(fiber, message -> {
-            if (message.eventType == ReplicatorInstanceEvent.EventType.QUORUM_FAILURE) {
-              LOG.error("replicator {} indicates failure, removing. Error {}", message.instance,
-                  message.error);
-              replicatorInstances.remove(message.instance.getQuorumId());
-            } else {
-              LOG.debug("replicator indicates state change {}", message);
-            }
-          });
-
           notifyStarted();
 
         },
@@ -531,6 +526,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     LOG.error("ReplicatorService failure, shutting down all ReplicatorInstances", t);
     try {
       replicatorInstances.values().forEach(ReplicatorInstance::dispose);
+      replicatorInstances.clear();
       fiber.dispose();
       if (listenChannel != null) {
         listenChannel.close();
@@ -557,6 +553,21 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       }
 
       allChannels.close().addListener(listener);
+      replicatorInstances.values().forEach(ReplicatorInstance::dispose);
+      replicatorInstances.clear();
+      fiber.dispose();
+    });
+  }
+
+  private void setupEventChannelSubscription() {
+    replicatorEventChannel.subscribe(fiber, message -> {
+      if (message.eventType == ReplicatorInstanceEvent.EventType.QUORUM_FAILURE) {
+        LOG.error("replicator {} indicates failure, removing. Error {}", message.instance,
+            message.error);
+        replicatorInstances.remove(message.instance.getQuorumId());
+      } else {
+        LOG.debug("replicator indicates state change {}", message);
+      }
     });
   }
 
