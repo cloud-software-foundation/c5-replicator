@@ -17,9 +17,9 @@
 
 package c5db.replication;
 
+import c5db.interfaces.ReplicatorLog;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
-import c5db.interfaces.ReplicatorLog;
 import c5db.replication.rpc.RpcMessage;
 import c5db.replication.rpc.RpcRequest;
 import c5db.replication.rpc.RpcWireReply;
@@ -196,6 +196,8 @@ public class InRamTest {
     // Kill the first leader; wait for a second leader to come to power
     leader().die();
     waitForANewLeader();
+    leader().log(someData());
+
     assertThat(leader(), willSend(anAppendRequest().withCommitIndex(equalTo(lastIndexLogged()))));
   }
 
@@ -253,6 +255,7 @@ public class InRamTest {
     sim.createAndStartReplicators(newPeerIds);
 
     waitForANewLeader();
+    leader().log(someData());
 
     peers(newPeerIds).forEach((peer) ->
         assertThat(peer, willCommitConfiguration(finalConfig)));
