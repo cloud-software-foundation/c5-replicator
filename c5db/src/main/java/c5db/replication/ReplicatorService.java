@@ -17,7 +17,6 @@
 
 package c5db.replication;
 
-import c5db.C5ServerConstants;
 import c5db.ConfigDirectory;
 import c5db.codec.ProtostuffDecoder;
 import c5db.codec.ProtostuffEncoder;
@@ -31,7 +30,7 @@ import c5db.interfaces.discovery.NodeInfoRequest;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
-import c5db.log.ReplicatorLog;
+import c5db.interfaces.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
 import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.rpc.RpcRequest;
@@ -175,7 +174,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
     private SystemTimeReplicatorClock() {
       Random r = new Random();
-      int baseElectionTimeout = C5ServerConstants.REPLICATOR_BASE_ELECTION_TIMEOUT_MILLISECONDS;
+      int baseElectionTimeout = 100;
       this.electionTimeout = r.nextInt(baseElectionTimeout) + baseElectionTimeout;
     }
 

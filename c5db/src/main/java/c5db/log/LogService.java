@@ -20,6 +20,7 @@ package c5db.log;
 import c5db.C5ServerConstants;
 import c5db.ConfigDirectory;
 import c5db.interfaces.LogModule;
+import c5db.interfaces.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
@@ -34,6 +35,7 @@ import java.util.concurrent.Executors;
  * The Log module.
  */
 public class LogService extends AbstractService implements LogModule {
+  public static final int WAL_THREAD_POOL_SIZE = 1;
   private final ConfigDirectory configDirectory;
   private OLog oLog;
   private final Map<String, Mooring> moorings = new HashMap<>();
@@ -47,7 +49,7 @@ public class LogService extends AbstractService implements LogModule {
     try {
       LogFileService logFileService = new LogFileService(configDirectory.getBaseConfigPath());
       KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
-          Executors.newFixedThreadPool(C5ServerConstants.WAL_THREAD_POOL_SIZE));
+          Executors.newFixedThreadPool(WAL_THREAD_POOL_SIZE));
       this.oLog = new QuorumDelegatingLog(
           logFileService,
           executor,

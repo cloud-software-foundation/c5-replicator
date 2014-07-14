@@ -14,21 +14,33 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package c5db.log;
 
-package c5db.interfaces;
+import java.nio.ByteBuffer;
+import java.util.Random;
 
-import c5db.interfaces.ReplicatorLog;
-import c5db.messages.generated.ModuleType;
+public class ReplicatorLogGenericTestUtil {
+  private static final Random deterministicDataSequence = new Random(112233);
 
-import java.io.IOException;
+  public static long seqNum(long seqNum) {
+    return seqNum;
+  }
 
-/**
- * The log module is responsible for running all the threads and IO for write-ahead-logging.
- * <p/>
- * The write-ahead-log is responsible for maintaining persistence in the face of node or machine
- * failure.
- */
-@ModuleTypeBinding(ModuleType.Log)
-public interface LogModule extends C5Module {
-  public ReplicatorLog getMooring(String quorumId) throws IOException;
+  public static long term(long term) {
+    return term;
+  }
+
+  public static ByteBuffer someData() {
+    byte[] bytes = new byte[10];
+    deterministicDataSequence.nextBytes(bytes);
+    return ByteBuffer.wrap(bytes);
+  }
+
+  public static long anElectionTerm() {
+    return Math.abs(deterministicDataSequence.nextLong());
+  }
+
+  public static long aSeqNum() {
+    return Math.abs(deterministicDataSequence.nextLong());
+  }
 }

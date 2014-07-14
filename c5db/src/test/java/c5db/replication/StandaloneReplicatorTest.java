@@ -74,7 +74,7 @@ import static c5db.C5ServerConstants.DISCOVERY_PORT;
 import static c5db.C5ServerConstants.REPLICATOR_PORT_MIN;
 import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.LEADER_ELECTED;
-import static c5db.log.LogTestUtil.someData;
+import static c5db.log.ReplicatorLogGenericTestUtil.someData;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static c5db.replication.ReplicatorService.FiberFactory;
 import static org.hamcrest.Matchers.equalTo;

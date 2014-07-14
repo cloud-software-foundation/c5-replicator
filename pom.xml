@@ -14,8 +14,13 @@
 
     <modules>
         <module>c5-end-to-end-tests</module>
+        <module>c5-hbase-shim</module>
         <module>c5db</module>
+        <module>c5db-replicator</module>
         <module>c5db-client</module>
+	    <module>c5db-protostuff-codec</module>
+	    <module>c5db-util</module>
+        <module>c5db-olog</module>
         <module>hbase-common</module>
         <module>hbase-hadoop-compat</module>
         <module>hbase-protocol</module>
