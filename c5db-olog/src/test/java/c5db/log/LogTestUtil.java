@@ -17,8 +17,7 @@
 
 package c5db.log;
 
-import c5db.replication.QuorumConfiguration;
-import c5db.replication.generated.LogEntry;
+import c5db.interfaces.replication.QuorumConfiguration;
 import com.google.common.collect.Lists;
 import com.google.common.math.LongMath;
 import io.netty.util.CharsetUtil;

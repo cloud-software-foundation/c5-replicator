@@ -17,8 +17,6 @@
 
 package c5db.interfaces.replication;
 
-import c5db.replication.QuorumConfiguration;
-import c5db.replication.ReplicatorReceipt;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.jetlang.channels.Subscriber;
 

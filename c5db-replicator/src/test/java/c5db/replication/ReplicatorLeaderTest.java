@@ -18,8 +18,9 @@
 package c5db.replication;
 
 import c5db.interfaces.replication.IndexCommitNotice;
+import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.interfaces.replication.ReplicatorLog;
 import c5db.log.InRamLog;
-import c5db.interfaces.ReplicatorLog;
 import c5db.replication.generated.AppendEntriesReply;
 import c5db.replication.generated.LogEntry;
 import c5db.replication.rpc.RpcRequest;
@@ -61,13 +62,11 @@ import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.RpcMatchers.RequestMatcher;
 import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
 import static c5db.interfaces.replication.Replicator.State;
-
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertFalse;
-
 
 
 public class ReplicatorLeaderTest {

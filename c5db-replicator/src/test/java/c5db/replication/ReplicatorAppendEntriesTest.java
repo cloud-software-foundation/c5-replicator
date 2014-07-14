@@ -17,8 +17,9 @@
 
 package c5db.replication;
 
-import c5db.interfaces.ReplicatorLog;
 import c5db.interfaces.replication.IndexCommitNotice;
+import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.interfaces.replication.ReplicatorLog;
 import c5db.log.InRamLog;
 import c5db.replication.generated.AppendEntries;
 import c5db.replication.generated.LogEntry;

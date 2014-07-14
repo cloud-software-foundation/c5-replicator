@@ -17,6 +17,7 @@
 
 package c5db.replication;
 
+import c5db.interfaces.replication.QuorumConfiguration;
 import com.google.common.collect.Sets;
 import org.junit.Test;
 

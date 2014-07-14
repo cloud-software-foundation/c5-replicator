@@ -17,6 +17,8 @@
 
 package c5db.replication;
 
+import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.interfaces.replication.ReplicatorReceipt;
 import c5db.replication.generated.LogEntry;
 import com.google.common.util.concurrent.SettableFuture;
 

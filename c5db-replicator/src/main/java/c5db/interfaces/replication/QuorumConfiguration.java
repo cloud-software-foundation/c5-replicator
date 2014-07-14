@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package c5db.replication;
+package c5db.interfaces.replication;
 
 import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.collect.ImmutableSet;

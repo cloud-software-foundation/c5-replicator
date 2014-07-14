@@ -17,7 +17,7 @@
 
 package c5db.log;
 
-import c5db.replication.QuorumConfiguration;
+import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.util.CheckedSupplier;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;

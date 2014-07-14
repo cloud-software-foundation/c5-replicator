@@ -18,7 +18,7 @@
 package c5db.log;
 
 import c5db.C5CommonTestUtil;
-import c5db.replication.QuorumConfiguration;
+import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.util.WrappingKeySerializingExecutor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

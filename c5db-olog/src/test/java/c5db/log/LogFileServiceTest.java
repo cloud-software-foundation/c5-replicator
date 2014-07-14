@@ -20,7 +20,7 @@ package c5db.log;
 import c5db.C5CommonTestUtil;
 import c5db.MiscMatchers;
 import c5db.generated.OLogHeader;
-import c5db.replication.QuorumConfiguration;
+import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import c5db.util.CheckedSupplier;
 import com.google.common.collect.Iterables;

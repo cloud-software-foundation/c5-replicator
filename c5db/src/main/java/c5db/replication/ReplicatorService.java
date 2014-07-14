@@ -30,7 +30,7 @@ import c5db.interfaces.discovery.NodeInfoRequest;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
-import c5db.interfaces.ReplicatorLog;
+import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
 import c5db.replication.generated.ReplicationWireMessage;
 import c5db.replication.rpc.RpcRequest;

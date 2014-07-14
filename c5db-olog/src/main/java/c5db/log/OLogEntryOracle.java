@@ -17,7 +17,7 @@
 
 package c5db.log;
 
-import c5db.replication.QuorumConfiguration;
+import c5db.interfaces.replication.QuorumConfiguration;
 
 /**
  * Keeps track of, and provides answers about, logged OLogEntries.

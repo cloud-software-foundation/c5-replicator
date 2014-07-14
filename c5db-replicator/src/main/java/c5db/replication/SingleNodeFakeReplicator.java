@@ -18,8 +18,10 @@
 package c5db.replication;
 
 import c5db.interfaces.replication.IndexCommitNotice;
+import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
+import c5db.interfaces.replication.ReplicatorReceipt;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;

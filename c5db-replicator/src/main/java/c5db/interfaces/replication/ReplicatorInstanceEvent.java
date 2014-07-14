@@ -14,15 +14,14 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package c5db.interfaces.replication;
 
-import c5db.replication.QuorumConfiguration;
+package c5db.interfaces.replication;
 
 /**
  * information about when a replicator instance changes state. replicator instances publish
  * these to indicate a variety of conditions.
- * <p/>
- * <p/>
+ * <p>
+ * <p>
  * A variety of events can be published:
  * <ul>
  * <li>Quorum started</li>

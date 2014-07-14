@@ -17,7 +17,7 @@
 
 package c5db;
 
-import c5db.replication.QuorumConfiguration;
+import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.replication.generated.LogEntry;
 import c5db.replication.rpc.RpcMessage;
 import c5db.replication.rpc.RpcRequest;

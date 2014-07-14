@@ -17,14 +17,14 @@
 
 package c5db.log;
 
-import c5db.replication.QuorumConfiguration;
+import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.replication.ReplicatorTestUtil;
 import c5db.replication.generated.LogEntry;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
+import static c5db.interfaces.replication.QuorumConfiguration.EMPTY;
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
-import static c5db.replication.QuorumConfiguration.EMPTY;
 import static c5db.replication.ReplicatorTestUtil.entries;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

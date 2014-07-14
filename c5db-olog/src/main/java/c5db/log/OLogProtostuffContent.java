@@ -18,7 +18,7 @@
 package c5db.log;
 
 import c5db.generated.OLogContentType;
-import c5db.replication.QuorumConfiguration;
+import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.collect.ImmutableMap;
 import io.protostuff.ByteBufferInput;

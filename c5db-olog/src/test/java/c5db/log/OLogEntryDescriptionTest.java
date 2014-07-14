@@ -18,7 +18,7 @@
 package c5db.log;
 
 import c5db.generated.OLogContentType;
-import c5db.replication.QuorumConfiguration;
+import c5db.interfaces.replication.QuorumConfiguration;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Test;
