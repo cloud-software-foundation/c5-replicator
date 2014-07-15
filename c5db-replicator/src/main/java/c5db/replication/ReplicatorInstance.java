@@ -163,8 +163,8 @@ public class ReplicatorInstance implements Replicator {
                     && notice.quorumId.equals(quorumId)));
 
     incomingChannel.subscribe(fiber, this::onIncomingMessage);
-    electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, clock.electionCheckRate(),
-        clock.electionCheckRate(), TimeUnit.MILLISECONDS);
+    electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, clock.electionCheckInterval(),
+        clock.electionCheckInterval(), TimeUnit.MILLISECONDS);
 
     this.myState = initialState;
 
@@ -957,7 +957,7 @@ public class ReplicatorInstance implements Replicator {
         logger.error("Exception in consumeQueue: ", t);
         failReplicatorInstance(t);
       }
-    }, 0, clock.groupCommitDelay(), TimeUnit.MILLISECONDS);
+    }, 0, clock.leaderLogRequestsProcessingInterval(), TimeUnit.MILLISECONDS);
   }
 
   @FiberOnly
@@ -1081,6 +1081,7 @@ public class ReplicatorInstance implements Replicator {
     }
     localLogFuture = log.logEntries(newLogEntries);
 
+    // TODO this callback and some others should have timeouts in case the log hangs somehow
     C5Futures.addCallback(localLogFuture,
         (result) -> {
           peersLastAckedIndex.put(myId, lastIndexInList);

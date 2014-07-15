@@ -112,7 +112,7 @@ public class InRamSim {
     }
 
     @Override
-    public long electionCheckRate() {
+    public long electionCheckInterval() {
       return 100;
     }
 
@@ -122,7 +122,7 @@ public class InRamSim {
     }
 
     @Override
-    public long groupCommitDelay() {
+    public long leaderLogRequestsProcessingInterval() {
       return 50;
     }
   }

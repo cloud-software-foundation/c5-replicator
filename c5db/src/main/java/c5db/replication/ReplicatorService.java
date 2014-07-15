@@ -80,7 +80,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -151,7 +150,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
               nodeId,
               quorumId,
               logMooring,
-              new SystemTimeReplicatorClock(),
+              new DefaultSystemTimeReplicatorClock(),
               persister,
               outgoingRequests,
               replicatorEventChannel,
@@ -166,37 +165,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       future.set(instance);
     });
     return future;
-  }
-
-  // TODO this should be actually via whatever configuration system we end up using.
-  private static class SystemTimeReplicatorClock implements ReplicatorClock {
-    private final long electionTimeout;
-
-    private SystemTimeReplicatorClock() {
-      Random r = new Random();
-      int baseElectionTimeout = 100;
-      this.electionTimeout = r.nextInt(baseElectionTimeout) + baseElectionTimeout;
-    }
-
-    @Override
-    public long currentTimeMillis() {
-      return System.currentTimeMillis();
-    }
-
-    @Override
-    public long electionCheckRate() {
-      return 100;
-    }
-
-    @Override
-    public long electionTimeout() {
-      return electionTimeout;
-    }
-
-    @Override
-    public long groupCommitDelay() {
-      return 100;
-    }
   }
 
   private static class ConfigDirectoryQuorumFileReaderWriter implements QuorumFileReaderWriter {

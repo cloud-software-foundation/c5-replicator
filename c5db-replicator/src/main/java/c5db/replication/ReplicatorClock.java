@@ -31,7 +31,7 @@ public interface ReplicatorClock {
    *
    * @return
    */
-  public long electionCheckRate();
+  public long electionCheckInterval();
 
   /**
    * The election timeout.
@@ -45,5 +45,5 @@ public interface ReplicatorClock {
    *
    * @return
    */
-  public long groupCommitDelay();
+  public long leaderLogRequestsProcessingInterval();
 }
