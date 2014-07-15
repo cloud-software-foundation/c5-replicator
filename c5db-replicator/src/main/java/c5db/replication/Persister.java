@@ -17,8 +17,6 @@
 
 package c5db.replication;
 
-import c5db.ConfigDirectory;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +28,10 @@ import java.util.List;
 class Persister implements ReplicatorInfoPersistence {
 
   private static final String REPLICATOR_PERSISTER_FILE_NAME = "replication-data";
-  private final ConfigDirectory configDirectory;
+  private final QuorumFileReaderWriter quorumFileReaderWriter;
 
-  Persister(ConfigDirectory configDirectory) {
-    this.configDirectory = configDirectory;
+  Persister(QuorumFileReaderWriter quorumFileReaderWriter) {
+    this.quorumFileReaderWriter = quorumFileReaderWriter;
   }
 
   @Override
@@ -47,8 +45,7 @@ class Persister implements ReplicatorInfoPersistence {
   }
 
   private long getLongOfFile(String quorumId, int whichLine) throws IOException {
-    List<String> data = configDirectory.readFile(configDirectory.getQuorumRelPath(quorumId),
-        REPLICATOR_PERSISTER_FILE_NAME);
+    List<String> data = quorumFileReaderWriter.readQuorumFile(quorumId, REPLICATOR_PERSISTER_FILE_NAME);
     if (data.size() != 2) {
       return 0; // corrupt file?
     }
@@ -65,6 +62,6 @@ class Persister implements ReplicatorInfoPersistence {
     List<String> data = new ArrayList<>(2);
     data.add(Long.toString(currentTerm));
     data.add(Long.toString(votedFor));
-    configDirectory.writeFile(configDirectory.getQuorumRelPath(quorumId), REPLICATOR_PERSISTER_FILE_NAME, data);
+    quorumFileReaderWriter.writeQuorumFile(quorumId, REPLICATOR_PERSISTER_FILE_NAME, data);
   }
 }

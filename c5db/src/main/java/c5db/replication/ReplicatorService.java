@@ -199,6 +199,24 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
   }
 
+  private static class ConfigDirectoryQuorumFileReaderWriter implements QuorumFileReaderWriter {
+    private final ConfigDirectory configDirectory;
+
+    private ConfigDirectoryQuorumFileReaderWriter(ConfigDirectory configDirectory) {
+      this.configDirectory = configDirectory;
+    }
+
+    @Override
+    public List<String> readQuorumFile(String quorumId, String fileName) throws IOException {
+      return configDirectory.readFile(configDirectory.getQuorumRelPath(quorumId), fileName);
+    }
+
+    @Override
+    public void writeQuorumFile(String quorumId, String fileName, List<String> data) throws IOException {
+      configDirectory.writeFile(configDirectory.getQuorumRelPath(quorumId), fileName, data);
+    }
+  }
+
   private final int port;
   private final ModuleServer moduleServer;
   private final FiberFactory fiberFactory;
@@ -256,7 +274,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     this.fiberFactory = fiberFactory;
 
     this.allChannels = new DefaultChannelGroup(workerGroup.next());
-    this.persister = new Persister(configDirectory);
+    this.persister = new Persister(new ConfigDirectoryQuorumFileReaderWriter(configDirectory));
   }
 
   /**
