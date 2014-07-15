@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.ReplicatorConstants;
 import c5db.generated.OLogHeader;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.util.C5Iterators;
@@ -66,7 +67,6 @@ import static c5db.log.SequentialLog.LogEntryNotInSequence;
  * a file) served from the LogPersistenceService injected on creation.
  */
 public class QuorumDelegatingLog implements OLog, AutoCloseable {
-  public static final int WAL_CLOSE_TIMEOUT_SECONDS = 15;
   private final LogPersistenceService<?> persistenceService;
   private final KeySerializingExecutor taskExecutor;
   private final Map<String, PerQuorum> quorumMap = new ConcurrentHashMap<>();
@@ -174,7 +174,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   @Override
   public void close() throws IOException {
     try {
-      taskExecutor.shutdownAndAwaitTermination(WAL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      taskExecutor.shutdownAndAwaitTermination(ReplicatorConstants.WAL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);
     }

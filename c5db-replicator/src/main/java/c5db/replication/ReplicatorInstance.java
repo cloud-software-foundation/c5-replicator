@@ -17,6 +17,7 @@
 
 package c5db.replication;
 
+import c5db.ReplicatorConstants;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.interfaces.replication.Replicator;
@@ -76,8 +77,6 @@ import java.util.concurrent.TimeUnit;
  * with the log package via {@link c5db.interfaces.replication.ReplicatorLog}.
  */
 public class ReplicatorInstance implements Replicator {
-
-  private static final int MAXIMUM_SIMULTANEOUS_LOG_ENTRIES_PER_LOG = 100000;
   private final Channel<State> stateMemoryChannel = new MemoryChannel<>();
   private final RequestChannel<RpcWireRequest, RpcReply> incomingChannel = new MemoryRequestChannel<>();
   private final RequestChannel<RpcRequest, RpcWireReply> sendRpcChannel;
@@ -99,7 +98,7 @@ public class ReplicatorInstance implements Replicator {
    */
 
   private final BlockingQueue<InternalReplicationRequest> logRequests =
-      new ArrayBlockingQueue<>(MAXIMUM_SIMULTANEOUS_LOG_ENTRIES_PER_LOG);
+      new ArrayBlockingQueue<>(ReplicatorConstants.REPLICATOR_MAXIMUM_SIMULTANEOUS_LOG_REQUESTS);
 
   // this is the next index from our log we need to send to each peer, kept track of on a per-peer basis.
   private final Map<Long, Long> peersNextIndex = new HashMap<>();

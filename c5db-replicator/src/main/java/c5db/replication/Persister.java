@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static c5db.ReplicatorConstants.REPLICATOR_PERSISTER_FILE_NAME;
+
 /**
  * A small persister that writes files to a directory. Persisting this information is needed to
  * provide crash recovery for {@link c5db.replication.ReplicatorInstance}.
  */
 class Persister implements ReplicatorInfoPersistence {
-
-  private static final String REPLICATOR_PERSISTER_FILE_NAME = "replication-data";
   private final QuorumFileReaderWriter quorumFileReaderWriter;
 
   Persister(QuorumFileReaderWriter quorumFileReaderWriter) {

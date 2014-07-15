@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.ReplicatorConstants;
 import c5db.util.CheckedSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,13 +38,10 @@ import java.util.TreeMap;
  * LogPersistenceService using FilePersistence objects (Files and FileChannels).
  */
 public class LogFileService implements LogPersistenceService<FilePersistence> {
-  public static final String WAL_ROOT_DIRECTORY_NAME = "wal";
-  public static final String WAL_LOG_FILE_SUBDIRECTORY_NAME = "logs";
-
   private final Path walRootDir;
 
   public LogFileService(Path basePath) throws IOException {
-    this.walRootDir = basePath.resolve(WAL_ROOT_DIRECTORY_NAME);
+    this.walRootDir = basePath.resolve(ReplicatorConstants.WAL_ROOT_DIRECTORY_NAME);
 
     createDirectoryStructure();
   }
@@ -175,7 +173,7 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   }
 
   private Path logFileDir(String quorumId) {
-    return quorumDir(quorumId).resolve(WAL_LOG_FILE_SUBDIRECTORY_NAME);
+    return quorumDir(quorumId).resolve(ReplicatorConstants.WAL_LOG_FILE_SUBDIRECTORY_NAME);
   }
 
   private void createDirectoryStructure() throws IOException {
@@ -187,7 +185,7 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
     Files.createDirectories(logFileDir(quorumId));
   }
 
-  private static File[] allFilesInDirectory(Path dirPath) throws IOException {
+  private static File[] allFilesInDirectory(Path dirPath) {
     File[] files = dirPath.toFile().listFiles();
     if (files == null) {
       return new File[]{};
