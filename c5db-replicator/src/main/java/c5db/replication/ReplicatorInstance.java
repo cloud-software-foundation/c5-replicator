@@ -68,6 +68,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static c5db.ReplicatorConstants.REPLICATOR_APPEND_RPC_TIMEOUT_MILLISECONDS;
+import static c5db.ReplicatorConstants.REPLICATOR_VOTE_RPC_TIMEOUT_MILLISECONDS;
+
 
 /**
  * Single instantiation of a replicator / log / lease. This implementation's logic is based on the
@@ -695,7 +698,8 @@ public class ReplicatorInstance implements Replicator {
   private void sendPreElectionRequest(RpcRequest request, long termBeingVotedFor, Set<Long> votes, long startTime) {
     AsyncRequest.withOneReply(fiber, sendRpcChannel, request,
         message -> handlePreElectionReply(message, termBeingVotedFor, votes, startTime),
-        1, TimeUnit.SECONDS, () -> handlePreElectionTimeout(request, termBeingVotedFor, votes, startTime));
+        REPLICATOR_VOTE_RPC_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS,
+        () -> handlePreElectionTimeout(request, termBeingVotedFor, votes, startTime));
   }
 
   @FiberOnly
@@ -786,7 +790,8 @@ public class ReplicatorInstance implements Replicator {
       RpcRequest req = new RpcRequest(peer, myId, quorumId, msg);
       AsyncRequest.withOneReply(fiber, sendRpcChannel, req,
           message -> handleElectionReply0(message, termBeingVotedFor, votes),
-          1, TimeUnit.SECONDS, new RequestVoteTimeout(req, termBeingVotedFor, votes));
+          REPLICATOR_VOTE_RPC_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS,
+          new RequestVoteTimeout(req, termBeingVotedFor, votes));
     }
   }
 
@@ -828,7 +833,7 @@ public class ReplicatorInstance implements Replicator {
       // Note we are using 'this' as the recursive timeout.
       AsyncRequest.withOneReply(fiber, sendRpcChannel, request,
           message -> handleElectionReply0(message, termBeingVotedFor, votes),
-          1, TimeUnit.SECONDS, this);
+          REPLICATOR_VOTE_RPC_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS, this);
     }
   }
 
@@ -1135,7 +1140,7 @@ public class ReplicatorInstance implements Replicator {
 
         checkIfMajorityCanCommit(lastIndexSent);
       }
-    }, 5, TimeUnit.SECONDS, () ->
+    }, REPLICATOR_APPEND_RPC_TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS, () ->
         // Do nothing -> let next timeout handle things.
         // This timeout exists just so that we can cancel and clean up stuff in jetlang.
         logger.trace("peer {} timed out", peer));
