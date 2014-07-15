@@ -1,6 +1,7 @@
 package c5db;
 
 option java_package = "c5db.eventLogging.generated";
+
 option optimize_for = SPEED;
 
 import "control_messages.proto";

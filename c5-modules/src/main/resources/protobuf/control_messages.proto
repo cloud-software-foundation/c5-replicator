@@ -18,6 +18,7 @@
 package c5db.messages;
 
 option java_package = "c5db.messages.generated";
+
 option optimize_for = SPEED;
 
 enum ModuleType {
@@ -42,7 +43,7 @@ enum ModuleType {
 
 message StartModule {
     optional ModuleType module = 1;
-    optional int32 module_port = 2 [default=0];
+    optional int32 module_port = 2 [default = 0];
     optional string module_argv = 3;
 }
 
@@ -59,13 +60,13 @@ message ModuleSubCommand {
 }
 
 message CommandReply {
-    optional bool command_success = 1 [default=false];
+    optional bool command_success = 1 [default = false];
     optional string command_stdout = 2;
     optional string command_stderr = 3;
 }
 
 message ControlWireMessage {
-  optional int64 receipientNodeId = 1;
-  optional string subType = 2;
-  optional bytes subMessage = 3;
+    optional int64 receipientNodeId = 1;
+    optional string subType = 2;
+    optional bytes subMessage = 3;
 }

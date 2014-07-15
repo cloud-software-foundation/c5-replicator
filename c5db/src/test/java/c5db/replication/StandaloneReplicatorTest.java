@@ -264,7 +264,8 @@ public class StandaloneReplicatorTest {
       discoveryFiber.start();
 
       // TODO ReplicatorService provides no way to dispose of its own fiber; it should
-      replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer, fiberFactory, configDirectory);
+      replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
+          fiberFactory, new ConfigDirectoryQuorumFileReaderWriter(configDirectory));
     }
 
     @Override
