@@ -51,6 +51,7 @@ public interface Replicator {
 
   /**
    * Submit data to be replicated.
+   * TODO we may want a variation of this method which does not block
    *
    * @param data Some data to log.
    * @return a listenable for a receipt for the log request, OR null if we aren't the leader.
