@@ -30,6 +30,7 @@ import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.LogService;
+import c5db.log.ReplicatorLogGenericTestUtil;
 import c5db.messages.generated.ModuleType;
 import c5db.util.C5Futures;
 import c5db.util.ExceptionHandlingBatchExecutor;
@@ -44,6 +45,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import org.hamcrest.Matcher;
 import org.jetlang.channels.Channel;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.Subscriber;
@@ -56,6 +58,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -72,12 +75,14 @@ import java.util.function.Consumer;
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.C5ServerConstants.DISCOVERY_PORT;
 import static c5db.C5ServerConstants.REPLICATOR_PORT_MIN;
+import static c5db.FutureMatchers.resultsIn;
 import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.LEADER_ELECTED;
-import static c5db.log.ReplicatorLogGenericTestUtil.someData;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static c5db.replication.ReplicatorService.FiberFactory;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 
 public class StandaloneReplicatorTest {
   @Rule
@@ -126,11 +131,41 @@ public class StandaloneReplicatorTest {
     }
   }
 
+  @Test(timeout = 9000)
+  public void logsToASingleQuorumReplicatorUsingTheGeneralizedInterface() throws Exception {
+    long nodeId = 1;
+    List<Long> peerIds = Lists.newArrayList(1L);
+
+    try (SingleQuorumReplicationServer serverFixture
+             = new SingleQuorumReplicationServer(nodeId, peerIds, this::newExceptionHandlingFiber)) {
+
+      serverFixture.eventMonitor.waitFor(aReplicatorEvent(LEADER_ELECTED));
+      GeneralizedReplicator replicator = new C5GeneralizedReplicator(serverFixture.replicator, mainTestFiber);
+
+      List<ListenableFuture<Long>> replicateFutures = new ArrayList<ListenableFuture<Long>>() {{
+        add(replicator.replicate(someData()));
+        add(replicator.replicate(someData()));
+        add(replicator.replicate(someData()));
+      }};
+
+      assertThat(Futures.allAsList(replicateFutures), resultsInAListOfLongs(hasSize(3)));
+    }
+  }
+
 
   private Fiber newExceptionHandlingFiber(Consumer<Throwable> throwableHandler) {
     Fiber newFiber = fiberFactory.create(new ExceptionHandlingBatchExecutor(throwableHandler));
     fibers.add(newFiber);
     return newFiber;
+  }
+
+  private List<ByteBuffer> someData() {
+    return Lists.newArrayList(ReplicatorLogGenericTestUtil.someData());
+  }
+
+  private static Matcher<? super ListenableFuture<List<Long>>> resultsInAListOfLongs(
+      Matcher<? super List<Long>> longsMatcher) {
+    return resultsIn(longsMatcher);
   }
 
   /**

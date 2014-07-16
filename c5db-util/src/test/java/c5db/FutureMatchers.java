@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class FutureMatchers {
   private static final int TIMEOUT = 4; // seconds
 
-  public static <T> Matcher<Future<T>> resultsIn(Matcher<T> resultMatcher) {
+  public static <T> Matcher<Future<T>> resultsIn(Matcher<? super T> resultMatcher) {
     return returnsAFutureWhoseResult(resultMatcher);
   }
 
@@ -35,7 +35,7 @@ public class FutureMatchers {
     return returnsAFutureWithException(exceptionClass);
   }
 
-  public static <T> Matcher<Future<T>> returnsAFutureWhoseResult(Matcher<T> resultMatcher) {
+  public static <T> Matcher<Future<T>> returnsAFutureWhoseResult(Matcher<? super T> resultMatcher) {
     return new TypeSafeMatcher<Future<T>>() {
       public Throwable throwable = null;
 
