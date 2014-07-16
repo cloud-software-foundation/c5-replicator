@@ -6,7 +6,8 @@
     <groupId>c5db</groupId>
     <artifactId>parent</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <packaging>pom</packaging><parent>
+    <packaging>pom</packaging>
+    <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
@@ -29,6 +30,7 @@
         <module>hbase-server</module>
         <module>hbase-client</module>
         <module>hbase-prefix-tree</module>
+        <module>c5db-cat-olog</module>
     </modules>
 
     <properties>
@@ -752,7 +754,8 @@
             <activation>
                 <property>
                     <!--Below formatting for dev-support/generate-hadoopX-poms.sh-->
-                    <!--h1--><name>!hadoop.profile</name>
+                    <!--h1-->
+                    <name>!hadoop.profile</name>
                 </property>
             </activation>
             <modules>

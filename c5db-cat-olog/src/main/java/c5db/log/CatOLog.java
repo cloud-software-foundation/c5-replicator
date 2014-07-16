@@ -18,10 +18,6 @@
 package c5db.log;
 
 import c5db.generated.OLogHeader;
-import c5db.log.EntryEncodingUtil;
-import c5db.log.FilePersistence;
-import c5db.log.OLogEntryDescription;
-import c5db.log.SequentialEntryCodec;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -55,7 +51,7 @@ public class CatOLog {
   public static void main(String args[]) throws IOException {
     if (args.length != 1) {
       System.err.println("Usage: CatOLog filename");
-
+      System.exit(-1);
     }
 
     File inputLogFile = new File(args[0]);
