@@ -55,6 +55,12 @@ public class CatOLog {
     }
 
     File inputLogFile = new File(args[0]);
+
+    if (!inputLogFile.exists() || inputLogFile.isDirectory()) {
+      System.err.println("File does not exist, or is a directory");
+      System.exit(-1);
+    }
+
     describeLogFileToOutput(inputLogFile, System.out);
   }
 
