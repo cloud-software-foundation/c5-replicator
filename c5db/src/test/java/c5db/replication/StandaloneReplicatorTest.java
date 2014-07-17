@@ -39,7 +39,6 @@ import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
@@ -75,11 +74,13 @@ import java.util.function.Consumer;
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.C5ServerConstants.DISCOVERY_PORT;
 import static c5db.C5ServerConstants.REPLICATOR_PORT_MIN;
+import static c5db.CollectionMatchers.isStrictlyIncreasing;
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.LEADER_ELECTED;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static c5db.replication.ReplicatorService.FiberFactory;
+import static com.google.common.util.concurrent.Futures.allAsList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
@@ -148,7 +149,8 @@ public class StandaloneReplicatorTest {
         add(replicator.replicate(someData()));
       }};
 
-      assertThat(Futures.allAsList(replicateFutures), resultsInAListOfLongs(hasSize(3)));
+      assertThat(allAsList(replicateFutures), resultsInAListOfLongsThat(hasSize(3)));
+      assertThat(allAsList(replicateFutures), resultsInAListOfLongsThat(isStrictlyIncreasing()));
     }
   }
 
@@ -163,7 +165,7 @@ public class StandaloneReplicatorTest {
     return Lists.newArrayList(ReplicatorLogGenericTestUtil.someData());
   }
 
-  private static Matcher<? super ListenableFuture<List<Long>>> resultsInAListOfLongs(
+  private static Matcher<? super ListenableFuture<List<Long>>> resultsInAListOfLongsThat(
       Matcher<? super List<Long>> longsMatcher) {
     return resultsIn(longsMatcher);
   }
@@ -311,7 +313,7 @@ public class StandaloneReplicatorTest {
       startFutures.add(moduleServer.startModule(discoveryModule));
       startFutures.add(moduleServer.startModule(replicationModule));
 
-      ListenableFuture<List<Service.State>> allFutures = Futures.allAsList(startFutures);
+      ListenableFuture<List<Service.State>> allFutures = allAsList(startFutures);
 
       C5Futures.addCallback(allFutures,
           (List<Service.State> ignore) -> notifyStarted(),

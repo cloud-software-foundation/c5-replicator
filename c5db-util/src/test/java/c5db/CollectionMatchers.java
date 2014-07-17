@@ -39,7 +39,26 @@ public class CollectionMatchers {
 
       @Override
       public void describeTo(Description description) {
-        description.appendText("a list whose elements are nondecreasing");
+        description.appendText("a list whose elements are non-decreasing");
+      }
+    };
+  }
+
+  public static <T extends Comparable<T>> Matcher<List<T>> isStrictlyIncreasing() {
+    return new TypeSafeMatcher<List<T>>() {
+      @Override
+      protected boolean matchesSafely(List<T> list) {
+        for (int i = 1; i < list.size(); i++) {
+          if (list.get(i).compareTo(list.get(i - 1)) <= 0) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("a list whose elements are strictly increasing");
       }
     };
   }
