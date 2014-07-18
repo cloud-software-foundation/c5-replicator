@@ -20,6 +20,7 @@ package c5db;
 public class ReplicatorConstants {
   public static final String WAL_ROOT_DIRECTORY_NAME = "wal";
   public static final String WAL_LOG_FILE_SUBDIRECTORY_NAME = "logs";
+  public static final int WAL_THREAD_POOL_SIZE = 1;
   public static final int WAL_CLOSE_TIMEOUT_SECONDS = 15;
   public static final int WAL_NAVIGATOR_DEFAULT_MAX_ENTRY_SEEK = 256;
 

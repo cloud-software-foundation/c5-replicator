@@ -17,7 +17,7 @@
 
 package c5db.log;
 
-import c5db.ConfigDirectory;
+import c5db.ReplicatorConstants;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
@@ -26,6 +26,7 @@ import c5db.util.WrappingKeySerializingExecutor;
 import com.google.common.util.concurrent.AbstractService;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -34,21 +35,21 @@ import java.util.concurrent.Executors;
  * The Log module.
  */
 public class LogService extends AbstractService implements LogModule {
-  public static final int WAL_THREAD_POOL_SIZE = 1;
-  private final ConfigDirectory configDirectory;
-  private OLog oLog;
+  private final Path basePath;
   private final Map<String, Mooring> moorings = new HashMap<>();
 
-  public LogService(ConfigDirectory configDirectory) {
-    this.configDirectory = configDirectory;
+  private OLog oLog;
+
+  public LogService(Path basePath) {
+    this.basePath = basePath;
   }
 
   @Override
   protected void doStart() {
     try {
-      LogFileService logFileService = new LogFileService(configDirectory.getBaseConfigPath());
+      LogFileService logFileService = new LogFileService(basePath);
       KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
-          Executors.newFixedThreadPool(WAL_THREAD_POOL_SIZE));
+          Executors.newFixedThreadPool(ReplicatorConstants.WAL_THREAD_POOL_SIZE));
       this.oLog = new QuorumDelegatingLog(
           logFileService,
           executor,
@@ -107,6 +108,7 @@ public class LogService extends AbstractService implements LogModule {
     return null;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public class FlushThread implements Runnable {
     int i = 0;
 

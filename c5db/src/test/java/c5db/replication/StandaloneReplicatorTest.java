@@ -284,7 +284,7 @@ public class StandaloneReplicatorTest {
     private final SimpleModuleServer moduleServer;
     private final Fiber discoveryFiber;
     private final DiscoveryModule discoveryModule;
-    private final LogModule logModule = new LogService(configDirectory);
+    private final LogModule logModule = new LogService(configDirectory.getBaseConfigPath());
     private final ReplicationModule replicationModule;
 
     private final int replicatorPort;
