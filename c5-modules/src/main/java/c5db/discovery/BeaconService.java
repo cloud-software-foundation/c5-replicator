@@ -17,7 +17,6 @@
 
 package c5db.discovery;
 
-import c5db.C5ServerConstants;
 import c5db.codec.UdpProtostuffDecoder;
 import c5db.codec.UdpProtostuffEncoder;
 import c5db.discovery.generated.Availability;
@@ -175,6 +174,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
   private final org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
   private final Fiber fiber;
+  public static final String BROADCAST_ADDRESS = "255.255.255.255";
 
   // These should be final, but they are initialized in doStart().
   private Channel broadcastChannel = null;
@@ -217,7 +217,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     this.fiber = fiber;
     this.eventLoopGroup = eventLoopGroup;
     this.modulePorts = initialModulePorts;
-    this.broadcastAddress = new InetSocketAddress(C5ServerConstants.BROADCAST_ADDRESS, discoveryPort);
+    this.broadcastAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
 
     moduleServer.availableModulePortsChannel().subscribe(fiber, this::updateCurrentModulePorts);
   }
