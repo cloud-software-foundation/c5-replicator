@@ -38,7 +38,7 @@
         </dependency>
 
         <dependency>
-        	<groupId>com.google.guava</groupId>
+            <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
@@ -58,12 +58,6 @@
                     <groupId>junit</groupId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.jmock</groupId>
-            <artifactId>jmock-legacy</artifactId>
-            <version>2.6.0</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

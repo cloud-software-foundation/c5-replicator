@@ -64,6 +64,8 @@
         <jetty.version>6.1.26</jetty.version>
         <jetty.jspapi.version>6.1.14</jetty.jspapi.version>
         <jersey.version>1.8</jersey.version>
+        <jmock-junit4.version>2.6.0</jmock-junit4.version>
+        <jmock-legacy.version>2.6.0</jmock-legacy.version>
         <htrace.version>2.01</htrace.version>
         <mockito-all.version>1.9.0</mockito-all.version>
         <stax-api.version>1.0.1</stax-api.version>
@@ -339,13 +341,13 @@
             <dependency>
                 <groupId>org.jmock</groupId>
                 <artifactId>jmock-junit4</artifactId>
-                <version>2.6.0</version>
+                <version>${jmock-junit4.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.jmock</groupId>
                 <artifactId>jmock-legacy</artifactId>
-                <version>2.6.0</version>
+                <version>${jmock-legacy.version}</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
