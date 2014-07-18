@@ -65,11 +65,6 @@
         </dependency>
         <dependency>
             <groupId>c5db</groupId>
-            <artifactId>c5db-replicator</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>c5db</groupId>
             <artifactId>c5-proto</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
