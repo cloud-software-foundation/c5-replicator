@@ -18,8 +18,6 @@
 package c5db.replication;
 
 import c5db.C5CommonTestUtil;
-import c5db.ConfigDirectory;
-import c5db.NioFileConfigDirectory;
 import c5db.discovery.BeaconService;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.DiscoveryModule;
@@ -58,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -72,11 +71,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
-import static c5db.C5ServerConstants.DISCOVERY_PORT;
-import static c5db.C5ServerConstants.REPLICATOR_PORT_MIN;
 import static c5db.CollectionMatchers.isStrictlyIncreasing;
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.IndexCommitMatcher.aCommitNotice;
+import static c5db.ReplicatorConstants.REPLICATOR_PORT_MIN;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.LEADER_ELECTED;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static c5db.replication.ReplicatorService.FiberFactory;
@@ -90,6 +88,9 @@ public class StandaloneReplicatorTest {
   public JUnitRuleFiberExceptions jUnitFiberExceptionHandler = new JUnitRuleFiberExceptions();
 
   private static final int NUMBER_OF_PROCESSORS = Runtime.getRuntime().availableProcessors();
+  private static final int DISCOVERY_PORT = 54333;
+
+  private final Path baseTestPath = new C5CommonTestUtil().getDataTestDir("general-replicator-test");
 
   private final ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_PROCESSORS);
   private final EventLoopGroup bossGroup = new NioEventLoopGroup(NUMBER_OF_PROCESSORS / 3);
@@ -99,11 +100,8 @@ public class StandaloneReplicatorTest {
   private final Set<Fiber> fibers = new HashSet<>();
   private final Fiber mainTestFiber = newExceptionHandlingFiber(jUnitFiberExceptionHandler);
 
-  private ConfigDirectory configDirectory;
-
   @Before
   public void setupConfigDirectory() throws Exception {
-    configDirectory = new NioFileConfigDirectory(new C5CommonTestUtil().getDataTestDir("general-replicator-test"));
     mainTestFiber.start();
   }
 
@@ -284,7 +282,7 @@ public class StandaloneReplicatorTest {
     private final SimpleModuleServer moduleServer;
     private final Fiber discoveryFiber;
     private final DiscoveryModule discoveryModule;
-    private final LogModule logModule = new LogService(configDirectory.getBaseConfigPath());
+    private final LogModule logModule = new LogService(baseTestPath);
     private final ReplicationModule replicationModule;
 
     private final int replicatorPort;
@@ -302,7 +300,7 @@ public class StandaloneReplicatorTest {
 
       // TODO ReplicatorService provides no way to dispose of its own fiber; it should
       replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
-          fiberFactory, new ConfigDirectoryQuorumFileReaderWriter(configDirectory));
+          fiberFactory, new NioQuorumFileReaderWriter(baseTestPath));
     }
 
     @Override

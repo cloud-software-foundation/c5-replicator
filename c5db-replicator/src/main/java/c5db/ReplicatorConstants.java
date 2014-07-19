@@ -24,6 +24,9 @@ public class ReplicatorConstants {
   public static final int WAL_CLOSE_TIMEOUT_SECONDS = 15;
   public static final int WAL_NAVIGATOR_DEFAULT_MAX_ENTRY_SEEK = 256;
 
+  public static final int REPLICATOR_PORT_MIN = 1024;
+
+  public static final String REPLICATOR_QUORUM_FILE_ROOT_DIRECTORY_NAME = "repl";
   public static final String REPLICATOR_PERSISTER_FILE_NAME = "replication-data";
   public static final int REPLICATOR_MAXIMUM_SIMULTANEOUS_LOG_REQUESTS = 10000;
   public static final int REPLICATOR_DEFAULT_BASE_ELECTION_TIMEOUT_MILLISECONDS = 1000;
