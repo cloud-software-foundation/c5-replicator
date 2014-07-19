@@ -18,11 +18,10 @@
 package c5db.replication;
 
 import c5db.C5CommonTestUtil;
+import c5db.SimpleC5ModuleServer;
 import c5db.discovery.BeaconService;
-import c5db.interfaces.C5Module;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
-import c5db.interfaces.ModuleServer;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
@@ -32,42 +31,31 @@ import c5db.log.ReplicatorLogGenericTestUtil;
 import c5db.messages.generated.ModuleType;
 import c5db.util.C5Futures;
 import c5db.util.ExceptionHandlingBatchExecutor;
-import c5db.util.FiberOnly;
 import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.SettableFuture;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.hamcrest.Matcher;
-import org.jetlang.channels.Channel;
-import org.jetlang.channels.MemoryChannel;
-import org.jetlang.channels.Subscriber;
 import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.PoolFiberFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
@@ -200,86 +188,13 @@ public class StandaloneReplicatorTest {
   }
 
   /**
-   * Stand-in for C5Server; coordinates the interaction of the local modules
-   */
-  private class SimpleModuleServer implements ModuleServer {
-    private final Fiber fiber;
-    private final Map<ModuleType, C5Module> modules = new HashMap<>();
-    private final Map<ModuleType, Integer> modulePorts = new HashMap<>();
-    private final Channel<ImmutableMap<ModuleType, Integer>> modulePortsChannel = new MemoryChannel<>();
-
-    private SimpleModuleServer(Fiber fiber) {
-      this.fiber = fiber;
-    }
-
-    public ListenableFuture<Service.State> startModule(C5Module module) {
-      SettableFuture<Service.State> startedFuture = SettableFuture.create();
-      Service.Listener stateChangeListener = new SimpleModuleListener(
-          module,
-          () -> {
-            addRunningModule(module);
-            startedFuture.set(null);
-          },
-          () -> removeModule(module));
-
-      module.addListener(stateChangeListener, fiber);
-      modules.put(module.getModuleType(), module);
-      module.start();
-
-      return startedFuture;
-    }
-
-    @Override
-    public ListenableFuture<C5Module> getModule(ModuleType moduleType) {
-      SettableFuture<C5Module> moduleFuture = SettableFuture.create();
-      fiber.execute(() -> moduleFuture.set(modules.get(moduleType)));
-      return moduleFuture;
-    }
-
-    @Override
-    public Subscriber<ImmutableMap<ModuleType, Integer>> availableModulePortsChannel() {
-      return modulePortsChannel;
-    }
-
-    @Override
-    public ImmutableMap<ModuleType, C5Module> getModules()
-        throws ExecutionException, InterruptedException, TimeoutException {
-      throw new UnsupportedOperationException();
-    }
-
-    @FiberOnly
-    private void addRunningModule(C5Module module) {
-      ModuleType type = module.getModuleType();
-      if (modules.containsKey(type) && modules.get(type).equals(module)) {
-        modulePorts.put(type, module.port());
-        publishCurrentActivePorts();
-      }
-    }
-
-    @FiberOnly
-    private void removeModule(C5Module module) {
-      ModuleType type = module.getModuleType();
-      if (modules.containsKey(type) && modules.get(type).equals(module)) {
-        modules.remove(type);
-        modulePorts.remove(type);
-        publishCurrentActivePorts();
-      }
-    }
-
-    @FiberOnly
-    private void publishCurrentActivePorts() {
-      modulePortsChannel.publish(ImmutableMap.copyOf(modulePorts));
-    }
-  }
-
-  /**
    * Replication server that includes its own discovery and logging mechanism; internally
    * it bundles a ReplicationModule, a LogModule, and a DiscoveryModule. It then implements
    * the ReplicationModule interface and delegates to its internal ReplicationModule.
    */
   private class ReplicationServer extends AbstractService implements ReplicationModule {
     private final Fiber serverFiber;
-    private final SimpleModuleServer moduleServer;
+    private final SimpleC5ModuleServer moduleServer;
     private final Fiber discoveryFiber;
     private final DiscoveryModule discoveryModule;
     private final LogModule logModule = new LogService(baseTestPath);
@@ -291,7 +206,7 @@ public class StandaloneReplicatorTest {
       this.replicatorPort = replicatorPort;
 
       serverFiber = fiberFactory.getFiber(jUnitFiberExceptionHandler);
-      moduleServer = new SimpleModuleServer(serverFiber);
+      moduleServer = new SimpleC5ModuleServer(serverFiber);
       serverFiber.start();
 
       discoveryFiber = fiberFactory.getFiber(jUnitFiberExceptionHandler);
@@ -359,49 +274,4 @@ public class StandaloneReplicatorTest {
     }
   }
 
-  /**
-   * A {@link com.google.common.util.concurrent.Service.Listener} that logs the module lifecycle
-   * and performs a single action when the module stops or fails.
-   */
-  private class SimpleModuleListener implements Service.Listener {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final C5Module module;
-    private final Runnable removeModule;
-    private final Runnable runningModule;
-
-    private SimpleModuleListener(C5Module module, Runnable runningModule, Runnable removeModule) {
-      this.module = module;
-      this.removeModule = removeModule;
-      this.runningModule = runningModule;
-    }
-
-    @Override
-    public void starting() {
-      logger.info("Started module {}", module);
-    }
-
-    @Override
-    public void running() {
-      logger.info("Running module {}", module);
-      runningModule.run();
-    }
-
-    @Override
-    public void stopping(Service.State from) {
-      logger.info("Stopping module {}", module);
-      removeModule.run();
-    }
-
-    @Override
-    public void terminated(Service.State from) {
-      logger.info("Terminated module {}", module);
-      removeModule.run();
-    }
-
-    @Override
-    public void failed(Service.State from, Throwable failure) {
-      logger.error("Failed module {}: {}", module, failure);
-      removeModule.run();
-    }
-  }
 }
