@@ -31,6 +31,7 @@
         <module>hbase-client</module>
         <module>hbase-prefix-tree</module>
         <module>c5db-cat-olog</module>
+        <module>c5-general-replication</module>
     </modules>
 
     <properties>

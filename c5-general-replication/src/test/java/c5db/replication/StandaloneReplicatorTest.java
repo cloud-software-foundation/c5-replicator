@@ -114,7 +114,7 @@ public class StandaloneReplicatorTest {
 
       serverFixture.eventMonitor.waitFor(aReplicatorEvent(LEADER_ELECTED));
       serverFixture.replicator.logData(Lists.newArrayList(someData())).get();
-      serverFixture.commitMonitor.waitFor(aCommitNotice().withIndex(equalTo(1L)));
+      serverFixture.commitMonitor.waitFor(aCommitNotice().withIndex(equalTo(2L)));
     }
   }
 
@@ -213,7 +213,6 @@ public class StandaloneReplicatorTest {
       discoveryModule = new BeaconService(nodeId, discoveryPort, discoveryFiber, workerGroup, ImmutableMap.of(), moduleServer);
       discoveryFiber.start();
 
-      // TODO ReplicatorService provides no way to dispose of its own fiber; it should
       replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
           fiberFactory, new NioQuorumFileReaderWriter(baseTestPath));
     }
