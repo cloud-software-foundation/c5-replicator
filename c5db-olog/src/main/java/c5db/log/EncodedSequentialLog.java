@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
@@ -90,15 +89,8 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
   }
 
   @Override
-  public void forEach(Consumer<? super E> doForEach) throws IOException {
-    try (InputStream inputStream = persistenceNavigator.getStreamAtFirstEntry()) {
-      //noinspection InfiniteLoopStatement
-      do {
-        E entry = codec.decode(inputStream);
-        doForEach.accept(entry);
-      } while (true);
-    } catch (EOFException ignore) {
-    }
+  public SequentialEntryIterator<E> iterator() throws IOException {
+    return new EncodedSequentialEntryIterator<>(persistenceNavigator, codec);
   }
 
   @Override
@@ -128,4 +120,5 @@ public class EncodedSequentialLog<E extends SequentialEntry> implements Sequenti
       }
     }
   }
+
 }

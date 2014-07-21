@@ -18,9 +18,10 @@
 package c5db.log;
 
 import c5db.interfaces.log.SequentialEntry;
+import c5db.interfaces.log.SequentialEntryIterable;
+
 import java.io.IOException;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Abstraction representing a sequence of log entries, persisted to some medium. Entries can
@@ -33,7 +34,7 @@ import java.util.function.Consumer;
  *
  * @param <E> Type of entry the log contains.
  */
-public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable {
+public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable, SequentialEntryIterable<E> {
   /**
    * Add entries to the log.
    *
@@ -69,13 +70,6 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable 
    * @throws IOException
    */
   E getLastEntry() throws IOException;
-
-  /**
-   * Iterate over every entry in the log, executing a callback for each one.
-   *
-   * @param doForEach Consumer that accepts a log entry.
-   */
-  void forEach(Consumer<? super E> doForEach) throws IOException;
 
   /**
    * Remove entries from the tail of the log.
