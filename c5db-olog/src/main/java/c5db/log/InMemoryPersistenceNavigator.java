@@ -17,7 +17,7 @@
 
 package c5db.log;
 
-import c5db.ReplicatorConstants;
+import c5db.LogConstants;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -47,7 +47,7 @@ public class InMemoryPersistenceNavigator<E extends SequentialEntry> implements 
 
   private final NavigableMap<Long, Long> index = new TreeMap<>();
   private final long fileOffset;
-  private int maxEntrySeek = ReplicatorConstants.WAL_NAVIGATOR_DEFAULT_MAX_ENTRY_SEEK;
+  private int maxEntrySeek = LogConstants.WAL_NAVIGATOR_DEFAULT_MAX_ENTRY_SEEK;
 
   public InMemoryPersistenceNavigator(BytePersistence persistence, SequentialEntryCodec<E> codec) {
     this(persistence, codec, 0);

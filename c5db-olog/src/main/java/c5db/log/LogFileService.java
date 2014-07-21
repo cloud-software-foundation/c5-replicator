@@ -17,7 +17,7 @@
 
 package c5db.log;
 
-import c5db.ReplicatorConstants;
+import c5db.LogConstants;
 import c5db.util.CheckedSupplier;
 import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   private final Path walRootDir;
 
   public LogFileService(Path basePath) throws IOException {
-    this.walRootDir = basePath.resolve(ReplicatorConstants.WAL_ROOT_DIRECTORY_NAME);
+    this.walRootDir = basePath.resolve(LogConstants.WAL_ROOT_DIRECTORY_NAME);
 
     createDirectoryStructure();
   }
@@ -157,7 +157,7 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   }
 
   private Path logFileDir(String quorumId) {
-    return quorumDir(quorumId).resolve(ReplicatorConstants.WAL_LOG_FILE_SUBDIRECTORY_NAME);
+    return quorumDir(quorumId).resolve(LogConstants.WAL_LOG_FILE_SUBDIRECTORY_NAME);
   }
 
   private void createDirectoryStructure() throws IOException {

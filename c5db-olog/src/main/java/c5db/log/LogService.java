@@ -17,7 +17,7 @@
 
 package c5db.log;
 
-import c5db.ReplicatorConstants;
+import c5db.LogConstants;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
@@ -49,7 +49,7 @@ public class LogService extends AbstractService implements LogModule {
     try {
       LogFileService logFileService = new LogFileService(basePath);
       KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
-          Executors.newFixedThreadPool(ReplicatorConstants.WAL_THREAD_POOL_SIZE));
+          Executors.newFixedThreadPool(LogConstants.WAL_THREAD_POOL_SIZE));
       this.oLog = new QuorumDelegatingLog(
           logFileService,
           executor,

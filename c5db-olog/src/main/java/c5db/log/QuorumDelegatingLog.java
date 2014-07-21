@@ -17,7 +17,7 @@
 
 package c5db.log;
 
-import c5db.ReplicatorConstants;
+import c5db.LogConstants;
 import c5db.generated.OLogHeader;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.util.C5Iterators;
@@ -175,7 +175,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   @Override
   public void close() throws IOException {
     try {
-      taskExecutor.shutdownAndAwaitTermination(ReplicatorConstants.WAL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      taskExecutor.shutdownAndAwaitTermination(LogConstants.WAL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);
     }
