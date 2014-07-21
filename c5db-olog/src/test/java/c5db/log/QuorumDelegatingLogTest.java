@@ -90,7 +90,7 @@ public class QuorumDelegatingLogTest {
   public void retrievesListsOfEntriesItHasLogged() throws Exception {
     List<OLogEntry> entries = someConsecutiveEntries(1, 5);
 
-    log.logEntry(entries, quorumId);
+    log.logEntries(entries, quorumId);
 
     assertThat(log.getLogEntries(1, 5, quorumId),
         resultsIn(equalTo(entries)));
@@ -98,13 +98,13 @@ public class QuorumDelegatingLogTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void throwsAnExceptionWhenGettingEntriesIfEndIsLessThanStart() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 5), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 5), quorumId);
     log.getLogEntries(3, 2, quorumId);
   }
 
   @Test
   public void returnsAnEmptyListWhenGettingEntriesIfStartEqualsEnd() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 5), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 5), quorumId);
     assertThat(log.getLogEntries(3, 3, quorumId), resultsIn(equalTo(emptyEntryList())));
   }
 
@@ -119,8 +119,8 @@ public class QuorumDelegatingLogTest {
     List<OLogEntry> entriesA = someConsecutiveEntries(1, 5);
     List<OLogEntry> entriesB = someConsecutiveEntries(1, 5);
 
-    log.logEntry(entriesA, quorumA);
-    log.logEntry(entriesB, quorumB);
+    log.logEntries(entriesA, quorumA);
+    log.logEntries(entriesB, quorumB);
 
     assertThat(log.getLogEntries(1, 5, quorumA), resultsIn(equalTo(entriesA)));
     assertThat(log.getLogEntries(1, 5, quorumB), resultsIn(equalTo(entriesB)));
@@ -130,35 +130,35 @@ public class QuorumDelegatingLogTest {
   public void retrievesEntriesFromTheMiddleOfTheLog() throws Exception {
     List<OLogEntry> entries = someConsecutiveEntries(1, 10);
 
-    log.logEntry(entries, quorumId);
+    log.logEntries(entries, quorumId);
 
     assertThat(log.getLogEntries(4, 6, quorumId), resultsIn(equalTo(subListWithSeqNums(entries, 4, 6))));
   }
 
   @Test
   public void truncatesEntriesFromTheEndOfTheLogAndMaintainsTheCorrectSequence() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 5), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
-    log.logEntry(someConsecutiveEntries(3, 5), quorumId);
+    log.logEntries(someConsecutiveEntries(3, 5), quorumId);
 
     assertThat(log.getLogEntries(1, 5, quorumId), resultsIn(aListOfEntriesWithConsecutiveSeqNums(1, 5)));
   }
 
   @Test(expected = RuntimeException.class)
   public void throwsAnExceptionIfAskedToLogEntriesWithASequenceGap() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 3), quorumId);
-    log.logEntry(someConsecutiveEntries(4, 5), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 3), quorumId);
+    log.logEntries(someConsecutiveEntries(4, 5), quorumId);
   }
 
   @Test(expected = RuntimeException.class)
   public void throwsAnExceptionIfAskedToLogEntriesWithoutAscendingSequenceNumber() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 2), quorumId);
-    log.logEntry(someConsecutiveEntries(1, 2), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 2), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 2), quorumId);
   }
 
   @Test(timeout = 1000)
   public void returnsAFutureWithAnExceptionIfAskedToRetrieveEntriesAndAtLeastOneIsNotInTheLog() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 5), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
 
     assertThat(log.getLogEntries(2, 4, quorumId), resultsInException(LogEntryNotFound.class));
@@ -168,7 +168,7 @@ public class QuorumDelegatingLogTest {
   public void returnsTheExpectedNextSequenceNumber() {
     assertThat(log.getNextSeqNum(quorumId), equalTo(1L));
 
-    log.logEntry(someConsecutiveEntries(1, 4), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 4), quorumId);
     assertThat(log.getNextSeqNum(quorumId), equalTo(4L));
 
     log.truncateLog(seqNum(2), quorumId);
@@ -177,8 +177,8 @@ public class QuorumDelegatingLogTest {
 
   @Test
   public void storesAndRetrievesElectionTermForEntriesItHasLogged() {
-    log.logEntry(makeSingleEntryList(nextSeqNum(), term(1), someData()), quorumId);
-    log.logEntry(makeSingleEntryList(nextSeqNum(), term(2), someData()), quorumId);
+    log.logEntries(makeSingleEntryList(nextSeqNum(), term(1), someData()), quorumId);
+    log.logEntries(makeSingleEntryList(nextSeqNum(), term(2), someData()), quorumId);
 
     assertThat(log.getLastTerm(quorumId), is(equalTo(term(2))));
     assertThat(log.getLogTerm(lastSeqNum(), quorumId), is(equalTo(term(2))));
@@ -187,10 +187,10 @@ public class QuorumDelegatingLogTest {
 
   @Test
   public void retrievesCorrectElectionTermAfterATruncation() {
-    log.logEntry(makeSingleEntryList(nextSeqNum(), term(1), someData()), quorumId);
-    log.logEntry(makeSingleEntryList(nextSeqNum(), term(2), someData()), quorumId);
+    log.logEntries(makeSingleEntryList(nextSeqNum(), term(1), someData()), quorumId);
+    log.logEntries(makeSingleEntryList(nextSeqNum(), term(2), someData()), quorumId);
     log.truncateLog(lastSeqNum(), quorumId);
-    log.logEntry(makeSingleEntryList(lastSeqNum(), term(3), someData()), quorumId);
+    log.logEntries(makeSingleEntryList(lastSeqNum(), term(3), someData()), quorumId);
 
     assertThat(log.getLastTerm(quorumId), is(equalTo(term(3))));
     assertThat(log.getLogTerm(lastSeqNum(), quorumId), is(equalTo(term(3))));
@@ -201,11 +201,11 @@ public class QuorumDelegatingLogTest {
     QuorumConfiguration firstConfig = QuorumConfiguration.of(Sets.newHashSet(1L, 2L, 3L));
     QuorumConfiguration secondConfig = firstConfig.getTransitionalConfiguration(Sets.newHashSet(4L, 5L, 6L));
 
-    log.logEntry(singleConfigurationEntryList(firstConfig, seqNum(1)), quorumId);
+    log.logEntries(singleConfigurationEntryList(firstConfig, seqNum(1)), quorumId);
     assertThat(log.getLastQuorumConfig(quorumId),
         equalTo(new QuorumConfigurationWithSeqNum(firstConfig, seqNum(1))));
 
-    log.logEntry(singleConfigurationEntryList(secondConfig, seqNum(2)), quorumId);
+    log.logEntries(singleConfigurationEntryList(secondConfig, seqNum(2)), quorumId);
     assertThat(log.getLastQuorumConfig(quorumId),
         equalTo(new QuorumConfigurationWithSeqNum(secondConfig, seqNum(2))));
 
@@ -216,40 +216,40 @@ public class QuorumDelegatingLogTest {
 
   @Test
   public void returnsResultsFromGetLogEntriesThatTakeIntoAccountMutationsRequestedEarlier() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 10), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 10), quorumId);
     log.truncateLog(5, quorumId);
     List<OLogEntry> replacementEntries = someConsecutiveEntries(5, 10);
-    log.logEntry(replacementEntries, quorumId);
+    log.logEntries(replacementEntries, quorumId);
 
     assertThat(log.getLogEntries(5, 10, quorumId), resultsIn(equalTo(replacementEntries)));
   }
 
   @Test(timeout = 3000)
   public void rollsTheLogWhileAcceptingLogRequestsAndEnsuresThatAllRequestedEntriesEndUpInTheNewLog() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 11), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 11), quorumId);
     log.roll(quorumId);
-    log.logEntry(someConsecutiveEntries(11, 21), quorumId);
+    log.logEntries(someConsecutiveEntries(11, 21), quorumId);
 
     assertThat(log.getLogEntries(11, 21, quorumId), resultsIn(aListOfEntriesWithConsecutiveSeqNums(11, 21)));
   }
 
   @Test
   public void truncatesARolledFileIfRequestedToTruncateToAPointBeforeTheBeginningOfTheCurrentFile() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 11), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 11), quorumId);
     log.roll(quorumId);
     log.truncateLog(seqNum(6), quorumId);
-    log.logEntry(someConsecutiveEntries(6, 21), quorumId);
+    log.logEntries(someConsecutiveEntries(6, 21), quorumId);
 
     assertThat(log.getLogEntries(6, 21, quorumId), resultsIn(aListOfEntriesWithConsecutiveSeqNums(6, 21)));
   }
 
   @Test
   public void fulfillsGetRequestsThatSpanMultipleLogFiles() throws Exception {
-    log.logEntry(someConsecutiveEntries(1, 6), quorumId);
+    log.logEntries(someConsecutiveEntries(1, 6), quorumId);
     log.roll(quorumId);
-    log.logEntry(someConsecutiveEntries(6, 11), quorumId);
+    log.logEntries(someConsecutiveEntries(6, 11), quorumId);
     log.roll(quorumId);
-    log.logEntry(someConsecutiveEntries(11, 16), quorumId);
+    log.logEntries(someConsecutiveEntries(11, 16), quorumId);
 
     assertThat(log.getLogEntries(3, 15, quorumId), resultsIn(aListOfEntriesWithConsecutiveSeqNums(3, 15)));
   }

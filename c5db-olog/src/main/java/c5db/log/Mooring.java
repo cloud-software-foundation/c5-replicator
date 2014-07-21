@@ -89,7 +89,7 @@ public class Mooring implements ReplicatorLog {
 
     updateCachedTermAndIndex(oLogEntries);
 
-    return log.logEntry(oLogEntries, quorumId);
+    return log.logEntries(oLogEntries, quorumId);
   }
 
   @Override

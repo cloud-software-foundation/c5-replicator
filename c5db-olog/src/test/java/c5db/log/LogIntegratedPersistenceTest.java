@@ -150,9 +150,9 @@ public class LogIntegratedPersistenceTest {
   @Test(timeout = 3000)
   public void rollsKeepingTrackOfTermCorrectly() throws Exception {
     withOpenOLog((oLog) -> {
-      oLog.logEntry(makeSingleEntryList(seqNum(1), term(17), someData()), QUORUM_ID);
+      oLog.logEntries(makeSingleEntryList(seqNum(1), term(17), someData()), QUORUM_ID);
       oLog.roll(QUORUM_ID);
-      oLog.logEntry(makeSingleEntryList(seqNum(2), term(56), someData()), QUORUM_ID);
+      oLog.logEntries(makeSingleEntryList(seqNum(2), term(56), someData()), QUORUM_ID);
     });
 
     withOpenOLog((oLog) -> {
@@ -166,11 +166,11 @@ public class LogIntegratedPersistenceTest {
   @Test(timeout = 3000)
   public void performsMultiLogFetchesCorrectlyFromPersistence() throws Exception {
     withOpenOLog((oLog) -> {
-      oLog.logEntry(someConsecutiveEntries(1, 6), QUORUM_ID);
+      oLog.logEntries(someConsecutiveEntries(1, 6), QUORUM_ID);
       oLog.roll(QUORUM_ID);
-      oLog.logEntry(someConsecutiveEntries(6, 11), QUORUM_ID);
+      oLog.logEntries(someConsecutiveEntries(6, 11), QUORUM_ID);
       oLog.roll(QUORUM_ID);
-      oLog.logEntry(someConsecutiveEntries(11, 16), QUORUM_ID);
+      oLog.logEntries(someConsecutiveEntries(11, 16), QUORUM_ID);
     });
 
     withOpenOLog((oLog) ->

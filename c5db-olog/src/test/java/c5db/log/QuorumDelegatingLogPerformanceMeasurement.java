@@ -154,7 +154,7 @@ public class QuorumDelegatingLogPerformanceMeasurement {
       for (int messageSizeLog2 : logSequence) {
         for (String quorumId : quorumList) {
           List<OLogEntry> entryList = Lists.newArrayList(constructLogEntry(messageSizeLog2, quorumId));
-          ListenableFuture<Boolean> lastFuture = log.logEntry(entryList, quorumId);
+          ListenableFuture<Boolean> lastFuture = log.logEntries(entryList, quorumId);
 
           sleepCountdown--;
 

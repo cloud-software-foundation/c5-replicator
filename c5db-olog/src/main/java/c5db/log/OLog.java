@@ -54,7 +54,7 @@ public interface OLog extends AutoCloseable {
    *                                            quorum, the sequence numbers must be
    *                                            strictly ascending with no gaps).
    */
-  ListenableFuture<Boolean> logEntry(List<OLogEntry> entries, String quorumId);
+  ListenableFuture<Boolean> logEntries(List<OLogEntry> entries, String quorumId);
 
   /**
    * Asynchronously retrieve a range of entries from sequence number 'start', inclusive, to

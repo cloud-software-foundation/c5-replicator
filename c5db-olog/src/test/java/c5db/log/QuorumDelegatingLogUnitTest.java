@@ -111,7 +111,7 @@ public class QuorumDelegatingLogUnitTest {
 
   @Test(expected = QuorumNotOpen.class)
   public void throwsAnExceptionIfAttemptingToLogToAQuorumBeforeOpeningIt() throws Exception {
-    oLog.logEntry(arbitraryEntries(), "quorum");
+    oLog.logEntries(arbitraryEntries(), "quorum");
   }
 
   @Test(expected = Exception.class)
@@ -134,8 +134,8 @@ public class QuorumDelegatingLogUnitTest {
     oLog.openAsync(quorumA).get();
     oLog.openAsync(quorumB).get();
 
-    oLog.logEntry(arbitraryEntries(), quorumA);
-    oLog.logEntry(arbitraryEntries(), quorumB);
+    oLog.logEntries(arbitraryEntries(), quorumA);
+    oLog.logEntries(arbitraryEntries(), quorumB);
   }
 
   @Test(timeout = 3000)
@@ -150,7 +150,7 @@ public class QuorumDelegatingLogUnitTest {
     }});
 
     oLog.openAsync(quorumId).get();
-    oLog.logEntry(Lists.newArrayList(entry), quorumId);
+    oLog.logEntries(Lists.newArrayList(entry), quorumId);
   }
 
   @Test(timeout = 3000)
@@ -168,13 +168,13 @@ public class QuorumDelegatingLogUnitTest {
     }});
 
     oLog.openAsync(quorumId).get();
-    oLog.logEntry(someConsecutiveEntries(1, 11), quorumId);
+    oLog.logEntries(someConsecutiveEntries(1, 11), quorumId);
     oLog.roll(quorumId).get();
 
     assertThat(logPersistenceObjectsForQuorum(quorumId), hasSize(2));
 
     deleteFirstLog(quorumId);
-    oLog.logEntry(someConsecutiveEntries(11, 21), quorumId).get();
+    oLog.logEntries(someConsecutiveEntries(11, 21), quorumId).get();
   }
 
   @Test(timeout = 3000)
@@ -193,7 +193,7 @@ public class QuorumDelegatingLogUnitTest {
     }});
 
     oLog.openAsync(quorumId).get();
-    oLog.logEntry(someConsecutiveEntries(1, 11), quorumId);
+    oLog.logEntries(someConsecutiveEntries(1, 11), quorumId);
     oLog.roll(quorumId).get();
 
     deleteFirstLog(quorumId);

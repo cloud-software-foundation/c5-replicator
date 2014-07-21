@@ -95,7 +95,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
-  public ListenableFuture<Boolean> logEntry(List<OLogEntry> passedInEntries, String quorumId) {
+  public ListenableFuture<Boolean> logEntries(List<OLogEntry> passedInEntries, String quorumId) {
     List<OLogEntry> entries = validateAndMakeDefensiveCopy(passedInEntries);
 
     getQuorumStructure(quorumId).ensureEntriesAreConsecutive(entries);

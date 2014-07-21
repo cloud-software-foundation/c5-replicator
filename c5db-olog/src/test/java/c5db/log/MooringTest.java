@@ -223,7 +223,7 @@ public class MooringTest {
   @SuppressWarnings("unchecked")
   private void expectLoggingNTimes(int n) {
     context.checking(new Expectations() {{
-      exactly(n).of(oLog).logEntry(with.is(any(List.class)), with(any(String.class)));
+      exactly(n).of(oLog).logEntries(with.is(any(List.class)), with(any(String.class)));
     }});
   }
 

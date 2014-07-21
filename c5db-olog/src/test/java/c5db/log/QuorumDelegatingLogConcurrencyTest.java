@@ -73,7 +73,7 @@ public class QuorumDelegatingLogConcurrencyTest {
       runForNQuorums(numQuorums, executor, (quorumId) -> {
         log.openAsync(quorumId)
             .get();
-        log.logEntry(logEntriesForQuorum(quorumId), quorumId)
+        log.logEntries(logEntriesForQuorum(quorumId), quorumId)
             .get();
       });
 
@@ -88,7 +88,7 @@ public class QuorumDelegatingLogConcurrencyTest {
       runForNQuorums(numQuorums, executor, (quorumId) -> {
         log.openAsync(quorumId)
             .get();
-        log.logEntry(logEntriesForQuorum(quorumId), quorumId)
+        log.logEntries(logEntriesForQuorum(quorumId), quorumId)
             .get();
       });
 
