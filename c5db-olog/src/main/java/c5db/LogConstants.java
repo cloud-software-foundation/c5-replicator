@@ -1,5 +1,3 @@
-package c5db;
-
 /*
  * Copyright (C) 2014  Ohm Data
  *
@@ -16,10 +14,13 @@ package c5db;
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+package c5db;
+
 public class LogConstants {
-  public static final String WAL_ROOT_DIRECTORY_NAME = "wal";
-  public static final String WAL_LOG_FILE_SUBDIRECTORY_NAME = "logs";
-  public static final int WAL_THREAD_POOL_SIZE = 1;
-  public static final int WAL_CLOSE_TIMEOUT_SECONDS = 15;
-  public static final int WAL_NAVIGATOR_DEFAULT_MAX_ENTRY_SEEK = 256;
+  public static final String LOG_ROOT_DIRECTORY_NAME = "logs";
+  public static final String LOG_FILE_SUBDIRECTORY_NAME = "files";
+  public static final int LOG_THREAD_POOL_SIZE = 1;
+  public static final int LOG_CLOSE_TIMEOUT_SECONDS = 15;
+  public static final int LOG_NAVIGATOR_DEFAULT_MAX_ENTRY_SEEK = 256;
 }

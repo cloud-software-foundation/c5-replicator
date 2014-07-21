@@ -49,7 +49,7 @@ public class LogService extends AbstractService implements LogModule {
     try {
       LogFileService logFileService = new LogFileService(basePath);
       KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
-          Executors.newFixedThreadPool(LogConstants.WAL_THREAD_POOL_SIZE));
+          Executors.newFixedThreadPool(LogConstants.LOG_THREAD_POOL_SIZE));
       this.oLog = new QuorumDelegatingLog(
           logFileService,
           executor,

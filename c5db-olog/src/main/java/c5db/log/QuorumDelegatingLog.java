@@ -167,7 +167,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   @Override
   public void close() throws IOException {
     try {
-      taskExecutor.shutdownAndAwaitTermination(LogConstants.WAL_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      taskExecutor.shutdownAndAwaitTermination(LogConstants.LOG_CLOSE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     } catch (InterruptedException | TimeoutException e) {
       throw new RuntimeException(e);
     }

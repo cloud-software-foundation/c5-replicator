@@ -37,7 +37,7 @@ import java.util.zip.Adler32;
 import static com.google.common.math.IntMath.checkedAdd;
 
 /**
- * Contains methods used for encoding and decoding WAL entries
+ * Contains methods used for encoding and decoding log entries
  */
 public class EntryEncodingUtil {
 
