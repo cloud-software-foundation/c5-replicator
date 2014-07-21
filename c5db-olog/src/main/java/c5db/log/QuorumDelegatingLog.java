@@ -30,6 +30,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.CountingInputStream;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import io.protostuff.Schema;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -184,21 +185,111 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
   }
 
+  /**
+   * A SequentialLog of OLogEntry, together with an OLogHeader message. Together, these two
+   * objects represent the byte contents present on a single BytePersistence encoded by this
+   * QuorumDelegatingLog.
+   */
   private static class SequentialLogWithHeader {
+    private static final Schema<OLogHeader> HEADER_SCHEMA = OLogHeader.getSchema();
+    private static final SequentialEntryCodec<OLogEntry> CODEC = new OLogEntry.Codec();
+
     public final SequentialLog<OLogEntry> log;
     public final OLogHeader header;
 
+    /**
+     * Private constructor; use one of the public static factory methods below.
+     */
     private SequentialLogWithHeader(SequentialLog<OLogEntry> log, OLogHeader header) {
       this.log = log;
       this.header = header;
     }
+
+    /**
+     * Create a new instance by reading in data from a preexisting BytePersistence. It
+     * reads the header and checks its CRC, then creates a SequentialLog to represent
+     * the entries.
+     *
+     * @param persistence      A BytePersistence representing an existing log (at least an
+     *                         OLogHeader and zero or more OLogEntry)
+     * @param navigatorFactory Used to create a PersistenceNavigator required for the log.
+     * @return A new SequentialLogWithHeader instance
+     * @throws IOException
+     */
+    public static SequentialLogWithHeader readLogFromPersistence(BytePersistence persistence,
+                                                                 PersistenceNavigatorFactory navigatorFactory)
+        throws IOException, EntryEncodingUtil.CrcError {
+
+      try (CountingInputStream input = getCountingInputStream(persistence.getReader())) {
+        final OLogHeader header = decodeAndCheckCrc(input, HEADER_SCHEMA);
+        final long headerSize = input.getCount();
+
+        return create(persistence, navigatorFactory, header, headerSize);
+      }
+    }
+
+    /**
+     * Create a new log and header and write them to a new persistence. The header corresponds to the
+     * current position and state of the current log (if there is one).
+     *
+     * @param persistenceService The LogPersistenceService, included as a parameter here in order to
+     *                           capture a wildcard (the BytePersistence type, P)
+     * @param navigatorFactory   Used to create a PersistenceNavigator required for the log.
+     * @param header             OLogHeader to write immediately at the start of the persistence
+     * @param quorumId           Quorum ID, needed to determine where to append the persistence
+     * @param <P>                Captured wildcard; the type of the BytePersistence to create and write
+     * @throws IOException
+     */
+    public static <P extends BytePersistence> SequentialLogWithHeader writeNewLog(
+        LogPersistenceService<P> persistenceService, PersistenceNavigatorFactory navigatorFactory,
+        OLogHeader header, String quorumId) throws IOException {
+
+      final P persistence = persistenceService.create(quorumId);
+      final List<ByteBuffer> serializedHeader = encodeWithLengthAndCrc(HEADER_SCHEMA, header);
+
+      persistence.append(Iterables.toArray(serializedHeader, ByteBuffer.class));
+      persistenceService.append(quorumId, persistence);
+
+      final long headerSize = persistence.size();
+
+      return create(persistence, navigatorFactory, header, headerSize);
+    }
+
+    private static SequentialLogWithHeader create(BytePersistence persistence,
+                                                  PersistenceNavigatorFactory navigatorFactory,
+                                                  OLogHeader header, long headerSize)
+        throws IOException {
+      final PersistenceNavigator navigator = navigatorFactory.create(persistence, CODEC, headerSize);
+      navigator.addToIndex(header.getBaseSeqNum() + 1, headerSize);
+      final SequentialLog<OLogEntry> log = new EncodedSequentialLog<>(persistence, CODEC, navigator);
+
+      return new SequentialLogWithHeader(log, header);
+    }
+
+    private static CountingInputStream getCountingInputStream(PersistenceReader reader) {
+      return new CountingInputStream(Channels.newInputStream(reader));
+    }
   }
 
+  /**
+   * A structure representing all information about the log record for a given quorum, and
+   * methods to access its individual persistence objects (using SequentialLogWithHeader
+   * instances). Each quorum has its own instance of PerQuorum. When the PerQuorum is
+   * opened, it loads the current such object, if there is one, or else is creates a new
+   * one. Additional objects are only loaded or created as necessary.
+   * <p>
+   * TODO This could use more clarity about its concurrency safety; perhaps methods which
+   * TODO  must be called synchronously by the user of the QuorumDelegatingLog should be
+   * TODO  broken out into their own class?
+   */
   private class PerQuorum {
     private final String quorumId;
-    private final SequentialEntryCodec<OLogEntry> codec = new OLogEntry.Codec();
     private final Deque<SequentialLogWithHeader> logDeque = new LinkedList<>();
 
+    /**
+     * These fields may only be accessed synchronously with the caller of the QuorumDelegatingLog
+     * public methods; in other words, they may not be accessed from an executing task.
+     */
     private volatile long expectedNextSequenceNumber = 1;
     public final OLogEntryOracle oLogEntryOracle = OLogEntryOracleFactory.create();
 
@@ -238,7 +329,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
 
     public void roll(OLogHeader newLogHeader) throws IOException {
-      SequentialLogWithHeader newLog = writeNewLog(persistenceService, newLogHeader);
+      SequentialLogWithHeader newLog = SequentialLogWithHeader.writeNewLog(persistenceService,
+          persistenceNavigatorFactory, newLogHeader, quorumId);
       logDeque.push(newLog);
     }
 
@@ -257,7 +349,8 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
           Iterators.transform(C5Iterators.advanced(persistenceService.iterator(quorumId), dequeSize),
               (persistenceSupplier) -> {
                 try {
-                  return readLogFromPersistence(persistenceSupplier.get());
+                  return SequentialLogWithHeader.readLogFromPersistence(persistenceSupplier.get(),
+                      persistenceNavigatorFactory);
                 } catch (IOException e) {
                   throw new LogPersistenceService.IteratorIOException(e);
                 }
@@ -271,63 +364,20 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       }
     }
 
-    private CountingInputStream getCountingInputStream(PersistenceReader reader) {
-      return new CountingInputStream(Channels.newInputStream(reader));
-    }
-
     private void loadCurrentOrNewLog() throws IOException {
       final BytePersistence persistence = persistenceService.getCurrent(quorumId);
       final SequentialLogWithHeader logWithHeader;
 
       if (persistence == null) {
-        logWithHeader = writeNewLog(persistenceService, newQuorumHeader());
+        logWithHeader = SequentialLogWithHeader.writeNewLog(persistenceService, persistenceNavigatorFactory,
+            newQuorumHeader(), quorumId);
       } else {
-        logWithHeader = readLogFromPersistence(persistence);
+        logWithHeader = SequentialLogWithHeader.readLogFromPersistence(persistence, persistenceNavigatorFactory);
       }
 
       logDeque.push(logWithHeader);
       prepareLogOracle(logWithHeader);
       increaseExpectedNextSeqNumTo(oLogEntryOracle.getGreatestSeqNum() + 1);
-    }
-
-    /**
-     * Create a new log and header and write them to a new persistence. The header corresponds to the
-     * current position and state of the current log (if there is one).
-     *
-     * @param persistenceService The LogPersistenceService, included as a parameter here in order to
-     *                           capture a wildcard
-     * @param <P>                Captured wildcard; the type of the BytePersistence to create and write
-     * @throws IOException
-     */
-    private <P extends BytePersistence> SequentialLogWithHeader writeNewLog(LogPersistenceService<P> persistenceService,
-                                                                            OLogHeader header) throws IOException {
-      final P persistence = persistenceService.create(quorumId);
-      final List<ByteBuffer> serializedHeader = encodeWithLengthAndCrc(OLogHeader.getSchema(), header);
-
-      persistence.append(Iterables.toArray(serializedHeader, ByteBuffer.class));
-      persistenceService.append(quorumId, persistence);
-
-      final long headerSize = persistence.size();
-
-      return createSequentialLogWithHeader(persistence, header, headerSize);
-    }
-
-    private SequentialLogWithHeader readLogFromPersistence(BytePersistence persistence) throws IOException {
-      try (CountingInputStream input = getCountingInputStream(persistence.getReader())) {
-        final OLogHeader header = decodeAndCheckCrc(input, OLogHeader.getSchema());
-        final long headerSize = input.getCount();
-
-        return createSequentialLogWithHeader(persistence, header, headerSize);
-      }
-    }
-
-    private SequentialLogWithHeader createSequentialLogWithHeader(BytePersistence persistence,
-                                                                  OLogHeader header, long headerSize)
-        throws IOException {
-      final PersistenceNavigator navigator = persistenceNavigatorFactory.create(persistence, codec, headerSize);
-      navigator.addToIndex(header.getBaseSeqNum() + 1, headerSize);
-      final SequentialLog<OLogEntry> log = new EncodedSequentialLog<>(persistence, codec, navigator);
-      return new SequentialLogWithHeader(log, header);
     }
 
     private void prepareLogOracle(SequentialLogWithHeader logWithHeader) throws IOException {
@@ -345,10 +395,6 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       if (seqNum > expectedNextSequenceNumber) {
         setExpectedNextSequenceNumber(seqNum);
       }
-    }
-
-    private OLogHeader newQuorumHeader() {
-      return new OLogHeader(0, 0, QuorumConfiguration.EMPTY.toProtostuff());
     }
   }
 
@@ -413,6 +459,10 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     final QuorumConfiguration baseConfiguration = getLastQuorumConfig(quorumId).quorumConfiguration;
 
     return new OLogHeader(baseTerm, baseSeqNum, baseConfiguration.toProtostuff());
+  }
+
+  private OLogHeader newQuorumHeader() {
+    return new OLogHeader(0, 0, QuorumConfiguration.EMPTY.toProtostuff());
   }
 
   private boolean seqNumPrecedesLog(long seqNum, @NotNull SequentialLogWithHeader logWithHeader) {
