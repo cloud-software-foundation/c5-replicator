@@ -18,6 +18,7 @@
 package c5db.interfaces;
 
 import c5db.interfaces.log.Reader;
+import c5db.interfaces.log.SequentialEntry;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
 
@@ -30,11 +31,11 @@ import java.io.IOException;
  * failure.
  */
 @ModuleTypeBinding(ModuleType.Log)
-public interface LogModule extends C5Module {
+public interface LogModule<E extends SequentialEntry> extends C5Module {
   // TODO: Replicator interaction is specified by protostuff message (LogEntry) but Reader by SequentialEntry;
   // TODO  should Mooring move to SequentialEntry specification?
 
   public ReplicatorLog getMooring(String quorumId) throws IOException;
 
-  public Reader<?> getLogReader(String quorumId);
+  public Reader<E> getLogReader(String quorumId);
 }

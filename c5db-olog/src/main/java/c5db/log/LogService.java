@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 /**
  * The Log module.
  */
-public class LogService extends AbstractService implements LogModule {
+public class LogService extends AbstractService implements LogModule<OLogEntry> {
   private final Path basePath;
   private final Map<String, Mooring> moorings = new HashMap<>();
 
