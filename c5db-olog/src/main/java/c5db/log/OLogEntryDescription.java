@@ -19,6 +19,7 @@ package c5db.log;
 
 import c5db.generated.OLogContentType;
 import c5db.generated.OLogEntryHeader;
+import c5db.interfaces.log.SequentialEntry;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.math.IntMath;
@@ -95,7 +96,7 @@ public final class OLogEntryDescription extends SequentialEntry {
 
     OLogEntryDescription that = (OLogEntryDescription) o;
 
-    return seqNum == that.seqNum
+    return seqNum == that.getSeqNum()
         && electionTerm == that.electionTerm
         && contentLength == that.contentLength
         && type == that.type

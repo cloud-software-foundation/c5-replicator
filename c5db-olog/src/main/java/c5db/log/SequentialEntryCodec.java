@@ -17,6 +17,8 @@
 
 package c5db.log;
 
+import c5db.interfaces.log.SequentialEntry;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;

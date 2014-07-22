@@ -18,6 +18,7 @@
 package c5db.log;
 
 import c5db.LogConstants;
+import c5db.interfaces.log.SequentialEntry;
 
 import java.io.EOFException;
 import java.io.IOException;
