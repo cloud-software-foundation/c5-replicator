@@ -89,6 +89,11 @@ public class LogService extends AbstractService implements LogModule {
   }
 
   @Override
+  public OLogReader getLogReader(String quorumId) {
+    return null;
+  }
+
+  @Override
   public ModuleType getModuleType() {
     return ModuleType.Log;
   }

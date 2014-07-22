@@ -15,26 +15,20 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package c5db.interfaces;
+package c5db.log;
 
 import c5db.interfaces.log.Reader;
-import c5db.interfaces.replication.ReplicatorLog;
-import c5db.messages.generated.ModuleType;
+import c5db.util.CheckedSupplier;
+import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 
-/**
- * The log module is responsible for running all the threads and IO for write-ahead-logging.
- * <p>
- * The write-ahead-log is responsible for maintaining persistence in the face of node or machine
- * failure.
- */
-@ModuleTypeBinding(ModuleType.Log)
-public interface LogModule extends C5Module {
-  // TODO: Replicator interaction is specified by protostuff message (LogEntry) but Reader by SequentialEntry;
-  // TODO  should Mooring move to SequentialEntry specification?
+import static c5db.interfaces.log.SequentialEntryIterable.SequentialEntryIterator;
 
-  public ReplicatorLog getMooring(String quorumId) throws IOException;
-
-  public Reader<?> getLogReader(String quorumId);
+public class OLogReader implements Reader<OLogEntry> {
+  @Override
+  public ImmutableList<CheckedSupplier<SequentialEntryIterator<OLogEntry>, IOException>> getLogList()
+      throws IOException {
+    return null;
+  }
 }
