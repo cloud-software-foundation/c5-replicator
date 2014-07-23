@@ -18,6 +18,7 @@
 package c5db.log;
 
 import c5db.util.CheckedSupplier;
+import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.util.Iterator;
 
 import static c5db.log.SequentialLog.LogEntryNotFound;
 
@@ -83,18 +83,19 @@ public interface LogPersistenceService<P extends LogPersistenceService.BytePersi
   void truncate(String quorumId) throws IOException;
 
   /**
-   * Return an iterator over the data stores for this quorum, in order from most recent
-   * to least recent. The iterator will not perform any IO (or blocking operations) until
-   * it is actually used (either invoking next() or hasNext()). The first element returned
-   * will be a Supplier that returns the element returned by getCurrent. The user is
-   * responsible for closing any BytePersistence objects returned by the Suppliers.
+   * Return an list of the data stores for this quorum, in order from most recent
+   * to least recent. This method may perform IO, to determine which stores are
+   * present. Rather than the list directly containing persistence objects, it contains
+   * Suppliers that return them when invoked; that way additional IO is only performed
+   * if needed.
    * <p>
-   * If an IOException occurs during the (lazy) initialization of the iterator, it will
-   * throw a {@link c5db.log.LogPersistenceService.IteratorIOException}.
+   * The first element (index 0) returned will be a Supplier that returns the element
+   * returned by getCurrent. The user is responsible for closing any BytePersistence
+   * objects returned by the Suppliers.
    *
-   * @return A new Iterator.
+   * @return A new ImmutableList.
    */
-  Iterator<CheckedSupplier<P, IOException>> iterator(String quorumId);
+  ImmutableList<CheckedSupplier<P, IOException>> getList(String quorumId) throws IOException;
 
   /**
    * Represents a single store of persisted log data; a file-like abstraction.
@@ -121,7 +122,7 @@ public interface LogPersistenceService<P extends LogPersistenceService.BytePersi
      * Append data.
      *
      * @param buffers Data to append.
-     * IOException if the persistence is closed, or if the underlying object is inaccessible.
+     *                IOException if the persistence is closed, or if the underlying object is inaccessible.
      */
     void append(ByteBuffer[] buffers) throws IOException;
 
@@ -246,11 +247,5 @@ public interface LogPersistenceService<P extends LogPersistenceService.BytePersi
 
   interface PersistenceNavigatorFactory {
     PersistenceNavigator create(BytePersistence persistence, SequentialEntryCodec<?> encoding, long offset);
-  }
-
-  class IteratorIOException extends RuntimeException {
-    public IteratorIOException(Throwable cause) {
-      super(cause);
-    }
   }
 }

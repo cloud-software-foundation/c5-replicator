@@ -19,6 +19,7 @@ package c5db.log;
 
 import c5db.ReplicatorConstants;
 import c5db.util.CheckedSupplier;
+import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
@@ -83,33 +83,17 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   }
 
   @Override
-  public Iterator<CheckedSupplier<FilePersistence, IOException>> iterator(String quorumId) {
-    return new Iterator<CheckedSupplier<FilePersistence, IOException>>() {
-      Iterator<Path> linkPathIterator; // Initialization requires IO, so do it lazily
+  public ImmutableList<CheckedSupplier<FilePersistence, IOException>> getList(String quorumId) throws IOException {
 
-      @Override
-      public boolean hasNext() {
-        initializeUnderlyingIteratorIfNeeded();
-        return linkPathIterator.hasNext();
-      }
+    ImmutableList.Builder<CheckedSupplier<FilePersistence, IOException>> persistenceSupplierBuilder =
+        ImmutableList.builder();
 
-      @Override
-      public CheckedSupplier<FilePersistence, IOException> next() {
-        initializeUnderlyingIteratorIfNeeded();
-        Path linkPath = linkPathIterator.next();
-        return () -> new FilePersistence(Files.readSymbolicLink(linkPath));
-      }
+    for (Path path : getLinkPathMap(quorumId).descendingMap().values()) {
+      persistenceSupplierBuilder.add(
+          () -> new FilePersistence(Files.readSymbolicLink(path)));
+    }
 
-      private void initializeUnderlyingIteratorIfNeeded() {
-        try {
-          if (linkPathIterator == null) {
-            linkPathIterator = getLinkPathMap(quorumId).descendingMap().values().iterator();
-          }
-        } catch (IOException e) {
-          throw new IteratorIOException(e);
-        }
-      }
-    };
+    return persistenceSupplierBuilder.build();
   }
 
   /**

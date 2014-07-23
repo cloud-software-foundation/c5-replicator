@@ -34,7 +34,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.List;
 
 import static c5db.log.EntryEncodingUtil.decodeAndCheckCrc;
@@ -128,12 +127,12 @@ public class LogFileServiceTest {
   }
 
   @Test
-  public void iteratesOverDataStoresInOrderOfMostRecentToLeastRecent() throws Exception {
+  public void listsDataStoresInOrderOfMostRecentToLeastRecent() throws Exception {
     havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(1));
     havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(2));
     havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(3));
 
-    assertThat(logFileService.iterator(QUORUM_ID), is(anIteratorOverPersistencesWithSeqNums(3, 2, 1)));
+    assertThat(logFileService.getList(QUORUM_ID), is(aListOfPersistencesWithSeqNums(3, 2, 1)));
   }
 
 
@@ -167,14 +166,14 @@ public class LogFileServiceTest {
     return QuorumConfiguration.of(Longs.asList(peerIds)).toProtostuff();
   }
 
-  private static Matcher<Iterator<? extends CheckedSupplier<? extends BytePersistence, IOException>>> anIteratorOverPersistencesWithSeqNums(
+  private static Matcher<List<? extends CheckedSupplier<? extends BytePersistence, IOException>>> aListOfPersistencesWithSeqNums(
       long... seqNumsInHeaders) {
-    return MiscMatchers.simpleMatcherForPredicate((iterator) -> {
+    return MiscMatchers.simpleMatcherForPredicate((list) -> {
       try {
         int seqNumIndex = 0;
 
-        while (iterator.hasNext()) {
-          BytePersistence persistence = iterator.next().get();
+        for (CheckedSupplier<? extends BytePersistence, IOException> persistenceSupplier : list) {
+          BytePersistence persistence = persistenceSupplier.get();
           OLogHeader header = deserializedHeader(persistence);
           if (header.getBaseSeqNum() != seqNumsInHeaders[seqNumIndex]) {
             return false;
@@ -186,7 +185,7 @@ public class LogFileServiceTest {
       } catch (Exception e) {
         throw new AssertionError(e);
       }
-    }, (description) -> description.appendText("an Iterator over BytePersistence Suppliers, where the persistence" +
+    }, (description) -> description.appendText("a List of BytePersistence Suppliers, where the persistence" +
         " objects begin with headers with sequence numbers ").appendValue(seqNumsInHeaders).appendText(" in order"));
   }
 

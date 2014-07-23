@@ -21,7 +21,7 @@ import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.util.CheckedSupplier;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -254,10 +253,16 @@ public class QuorumDelegatingLogUnitTest {
     }
 
     @Override
-    public Iterator<CheckedSupplier<ByteArrayPersistence, IOException>> iterator(String quorumId) {
-      return Iterators.transform(
-          quorumMap.get(quorumId).iterator(),
-          (persistence) -> (() -> persistence));
+    public ImmutableList<CheckedSupplier<ByteArrayPersistence, IOException>> getList(String quorumId)
+        throws IOException {
+      List<CheckedSupplier<ByteArrayPersistence, IOException>> persistenceSupplierList = new ArrayList<>();
+
+      for (ByteArrayPersistence persistence : quorumMap.get(quorumId)) {
+        persistenceSupplierList.add(
+            () -> persistence);
+      }
+
+      return ImmutableList.copyOf(persistenceSupplierList);
     }
 
     public BytePersistence firstLog(String quorumId) {

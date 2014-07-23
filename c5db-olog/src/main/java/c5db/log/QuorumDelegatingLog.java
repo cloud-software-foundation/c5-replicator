@@ -339,20 +339,20 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       logDeque.pop();
     }
 
-    public Iterator<SequentialLogWithHeader> getLogIterator() {
+    public Iterator<SequentialLogWithHeader> getLogIterator() throws IOException {
       final Iterator<SequentialLogWithHeader> dequeIterator = logDeque.iterator();
       final int dequeSize = logDeque.size();
 
       // First return the log(s) already in memory, then read additional logs from the persistence.
       return Iterators.concat(
           dequeIterator,
-          Iterators.transform(C5Iterators.advanced(persistenceService.iterator(quorumId), dequeSize),
+          Iterators.transform(C5Iterators.advanced(persistenceService.getList(quorumId).iterator(), dequeSize),
               (persistenceSupplier) -> {
                 try {
                   return SequentialLogWithHeader.readLogFromPersistence(persistenceSupplier.get(),
                       persistenceNavigatorFactory);
                 } catch (IOException e) {
-                  throw new LogPersistenceService.IteratorIOException(e);
+                  throw new IteratorIOException(e);
                 }
               }));
     }
@@ -395,6 +395,15 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       if (seqNum > expectedNextSequenceNumber) {
         setExpectedNextSequenceNumber(seqNum);
       }
+    }
+  }
+
+  /**
+   * Exception thrown if an IOException occurs during
+   */
+  class IteratorIOException extends RuntimeException {
+    public IteratorIOException(Throwable cause) {
+      super(cause);
     }
   }
 
