@@ -52,7 +52,7 @@ public interface LogModule<E extends SequentialEntry> extends C5Module {
    * of resources; the resources, if any, will be released when the LogModule stops.
    * @throws IOException
    */
-  public ReplicatorLog getMooring(String quorumId) throws IOException;
+  public ReplicatorLog getReplicatorLog(String quorumId) throws IOException;
 
   /**
    * Obtain a Reader, to access entries that have been logged for a given quorum.

@@ -134,7 +134,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
       ReplicatorLog logMooring;
       try {
-        logMooring = logModule.getMooring(quorumId);
+        logMooring = logModule.getReplicatorLog(quorumId);
       } catch (IOException e) {
         LOG.error("Unable to start Mooring for {} peers {}", quorumId, peers);
         future.setException(e);
