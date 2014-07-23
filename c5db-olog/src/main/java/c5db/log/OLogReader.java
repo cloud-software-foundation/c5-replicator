@@ -24,11 +24,44 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 
 import static c5db.interfaces.log.SequentialEntryIterable.SequentialEntryIterator;
+import static c5db.log.LogPersistenceService.BytePersistence;
+import static c5db.log.LogPersistenceService.PersistenceNavigator;
+import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 
+/**
+ * A Reader for logs beginning with OLogHeader and consisting of OLogEntry.
+ */
 public class OLogReader implements Reader<OLogEntry> {
+
+  private static final SequentialEntryCodec<OLogEntry> ENTRY_CODEC = new OLogEntry.Codec();
+  private final PersistenceNavigatorFactory navigatorFactory = InMemoryPersistenceNavigator::new;
+  private final LogPersistenceService<?> logPersistenceService;
+  private final String quorumId;
+
+  public OLogReader(LogPersistenceService<?> logPersistenceService, String quorumId) {
+    this.logPersistenceService = logPersistenceService;
+    this.quorumId = quorumId;
+  }
+
   @Override
   public ImmutableList<CheckedSupplier<SequentialEntryIterator<OLogEntry>, IOException>> getLogList()
       throws IOException {
-    return null;
+
+    ImmutableList.Builder<CheckedSupplier<SequentialEntryIterator<OLogEntry>, IOException>> logSupplierBuilder =
+        ImmutableList.builder();
+
+    for (CheckedSupplier<? extends BytePersistence, IOException> persistenceSupplier :
+        logPersistenceService.getList(quorumId)) {
+
+      logSupplierBuilder.add(
+          () -> {
+            BytePersistence persistence = persistenceSupplier.get();
+            PersistenceNavigator navigator =
+                SequentialLogWithHeader.createNavigatorFromPersistence(persistence, navigatorFactory);
+            return new EncodedSequentialEntryIterator<>(navigator, ENTRY_CODEC);
+          });
+    }
+
+    return logSupplierBuilder.build();
   }
 }

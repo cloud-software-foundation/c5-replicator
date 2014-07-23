@@ -45,6 +45,7 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
   // This map may only be read or written from tasks running on the fiber.
   private final Map<String, Mooring> moorings = new HashMap<>();
 
+  private LogFileService logFileService;
   private OLog oLog;
   private Fiber fiber;
 
@@ -57,7 +58,7 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
   protected void doStart() {
     try {
       this.fiber = fiberSupplier.getFiber(this::failModule);
-      LogFileService logFileService = new LogFileService(basePath);
+      this.logFileService = new LogFileService(basePath);
       KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
           Executors.newFixedThreadPool(LogConstants.LOG_THREAD_POOL_SIZE));
       this.oLog = new QuorumDelegatingLog(
@@ -111,7 +112,7 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
 
   @Override
   public OLogReader getLogReader(String quorumId) {
-    return null;
+    return new OLogReader(logFileService, quorumId);
   }
 
   @Override
@@ -149,6 +150,8 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
 
     fiber.dispose();
     fiber = null;
+
+    logFileService = null;
   }
 
   @SuppressWarnings("UnusedDeclaration")
