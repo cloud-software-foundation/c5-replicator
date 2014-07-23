@@ -522,6 +522,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       replicatorInstances.values().forEach(ReplicatorInstance::dispose);
       replicatorInstances.clear();
       fiber.dispose();
+      fiber = null;
     });
   }
 
