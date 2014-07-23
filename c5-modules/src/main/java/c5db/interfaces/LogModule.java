@@ -25,17 +25,40 @@ import c5db.messages.generated.ModuleType;
 import java.io.IOException;
 
 /**
- * The log module is responsible for running all the threads and IO for write-ahead-logging.
- * <p>
- * The write-ahead-log is responsible for maintaining persistence in the face of node or machine
+ * The log module is responsible for running all the threads and IO for replicated
+ * logs. It is responsible for maintaining persistence in the face of node or machine
  * failure.
+ * <p>
+ * One use case for replicating logs is to implement a fault-tolerant distributed
+ * write-ahead log.
+ *
+ * @param <E> The type of entry the log uses.
  */
 @ModuleTypeBinding(ModuleType.Log)
 public interface LogModule<E extends SequentialEntry> extends C5Module {
   // TODO: Replicator interaction is specified by protostuff message (LogEntry) but Reader by SequentialEntry;
   // TODO  should Mooring move to SequentialEntry specification?
 
+  /**
+   * Obtain a new quorum-specific ReplicatorLog -- that is, an interface to the
+   * LogModule's services, specialized for one Replicator to use.
+   *
+   * @param quorumId Quorum ID -- an identifier of which continuity of distributed
+   *                 log the ReplicatorLog should interface with. In other words,
+   *                 a quorum is the unit of maintaining a single sequence of logged
+   *                 entries. Multiple replicators may cooperate to replicate that
+   *                 sequence, each having its own local log.
+   * @return A new ReplicatorLog. The caller does not need to close it or release
+   * of resources; the resources, if any, will be released when the LogModule stops.
+   * @throws IOException
+   */
   public ReplicatorLog getMooring(String quorumId) throws IOException;
 
+  /**
+   * Obtain a Reader, to access entries that have been logged for a given quorum.
+   *
+   * @param quorumId Quorum ID
+   * @return A new Reader instance.
+   */
   public Reader<E> getLogReader(String quorumId);
 }
