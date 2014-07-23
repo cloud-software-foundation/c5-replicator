@@ -80,7 +80,7 @@ public class C5GeneralizedReplicationService extends AbstractService {
     replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
         fiberSupplier, new NioQuorumFileReaderWriter(basePath));
 
-    logModule = new LogService(basePath);
+    logModule = new LogService(basePath, fiberSupplier);
   }
 
   @Override

@@ -74,7 +74,6 @@ import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -119,50 +118,18 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   public ListenableFuture<Replicator> createReplicator(final String quorumId,
                                                        final Collection<Long> peers) {
     final SettableFuture<Replicator> future = SettableFuture.create();
-    fiber.execute(() -> {
-      if (replicatorInstances.containsKey(quorumId)) {
-        LOG.debug("Replicator for quorum {} exists already", quorumId);
-        future.set(replicatorInstances.get(quorumId));
-        return;
-      }
 
-      if (!peers.contains(nodeId)) {
-        LOG.warn("Creating a replicator instance for quorum {} peers {} but it does not contain me ({})",
-            quorumId, peers, nodeId);
-      }
-      LOG.info("Creating replicator instance for {} peers {}", quorumId, peers);
+    ListenableFuture<ReplicatorLog> logFuture = logModule.getReplicatorLog(quorumId);
 
-      ReplicatorLog logMooring;
-      try {
-        logMooring = logModule.getReplicatorLog(quorumId);
-      } catch (IOException e) {
-        LOG.error("Unable to start Mooring for {} peers {}", quorumId, peers);
-        future.setException(e);
-        return;
-      }
+    C5Futures.addCallback(logFuture,
+        (ReplicatorLog log) -> {
+          Replicator replicator = createReplicatorWithLog(log, quorumId, peers);
+          future.set(replicator);
+        },
+        future::setException,
+        fiber
+    );
 
-      MemoryChannel<Throwable> throwableChannel = new MemoryChannel<>();
-      Fiber instanceFiber = fiberSupplier.getFiber(throwableChannel::publish);
-      ReplicatorInstance instance =
-          new ReplicatorInstance(
-              instanceFiber,
-              nodeId,
-              quorumId,
-              logMooring,
-              new DefaultSystemTimeReplicatorClock(),
-              persister,
-              outgoingRequests,
-              replicatorEventChannel,
-              indexCommitNotices,
-              Replicator.State.FOLLOWER
-          );
-      if (logMooring.getLastIndex() == 0) {
-        instance.bootstrapQuorum(peers);
-      }
-      throwableChannel.subscribe(fiber, instance::failReplicatorInstance);
-      replicatorInstances.put(quorumId, instance);
-      future.set(instance);
-    });
     return future;
   }
 
@@ -197,7 +164,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   // Initialized in the module start, by the time any messages or fiber executions trigger, these should be not-null
   private DiscoveryModule discoveryModule = null;
-  private LogModule logModule = null;
+  private LogModule<?> logModule = null;
   private Channel listenChannel;
   private Fiber fiber;
 
@@ -561,4 +528,39 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     return doneFuture;
   }
 
+  private Replicator createReplicatorWithLog(ReplicatorLog log, String quorumId, Collection<Long> peers) {
+    if (replicatorInstances.containsKey(quorumId)) {
+      LOG.debug("Replicator for quorum {} exists already", quorumId);
+      return replicatorInstances.get(quorumId);
+    }
+
+    if (!peers.contains(nodeId)) {
+      LOG.warn("Creating a replicator instance for quorum {} peers {} but it does not contain me ({})",
+          quorumId, peers, nodeId);
+    }
+
+    LOG.info("Creating replicator instance for {} peers {}", quorumId, peers);
+
+    MemoryChannel<Throwable> throwableChannel = new MemoryChannel<>();
+    Fiber instanceFiber = fiberSupplier.getFiber(throwableChannel::publish);
+    ReplicatorInstance instance =
+        new ReplicatorInstance(
+            instanceFiber,
+            nodeId,
+            quorumId,
+            log,
+            new DefaultSystemTimeReplicatorClock(),
+            persister,
+            outgoingRequests,
+            replicatorEventChannel,
+            indexCommitNotices,
+            Replicator.State.FOLLOWER
+        );
+    if (log.getLastIndex() == 0) {
+      instance.bootstrapQuorum(peers);
+    }
+    throwableChannel.subscribe(fiber, instance::failReplicatorInstance);
+    replicatorInstances.put(quorumId, instance);
+    return instance;
+  }
 }

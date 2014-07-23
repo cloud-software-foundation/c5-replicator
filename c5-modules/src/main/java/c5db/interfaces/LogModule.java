@@ -21,8 +21,7 @@ import c5db.interfaces.log.Reader;
 import c5db.interfaces.log.SequentialEntry;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
-
-import java.io.IOException;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * The log module is responsible for running all the threads and IO for replicated
@@ -48,11 +47,12 @@ public interface LogModule<E extends SequentialEntry> extends C5Module {
    *                 a quorum is the unit of maintaining a single sequence of logged
    *                 entries. Multiple replicators may cooperate to replicate that
    *                 sequence, each having its own local log.
-   * @return A new ReplicatorLog. The caller does not need to close it or release
-   * of resources; the resources, if any, will be released when the LogModule stops.
-   * @throws IOException
+   * @return A future which will return a new, open ReplicatorLog. The caller does not
+   * need to close it or release of resources; the resources, if any, will be released
+   * when the LogModule stops. If an exception occurs while creating the log, the
+   * future will return the exception.
    */
-  public ReplicatorLog getReplicatorLog(String quorumId) throws IOException;
+  public ListenableFuture<ReplicatorLog> getReplicatorLog(String quorumId);
 
   /**
    * Obtain a Reader, to access entries that have been logged for a given quorum.

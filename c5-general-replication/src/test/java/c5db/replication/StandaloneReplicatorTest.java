@@ -197,7 +197,7 @@ public class StandaloneReplicatorTest {
     private final SimpleC5ModuleServer moduleServer;
     private final Fiber discoveryFiber;
     private final DiscoveryModule discoveryModule;
-    private final LogModule logModule = new LogService(baseTestPath);
+    private final LogModule logModule;
     private final ReplicationModule replicationModule;
 
     private final int replicatorPort;
@@ -212,6 +212,8 @@ public class StandaloneReplicatorTest {
       discoveryFiber = fiberSupplier.getFiber(jUnitFiberExceptionHandler);
       discoveryModule = new BeaconService(nodeId, discoveryPort, discoveryFiber, workerGroup, ImmutableMap.of(), moduleServer);
       discoveryFiber.start();
+
+      logModule = new LogService(baseTestPath, fiberSupplier);
 
       replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
           fiberSupplier, new NioQuorumFileReaderWriter(baseTestPath));

@@ -21,9 +21,13 @@ import c5db.LogConstants;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
+import c5db.util.FiberSupplier;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
 import com.google.common.util.concurrent.AbstractService;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import org.jetlang.fibers.Fiber;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -36,17 +40,23 @@ import java.util.concurrent.Executors;
  */
 public class LogService extends AbstractService implements LogModule<OLogEntry> {
   private final Path basePath;
+  private final FiberSupplier fiberSupplier;
+
+  // This map may only be read or written from tasks running on the fiber.
   private final Map<String, Mooring> moorings = new HashMap<>();
 
   private OLog oLog;
+  private Fiber fiber;
 
-  public LogService(Path basePath) {
+  public LogService(Path basePath, FiberSupplier fiberSupplier) {
     this.basePath = basePath;
+    this.fiberSupplier = fiberSupplier;
   }
 
   @Override
   protected void doStart() {
     try {
+      this.fiber = fiberSupplier.getFiber(this::failModule);
       LogFileService logFileService = new LogFileService(basePath);
       KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
           Executors.newFixedThreadPool(LogConstants.LOG_THREAD_POOL_SIZE));
@@ -58,6 +68,7 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
 
       // TODO start the flush threads as necessary
       // TODO log maintenance threads can go here too.
+      fiber.start();
       notifyStarted();
     } catch (IOException e) {
       notifyFailed(e);
@@ -67,8 +78,7 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
   @Override
   protected void doStop() {
     try {
-      oLog.close();
-      oLog = null;
+      dispose();
     } catch (IOException ignored) {
     } finally {
       notifyStopped();
@@ -76,16 +86,27 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
   }
 
   @Override
-  public ReplicatorLog getReplicatorLog(String quorumId) throws IOException {
-    // TODO change this to use futures and fibers to manage the concurrency?
-    synchronized (moorings) {
+  public ListenableFuture<ReplicatorLog> getReplicatorLog(String quorumId) {
+    SettableFuture<ReplicatorLog> logFuture = SettableFuture.create();
+
+    fiber.execute(() -> {
       if (moorings.containsKey(quorumId)) {
-        return moorings.get(quorumId);
+        logFuture.set(moorings.get(quorumId));
+        return;
       }
-      Mooring m = new Mooring(oLog, quorumId);
-      moorings.put(quorumId, m);
-      return m;
-    }
+
+      try {
+        // TODO this blocks on a fiber, and should be changed to use a callback.
+        Mooring mooring = new Mooring(oLog, quorumId);
+        moorings.put(quorumId, mooring);
+        logFuture.set(mooring);
+
+      } catch (IOException e) {
+        logFuture.setException(e);
+      }
+    });
+
+    return logFuture;
   }
 
   @Override
@@ -111,6 +132,23 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
   @Override
   public String acceptCommand(String commandString) {
     return null;
+  }
+
+  protected void failModule(Throwable t) {
+    try {
+      dispose();
+    } catch (IOException ignore) {
+    } finally {
+      notifyFailed(t);
+    }
+  }
+
+  private void dispose() throws IOException {
+    oLog.close();
+    oLog = null;
+
+    fiber.dispose();
+    fiber = null;
   }
 
   @SuppressWarnings("UnusedDeclaration")
