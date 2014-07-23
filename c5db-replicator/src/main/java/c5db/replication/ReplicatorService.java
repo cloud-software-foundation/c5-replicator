@@ -37,6 +37,7 @@ import c5db.replication.rpc.RpcWireReply;
 import c5db.replication.rpc.RpcWireRequest;
 import c5db.util.C5Futures;
 import c5db.util.FiberOnly;
+import c5db.util.FiberSupplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -80,7 +81,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 
 /**
@@ -142,7 +142,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       }
 
       MemoryChannel<Throwable> throwableChannel = new MemoryChannel<>();
-      Fiber instanceFiber = fiberFactory.getFiber(throwableChannel::publish);
+      Fiber instanceFiber = fiberSupplier.getFiber(throwableChannel::publish);
       ReplicatorInstance instance =
           new ReplicatorInstance(
               instanceFiber,
@@ -168,7 +168,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   private final int port;
   private final ModuleServer moduleServer;
-  private final FiberFactory fiberFactory;
+  private final FiberSupplier fiberSupplier;
   private final long nodeId;
 
   // Netty infrastructure
@@ -213,14 +213,14 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                            long nodeId,
                            int port,
                            ModuleServer moduleServer,
-                           FiberFactory fiberFactory,
+                           FiberSupplier fiberSupplier,
                            QuorumFileReaderWriter quorumFileReaderWriter) {
     this.bossGroup = bossGroup;
     this.workerGroup = workerGroup;
     this.nodeId = nodeId;
     this.port = port;
     this.moduleServer = moduleServer;
-    this.fiberFactory = fiberFactory;
+    this.fiberSupplier = fiberSupplier;
 
     this.allChannels = new DefaultChannelGroup(workerGroup.next());
     this.persister = new Persister(quorumFileReaderWriter);
@@ -430,7 +430,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   @Override
   protected void doStart() {
     // must start the fiber up early.
-    fiber = fiberFactory.getFiber(this::failModule);
+    fiber = fiberSupplier.getFiber(this::failModule);
     setupEventChannelSubscription();
     fiber.start();
 
@@ -561,7 +561,4 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     return doneFuture;
   }
 
-  public interface FiberFactory {
-    Fiber getFiber(Consumer<Throwable> throwableHandler);
-  }
 }

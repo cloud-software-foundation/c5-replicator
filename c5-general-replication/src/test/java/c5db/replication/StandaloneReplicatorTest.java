@@ -31,6 +31,7 @@ import c5db.log.ReplicatorLogGenericTestUtil;
 import c5db.messages.generated.ModuleType;
 import c5db.util.C5Futures;
 import c5db.util.ExceptionHandlingBatchExecutor;
+import c5db.util.FiberSupplier;
 import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -65,7 +66,6 @@ import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.ReplicatorConstants.REPLICATOR_PORT_MIN;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.LEADER_ELECTED;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
-import static c5db.replication.ReplicatorService.FiberFactory;
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -168,9 +168,9 @@ public class StandaloneReplicatorTest {
     public final ChannelHistoryMonitor<ReplicatorInstanceEvent> eventMonitor;
     public final ChannelHistoryMonitor<IndexCommitNotice> commitMonitor;
 
-    public SingleQuorumReplicationServer(long nodeId, Collection<Long> peerIds, FiberFactory fiberFactory)
+    public SingleQuorumReplicationServer(long nodeId, Collection<Long> peerIds, FiberSupplier fiberSupplier)
         throws Exception {
-      server = new ReplicationServer(nodeId, REPLICATOR_PORT_MIN, DISCOVERY_PORT, fiberFactory);
+      server = new ReplicationServer(nodeId, REPLICATOR_PORT_MIN, DISCOVERY_PORT, fiberSupplier);
       server.startAndWait();
 
       replicator = server.createReplicator(QUORUM_ID, peerIds).get();
@@ -202,19 +202,19 @@ public class StandaloneReplicatorTest {
 
     private final int replicatorPort;
 
-    public ReplicationServer(long nodeId, int replicatorPort, int discoveryPort, FiberFactory fiberFactory) {
+    public ReplicationServer(long nodeId, int replicatorPort, int discoveryPort, FiberSupplier fiberSupplier) {
       this.replicatorPort = replicatorPort;
 
-      serverFiber = fiberFactory.getFiber(jUnitFiberExceptionHandler);
+      serverFiber = fiberSupplier.getFiber(jUnitFiberExceptionHandler);
       moduleServer = new SimpleC5ModuleServer(serverFiber);
       serverFiber.start();
 
-      discoveryFiber = fiberFactory.getFiber(jUnitFiberExceptionHandler);
+      discoveryFiber = fiberSupplier.getFiber(jUnitFiberExceptionHandler);
       discoveryModule = new BeaconService(nodeId, discoveryPort, discoveryFiber, workerGroup, ImmutableMap.of(), moduleServer);
       discoveryFiber.start();
 
       replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
-          fiberFactory, new NioQuorumFileReaderWriter(baseTestPath));
+          fiberSupplier, new NioQuorumFileReaderWriter(baseTestPath));
     }
 
     @Override

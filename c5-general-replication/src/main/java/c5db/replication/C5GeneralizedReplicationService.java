@@ -24,6 +24,7 @@ import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.replication.Replicator;
 import c5db.log.LogService;
 import c5db.util.C5Futures;
+import c5db.util.FiberSupplier;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -50,7 +51,7 @@ import static com.google.common.util.concurrent.Futures.allAsList;
 public class C5GeneralizedReplicationService extends AbstractService {
   private static final int NUMBER_OF_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
-  private final ReplicatorService.FiberFactory fiberFactory;
+  private final FiberSupplier fiberSupplier;
   private final Fiber serverFiber;
   private final SimpleC5ModuleServer moduleServer;
   private final DiscoveryModule nodeInfoModule;
@@ -67,17 +68,17 @@ public class C5GeneralizedReplicationService extends AbstractService {
       long nodeId,
       int replicatorPort,
       DiscoveryModule nodeInfoModule,
-      ReplicatorService.FiberFactory fiberFactory) {
+      FiberSupplier fiberSupplier) {
 
     this.nodeInfoModule = nodeInfoModule;
-    this.fiberFactory = fiberFactory;
+    this.fiberSupplier = fiberSupplier;
 
-    serverFiber = fiberFactory.getFiber(this::notifyFailed);
+    serverFiber = fiberSupplier.getFiber(this::notifyFailed);
     moduleServer = new SimpleC5ModuleServer(serverFiber);
     serverFiber.start();
 
     replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
-        fiberFactory, new NioQuorumFileReaderWriter(basePath));
+        fiberSupplier, new NioQuorumFileReaderWriter(basePath));
 
     logModule = new LogService(basePath);
   }
@@ -121,7 +122,7 @@ public class C5GeneralizedReplicationService extends AbstractService {
   }
 
   private Fiber createAndStartFiber(Consumer<Throwable> throwableHandler) {
-    Fiber newFiber = fiberFactory.getFiber(throwableHandler);
+    Fiber newFiber = fiberSupplier.getFiber(throwableHandler);
     serverFiber.execute(() -> disposables.add(newFiber));
     newFiber.start();
     return newFiber;
