@@ -91,9 +91,11 @@ public class LogFileServiceTest {
   @Test
   public void appendsANewPersistenceSoThatItWillBeReturnedByFutureCallsToGetCurrent() throws Exception {
     final OLogHeader secondHeader;
+    final long anArbitrarySeqNum = 1210;
+    final long aGreaterArbitrarySeqNum = 1815;
 
-    havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(1210));
-    havingAppendedAPersistenceContainingHeader(secondHeader = anOLogHeaderWithSeqNum(1815));
+    havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(anArbitrarySeqNum));
+    havingAppendedAPersistenceContainingHeader(secondHeader = anOLogHeaderWithSeqNum(aGreaterArbitrarySeqNum));
 
     try (BytePersistence primaryPersistence = logFileService.getCurrent(QUORUM_ID)) {
       assertThat(deserializedHeader(primaryPersistence), is(equalToHeader(secondHeader)));
@@ -115,9 +117,11 @@ public class LogFileServiceTest {
   @Test
   public void removesTheMostRecentAppendedDataStoreWhenTruncateIsCalled() throws Exception {
     final OLogHeader firstHeader;
+    final long anArbitrarySeqNum = 1210;
+    final long aGreaterArbitrarySeqNum = 1815;
 
-    havingAppendedAPersistenceContainingHeader(firstHeader = anOLogHeaderWithSeqNum(1210));
-    havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(1815));
+    havingAppendedAPersistenceContainingHeader(firstHeader = anOLogHeaderWithSeqNum(anArbitrarySeqNum));
+    havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(aGreaterArbitrarySeqNum));
 
     logFileService.truncate(QUORUM_ID);
 

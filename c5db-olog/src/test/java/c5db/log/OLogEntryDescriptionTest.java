@@ -30,9 +30,7 @@ import java.util.List;
 import static c5db.log.EntryEncodingUtil.sumRemaining;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
-import static c5db.log.ReplicatorLogGenericTestUtil.seqNum;
 import static c5db.log.ReplicatorLogGenericTestUtil.someData;
-import static c5db.log.ReplicatorLogGenericTestUtil.term;
 import static c5db.replication.ReplicatorTestUtil.makeConfigurationEntry;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
@@ -55,12 +53,15 @@ public class OLogEntryDescriptionTest {
 
   @Test
   public void returnsADescriptionOfALoggedEntry() throws Exception {
-    log.append(makeSingleEntryList(seqNum(11), term(22), rawData));
+    long arbitrarySeqNum = 11;
+    long arbitraryTerm = 22;
+
+    log.append(makeSingleEntryList(arbitrarySeqNum, arbitraryTerm, rawData));
 
     assertThat(descriptionLog.getLastEntry(), is(equalTo(
         new OLogEntryDescription(
-            seqNum(11),
-            term(22),
+            arbitrarySeqNum,
+            arbitraryTerm,
             rawData.remaining(),
             OLogContentType.DATA,
             true,
@@ -79,21 +80,25 @@ public class OLogEntryDescriptionTest {
 
   @Test
   public void detectsThatLoggedContentHasBeenCorruptedWhenDescribingIt() throws Exception {
-    log.append(makeSingleEntryList(seqNum(11), term(22), rawData));
+    long arbitrarySeqNum = 11;
+    long arbitraryTerm = 22;
+
+    log.append(makeSingleEntryList(arbitrarySeqNum, arbitraryTerm, rawData));
 
     // Hack to find the content within the logged data: assume 4-byte ending CRC, so subtract 5
     // Also assume that the existing byte value at that location is different than zero.
-    int bytePositionToCorrupt = (int) persistence.size() - 5;
+    int numberOfBytesFromEndOfPersistence = 5;
+    int bytePositionToCorrupt = (int) persistence.size() - numberOfBytesFromEndOfPersistence;
     persistence.overwrite(bytePositionToCorrupt, 0);
 
     assertThat(descriptionLog.getLastEntry(), is(equalTo(
         new OLogEntryDescription(
-            seqNum(11),
-            term(22),
+            arbitrarySeqNum,
+            arbitraryTerm,
             rawData.remaining(),
             OLogContentType.DATA,
             true,
-            false,
+            false, // error
             null)
     )));
   }

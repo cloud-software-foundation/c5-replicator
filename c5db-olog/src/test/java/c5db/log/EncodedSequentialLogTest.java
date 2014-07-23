@@ -33,6 +33,7 @@ import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogTestUtil.anOLogEntry;
 import static c5db.log.LogTestUtil.makeEntry;
+import static c5db.log.LogTestUtil.nConsecutiveEntries;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
 import static c5db.log.ReplicatorLogGenericTestUtil.seqNum;
 import static c5db.log.ReplicatorLogGenericTestUtil.term;
@@ -75,7 +76,7 @@ public class EncodedSequentialLogTest {
       exactly(5).of(navigator).notifyLogging(with(any(Long.class)), with(any(Long.class)));
     }});
 
-    log.append(someConsecutiveEntries(1, 6));
+    log.append(nConsecutiveEntries(5));
   }
 
   @Test

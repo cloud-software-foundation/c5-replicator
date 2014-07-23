@@ -36,6 +36,12 @@ public class ReplicatorLogGenericTestUtil {
     return ByteBuffer.wrap(bytes);
   }
 
+  public static ByteBuffer lotsOfData() {
+    byte[] bytes = new byte[150];
+    deterministicDataSequence.nextBytes(bytes);
+    return ByteBuffer.wrap(bytes);
+  }
+
   public static long anElectionTerm() {
     return Math.abs(deterministicDataSequence.nextLong());
   }

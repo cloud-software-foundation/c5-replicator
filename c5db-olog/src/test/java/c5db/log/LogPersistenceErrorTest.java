@@ -17,14 +17,11 @@
 
 package c5db.log;
 
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
-import java.util.List;
-
 import static c5db.log.EntryEncodingUtil.CrcError;
-import static c5db.log.LogTestUtil.makeSingleEntryList;
-import static c5db.log.ReplicatorLogGenericTestUtil.seqNum;
-import static c5db.log.ReplicatorLogGenericTestUtil.term;
+import static c5db.log.LogTestUtil.anOLogEntryWithLotsOfData;
 
 public class LogPersistenceErrorTest {
   private final ByteArrayPersistence persistence = new ByteArrayPersistence();
@@ -36,11 +33,13 @@ public class LogPersistenceErrorTest {
 
   @Test(expected = CrcError.class)
   public void logThrowsAnExceptionIfDetectingCorruptedContentWhenReading() throws Exception {
-    List<OLogEntry> data = makeSingleEntryList(seqNum(1), term(1), "data data data");
-    log.append(data);
+    OLogEntry entry = anOLogEntryWithLotsOfData();
+    log.append(Lists.newArrayList(entry));
 
-    int bytePositionToCorrupt = (int) persistence.size() - 5;
+    int numberOfBytesFromEndOfPersistence = 5;
+    int bytePositionToCorrupt = (int) persistence.size() - numberOfBytesFromEndOfPersistence;
     persistence.overwrite(bytePositionToCorrupt, 0);
-    log.subSequence(1, 2);
+
+    log.subSequence(entry.getSeqNum(), entry.getSeqNum() + 1); // exception
   }
 }

@@ -18,6 +18,7 @@
 package c5db.log;
 
 import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.collect.Lists;
 import com.google.common.math.LongMath;
 import io.netty.util.CharsetUtil;
@@ -29,6 +30,7 @@ import java.util.List;
 
 import static c5db.log.ReplicatorLogGenericTestUtil.aSeqNum;
 import static c5db.log.ReplicatorLogGenericTestUtil.anElectionTerm;
+import static c5db.log.ReplicatorLogGenericTestUtil.lotsOfData;
 import static c5db.log.ReplicatorLogGenericTestUtil.someData;
 
 /**
@@ -68,47 +70,27 @@ public class LogTestUtil {
     return entries;
   }
 
+  public static List<OLogEntry> nConsecutiveEntries(long howMany) {
+    return someConsecutiveEntries(1, 1 + howMany);
+  }
+
   public static OLogEntry anOLogEntry() {
     return makeEntry(aSeqNum(), anElectionTerm(), someData());
   }
 
-  public static OLogSequenceBuilder entries() {
-    return new OLogSequenceBuilder();
+  public static OLogEntry anOLogEntryWithLotsOfData() {
+    return makeEntry(aSeqNum(), anElectionTerm(), lotsOfData());
   }
 
-  public static class OLogSequenceBuilder {
-    private final List<OLogEntry> logSequence = new ArrayList<>();
-    private long term = 1;
+  public static OLogEntry anOLogConfigurationEntry() {
+    final QuorumConfigurationMessage message = aQuorumConfigurationMessage();
+    return new OLogEntry(aSeqNum(), anElectionTerm(), new OLogProtostuffContent<>(message));
+  }
 
-    public OLogSequenceBuilder term(long term) {
-      this.term = term;
-      return this;
-    }
-
-    public OLogSequenceBuilder indexes(long... indexes) {
-      for (long index : indexes) {
-        logSequence.add(makeEntry(index, term, someData()));
-      }
-      return this;
-    }
-
-    public OLogSequenceBuilder configurationAndIndex(QuorumConfiguration configuration, long index) {
-      logSequence.add(new OLogEntry(index, term, new OLogProtostuffContent<>(configuration.toProtostuff())));
-      return this;
-    }
-
-    // Alternate name for code clarity in certain places
-    public OLogSequenceBuilder seqNums(long... seqNums) {
-      return indexes(seqNums);
-    }
-
-    // Alternate name for code clarity in certain places
-    public OLogSequenceBuilder configurationAndSeqNum(QuorumConfiguration configuration, long seqNum) {
-      return configurationAndIndex(configuration, seqNum);
-    }
-
-    public List<OLogEntry> build() {
-      return logSequence;
-    }
+  private static QuorumConfigurationMessage aQuorumConfigurationMessage() {
+    return QuorumConfiguration
+        .of(Lists.newArrayList(1L, 2L, 3L))
+        .getTransitionalConfiguration(Lists.newArrayList(4L, 5L, 6L))
+        .toProtostuff();
   }
 }
