@@ -21,6 +21,7 @@ import c5db.SimpleC5ModuleServer;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.Replicator;
 import c5db.log.LogService;
 import c5db.util.C5Futures;

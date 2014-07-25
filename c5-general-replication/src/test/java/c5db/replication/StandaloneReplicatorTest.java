@@ -23,6 +23,7 @@ import c5db.discovery.BeaconService;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;

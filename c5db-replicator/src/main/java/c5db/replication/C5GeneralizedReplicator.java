@@ -18,6 +18,7 @@
 package c5db.replication;
 
 import c5db.ReplicatorConstants;
+import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorReceipt;
