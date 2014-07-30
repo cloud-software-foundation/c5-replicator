@@ -18,20 +18,16 @@
 package c5db.replication;
 
 import c5db.SimpleC5ModuleServer;
-import c5db.generated.OLogContentType;
-import c5db.generated.OLogEntryHeader;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.GeneralizedReplicationService;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.log.Reader;
-import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorEntry;
-import c5db.log.EntryEncodingUtil;
 import c5db.log.LogService;
-import c5db.log.OLogEntry;
+import c5db.log.OLogToReplicatorEntryCodec;
 import c5db.util.C5Futures;
 import c5db.util.FiberSupplier;
 import com.google.common.util.concurrent.AbstractService;
@@ -43,9 +39,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import org.jetlang.core.Disposable;
 import org.jetlang.fibers.Fiber;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -144,37 +137,6 @@ public class C5GeneralizedReplicationService extends AbstractService implements 
     serverFiber.execute(() -> disposables.add(newFiber));
     newFiber.start();
     return newFiber;
-  }
-
-  private class OLogToReplicatorEntryCodec implements SequentialEntryCodec<ReplicatorEntry> {
-    private OLogEntry.Codec oLogEntryCodec = new OLogEntry.Codec();
-
-    @Override
-    public ByteBuffer[] encode(ReplicatorEntry entry) {
-      throw new UnsupportedOperationException("OLogToReplicatorEntryCodec is read-only");
-    }
-
-    @Override
-    public ReplicatorEntry decode(InputStream inputStream) throws IOException, EntryEncodingUtil.CrcError {
-      OLogEntry oLogEntry;
-
-      do {
-        oLogEntry = oLogEntryCodec.decode(inputStream);
-      } while (oLogEntry.getContentType() != OLogContentType.DATA);
-
-      return new ReplicatorEntry(oLogEntry.getSeqNum(), oLogEntry.toProtostuff().getDataList());
-    }
-
-    @Override
-    public long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException, EntryEncodingUtil.CrcError {
-      OLogEntryHeader oLogEntryHeader;
-
-      do {
-        oLogEntryHeader = oLogEntryCodec.skipEntryAndReturnHeader(inputStream);
-      } while (oLogEntryHeader.getType() != OLogContentType.DATA);
-
-      return oLogEntryHeader.getSeqNum();
-    }
   }
 }
 
