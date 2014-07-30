@@ -20,6 +20,7 @@ package c5db.log;
 import c5db.generated.OLogContentType;
 import c5db.generated.OLogEntryHeader;
 import c5db.interfaces.log.SequentialEntry;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.math.IntMath;

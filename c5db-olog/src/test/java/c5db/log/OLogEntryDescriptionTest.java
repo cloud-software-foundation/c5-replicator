@@ -18,6 +18,7 @@
 package c5db.log;
 
 import c5db.generated.OLogContentType;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.QuorumConfiguration;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;

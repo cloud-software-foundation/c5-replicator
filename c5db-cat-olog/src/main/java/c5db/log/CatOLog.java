@@ -18,6 +18,7 @@
 package c5db.log;
 
 import c5db.generated.OLogHeader;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;

@@ -18,6 +18,7 @@
 package c5db.log;
 
 import c5db.interfaces.log.SequentialEntry;
+import c5db.interfaces.log.SequentialEntryCodec;
 import org.junit.Before;
 import org.junit.Test;
 

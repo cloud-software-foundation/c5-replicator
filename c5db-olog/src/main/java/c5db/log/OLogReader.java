@@ -18,6 +18,7 @@
 package c5db.log;
 
 import c5db.interfaces.log.Reader;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.util.CheckedSupplier;
 import com.google.common.collect.ImmutableList;
 

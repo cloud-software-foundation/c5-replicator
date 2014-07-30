@@ -17,6 +17,7 @@
 
 package c5db.log;
 
+import c5db.interfaces.log.SequentialEntryCodec;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 
