@@ -21,11 +21,14 @@ import c5db.C5CommonTestUtil;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.log.Reader;
 import c5db.interfaces.log.SequentialEntry;
+import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.interfaces.replication.ReplicatorEntry;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.replication.generated.LogEntry;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberSupplier;
 import c5db.util.JUnitRuleFiberExceptions;
+import com.google.common.collect.Sets;
 import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.RunnableExecutor;
 import org.jetlang.core.RunnableExecutorImpl;
@@ -80,6 +83,19 @@ public class OLogReaderTest {
     }
   }
 
+  @Test(timeout = 3000)
+  public void iteratesOverLoggedEntriesWithAnIteratorThatSkipsQuorumConfigurationEntries() throws Exception {
+    List<LogEntry> entries = someEntriesInterspersedWithConfigurationEntries();
+
+    havingLogged(entries);
+
+    Reader<ReplicatorEntry> reader = logModule.getLogReader(QUORUM_ID, new OLogToReplicatorEntryCodec());
+
+    try (SequentialEntryIterator<ReplicatorEntry> iterator = iteratorOfFirstLogInReader(reader)) {
+      assertThat(iterator, isIteratorContainingInOrder(justDataEntries(entries)));
+    }
+  }
+
 
   private <E extends SequentialEntry> SequentialEntryIterator<E> iteratorOfFirstLogInReader(Reader<E> reader)
       throws Exception {
@@ -96,11 +112,32 @@ public class OLogReaderTest {
         .collect(Collectors.toList());
   }
 
+  private List<ReplicatorEntry> justDataEntries(List<LogEntry> entries) {
+    return entries.stream()
+        .filter((logEntry) -> logEntry.getQuorumConfiguration() == null)
+        .map((logEntry) -> new ReplicatorEntry(logEntry.getIndex(), logEntry.getDataList()))
+        .collect(Collectors.toList());
+  }
+
   private List<LogEntry> someConsecutiveLogEntries() {
     return entries()
         .term(7)
         .indexes(1, 2, 3, 4, 5, 6)
         .build();
+  }
+
+  private List<LogEntry> someEntriesInterspersedWithConfigurationEntries() {
+    return entries()
+        .term(777)
+        .configurationAndSeqNum(someConfiguration(), 1)
+        .seqNums(2, 3)
+        .configurationAndSeqNum(someConfiguration(), 4)
+        .seqNums(5)
+        .build();
+  }
+
+  private QuorumConfiguration someConfiguration() {
+    return QuorumConfiguration.of(Sets.newHashSet(1L, 2L, 3L));
   }
 
   private FiberSupplier makeFiberSupplier() {
