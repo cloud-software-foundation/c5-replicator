@@ -33,4 +33,28 @@ public class ReplicatorEntry extends SequentialEntry {
   public List<ByteBuffer> getData() {
     return data;
   }
+
+  @Override
+  public String toString() {
+    return "ReplicatorEntry{" +
+        "seqNum=" + seqNum +
+        ", data=" + data +
+        '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || (o.getClass() != this.getClass())) {
+      return false;
+    }
+    ReplicatorEntry that = (ReplicatorEntry) o;
+    return this.seqNum == that.getSeqNum()
+        && this.data.equals(that.data);
+  }
+
+  @Override
+  public int hashCode() {
+    return ((int) seqNum) * 31 +
+        data.hashCode();
+  }
 }
