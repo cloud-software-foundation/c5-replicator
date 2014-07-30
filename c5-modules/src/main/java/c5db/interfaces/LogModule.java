@@ -19,6 +19,7 @@ package c5db.interfaces;
 
 import c5db.interfaces.log.Reader;
 import c5db.interfaces.log.SequentialEntry;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,11 +31,9 @@ import com.google.common.util.concurrent.ListenableFuture;
  * <p>
  * One use case for replicating logs is to implement a fault-tolerant distributed
  * write-ahead log.
- *
- * @param <E> The type of entry the log uses.
  */
 @ModuleTypeBinding(ModuleType.Log)
-public interface LogModule<E extends SequentialEntry> extends C5Module {
+public interface LogModule extends C5Module {
   // TODO: Replicator interaction is specified by protostuff message (LogEntry) but Reader by SequentialEntry;
   // TODO  should Mooring move to SequentialEntry specification?
 
@@ -52,7 +51,7 @@ public interface LogModule<E extends SequentialEntry> extends C5Module {
    * when the LogModule stops. If an exception occurs while creating the log, the
    * future will return the exception.
    */
-  public ListenableFuture<ReplicatorLog> getReplicatorLog(String quorumId);
+  ListenableFuture<ReplicatorLog> getReplicatorLog(String quorumId);
 
   /**
    * Obtain a Reader, to access entries that have been logged for a given quorum.
@@ -60,5 +59,5 @@ public interface LogModule<E extends SequentialEntry> extends C5Module {
    * @param quorumId Quorum ID
    * @return A new Reader instance.
    */
-  public Reader<E> getLogReader(String quorumId);
+  <E extends SequentialEntry> Reader<E> getLogReader(String quorumId, SequentialEntryCodec<E> entryCodec);
 }

@@ -18,12 +18,20 @@
 package c5db.replication;
 
 import c5db.SimpleC5ModuleServer;
+import c5db.generated.OLogContentType;
+import c5db.generated.OLogEntryHeader;
 import c5db.interfaces.DiscoveryModule;
+import c5db.interfaces.GeneralizedReplicationService;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
+import c5db.interfaces.log.Reader;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.Replicator;
+import c5db.interfaces.replication.ReplicatorEntry;
+import c5db.log.EntryEncodingUtil;
 import c5db.log.LogService;
+import c5db.log.OLogEntry;
 import c5db.util.C5Futures;
 import c5db.util.FiberSupplier;
 import com.google.common.util.concurrent.AbstractService;
@@ -35,6 +43,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import org.jetlang.core.Disposable;
 import org.jetlang.fibers.Fiber;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,10 +57,10 @@ import static com.google.common.util.concurrent.Futures.allAsList;
 
 /**
  * Replication server implementing a variation of the Raft algorithm; internally
- * it bundles a ReplicationModule, a LogModule, and a DiscoveryModule. It then implements
- * the ReplicationModule interface and delegates to its internal ReplicationModule.
+ * it bundles a ReplicationModule, a LogModule (based on OLog), and a DiscoveryModule
+ * (passed in as a constructor argument).
  */
-public class C5GeneralizedReplicationService extends AbstractService {
+public class C5GeneralizedReplicationService extends AbstractService implements GeneralizedReplicationService {
   private static final int NUMBER_OF_PROCESSORS = Runtime.getRuntime().availableProcessors();
 
   private final FiberSupplier fiberSupplier;
@@ -109,12 +120,18 @@ public class C5GeneralizedReplicationService extends AbstractService {
     notifyStopped();
   }
 
+  @Override
   public ListenableFuture<GeneralizedReplicator> createReplicator(String quorumId, Collection<Long> peerIds) {
     // TODO the failure of the fiber passed to C5GeneralizedReplicator should not fail this entire service.
     return Futures.transform(
         replicationModule.createReplicator(quorumId, peerIds),
         (Replicator replicator) ->
             new C5GeneralizedReplicator(replicator, createAndStartFiber(this::notifyFailed)));
+  }
+
+  @Override
+  public Reader<ReplicatorEntry> getLogReader(String quorumId) {
+    return logModule.getLogReader(quorumId, new OLogToReplicatorEntryCodec());
   }
 
   public void dispose() {
@@ -127,6 +144,37 @@ public class C5GeneralizedReplicationService extends AbstractService {
     serverFiber.execute(() -> disposables.add(newFiber));
     newFiber.start();
     return newFiber;
+  }
+
+  private class OLogToReplicatorEntryCodec implements SequentialEntryCodec<ReplicatorEntry> {
+    private OLogEntry.Codec oLogEntryCodec = new OLogEntry.Codec();
+
+    @Override
+    public ByteBuffer[] encode(ReplicatorEntry entry) {
+      throw new UnsupportedOperationException("OLogToReplicatorEntryCodec is read-only");
+    }
+
+    @Override
+    public ReplicatorEntry decode(InputStream inputStream) throws IOException, EntryEncodingUtil.CrcError {
+      OLogEntry oLogEntry;
+
+      do {
+        oLogEntry = oLogEntryCodec.decode(inputStream);
+      } while (oLogEntry.getContentType() != OLogContentType.DATA);
+
+      return new ReplicatorEntry(oLogEntry.getSeqNum(), oLogEntry.toProtostuff().getDataList());
+    }
+
+    @Override
+    public long skipEntryAndReturnSeqNum(InputStream inputStream) throws IOException, EntryEncodingUtil.CrcError {
+      OLogEntryHeader oLogEntryHeader;
+
+      do {
+        oLogEntryHeader = oLogEntryCodec.skipEntryAndReturnHeader(inputStream);
+      } while (oLogEntryHeader.getType() != OLogContentType.DATA);
+
+      return oLogEntryHeader.getSeqNum();
+    }
   }
 }
 

@@ -51,7 +51,7 @@ public class OLogReaderTest {
   private static final String QUORUM_ID = "q";
   private final Path baseTestPath = new C5CommonTestUtil().getDataTestDir("o-log-reader-test");
   private final FiberSupplier fiberSupplier = makeFiberSupplier();
-  private final LogModule<OLogEntry> logModule = new LogService(baseTestPath, fiberSupplier);
+  private final LogModule logModule = new LogService(baseTestPath, fiberSupplier);
 
   // initialized after module starts
   private ReplicatorLog log;
@@ -73,7 +73,7 @@ public class OLogReaderTest {
 
     havingLogged(entries);
 
-    Reader<OLogEntry> reader = logModule.getLogReader(QUORUM_ID);
+    Reader<OLogEntry> reader = logModule.getLogReader(QUORUM_ID, new OLogEntry.Codec());
 
     try (SequentialEntryIterator<OLogEntry> iterator = iteratorOfFirstLogInReader(reader)) {
       assertThat(iterator, isIteratorContainingInOrder(oLogEntries(entries)));

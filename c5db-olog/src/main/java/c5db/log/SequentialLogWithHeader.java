@@ -100,27 +100,30 @@ class SequentialLogWithHeader {
    * Create a PersistenceNavigator for data resident on an existing persistence.
    *
    * @param persistence      A BytePersistence representing an existing log (at least an
-   *                         OLogHeader and zero or more OLogEntry)
+   *                         OLogHeader and zero or more entries)
    * @param navigatorFactory Factory to create the PersistenceNavigator with
+   * @param entryCodec       Codec to use to decode entries on the persistence
    * @return A new PersistenceNavigator, ready to use with the log
    * @throws IOException
    */
   public static PersistenceNavigator createNavigatorFromPersistence(BytePersistence persistence,
-                                                                    PersistenceNavigatorFactory navigatorFactory)
-      throws IOException {
+                                                                    PersistenceNavigatorFactory navigatorFactory,
+                                                                    SequentialEntryCodec<?> entryCodec)
+  throws IOException {
 
     HeaderWithSize headerWithSize = readHeaderFromPersistence(persistence);
 
-    return createNavigatorForHeader(persistence, navigatorFactory, headerWithSize);
+    return createNavigatorForHeader(persistence, navigatorFactory, entryCodec, headerWithSize);
   }
 
 
   private static PersistenceNavigator createNavigatorForHeader(BytePersistence persistence,
                                                                PersistenceNavigatorFactory navigatorFactory,
+                                                               SequentialEntryCodec<?> entryCodec,
                                                                HeaderWithSize headerWithSize)
       throws IOException {
 
-    final PersistenceNavigator navigator = navigatorFactory.create(persistence, CODEC, headerWithSize.size);
+    final PersistenceNavigator navigator = navigatorFactory.create(persistence, entryCodec, headerWithSize.size);
     navigator.addToIndex(headerWithSize.header.getBaseSeqNum() + 1, headerWithSize.size);
 
     return navigator;
@@ -131,7 +134,8 @@ class SequentialLogWithHeader {
                                                 HeaderWithSize headerWithSize)
       throws IOException {
 
-    final PersistenceNavigator navigator = createNavigatorForHeader(persistence, navigatorFactory, headerWithSize);
+    final PersistenceNavigator navigator =
+        createNavigatorForHeader(persistence, navigatorFactory, CODEC, headerWithSize);
     final SequentialLog<OLogEntry> log = new EncodedSequentialLog<>(persistence, CODEC, navigator);
 
     return new SequentialLogWithHeader(log, headerWithSize.header);

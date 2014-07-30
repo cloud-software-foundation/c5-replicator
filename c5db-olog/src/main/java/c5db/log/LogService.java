@@ -19,6 +19,8 @@ package c5db.log;
 
 import c5db.LogConstants;
 import c5db.interfaces.LogModule;
+import c5db.interfaces.log.SequentialEntry;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
 import c5db.util.FiberSupplier;
@@ -38,7 +40,7 @@ import java.util.concurrent.Executors;
 /**
  * The Log module.
  */
-public class LogService extends AbstractService implements LogModule<OLogEntry> {
+public class LogService extends AbstractService implements LogModule {
   private final Path basePath;
   private final FiberSupplier fiberSupplier;
 
@@ -111,8 +113,8 @@ public class LogService extends AbstractService implements LogModule<OLogEntry> 
   }
 
   @Override
-  public OLogReader getLogReader(String quorumId) {
-    return new OLogReader(logFileService, quorumId);
+  public <E extends SequentialEntry> OLogReader<E> getLogReader(String quorumId, SequentialEntryCodec<E> entryCodec) {
+    return new OLogReader<>(entryCodec, logFileService, quorumId);
   }
 
   @Override

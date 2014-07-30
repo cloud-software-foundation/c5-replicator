@@ -164,7 +164,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
   // Initialized in the module start, by the time any messages or fiber executions trigger, these should be not-null
   private DiscoveryModule discoveryModule = null;
-  private LogModule<?> logModule = null;
+  private LogModule logModule = null;
   private Channel listenChannel;
   private Fiber fiber;
 

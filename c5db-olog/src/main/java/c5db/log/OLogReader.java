@@ -18,6 +18,7 @@
 package c5db.log;
 
 import c5db.interfaces.log.Reader;
+import c5db.interfaces.log.SequentialEntry;
 import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.util.CheckedSupplier;
 import com.google.common.collect.ImmutableList;
@@ -30,25 +31,31 @@ import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 
 /**
- * A Reader for logs beginning with OLogHeader and consisting of OLogEntry.
+ * A Reader for logs beginning with OLogHeader.
+ *
+ * @param <E> The type of entry this reader returns; it could be different than OLogEntry because some other
+ *           codec could be used to decode entries that were initially written as OLogEntry.
  */
-public class OLogReader implements Reader<OLogEntry> {
+public class OLogReader<E extends SequentialEntry> implements Reader<E> {
 
-  private static final SequentialEntryCodec<OLogEntry> ENTRY_CODEC = new OLogEntry.Codec();
+  private final SequentialEntryCodec<E> codec;
   private final PersistenceNavigatorFactory navigatorFactory = InMemoryPersistenceNavigator::new;
   private final LogPersistenceService<?> logPersistenceService;
   private final String quorumId;
 
-  public OLogReader(LogPersistenceService<?> logPersistenceService, String quorumId) {
+  public OLogReader(SequentialEntryCodec<E> codec,
+                    LogPersistenceService<?> logPersistenceService,
+                    String quorumId) {
+    this.codec = codec;
     this.logPersistenceService = logPersistenceService;
     this.quorumId = quorumId;
   }
 
   @Override
-  public ImmutableList<CheckedSupplier<SequentialEntryIterator<OLogEntry>, IOException>> getLogList()
-      throws IOException {
+  public ImmutableList<CheckedSupplier<SequentialEntryIterator<E>, IOException>> getLogList()
+  throws IOException {
 
-    ImmutableList.Builder<CheckedSupplier<SequentialEntryIterator<OLogEntry>, IOException>> logSupplierBuilder =
+    ImmutableList.Builder<CheckedSupplier<SequentialEntryIterator<E>, IOException>> logSupplierBuilder =
         ImmutableList.builder();
 
     for (CheckedSupplier<? extends BytePersistence, IOException> persistenceSupplier :
@@ -58,8 +65,8 @@ public class OLogReader implements Reader<OLogEntry> {
           () -> {
             BytePersistence persistence = persistenceSupplier.get();
             PersistenceNavigator navigator =
-                SequentialLogWithHeader.createNavigatorFromPersistence(persistence, navigatorFactory);
-            return new EncodedSequentialEntryIterator<>(navigator, ENTRY_CODEC);
+                SequentialLogWithHeader.createNavigatorFromPersistence(persistence, navigatorFactory, codec);
+            return new EncodedSequentialEntryIterator<>(navigator, codec);
           });
     }
 
