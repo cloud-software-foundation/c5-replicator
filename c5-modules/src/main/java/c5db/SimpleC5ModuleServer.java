@@ -73,6 +73,13 @@ public class SimpleC5ModuleServer implements ModuleServer {
   }
 
   @Override
+  public ListenableFuture<ImmutableMap<ModuleType, Integer>> getAvailableModulePorts() {
+    final SettableFuture<ImmutableMap<ModuleType, Integer>> future = SettableFuture.create();
+    fiber.execute(() -> future.set(ImmutableMap.copyOf(modulePorts)));
+    return future;
+  }
+
+  @Override
   public Subscriber<ImmutableMap<ModuleType, Integer>> availableModulePortsChannel() {
     return modulePortsChannel;
   }

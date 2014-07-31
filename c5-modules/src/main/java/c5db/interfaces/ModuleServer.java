@@ -52,6 +52,11 @@ public interface ModuleServer {
   ListenableFuture<C5Module> getModule(ModuleType moduleType);
 
   /**
+   * Get a future returning the map of currently online modules and their associated ports.
+   */
+  ListenableFuture<ImmutableMap<ModuleType, Integer>> getAvailableModulePorts();
+
+  /**
    * Each time a module comes online or goes offline, the module server will emit
    * a complete map of the currently online modules, mapping them to their associated
    * ports.
@@ -60,5 +65,10 @@ public interface ModuleServer {
    */
   Subscriber<ImmutableMap<ModuleType, Integer>> availableModulePortsChannel();
 
+  /**
+   * This is deprecated because it is synchronous and allows blocking implementations;
+   * clients of this interface should use getModule instead, which is async.
+   */
+  @Deprecated
   ImmutableMap<ModuleType, C5Module> getModules() throws ExecutionException, InterruptedException, TimeoutException;
 }
