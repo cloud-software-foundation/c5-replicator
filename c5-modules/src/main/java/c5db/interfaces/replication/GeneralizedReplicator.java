@@ -45,6 +45,18 @@ public interface GeneralizedReplicator {
       throws InterruptedException, InvalidReplicatorStateException;
 
   /**
+   * Return a future which will not complete until the GeneralizedReplicator is in a state
+   * in which it can accept replicate() requests. If the GeneralizedReplicator is already
+   * in such a state, then return an already-completed future.
+   * <p>
+   * When the returned future completes, it may nevertheless be the case that calling
+   * replicate() will throw an InvalidReplicatorStateException. This can happen, for
+   * instance, if the replicator becomes available but quickly becomes unavailable again
+   * before it can replicate.
+   */
+  ListenableFuture<Void> isAvailableFuture();
+
+  /**
    * An exception thrown when attempting to replicate but the GeneralizedReplicator is not
    * accepting replication requests -- perhaps because the replicator must be in a certain
    * state to accept requests (e.g. leader in Raft or proposer in Paxos), and that state

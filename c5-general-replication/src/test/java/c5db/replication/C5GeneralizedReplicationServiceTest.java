@@ -103,6 +103,8 @@ public class C5GeneralizedReplicationServiceTest {
 
       GeneralizedReplicator replicator = serverFixture.replicator;
 
+      waitUntilReplicatorIsAvailable(replicator);
+
       List<ListenableFuture<Long>> replicateFutures = new ArrayList<ListenableFuture<Long>>() {{
         add(replicator.replicate(someData()));
         add(replicator.replicate(someData()));
@@ -114,6 +116,9 @@ public class C5GeneralizedReplicationServiceTest {
     }
   }
 
+  private void waitUntilReplicatorIsAvailable(GeneralizedReplicator replicator) throws Exception {
+    replicator.isAvailableFuture().get();
+  }
 
   private Fiber newExceptionHandlingFiber(Consumer<Throwable> throwableHandler) {
     Fiber newFiber = fiberFactory.create(new ExceptionHandlingBatchExecutor(throwableHandler));
@@ -131,8 +136,8 @@ public class C5GeneralizedReplicationServiceTest {
   }
 
   /**
-   * Runs a ReplicatorServer and handles startup and disposal for the purpose of making
-   * tests more readable
+   * Runs a C5GeneralizedReplicationService and handles startup and disposal,
+   * for the purpose of making tests more readable
    */
   private class SingleQuorumReplicationServer implements AutoCloseable {
     private static final String QUORUM_ID = "quorumId";

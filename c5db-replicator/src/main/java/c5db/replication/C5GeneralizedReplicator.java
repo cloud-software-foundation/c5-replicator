@@ -21,6 +21,7 @@ import c5db.ReplicatorConstants;
 import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.Replicator;
+import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.interfaces.replication.ReplicatorReceipt;
 import c5db.util.C5Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -42,8 +43,11 @@ import java.util.concurrent.ExecutionException;
  * interface.
  */
 public class C5GeneralizedReplicator implements GeneralizedReplicator {
+  private final long nodeId;
   private final Replicator replicator;
   private final Fiber fiber;
+
+  private SettableFuture<Void> availableFuture;
 
   /**
    * Queue of receipts for pending log requests and their futures; access this queue only
@@ -57,10 +61,12 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
    * user takes responsibility for their disposal.
    */
   public C5GeneralizedReplicator(Replicator replicator, Fiber fiber) {
+    this.nodeId = replicator.getId();
     this.replicator = replicator;
     this.fiber = fiber;
 
     setupCommitNoticeSubscription();
+    setupEventNoticeSubscription();
   }
 
   @Override
@@ -81,6 +87,26 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
     return receiptWithCompletionFuture.completionFuture;
   }
 
+  @Override
+  public ListenableFuture<Void> isAvailableFuture() {
+    SettableFuture<Void> returnedFuture = SettableFuture.create();
+
+    fiber.execute(() -> {
+      if (this.availableFuture == null) {
+        // By placing this future here, the handleEventNotice method will know someone is waiting
+        // for notification of availability; that method will handle setting this.
+        this.availableFuture = returnedFuture;
+
+      } else {
+        // Some other invocation of this method is already waiting for notification of availability,
+        // so setup that existing availableFuture to "forward" its result to the newly created one.
+        C5Futures.addCallback(this.availableFuture, returnedFuture::set, returnedFuture::setException, fiber);
+      }
+    });
+
+    return returnedFuture;
+  }
+
   private void setupCommitNoticeSubscription() {
     final String quorumId = replicator.getQuorumId();
     final long serverNodeId = replicator.getId();
@@ -90,6 +116,10 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
             (notice) ->
                 notice.nodeId == serverNodeId
                     && notice.quorumId.equals(quorumId)));
+  }
+
+  private void setupEventNoticeSubscription() {
+    replicator.getEventChannel().subscribe(fiber, this::handleEventNotice);
   }
 
   /**
@@ -125,6 +155,29 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
       }
 
       receiptQueue.poll();
+    }
+  }
+
+  /**
+   * This method runs whenever our wrapped Replicator emits an event notice. It checks to
+   * see if the replicator is announcing that it has been elected leader of its quorum. If so,
+   * then this GeneralizedReplicator is now available for submission of replication requests.
+   * Therefore, check if anyone has been waiting to be notified of our availability, by having
+   * left an unset availableFuture. If so, notify them by setting that pending future..
+   */
+  @FiberOnly
+  private void handleEventNotice(ReplicatorInstanceEvent eventNotice) {
+    if (availableFuture != null
+        && eventNotice.instance == replicator
+        && eventNotice.eventType == ReplicatorInstanceEvent.EventType.LEADER_ELECTED
+        && eventNotice.newLeader == nodeId) {
+
+      // Notify past callers of isAvailableFuture
+      availableFuture.set(null);
+
+      // Remove the future so that a subsequent invocation of this method will not try
+      // to set it again.
+      availableFuture = null;
     }
   }
 
