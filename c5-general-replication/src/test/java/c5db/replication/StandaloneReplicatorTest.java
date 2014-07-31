@@ -34,7 +34,6 @@ import c5db.util.C5Futures;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberSupplier;
 import c5db.util.JUnitRuleFiberExceptions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -211,7 +210,7 @@ public class StandaloneReplicatorTest {
       serverFiber.start();
 
       discoveryFiber = fiberSupplier.getFiber(jUnitFiberExceptionHandler);
-      discoveryModule = new BeaconService(nodeId, discoveryPort, discoveryFiber, workerGroup, ImmutableMap.of(), moduleServer);
+      discoveryModule = new BeaconService(nodeId, discoveryPort, workerGroup, moduleServer, fiberSupplier);
       discoveryFiber.start();
 
       logModule = new LogService(baseTestPath, fiberSupplier);

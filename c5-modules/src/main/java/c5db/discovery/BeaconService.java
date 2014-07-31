@@ -28,7 +28,9 @@ import c5db.interfaces.discovery.NodeInfo;
 import c5db.interfaces.discovery.NodeInfoReply;
 import c5db.interfaces.discovery.NodeInfoRequest;
 import c5db.messages.generated.ModuleType;
+import c5db.util.C5Futures;
 import c5db.util.FiberOnly;
+import c5db.util.FiberSupplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -173,13 +175,15 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private final Map<Long, NodeInfo> peerNodeInfoMap = new HashMap<>();
   private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
   private final org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
-  private final Fiber fiber;
+  private final ModuleServer moduleServer;
+  private final FiberSupplier fiberSupplier;
   public static final String BROADCAST_ADDRESS = "255.255.255.255";
 
   // These should be final, but they are initialized in doStart().
   private Channel broadcastChannel = null;
   private Bootstrap bootstrap = null;
   private List<String> localIPs;
+  private Fiber fiber;
 
   // This field is updated when modules' availability changes
   private ImmutableMap<ModuleType, Integer> modulePorts;
@@ -200,26 +204,21 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
    * @param nodeId         the id of this node.
    * @param discoveryPort  the port to send discovery beacon messages on, and to listen to
    *                       for messages from others
-   * @param fiber          A started fiber; the caller is responsible for its disposal
    * @param eventLoopGroup An EventLoopGroup that's not shut down.
-   * @param initialModulePorts    An initial lookup of ports by module type; can be empty
    * @param moduleServer   A module server, used to receive module availability updates
    */
   public BeaconService(long nodeId,
                        int discoveryPort,
-                       final Fiber fiber,
                        EventLoopGroup eventLoopGroup,
-                       ImmutableMap<ModuleType, Integer> initialModulePorts,
-                       ModuleServer moduleServer
+                       ModuleServer moduleServer,
+                       FiberSupplier fiberSupplier
   ) {
-    this.discoveryPort = discoveryPort;
     this.nodeId = nodeId;
-    this.fiber = fiber;
+    this.discoveryPort = discoveryPort;
     this.eventLoopGroup = eventLoopGroup;
-    this.modulePorts = initialModulePorts;
+    this.moduleServer = moduleServer;
+    this.fiberSupplier = fiberSupplier;
     this.broadcastAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
-
-    moduleServer.availableModulePortsChannel().subscribe(fiber, this::updateCurrentModulePorts);
   }
 
   @Override
@@ -321,19 +320,30 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         notifyFailed(e);
       }
 
+      fiber = fiberSupplier.getFiber(this::notifyFailed);
+      fiber.start();
+
       // Schedule fiber tasks and subscriptions.
       incomingMessages.subscribe(fiber, this::processWireMessage);
       nodeInfoRequests.subscribe(fiber, this::handleNodeInfoRequest);
+      moduleServer.availableModulePortsChannel().subscribe(fiber, this::updateCurrentModulePorts);
 
       fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
 
-      notifyStarted();
-
+      C5Futures.addCallback(moduleServer.getAvailableModulePorts(),
+          (ImmutableMap<ModuleType, Integer> availablePorts) -> {
+            updateCurrentModulePorts(availablePorts);
+            notifyStarted();
+          },
+          this::notifyFailed,
+          fiber);
     });
   }
 
   @Override
   protected void doStop() {
+    fiber.dispose();
+    fiber = null;
     eventLoopGroup.next().execute(this::notifyStopped);
   }
 
