@@ -260,8 +260,14 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
     Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
 
-    broadcastChannel.writeAndFlush(new
-        UdpProtostuffEncoder.UdpProtostuffMessage<>(broadcastAddress, beaconMessage));
+    broadcastChannel.writeAndFlush(new UdpProtostuffEncoder.UdpProtostuffMessage<>(broadcastAddress, beaconMessage))
+        .addListener(
+            future -> {
+              if (!future.isSuccess()) {
+                LOG.warn("node {} error sending message {} to broadcast address {}",
+                    nodeId, beaconMessage, broadcastAddress);
+              }
+            });
 
     // Fix issue #76, feed back the beacon Message to our own database:
     processWireMessage(beaconMessage);
