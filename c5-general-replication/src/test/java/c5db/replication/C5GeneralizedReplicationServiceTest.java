@@ -153,7 +153,7 @@ public class C5GeneralizedReplicationServiceTest {
     public SingleQuorumReplicationServer(long nodeId, Collection<Long> peerIds, FiberSupplier fiberSupplier)
         throws Exception {
 
-      moduleServer = new SimpleC5ModuleServer(mainTestFiber);
+      moduleServer = new SimpleC5ModuleServer(mainTestFiber, jUnitFiberExceptionHandler);
 
       replicationModule =
           new ReplicatorService(bossGroup, workerGroup, nodeId, REPLICATOR_PORT_MIN, moduleServer, fiberSupplier,
