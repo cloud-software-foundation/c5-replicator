@@ -310,7 +310,12 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       // Wait, this is why we are in a new executor...
       //noinspection RedundantCast
       bootstrap.bind(discoveryPort).addListener((ChannelFutureListener) future -> {
-        broadcastChannel = future.channel();
+        if (future.isSuccess()) {
+          broadcastChannel = future.channel();
+        } else {
+          LOG.error("Unable to bind! ", future.cause());
+          notifyFailed(future.cause());
+        }
       });
 
       try {

@@ -431,6 +431,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                   listenChannel = future.channel();
                 } else {
                   LOG.error("Unable to bind! ", future.cause());
+                  failModule(future.cause());
                 }
               });
 
@@ -451,7 +452,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
         },
         (Throwable t) -> {
           LOG.error("ReplicatorService unable to retrieve modules!", t);
-          notifyFailed(t);
+          failModule(t);
         }, fiber);
   }
 
@@ -523,7 +524,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
 
           doneFuture.set(null);
         },
-        this::notifyFailed, fiber);
+        this::failModule, fiber);
 
     return doneFuture;
   }
