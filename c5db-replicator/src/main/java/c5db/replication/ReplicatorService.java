@@ -496,6 +496,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       final AtomicInteger countDown = new AtomicInteger(1);
       GenericFutureListener<? extends Future<? super Void>> listener = future -> {
         if (countDown.decrementAndGet() == 0) {
+          fiber.dispose();
+          fiber = null;
           notifyStopped();
         }
 
@@ -508,8 +510,6 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
       allChannels.close().addListener(listener);
       replicatorInstances.values().forEach(ReplicatorInstance::dispose);
       replicatorInstances.clear();
-      fiber.dispose();
-      fiber = null;
     });
   }
 
