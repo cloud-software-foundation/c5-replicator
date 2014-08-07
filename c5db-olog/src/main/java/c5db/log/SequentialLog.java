@@ -81,11 +81,9 @@ public interface SequentialLog<E extends SequentialEntry> extends AutoCloseable,
 
   /**
    * Synchronously persist all previously written changes to the underlying medium.
-   * TODO remove from this interface?
    *
    * @throws IOException
    */
-  @SuppressWarnings("UnusedDeclaration")
   void sync() throws IOException;
 
   /**

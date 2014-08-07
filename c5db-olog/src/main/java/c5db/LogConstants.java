@@ -23,4 +23,5 @@ public class LogConstants {
   public static final int LOG_THREAD_POOL_SIZE = 1;
   public static final int LOG_CLOSE_TIMEOUT_SECONDS = 15;
   public static final int LOG_NAVIGATOR_DEFAULT_MAX_ENTRY_SEEK = 256;
+  public static final boolean LOG_USE_FILE_CHANNEL_FORCE = true;
 }
