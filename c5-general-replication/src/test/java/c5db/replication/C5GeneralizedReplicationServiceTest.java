@@ -18,6 +18,7 @@
 package c5db.replication;
 
 import c5db.C5CommonTestUtil;
+import c5db.MiscMatchers;
 import c5db.ReplicatorConstants;
 import c5db.SimpleC5ModuleServer;
 import c5db.discovery.BeaconService;
@@ -25,6 +26,7 @@ import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.replication.GeneralizedReplicator;
+import c5db.interfaces.replication.ReplicateSubmissionInfo;
 import c5db.log.LogService;
 import c5db.log.ReplicatorLogGenericTestUtil;
 import c5db.util.C5Futures;
@@ -32,6 +34,7 @@ import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberSupplier;
 import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
@@ -57,11 +60,14 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static c5db.CollectionMatchers.isStrictlyIncreasing;
 import static c5db.FutureMatchers.resultsIn;
+import static c5db.FutureMatchers.returnsAFutureWhoseResult;
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 public class C5GeneralizedReplicationServiceTest {
@@ -105,14 +111,12 @@ public class C5GeneralizedReplicationServiceTest {
 
       GeneralizedReplicator replicator = controller.waitUntilAReplicatorIsReady();
 
-      List<ListenableFuture<Long>> replicateFutures = new ArrayList<ListenableFuture<Long>>() {{
-        add(replicator.replicate(someData()));
-        add(replicator.replicate(someData()));
-        add(replicator.replicate(someData()));
-      }};
+      ListenableFuture<List<ReplicateSubmissionInfo>> resultListFuture =
+          resultFutureForNReplicateRequests(replicator, 3);
 
-      assertThat(allAsList(replicateFutures), resultsInAListOfLongsThat(hasSize(3)));
-      assertThat(allAsList(replicateFutures), resultsInAListOfLongsThat(isStrictlyIncreasing()));
+      assertThat(sequenceNumberListFuture(resultListFuture), resultsInAListOfLongsThat(hasSize(3)));
+      assertThat(sequenceNumberListFuture(resultListFuture), resultsInAListOfLongsThat(isStrictlyIncreasing()));
+      assertThat(resultListFuture, allRequestsWillComplete());
     }
   }
 
@@ -124,14 +128,12 @@ public class C5GeneralizedReplicationServiceTest {
 
       GeneralizedReplicator replicator = controller.waitUntilAReplicatorIsReady();
 
-      List<ListenableFuture<Long>> replicateFutures = new ArrayList<ListenableFuture<Long>>() {{
-        add(replicator.replicate(someData()));
-        add(replicator.replicate(someData()));
-        add(replicator.replicate(someData()));
-      }};
+      ListenableFuture<List<ReplicateSubmissionInfo>> resultListFuture =
+          resultFutureForNReplicateRequests(replicator, 3);
 
-      assertThat(allAsList(replicateFutures), resultsInAListOfLongsThat(hasSize(3)));
-      assertThat(allAsList(replicateFutures), resultsInAListOfLongsThat(isStrictlyIncreasing()));
+      assertThat(sequenceNumberListFuture(resultListFuture), resultsInAListOfLongsThat(hasSize(3)));
+      assertThat(sequenceNumberListFuture(resultListFuture), resultsInAListOfLongsThat(isStrictlyIncreasing()));
+      assertThat(resultListFuture, allRequestsWillComplete());
     }
   }
 
@@ -146,9 +148,47 @@ public class C5GeneralizedReplicationServiceTest {
     return Lists.newArrayList(ReplicatorLogGenericTestUtil.someData());
   }
 
+  private ListenableFuture<List<ReplicateSubmissionInfo>> resultFutureForNReplicateRequests(
+      GeneralizedReplicator replicator, int numberOfReplicateRequests) throws Exception {
+
+    List<ListenableFuture<ReplicateSubmissionInfo>> replicateFutures =
+        new ArrayList<ListenableFuture<ReplicateSubmissionInfo>>() {{
+          for (int i = 0; i < numberOfReplicateRequests; i++) {
+            add(replicator.replicate(someData()));
+          }
+        }};
+
+    return allAsList(replicateFutures);
+  }
+
+  private ListenableFuture<List<Long>> sequenceNumberListFuture(ListenableFuture<List<ReplicateSubmissionInfo>>
+                                                                    resultListFuture) {
+    return Futures.transform(resultListFuture,
+        (List<ReplicateSubmissionInfo> resultList) ->
+            resultList.stream()
+                .map((result) -> result.sequenceNumber)
+                .collect(Collectors.toList()));
+  }
+
   private static Matcher<? super ListenableFuture<List<Long>>> resultsInAListOfLongsThat(
       Matcher<? super List<Long>> longsMatcher) {
     return resultsIn(longsMatcher);
+  }
+
+  private static Matcher<? super ListenableFuture<List<ReplicateSubmissionInfo>>> allRequestsWillComplete() {
+    return returnsAFutureWhoseResult(
+        MiscMatchers.simpleMatcherForPredicate(
+            (List<ReplicateSubmissionInfo> resultList) -> {
+              for (ReplicateSubmissionInfo result : resultList) {
+                if (!resultsIn(equalTo(null)).matches(result.completedFuture)) {
+                  return false;
+                }
+              }
+              return true;
+            },
+            (description) -> description.appendText("a list of ReplicateSubmissionInfo each indicating the " +
+                "requests have completed")
+        ));
   }
 
   /**
