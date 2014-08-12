@@ -17,9 +17,12 @@
 
 package c5db;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class LogConstants {
-  public static final String LOG_ROOT_DIRECTORY_NAME = "logs";
-  public static final String LOG_FILE_SUBDIRECTORY_NAME = "files";
+  public static final Path LOG_ROOT_DIRECTORY_RELATIVE_PATH = Paths.get("logs");
+  public static final Path LOG_FILE_SUBDIRECTORY_RELATIVE_PATH = Paths.get("files");
   public static final int LOG_THREAD_POOL_SIZE = 1;
   public static final int LOG_CLOSE_TIMEOUT_SECONDS = 15;
   public static final int LOG_NAVIGATOR_DEFAULT_MAX_ENTRY_SEEK = 256;

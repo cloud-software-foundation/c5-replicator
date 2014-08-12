@@ -31,7 +31,7 @@ public class NioQuorumFileReaderWriter implements QuorumFileReaderWriter {
   private final Path basePath;
 
   public NioQuorumFileReaderWriter(Path basePath) {
-    this.basePath = basePath.resolve(ReplicatorConstants.REPLICATOR_QUORUM_FILE_ROOT_DIRECTORY_NAME);
+    this.basePath = basePath.resolve(ReplicatorConstants.REPLICATOR_QUORUM_FILE_ROOT_DIRECTORY_RELATIVE_PATH);
   }
 
   @Override

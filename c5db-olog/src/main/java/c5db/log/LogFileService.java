@@ -41,7 +41,7 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   private final Path logRootDir;
 
   public LogFileService(Path basePath) throws IOException {
-    this.logRootDir = basePath.resolve(LogConstants.LOG_ROOT_DIRECTORY_NAME);
+    this.logRootDir = basePath.resolve(LogConstants.LOG_ROOT_DIRECTORY_RELATIVE_PATH);
 
     createDirectoryStructure();
   }
@@ -157,7 +157,7 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
   }
 
   private Path logFileDir(String quorumId) {
-    return quorumDir(quorumId).resolve(LogConstants.LOG_FILE_SUBDIRECTORY_NAME);
+    return quorumDir(quorumId).resolve(LogConstants.LOG_FILE_SUBDIRECTORY_RELATIVE_PATH);
   }
 
   private void createDirectoryStructure() throws IOException {
