@@ -529,7 +529,7 @@ public class ReplicatorInstance implements Replicator {
 
     long theLeader = appendMessage.getLeaderId();
     if (whosLeader != theLeader) {
-      acknowledgeNewLeader(theLeader);
+      updateFollowersKnowledgeOfCurrentLeader(theLeader);
     }
 
     // 5. return failure if log doesn't contain an entry at
@@ -582,7 +582,7 @@ public class ReplicatorInstance implements Replicator {
   }
 
   @FiberOnly
-  private void acknowledgeNewLeader(long theLeader) {
+  private void updateFollowersKnowledgeOfCurrentLeader(long theLeader) {
     logger.debug("discovered new leader: {}", theLeader);
     whosLeader = theLeader;
 
