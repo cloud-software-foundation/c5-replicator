@@ -32,6 +32,7 @@ import c5db.util.C5Futures;
 import c5db.util.FiberOnly;
 import c5db.util.FiberSupplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -91,6 +92,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class BeaconService extends AbstractService implements DiscoveryModule {
   private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
+  private static final InetAddress BROADCAST_ADDRESS = InetAddresses.forString("255.255.255.255");
 
   @Override
   public ModuleType getModuleType() {
@@ -177,7 +179,6 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private final org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
   private final ModuleServer moduleServer;
   private final FiberSupplier fiberSupplier;
-  public static final String BROADCAST_ADDRESS = "255.255.255.255";
 
   // These should be final, but they are initialized in doStart().
   private Channel broadcastChannel = null;
