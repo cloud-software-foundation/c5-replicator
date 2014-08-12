@@ -402,7 +402,7 @@ public class ReplicatorInstance implements Replicator {
         logger.warn("got a message of protobuf type I don't know: {}", req);
       }
     } catch (Exception e) {
-      logger.error("exception while processing message {}: {}", message, e);
+      logger.error("Uncaught exception while processing message {}: {}", message, e);
       throw e;
     }
   }
@@ -533,7 +533,7 @@ public class ReplicatorInstance implements Replicator {
     }
 
     // 5. return failure if log doesn't contain an entry at
-    // prevLogIndex who's term matches prevLogTerm (sec 5.3)
+    // prevLogIndex whose term matches prevLogTerm (sec 5.3)
     // if msgPrevLogIndex == 0 -> special case of starting the log!
     long msgPrevLogIndex = appendMessage.getPrevLogIndex();
     long msgPrevLogTerm = appendMessage.getPrevLogTerm();
@@ -619,9 +619,10 @@ public class ReplicatorInstance implements Replicator {
 
       if (entryIndex > nextIndex) {
         // ok this entry is still beyond the LAST entry, so we have a problem:
-        logger.error("log entry missing, I expected {} and the next in the message is {}", nextIndex, entryIndex);
+        logger.warn("Received entry later in sequence than expected: expected {} but the next in the message is {}",
+            nextIndex, entryIndex);
         logOperationFutures.add(Futures.immediateFailedFuture(
-            new Exception("Log entry missing from received entries")));
+            new Exception("Unexpected log entry, or entry sequence gap in received entries")));
         return logOperationFutures;
       }
 
@@ -1093,7 +1094,7 @@ public class ReplicatorInstance implements Replicator {
           checkIfMajorityCanCommit(lastIndexInList);
         },
         (Throwable t) -> {
-          logger.error("failed to commit to local log", t);
+          logger.error("As a leader, failed to write new entries to local log", t);
           failReplicatorInstance(t);
         }, fiber);
   }
