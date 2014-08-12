@@ -69,7 +69,7 @@ public class SingleNodeFakeReplicator implements Replicator {
   }
 
   @Override
-  public ListenableFuture<ReplicatorReceipt> logData(List<ByteBuffer> data) {
+  public synchronized ListenableFuture<ReplicatorReceipt> logData(List<ByteBuffer> data) {
     SettableFuture<ReplicatorReceipt> receiptFuture = SettableFuture.create();
     final long thisSeqNum = nextSeqNum;
     nextSeqNum++;
