@@ -1197,7 +1197,7 @@ public class ReplicatorInstance implements Replicator {
 
   private void setLastCommittedIndex(long newLastCommittedIndex) {
     if (newLastCommittedIndex < lastCommittedIndex) {
-      logger.warn("New lastCommittedIndex {} is smaller than previous lastCommittedIndex {}",
+      logger.info("Requested to update to commit index {} but it is smaller than my current commit index {}; ignoring",
           newLastCommittedIndex, lastCommittedIndex);
     } else if (newLastCommittedIndex > lastCommittedIndex) {
       long oldLastCommittedIndex = lastCommittedIndex;
