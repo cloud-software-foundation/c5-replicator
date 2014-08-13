@@ -19,6 +19,7 @@ package c5db.replication;
 
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.interfaces.replication.ReplicatorReceipt;
@@ -65,6 +66,7 @@ import static c5db.RpcMatchers.RequestMatcher.aPreElectionPoll;
 import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
 import static c5db.RpcMatchers.containsQuorumConfiguration;
 import static c5db.interfaces.replication.Replicator.State.FOLLOWER;
+import static c5db.interfaces.replication.Replicator.State.LEADER;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT;
 import static c5db.replication.ReplicationMatchers.aQuorumChangeCommittedEvent;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
@@ -510,7 +512,8 @@ public class InRamTest {
     final long currentTerm = currentTerm();
     int leaderCount = 0;
     for (ReplicatorInstance replicatorInstance : sim.getReplicators().values()) {
-      if (replicatorInstance.isLeader() && replicatorInstance.currentTerm >= currentTerm) {
+      if (currentState(replicatorInstance) == LEADER
+          && replicatorInstance.currentTerm >= currentTerm) {
         leaderCount++;
       }
     }
@@ -580,8 +583,7 @@ public class InRamTest {
     }
 
     public boolean isCurrentLeader() {
-      return instance.isLeader()
-          && instance.currentTerm >= currentTerm();
+      return id == currentLeader();
     }
 
     public QuorumConfiguration currentConfiguration() {
@@ -698,7 +700,7 @@ public class InRamTest {
   }
 
   private PeerController pickFollower() {
-    PeerController chosenPeer = anyPeerSuchThat((peer) -> peer.instance.myState == FOLLOWER && peer.isOnline());
+    PeerController chosenPeer = anyPeerSuchThat((peer) -> currentState(peer.instance) == FOLLOWER && peer.isOnline());
     assertThat(chosenPeer, not(nullValue()));
     return chosenPeer;
   }
@@ -715,6 +717,18 @@ public class InRamTest {
 
   private long currentLeader() {
     return eventMonitor.getLatest(leaderElectedEvent(anyLeader(), anyTerm())).newLeader;
+  }
+
+  private Replicator.State currentState(Replicator replicator) {
+    long id = replicator.getId();
+    Replicator.State currentState = sim.getStateMonitor(id).getLatest(any(Replicator.State.class));
+
+    if (currentState == null) {
+      // No State has been issued via the replicator's State channel, so assume FOLLOWER (default)
+      return FOLLOWER;
+    } else {
+      return currentState;
+    }
   }
 
   private static long term(long term) {

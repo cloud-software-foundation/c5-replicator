@@ -58,6 +58,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -172,6 +173,8 @@ public class InRamSim {
   private final Channel<RpcMessage> replyChannel = new MemoryChannel<>();
   private final Channel<ReplicatorInstanceEvent> eventChannel = new MemoryChannel<>();
 
+  private final Map<Long, ChannelHistoryMonitor<Replicator.State>> stateMonitors = new HashMap<>();
+
   private final long electionTimeout;
   private final long electionTimeoutOffset;
 
@@ -214,6 +217,7 @@ public class InRamSim {
       peerIds.add(peerId);
       replicators.put(peerId, rep);
       replicatorLogs.put(peerId, log);
+      stateMonitors.put(peerId, new ChannelHistoryMonitor<>(rep.getStateChannel(), rpcFiber));
       plusMillis += electionTimeoutOffset;
       rep.start();
     }
@@ -244,6 +248,7 @@ public class InRamSim {
         Replicator.State.FOLLOWER);
     replicators.put(peerId, repl);
     replicatorLogs.put(peerId, log);
+    stateMonitors.put(peerId, new ChannelHistoryMonitor<>(repl.getStateChannel(), rpcFiber));
     offlinePeers.remove(peerId);
     repl.start();
   }
@@ -294,6 +299,10 @@ public class InRamSim {
 
   public Channel<ReplicatorInstanceEvent> getEventChannel() {
     return eventChannel;
+  }
+
+  public ChannelHistoryMonitor<Replicator.State> getStateMonitor(long peerId) {
+    return stateMonitors.get(peerId);
   }
 
   public Channel<IndexCommitNotice> getCommitNotices() {
