@@ -19,6 +19,7 @@ package c5db.replication;
 
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.log.InRamLog;
 import c5db.replication.generated.AppendEntries;
@@ -61,10 +62,12 @@ import static c5db.interfaces.replication.Replicator.State;
 import static c5db.log.ReplicatorLogGenericTestUtil.aSeqNum;
 import static c5db.log.ReplicatorLogGenericTestUtil.someData;
 import static c5db.replication.ReplicationMatchers.aListOfEntriesWithConsecutiveSeqNums;
+import static c5db.replication.ReplicationMatchers.leaderElectedEvent;
 import static c5db.replication.ReplicatorTestUtil.LogSequenceBuilder;
 import static c5db.replication.ReplicatorTestUtil.entries;
 import static c5db.replication.ReplicatorTestUtil.makeProtostuffEntry;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -210,7 +213,7 @@ public class ReplicatorAppendEntriesTest {
             .withANewerTerm(newerTerm));
 
     assertThat(reply(), is(anAppendReply().withResult(true)));
-    assertThat(replicatorInstance.currentTerm, is(equalTo(newerTerm)));
+    assertThat(latestIssuedElectionTerm(), is(equalTo(newerTerm)));
   }
 
   @Test
@@ -382,6 +385,10 @@ public class ReplicatorAppendEntriesTest {
   private final ChannelHistoryMonitor<IndexCommitNotice> commitMonitor =
       new ChannelHistoryMonitor<>(commitNotices, rpcFiber);
 
+  private final Channel<ReplicatorInstanceEvent> eventChannel = new MemoryChannel<>();
+  private final ChannelHistoryMonitor<ReplicatorInstanceEvent> eventMonitor =
+      new ChannelHistoryMonitor<>(eventChannel, rpcFiber);
+
   private ReplicatorInstance makeTestInstance() throws Exception {
     long thisReplicatorId = 1;
     ReplicatorClock info = new InRamSim.StoppableClock(0, Integer.MAX_VALUE / 2L);
@@ -394,7 +401,7 @@ public class ReplicatorAppendEntriesTest {
         info,
         persistence,
         new MemoryRequestChannel<>(),
-        new MemoryChannel<>(),
+        eventChannel,
         commitNotices,
         State.FOLLOWER);
   }
@@ -413,6 +420,10 @@ public class ReplicatorAppendEntriesTest {
           // Invoke and return result from working (fake) log
           return method.invoke(internalLog, args);
         });
+  }
+
+  private long latestIssuedElectionTerm() {
+    return eventMonitor.getLatest(leaderElectedEvent(any(Long.class), any(Long.class))).leaderElectedTerm;
   }
 
   private void assertThatReplicatorWillCommitUpToIndex(long index) {

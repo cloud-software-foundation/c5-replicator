@@ -66,7 +66,6 @@ import static c5db.RpcMatchers.RequestMatcher.aPreElectionPoll;
 import static c5db.RpcMatchers.RequestMatcher.anAppendRequest;
 import static c5db.RpcMatchers.containsQuorumConfiguration;
 import static c5db.interfaces.replication.Replicator.State.FOLLOWER;
-import static c5db.interfaces.replication.Replicator.State.LEADER;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.ELECTION_TIMEOUT;
 import static c5db.replication.ReplicationMatchers.aQuorumChangeCommittedEvent;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
@@ -511,9 +510,9 @@ public class InRamTest {
   private int leaderCount() {
     final long currentTerm = currentTerm();
     int leaderCount = 0;
-    for (ReplicatorInstance replicatorInstance : sim.getReplicators().values()) {
-      if (currentState(replicatorInstance) == LEADER
-          && replicatorInstance.currentTerm >= currentTerm) {
+
+    for (long id : sim.getOnlinePeers()) {
+      if (peer(id).hasWonAnElection(greaterThanOrEqualTo(currentTerm))) {
         leaderCount++;
       }
     }
