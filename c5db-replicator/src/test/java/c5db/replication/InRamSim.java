@@ -170,7 +170,7 @@ public class InRamSim {
   private final PoolFiberFactory fiberPool;
   private final BatchExecutor batchExecutor;
   private final Channel<RpcMessage> replyChannel = new MemoryChannel<>();
-  private final Channel<ReplicatorInstanceEvent> stateChanges = new MemoryChannel<>();
+  private final Channel<ReplicatorInstanceEvent> eventChannel = new MemoryChannel<>();
 
   private final long electionTimeout;
   private final long electionTimeoutOffset;
@@ -208,7 +208,7 @@ public class InRamSim {
           new StoppableClock(plusMillis, electionTimeout),
           new Persister(),
           rpcChannel,
-          stateChanges,
+          eventChannel,
           commitNotices,
           Replicator.State.FOLLOWER);
       peerIds.add(peerId);
@@ -239,7 +239,7 @@ public class InRamSim {
         oldRepl.clock,
         oldRepl.persister,
         rpcChannel,
-        stateChanges,
+        eventChannel,
         commitNotices,
         Replicator.State.FOLLOWER);
     replicators.put(peerId, repl);
@@ -292,8 +292,8 @@ public class InRamSim {
     return replyChannel;
   }
 
-  public Channel<ReplicatorInstanceEvent> getStateChanges() {
-    return stateChanges;
+  public Channel<ReplicatorInstanceEvent> getEventChannel() {
+    return eventChannel;
   }
 
   public Channel<IndexCommitNotice> getCommitNotices() {

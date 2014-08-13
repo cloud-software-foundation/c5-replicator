@@ -120,9 +120,9 @@ public class InRamTest {
     sim.getRpcChannel().subscribe(fiber, requestLog::publish);
     sim.getCommitNotices().subscribe(fiber, this::updateLastCommit);
     sim.getCommitNotices().subscribe(fiber, System.out::println);
-    sim.getStateChanges().subscribe(fiber, System.out::println);
+    sim.getEventChannel().subscribe(fiber, System.out::println);
     commitMonitor = new ChannelHistoryMonitor<>(sim.getCommitNotices(), fiber);
-    eventMonitor = new ChannelHistoryMonitor<>(sim.getStateChanges(), fiber);
+    eventMonitor = new ChannelHistoryMonitor<>(sim.getEventChannel(), fiber);
     replyMonitor = new ChannelHistoryMonitor<>(sim.getReplyChannel(), fiber);
 
     fiber.start();
