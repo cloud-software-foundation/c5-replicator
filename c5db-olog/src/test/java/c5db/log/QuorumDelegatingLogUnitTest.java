@@ -40,10 +40,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static c5db.FutureMatchers.resultsInException;
 import static c5db.log.LogPersistenceService.BytePersistence;
@@ -226,8 +226,8 @@ public class QuorumDelegatingLogUnitTest {
   /**
    * In-memory LogPersistenceService to simplify these tests, rather than use mocks that return mocks.
    */
-  private static class ArrayPersistenceService implements LogPersistenceService<ByteArrayPersistence> {
-    private final Map<String, Deque<ByteArrayPersistence>> quorumMap = new HashMap<>();
+  static class ArrayPersistenceService implements LogPersistenceService<ByteArrayPersistence> {
+    private final Map<String, Deque<ByteArrayPersistence>> quorumMap = new ConcurrentHashMap<>();
 
     @Nullable
     @Override
