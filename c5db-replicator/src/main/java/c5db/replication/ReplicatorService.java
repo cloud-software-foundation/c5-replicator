@@ -581,6 +581,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     }
     throwableChannel.subscribe(fiber, instance::failReplicatorInstance);
     replicatorInstances.put(quorumId, instance);
+    instance.start();
     return instance;
   }
 }

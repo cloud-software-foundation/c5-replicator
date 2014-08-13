@@ -91,12 +91,6 @@ public class SingleNodeFakeReplicator implements Replicator {
     return nodeId;
   }
 
-  @Override
-  public boolean isLeader() {
-    return state == State.LEADER;
-  }
-
-  @Override
   public void start() {
     state = State.LEADER;
     doLater(() ->

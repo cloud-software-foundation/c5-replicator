@@ -242,17 +242,6 @@ public class ReplicatorInstance implements Replicator {
   }
 
   @Override
-  public boolean isLeader() {
-    return myState == State.LEADER;
-  }
-
-  @Override
-  public void start() {
-    logger.debug("started {} with election timeout {}", this.quorumId, this.myElectionTimeout);
-    fiber.start();
-  }
-
-  @Override
   public String toString() {
     return "ReplicatorInstance{" +
         "myId=" + myId +
@@ -283,6 +272,11 @@ public class ReplicatorInstance implements Replicator {
 
   public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
     return incomingChannel;
+  }
+
+  public void start() {
+    logger.debug("started {} with election timeout {}", this.quorumId, this.myElectionTimeout);
+    fiber.start();
   }
 
   public void dispose() {
@@ -581,6 +575,11 @@ public class ReplicatorInstance implements Replicator {
     AppendEntriesReply m = new AppendEntriesReply(currentTerm, success, 0);
     RpcReply reply = new RpcReply(m);
     request.reply(reply);
+  }
+
+  @FiberOnly
+  private boolean isLeader() {
+    return myState == State.LEADER;
   }
 
   @FiberOnly
