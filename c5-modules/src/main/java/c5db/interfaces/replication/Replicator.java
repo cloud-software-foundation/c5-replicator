@@ -30,7 +30,13 @@ import java.util.List;
 public interface Replicator {
   String getQuorumId();
 
-  QuorumConfiguration getQuorumConfiguration();
+  /**
+   * Return a future containing the Replicator's current quorum configuration; that is,
+   * the set of peers it recognizes as being part of its quorum. This set can change
+   * if directed to locally (for instance using the method changeQuorum) or if a remote
+   * leader initiates a quorum change.
+   */
+  ListenableFuture<QuorumConfiguration> getQuorumConfiguration();
 
   /**
    * Change the members of the quorum to a new collection of peers (which may include peers in

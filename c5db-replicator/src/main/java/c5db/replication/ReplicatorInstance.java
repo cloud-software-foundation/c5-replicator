@@ -205,8 +205,10 @@ public class ReplicatorInstance implements Replicator {
   }
 
   @Override
-  public QuorumConfiguration getQuorumConfiguration() {
-    return quorumConfig;
+  public ListenableFuture<QuorumConfiguration> getQuorumConfiguration() {
+    SettableFuture<QuorumConfiguration> quorumConfigurationFuture = SettableFuture.create();
+    fiber.execute(() -> quorumConfigurationFuture.set(quorumConfig));
+    return quorumConfigurationFuture;
   }
 
   @Override

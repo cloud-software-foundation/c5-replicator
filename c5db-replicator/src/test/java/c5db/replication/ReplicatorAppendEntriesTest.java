@@ -332,7 +332,7 @@ public class ReplicatorAppendEntriesTest {
             .withEntries(receivedEntries));
 
     assertThat(reply(), is(anAppendReply().withResult(true)));
-    assertThat(replicatorInstance.getQuorumConfiguration(), is(equalTo(configuration)));
+    assertThat(replicatorInstance.getQuorumConfiguration().get(), is(equalTo(configuration)));
   }
 
   @Test

@@ -23,6 +23,7 @@ import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.interfaces.replication.ReplicatorReceipt;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.Channel;
@@ -59,8 +60,10 @@ public class SingleNodeFakeReplicator implements Replicator {
   }
 
   @Override
-  public QuorumConfiguration getQuorumConfiguration() {
-    return QuorumConfiguration.of(Sets.newHashSet(nodeId));
+  public ListenableFuture<QuorumConfiguration> getQuorumConfiguration() {
+    return Futures.immediateFuture(
+        QuorumConfiguration.of(
+            Sets.newHashSet(nodeId)));
   }
 
   @Override

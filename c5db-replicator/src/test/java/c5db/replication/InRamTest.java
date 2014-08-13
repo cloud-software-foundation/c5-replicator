@@ -586,8 +586,8 @@ public class InRamTest {
       return id == currentLeader();
     }
 
-    public QuorumConfiguration currentConfiguration() {
-      return instance.getQuorumConfiguration();
+    public QuorumConfiguration currentConfiguration() throws Exception {
+      return instance.getQuorumConfiguration().get();
     }
 
     public ListenableFuture<ReplicatorReceipt> changeQuorum(Collection<Long> newPeerIds) throws Exception {
