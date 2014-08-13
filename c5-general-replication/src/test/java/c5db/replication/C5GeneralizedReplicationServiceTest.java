@@ -19,7 +19,7 @@ package c5db.replication;
 import c5db.C5CommonTestUtil;
 import c5db.MiscMatchers;
 import c5db.ReplicatorConstants;
-import c5db.SimpleC5ModuleServer;
+import c5db.SimpleModuleInformationProvider;
 import c5db.discovery.BeaconService;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
@@ -200,7 +200,7 @@ public class C5GeneralizedReplicationServiceTest {
     public final C5GeneralizedReplicationService service;
     public final GeneralizedReplicator replicator;
 
-    private final SimpleC5ModuleServer moduleServer;
+    private final SimpleModuleInformationProvider moduleInfo;
     private final ReplicationModule replicationModule;
     private final LogModule logModule;
     private final DiscoveryModule nodeInfoModule;
@@ -208,13 +208,13 @@ public class C5GeneralizedReplicationServiceTest {
     public SingleReplicatorController(long nodeId, int port, Collection<Long> peerIds, FiberSupplier fiberSupplier)
         throws Exception {
 
-      moduleServer = new SimpleC5ModuleServer(mainTestFiber, jUnitFiberExceptionHandler);
+      moduleInfo = new SimpleModuleInformationProvider(mainTestFiber, jUnitFiberExceptionHandler);
 
       replicationModule =
-          new ReplicatorService(bossGroup, workerGroup, nodeId, port, moduleServer, fiberSupplier,
+          new ReplicatorService(bossGroup, workerGroup, nodeId, port, moduleInfo, fiberSupplier,
               new NioQuorumFileReaderWriter(baseTestPath));
       logModule = new LogService(baseTestPath, fiberSupplier);
-      nodeInfoModule = new BeaconService(nodeId, DISCOVERY_PORT, workerGroup, moduleServer, fiberSupplier);
+      nodeInfoModule = new BeaconService(nodeId, DISCOVERY_PORT, workerGroup, moduleInfo, fiberSupplier);
 
       startAll();
 
@@ -231,9 +231,9 @@ public class C5GeneralizedReplicationServiceTest {
     private void startAll() throws Exception {
       List<ListenableFuture<Service.State>> startFutures = new ArrayList<>();
 
-      startFutures.add(moduleServer.startModule(logModule));
-      startFutures.add(moduleServer.startModule(nodeInfoModule));
-      startFutures.add(moduleServer.startModule(replicationModule));
+      startFutures.add(moduleInfo.startModule(logModule));
+      startFutures.add(moduleInfo.startModule(nodeInfoModule));
+      startFutures.add(moduleInfo.startModule(replicationModule));
 
       ListenableFuture<List<Service.State>> allFutures = allAsList(startFutures);
 

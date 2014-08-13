@@ -25,9 +25,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A server that organizes its work by delegating to various dynamically-assembled modules.
+ * A service that provides information about C5Modules.
  */
-public interface ModuleServer {
+public interface ModuleInformationProvider {
 
   // TODO this could be generified if we used an interface instead of ModuleType
 
@@ -56,7 +56,7 @@ public interface ModuleServer {
   ListenableFuture<ImmutableMap<ModuleType, Integer>> getAvailableModulePorts();
 
   /**
-   * Each time a module comes online or goes offline, the module server will emit
+   * Each time a module comes online or goes offline, the returned Subscriber will emit
    * a complete map of the currently online modules, mapping them to their associated
    * ports.
    *

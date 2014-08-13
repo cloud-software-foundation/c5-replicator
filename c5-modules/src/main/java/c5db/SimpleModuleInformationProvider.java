@@ -17,7 +17,7 @@
 package c5db;
 
 import c5db.interfaces.C5Module;
-import c5db.interfaces.ModuleServer;
+import c5db.interfaces.ModuleInformationProvider;
 import c5db.messages.generated.ModuleType;
 import c5db.util.FiberOnly;
 import com.google.common.collect.ImmutableMap;
@@ -36,16 +36,17 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
- * A basic C5Server; coordinates the interaction of the local modules
+ * A basic ModuleInformationProvider that enables one to register and start C5Modules,
+ * after which their life cycle is tracked using a SimpleC5ModuleListener.
  */
-public class SimpleC5ModuleServer implements ModuleServer {
+public class SimpleModuleInformationProvider implements ModuleInformationProvider {
   private final Fiber fiber;
   private final Consumer<Throwable> failureHandler;
   private final Map<ModuleType, C5Module> modules = new HashMap<>();
   private final Map<ModuleType, Integer> modulePorts = new HashMap<>();
   private final Channel<ImmutableMap<ModuleType, Integer>> modulePortsChannel = new MemoryChannel<>();
 
-  public SimpleC5ModuleServer(Fiber fiber, Consumer<Throwable> failureHandler) {
+  public SimpleModuleInformationProvider(Fiber fiber, Consumer<Throwable> failureHandler) {
     this.fiber = fiber;
     this.failureHandler = failureHandler;
   }

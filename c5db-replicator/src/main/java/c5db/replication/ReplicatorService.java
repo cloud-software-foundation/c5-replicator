@@ -22,7 +22,7 @@ import c5db.codec.ProtostuffEncoder;
 import c5db.interfaces.C5Module;
 import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
-import c5db.interfaces.ModuleServer;
+import c5db.interfaces.ModuleInformationProvider;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.discovery.NodeInfoReply;
 import c5db.interfaces.discovery.NodeInfoRequest;
@@ -135,7 +135,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   }
 
   private final int port;
-  private final ModuleServer moduleServer;
+  private final ModuleInformationProvider moduleInformationProvider;
   private final FiberSupplier fiberSupplier;
   private final long nodeId;
 
@@ -180,14 +180,14 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
                            EventLoopGroup workerGroup,
                            long nodeId,
                            int port,
-                           ModuleServer moduleServer,
+                           ModuleInformationProvider moduleInformationProvider,
                            FiberSupplier fiberSupplier,
                            QuorumFileReaderWriter quorumFileReaderWriter) {
     this.bossGroup = bossGroup;
     this.workerGroup = workerGroup;
     this.nodeId = nodeId;
     this.port = port;
-    this.moduleServer = moduleServer;
+    this.moduleInformationProvider = moduleInformationProvider;
     this.fiberSupplier = fiberSupplier;
 
     this.allChannels = new DefaultChannelGroup(workerGroup.next());
@@ -528,8 +528,8 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     SettableFuture<Void> doneFuture = SettableFuture.create();
 
     List<ListenableFuture<C5Module>> moduleFutures = new ArrayList<>();
-    moduleFutures.add(moduleServer.getModule(ModuleType.Log));
-    moduleFutures.add(moduleServer.getModule(ModuleType.Discovery));
+    moduleFutures.add(moduleInformationProvider.getModule(ModuleType.Log));
+    moduleFutures.add(moduleInformationProvider.getModule(ModuleType.Discovery));
 
     ListenableFuture<List<C5Module>> compositeModulesFuture = Futures.allAsList(moduleFutures);
 
