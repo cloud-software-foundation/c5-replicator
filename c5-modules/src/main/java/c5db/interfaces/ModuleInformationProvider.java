@@ -53,7 +53,7 @@ public interface ModuleInformationProvider {
   /**
    * Get a future returning the map of currently online modules and their associated ports.
    */
-  ListenableFuture<ImmutableMap<ModuleType, Integer>> getAvailableModulePorts();
+  ListenableFuture<ImmutableMap<ModuleType, Integer>> getOnlineModules();
 
   /**
    * Each time a module comes online or goes offline, the returned Subscriber will emit
@@ -62,7 +62,7 @@ public interface ModuleInformationProvider {
    *
    * @return A Subscriber the caller may subscribe to to receive such maps.
    */
-  Subscriber<ImmutableMap<ModuleType, Integer>> availableModulePortsChannel();
+  Subscriber<ImmutableMap<ModuleType, Integer>> moduleChangeChannel();
 
   /**
    * This is deprecated because it is synchronous and allows blocking implementations;

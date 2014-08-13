@@ -43,8 +43,8 @@ public class SimpleModuleInformationProvider implements ModuleInformationProvide
   private final Fiber fiber;
   private final Consumer<Throwable> failureHandler;
   private final Map<ModuleType, C5Module> modules = new HashMap<>();
-  private final Map<ModuleType, Integer> modulePorts = new HashMap<>();
-  private final Channel<ImmutableMap<ModuleType, Integer>> modulePortsChannel = new MemoryChannel<>();
+  private final Map<ModuleType, Integer> onlineModuleToPortMap = new HashMap<>();
+  private final Channel<ImmutableMap<ModuleType, Integer>> moduleChangeChannel = new MemoryChannel<>();
 
   public SimpleModuleInformationProvider(Fiber fiber, Consumer<Throwable> failureHandler) {
     this.fiber = fiber;
@@ -77,15 +77,15 @@ public class SimpleModuleInformationProvider implements ModuleInformationProvide
   }
 
   @Override
-  public ListenableFuture<ImmutableMap<ModuleType, Integer>> getAvailableModulePorts() {
+  public ListenableFuture<ImmutableMap<ModuleType, Integer>> getOnlineModules() {
     final SettableFuture<ImmutableMap<ModuleType, Integer>> future = SettableFuture.create();
-    fiber.execute(() -> future.set(ImmutableMap.copyOf(modulePorts)));
+    fiber.execute(() -> future.set(ImmutableMap.copyOf(onlineModuleToPortMap)));
     return future;
   }
 
   @Override
-  public Subscriber<ImmutableMap<ModuleType, Integer>> availableModulePortsChannel() {
-    return modulePortsChannel;
+  public Subscriber<ImmutableMap<ModuleType, Integer>> moduleChangeChannel() {
+    return moduleChangeChannel;
   }
 
   @Override
@@ -98,7 +98,7 @@ public class SimpleModuleInformationProvider implements ModuleInformationProvide
   private void addRunningModule(C5Module module) {
     ModuleType type = module.getModuleType();
     if (modules.containsKey(type) && modules.get(type).equals(module)) {
-      modulePorts.put(type, module.port());
+      onlineModuleToPortMap.put(type, module.port());
       publishCurrentActivePorts();
     }
   }
@@ -108,13 +108,13 @@ public class SimpleModuleInformationProvider implements ModuleInformationProvide
     ModuleType type = module.getModuleType();
     if (modules.containsKey(type) && modules.get(type).equals(module)) {
       modules.remove(type);
-      modulePorts.remove(type);
+      onlineModuleToPortMap.remove(type);
       publishCurrentActivePorts();
     }
   }
 
   @FiberOnly
   private void publishCurrentActivePorts() {
-    modulePortsChannel.publish(ImmutableMap.copyOf(modulePorts));
+    moduleChangeChannel.publish(ImmutableMap.copyOf(onlineModuleToPortMap));
   }
 }
