@@ -22,6 +22,17 @@ import c5db.interfaces.log.SequentialEntry;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+
+/**
+ * A Sequential Entry with the minimum set of information understandable to clients of
+ * a GeneralizedReplicator: data and sequence number in the log. This is a value type
+ * intended for returning to replicator clients via readers, iterators, and events.
+ * <p>
+ * Compare {@link c5db.replication.generated.LogEntry}, which is a message containing
+ * entry information for internal distribution among replicators: also compare
+ * e.g. OLogEntry, which is a SequentialEntry for internal log use, which contains
+ * information that should be hidden from replicator clients.
+ */
 public class ReplicatorEntry extends SequentialEntry {
   protected final List<ByteBuffer> data;
 
