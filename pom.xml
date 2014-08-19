@@ -31,11 +31,13 @@
     </parent>
 
     <modules>
+        <module>c5-api</module>
         <module>c5-end-to-end-tests</module>
+        <module>c5-general-replication</module>
         <module>c5-hbase-shim</module>
-        <module>c5-modules</module>
         <module>c5-proto</module>
         <module>c5db</module>
+        <module>c5db-cat-olog</module>
         <module>c5db-client</module>
         <module>c5db-olog</module>
         <module>c5db-protostuff-codec</module>
@@ -47,8 +49,6 @@
         <module>hbase-server</module>
         <module>hbase-client</module>
         <module>hbase-prefix-tree</module>
-        <module>c5db-cat-olog</module>
-        <module>c5-general-replication</module>
     </modules>
 
     <properties>
