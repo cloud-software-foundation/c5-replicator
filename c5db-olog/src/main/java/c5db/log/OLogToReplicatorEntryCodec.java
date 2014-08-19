@@ -44,7 +44,6 @@ public class OLogToReplicatorEntryCodec implements SequentialEntryCodec<Replicat
 
     do {
       oLogEntry = oLogEntryCodec.decode(inputStream);
-      System.out.println("codec decoded " + oLogEntry);
     } while (oLogEntry.getContentType() != OLogContentType.DATA);
 
     return new ReplicatorEntry(oLogEntry.getSeqNum(), oLogEntry.toProtostuff().getDataList());
