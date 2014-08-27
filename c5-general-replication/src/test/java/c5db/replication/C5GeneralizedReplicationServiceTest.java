@@ -71,7 +71,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
-public class StandaloneReplicatorTest {
+public class C5GeneralizedReplicationServiceTest {
   @Rule
   public JUnitRuleFiberExceptions jUnitFiberExceptionHandler = new JUnitRuleFiberExceptions();
 
