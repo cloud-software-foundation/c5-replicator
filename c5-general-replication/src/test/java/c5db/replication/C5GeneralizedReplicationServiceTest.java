@@ -62,13 +62,11 @@ import java.util.function.Consumer;
 import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.CollectionMatchers.isStrictlyIncreasing;
 import static c5db.FutureMatchers.resultsIn;
-import static c5db.IndexCommitMatcher.aCommitNotice;
 import static c5db.ReplicatorConstants.REPLICATOR_PORT_MIN;
 import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.LEADER_ELECTED;
 import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 
 public class C5GeneralizedReplicationServiceTest {
@@ -102,20 +100,6 @@ public class C5GeneralizedReplicationServiceTest {
     // Initiate shut down but don't wait for termination, for the sake of test speed.
     bossGroup.shutdownGracefully();
     workerGroup.shutdownGracefully();
-  }
-
-  @Test(timeout = 9000)
-  public void logsToASingleQuorumReplicator() throws Exception {
-    long nodeId = 1;
-    List<Long> peerIds = Lists.newArrayList(1L);
-
-    try (SingleQuorumReplicationServer serverFixture
-             = new SingleQuorumReplicationServer(nodeId, peerIds, this::newExceptionHandlingFiber)) {
-
-      serverFixture.eventMonitor.waitFor(aReplicatorEvent(LEADER_ELECTED));
-      serverFixture.replicator.logData(Lists.newArrayList(someData())).get();
-      serverFixture.commitMonitor.waitFor(aCommitNotice().withIndex(equalTo(2L)));
-    }
   }
 
   @Test(timeout = 9000)
