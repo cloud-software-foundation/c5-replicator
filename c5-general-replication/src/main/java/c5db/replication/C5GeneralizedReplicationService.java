@@ -115,11 +115,13 @@ public class C5GeneralizedReplicationService extends AbstractService implements 
 
   @Override
   public ListenableFuture<GeneralizedReplicator> createReplicator(String quorumId, Collection<Long> peerIds) {
-    // TODO the failure of the fiber passed to C5GeneralizedReplicator should not fail this entire service.
     return Futures.transform(
         replicationModule.createReplicator(quorumId, peerIds),
-        (Replicator replicator) ->
-            new C5GeneralizedReplicator(replicator, createAndStartFiber(this::notifyFailed)));
+        (Replicator replicator) -> {
+          replicator.start();
+          // TODO the failure of the fiber passed to C5GeneralizedReplicator should not fail this entire service.
+          return new C5GeneralizedReplicator(replicator, createAndStartFiber(this::notifyFailed));
+        });
   }
 
   @Override
