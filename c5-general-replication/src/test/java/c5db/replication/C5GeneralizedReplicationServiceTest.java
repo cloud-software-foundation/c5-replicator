@@ -24,18 +24,12 @@ import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
 import c5db.interfaces.replication.GeneralizedReplicator;
-import c5db.interfaces.replication.IndexCommitNotice;
-import c5db.interfaces.replication.Replicator;
-import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.log.LogService;
 import c5db.log.ReplicatorLogGenericTestUtil;
-import c5db.messages.generated.ModuleType;
-import c5db.util.C5Futures;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberSupplier;
 import c5db.util.JUnitRuleFiberExceptions;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import io.netty.channel.EventLoopGroup;
@@ -59,12 +53,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
-import static c5db.AsyncChannelAsserts.ChannelHistoryMonitor;
 import static c5db.CollectionMatchers.isStrictlyIncreasing;
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.ReplicatorConstants.REPLICATOR_PORT_MIN;
-import static c5db.interfaces.replication.ReplicatorInstanceEvent.EventType.LEADER_ELECTED;
-import static c5db.replication.ReplicationMatchers.aReplicatorEvent;
 import static com.google.common.util.concurrent.Futures.allAsList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -110,8 +101,7 @@ public class C5GeneralizedReplicationServiceTest {
     try (SingleQuorumReplicationServer serverFixture
              = new SingleQuorumReplicationServer(nodeId, peerIds, this::newExceptionHandlingFiber)) {
 
-      serverFixture.eventMonitor.waitFor(aReplicatorEvent(LEADER_ELECTED));
-      GeneralizedReplicator replicator = new C5GeneralizedReplicator(serverFixture.replicator, mainTestFiber);
+      GeneralizedReplicator replicator = serverFixture.replicator;
 
       List<ListenableFuture<Long>> replicateFutures = new ArrayList<ListenableFuture<Long>>() {{
         add(replicator.replicate(someData()));
@@ -147,116 +137,54 @@ public class C5GeneralizedReplicationServiceTest {
   private class SingleQuorumReplicationServer implements AutoCloseable {
     private static final String QUORUM_ID = "quorumId";
 
-    public final ReplicationServer server;
-    public final Replicator replicator;
-    public final ChannelHistoryMonitor<ReplicatorInstanceEvent> eventMonitor;
-    public final ChannelHistoryMonitor<IndexCommitNotice> commitMonitor;
+    public final C5GeneralizedReplicationService service;
+    public final GeneralizedReplicator replicator;
+
+    private final SimpleC5ModuleServer moduleServer;
+    private final ReplicationModule replicationModule;
+    private final LogModule logModule;
+    private final DiscoveryModule nodeInfoModule;
 
     public SingleQuorumReplicationServer(long nodeId, Collection<Long> peerIds, FiberSupplier fiberSupplier)
         throws Exception {
-      server = new ReplicationServer(nodeId, REPLICATOR_PORT_MIN, DISCOVERY_PORT, fiberSupplier);
-      server.startAndWait();
 
-      replicator = server.createReplicator(QUORUM_ID, peerIds).get();
-      replicator.start();
+      moduleServer = new SimpleC5ModuleServer(mainTestFiber);
 
-      eventMonitor = new ChannelHistoryMonitor<>(replicator.getEventChannel(), mainTestFiber);
-      commitMonitor = new ChannelHistoryMonitor<>(replicator.getCommitNoticeChannel(), mainTestFiber);
+      replicationModule =
+          new ReplicatorService(bossGroup, workerGroup, nodeId, REPLICATOR_PORT_MIN, moduleServer, fiberSupplier,
+              new NioQuorumFileReaderWriter(baseTestPath));
+      logModule = new LogService(baseTestPath, fiberSupplier);
+      nodeInfoModule = new BeaconService(nodeId, DISCOVERY_PORT, workerGroup, moduleServer, fiberSupplier);
+
+      startAll();
+
+      service = new C5GeneralizedReplicationService(replicationModule, logModule, fiberSupplier);
+      replicator = service.createReplicator(QUORUM_ID, peerIds).get();
     }
 
     @Override
     public void close() {
-      server.stopAndWait();
-      server.dispose();
-    }
-  }
-
-  /**
-   * Replication server that includes its own discovery and logging mechanism; internally
-   * it bundles a ReplicationModule, a LogModule, and a DiscoveryModule. It then implements
-   * the ReplicationModule interface and delegates to its internal ReplicationModule.
-   */
-  private class ReplicationServer extends AbstractService implements ReplicationModule {
-    private final Fiber serverFiber;
-    private final SimpleC5ModuleServer moduleServer;
-    private final Fiber discoveryFiber;
-    private final DiscoveryModule discoveryModule;
-    private final LogModule logModule;
-    private final ReplicationModule replicationModule;
-
-    private final int replicatorPort;
-
-    public ReplicationServer(long nodeId, int replicatorPort, int discoveryPort, FiberSupplier fiberSupplier) {
-      this.replicatorPort = replicatorPort;
-
-      serverFiber = fiberSupplier.getFiber(jUnitFiberExceptionHandler);
-      moduleServer = new SimpleC5ModuleServer(serverFiber);
-      serverFiber.start();
-
-      discoveryFiber = fiberSupplier.getFiber(jUnitFiberExceptionHandler);
-      discoveryModule = new BeaconService(nodeId, discoveryPort, workerGroup, moduleServer, fiberSupplier);
-      discoveryFiber.start();
-
-      logModule = new LogService(baseTestPath, fiberSupplier);
-
-      replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
-          fiberSupplier, new NioQuorumFileReaderWriter(baseTestPath));
+      service.dispose();
+      stopAll();
     }
 
-    @Override
-    protected void doStart() {
+    private void startAll() throws Exception {
       List<ListenableFuture<Service.State>> startFutures = new ArrayList<>();
 
       startFutures.add(moduleServer.startModule(logModule));
-      startFutures.add(moduleServer.startModule(discoveryModule));
+      startFutures.add(moduleServer.startModule(nodeInfoModule));
       startFutures.add(moduleServer.startModule(replicationModule));
 
       ListenableFuture<List<Service.State>> allFutures = allAsList(startFutures);
 
-      C5Futures.addCallback(allFutures,
-          (List<Service.State> ignore) -> notifyStarted(),
-          this::notifyFailed,
-          serverFiber);
+      // Block waiting for everything to start.
+      allFutures.get();
     }
 
-    @Override
-    protected void doStop() {
+    private void stopAll() {
       replicationModule.stopAndWait();
-      discoveryModule.stopAndWait();
+      nodeInfoModule.stopAndWait();
       logModule.stopAndWait();
-
-      notifyStopped();
-    }
-
-    @Override
-    public ListenableFuture<Replicator> createReplicator(String quorumId, Collection<Long> peerIds) {
-      return replicationModule.createReplicator(quorumId, peerIds);
-    }
-
-    @Override
-    public ModuleType getModuleType() {
-      return ModuleType.Replication;
-    }
-
-    @Override
-    public boolean hasPort() {
-      return true;
-    }
-
-    @Override
-    public int port() {
-      return replicatorPort;
-    }
-
-    @Override
-    public String acceptCommand(String commandString) throws InterruptedException {
-      throw new UnsupportedOperationException();
-    }
-
-    public void dispose() {
-      serverFiber.dispose();
-      discoveryFiber.dispose();
     }
   }
-
 }

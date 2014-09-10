@@ -17,8 +17,6 @@
 
 package c5db.replication;
 
-import c5db.SimpleC5ModuleServer;
-import c5db.interfaces.DiscoveryModule;
 import c5db.interfaces.GeneralizedReplicationService;
 import c5db.interfaces.LogModule;
 import c5db.interfaces.ReplicationModule;
@@ -26,91 +24,45 @@ import c5db.interfaces.log.Reader;
 import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorEntry;
-import c5db.log.LogService;
 import c5db.log.OLogToReplicatorEntryCodec;
-import c5db.util.C5Futures;
 import c5db.util.FiberSupplier;
-import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import org.jetlang.core.Disposable;
 import org.jetlang.fibers.Fiber;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.google.common.util.concurrent.Futures.allAsList;
-
 
 /**
- * Replication server implementing a variation of the Raft algorithm; internally
- * it bundles a ReplicationModule, a LogModule (based on OLog), and a DiscoveryModule
- * (passed in as a constructor argument).
+ * A GeneralizedReplicationService implementing a variation of the Raft algorithm; internally
+ * it bundles a ReplicationModule and a LogModule (based on OLog). This class just wraps
+ * the modules, and doesn't do any lifecycle management; it assumes they are started elsewhere
+ * and have finished starting up before any of the GeneralizedReplicationService methods are called.
  */
-public class C5GeneralizedReplicationService extends AbstractService implements GeneralizedReplicationService {
-  private static final int NUMBER_OF_PROCESSORS = Runtime.getRuntime().availableProcessors();
+public class C5GeneralizedReplicationService implements GeneralizedReplicationService {
 
   private final FiberSupplier fiberSupplier;
-  private final Fiber serverFiber;
-  private final SimpleC5ModuleServer moduleServer;
-  private final DiscoveryModule nodeInfoModule;
+  private final Fiber fiber;
   private final LogModule logModule;
   private final ReplicationModule replicationModule;
 
   private final List<Disposable> disposables = new ArrayList<>();
 
-  private final EventLoopGroup bossGroup = new NioEventLoopGroup(NUMBER_OF_PROCESSORS / 3);
-  private final EventLoopGroup workerGroup = new NioEventLoopGroup(NUMBER_OF_PROCESSORS / 3);
-
   public C5GeneralizedReplicationService(
-      Path basePath,
-      long nodeId,
-      int replicatorPort,
-      DiscoveryModule nodeInfoModule,
+      ReplicationModule replicationModule,
+      LogModule logModule,
       FiberSupplier fiberSupplier) {
 
-    this.nodeInfoModule = nodeInfoModule;
+    this.replicationModule = replicationModule;
+    this.logModule = logModule;
     this.fiberSupplier = fiberSupplier;
 
-    serverFiber = fiberSupplier.getFiber(this::notifyFailed);
-    moduleServer = new SimpleC5ModuleServer(serverFiber);
-    serverFiber.start();
-
-    replicationModule = new ReplicatorService(bossGroup, workerGroup, nodeId, replicatorPort, moduleServer,
-        fiberSupplier, new NioQuorumFileReaderWriter(basePath));
-
-    logModule = new LogService(basePath, fiberSupplier);
-  }
-
-  @Override
-  protected void doStart() {
-    List<ListenableFuture<Service.State>> startFutures = new ArrayList<>();
-
-    startFutures.add(moduleServer.startModule(logModule));
-    startFutures.add(moduleServer.startModule(nodeInfoModule));
-    startFutures.add(moduleServer.startModule(replicationModule));
-
-    ListenableFuture<List<Service.State>> allFutures = allAsList(startFutures);
-
-    C5Futures.addCallback(allFutures,
-        (List<Service.State> ignore) -> notifyStarted(),
-        this::notifyFailed,
-        serverFiber);
-  }
-
-  @Override
-  protected void doStop() {
-    replicationModule.stopAndWait();
-    nodeInfoModule.stopAndWait();
-    logModule.stopAndWait();
-
-    notifyStopped();
+    fiber = fiberSupplier.getFiber(this::notifyFailed);
+    fiber.start();
   }
 
   @Override
@@ -119,7 +71,6 @@ public class C5GeneralizedReplicationService extends AbstractService implements 
         replicationModule.createReplicator(quorumId, peerIds),
         (Replicator replicator) -> {
           replicator.start();
-          // TODO the failure of the fiber passed to C5GeneralizedReplicator should not fail this entire service.
           return new C5GeneralizedReplicator(replicator, createAndStartFiber(this::notifyFailed));
         });
   }
@@ -130,15 +81,19 @@ public class C5GeneralizedReplicationService extends AbstractService implements 
   }
 
   public void dispose() {
-    serverFiber.dispose();
+    fiber.dispose();
     disposables.forEach(Disposable::dispose);
   }
 
-  private Fiber createAndStartFiber(Consumer<Throwable> throwableHandler) {
-    Fiber newFiber = fiberSupplier.getFiber(throwableHandler);
-    serverFiber.execute(() -> disposables.add(newFiber));
+  private Fiber createAndStartFiber(Consumer<Throwable> throwableConsumer) {
+    Fiber newFiber = fiberSupplier.getFiber(throwableConsumer);
+    fiber.execute(() -> disposables.add(newFiber));
     newFiber.start();
     return newFiber;
+  }
+
+  private void notifyFailed(Throwable throwable) {
+    // TODO log and/or propagate the exception
   }
 }
 

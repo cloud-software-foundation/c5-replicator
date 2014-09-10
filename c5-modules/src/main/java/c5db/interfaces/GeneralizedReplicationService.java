@@ -21,11 +21,10 @@ import c5db.interfaces.log.Reader;
 import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.ReplicatorEntry;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 
 import java.util.Collection;
 
-public interface GeneralizedReplicationService extends Service {
+public interface GeneralizedReplicationService {
 
   ListenableFuture<GeneralizedReplicator> createReplicator(String quorumId, Collection<Long> peerIds);
 
