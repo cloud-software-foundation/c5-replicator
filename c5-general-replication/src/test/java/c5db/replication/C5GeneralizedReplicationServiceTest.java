@@ -79,8 +79,6 @@ public class C5GeneralizedReplicationServiceTest {
   private final Path baseTestPath = new C5CommonTestUtil().getDataTestDir("general-replicator-test");
 
   private final ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_PROCESSORS);
-  private final EventLoopGroup bossGroup = new NioEventLoopGroup(NUMBER_OF_PROCESSORS / 3);
-  private final EventLoopGroup workerGroup = new NioEventLoopGroup(NUMBER_OF_PROCESSORS / 3);
 
   private final PoolFiberFactory fiberFactory = new PoolFiberFactory(executorService);
   private final Set<Fiber> fibers = new HashSet<>();
@@ -96,17 +94,13 @@ public class C5GeneralizedReplicationServiceTest {
     fiberFactory.dispose();
     executorService.shutdownNow();
     fibers.forEach(Fiber::dispose);
-
-    // Initiate shut down but don't wait for termination, for the sake of test speed.
-    bossGroup.shutdownGracefully();
-    workerGroup.shutdownGracefully();
   }
 
   @Test(timeout = 9000)
   public void logsToASingleQuorumReplicator() throws Exception {
-    List<Long> peerIds = Lists.newArrayList(1L);
+    List<Long> nodeIds = Lists.newArrayList(1L);
 
-    try (QuorumOfReplicatorsController controller = new QuorumOfReplicatorsController(peerIds, this::newFiber)) {
+    try (QuorumOfReplicatorsController controller = newQuorum(nodeIds)) {
 
       GeneralizedReplicator replicator = controller.waitUntilAReplicatorIsReady();
 
@@ -121,9 +115,9 @@ public class C5GeneralizedReplicationServiceTest {
 
   @Test(timeout = 9000)
   public void replicatesAcrossAQuorumComposedOfThreeReplicators() throws Exception {
-    List<Long> peerIds = Lists.newArrayList(1L, 2L, 3L);
+    List<Long> nodeIds = Lists.newArrayList(1L, 2L, 3L);
 
-    try (QuorumOfReplicatorsController controller = new QuorumOfReplicatorsController(peerIds, this::newFiber)) {
+    try (QuorumOfReplicatorsController controller = newQuorum(nodeIds)) {
 
       GeneralizedReplicator replicator = controller.waitUntilAReplicatorIsReady();
 
@@ -145,6 +139,10 @@ public class C5GeneralizedReplicationServiceTest {
 
   private List<ByteBuffer> someData() {
     return Lists.newArrayList(ReplicatorLogGenericTestUtil.someData());
+  }
+
+  private QuorumOfReplicatorsController newQuorum(Collection<Long> nodeIds) throws Exception {
+    return new QuorumOfReplicatorsController(nodeIds, baseTestPath, mainTestFiber, this::newFiber, jUnitFiberExceptionHandler);
   }
 
   private ListenableFuture<List<ReplicateSubmissionInfo>> resultFutureForNReplicateRequests(
@@ -194,7 +192,7 @@ public class C5GeneralizedReplicationServiceTest {
    * Runs a C5GeneralizedReplicationService and handles startup and disposal,
    * for the purpose of making tests more readable
    */
-  private class SingleReplicatorController implements AutoCloseable {
+  private static class SingleReplicatorController implements AutoCloseable {
     private static final String QUORUM_ID = "quorumId";
 
     public final C5GeneralizedReplicationService service;
@@ -205,10 +203,17 @@ public class C5GeneralizedReplicationServiceTest {
     private final LogModule logModule;
     private final DiscoveryModule nodeInfoModule;
 
-    public SingleReplicatorController(long nodeId, int port, Collection<Long> peerIds, FiberSupplier fiberSupplier)
-        throws Exception {
+    public SingleReplicatorController(int port,
+                                      long nodeId,
+                                      Collection<Long> peerIds,
+                                      Path baseTestPath,
+                                      Fiber testFiber,
+                                      FiberSupplier fiberSupplier,
+                                      Consumer<Throwable> exceptionHandler,
+                                      EventLoopGroup bossGroup,
+                                      EventLoopGroup workerGroup) throws Exception {
 
-      moduleInfo = new SimpleModuleInformationProvider(mainTestFiber, jUnitFiberExceptionHandler);
+      moduleInfo = new SimpleModuleInformationProvider(testFiber, exceptionHandler);
 
       replicationModule =
           new ReplicatorService(bossGroup, workerGroup, nodeId, port, moduleInfo, fiberSupplier,
@@ -252,15 +257,30 @@ public class C5GeneralizedReplicationServiceTest {
    * Runs a complete quorum of C5GeneralizedReplicationService and handles startup and disposal,
    * for the purpose of making tests more readable
    */
-  private class QuorumOfReplicatorsController implements AutoCloseable {
+  private static class QuorumOfReplicatorsController implements AutoCloseable {
     private final Collection<Long> peerIds;
+    private final Path baseTestPath;
+    private final Fiber testFiber;
     private final FiberSupplier fiberSupplier;
+    private final Consumer<Throwable> exceptionHandler;
+
+    private final EventLoopGroup bossGroup = new NioEventLoopGroup(NUMBER_OF_PROCESSORS / 3);
+    private final EventLoopGroup workerGroup = new NioEventLoopGroup(NUMBER_OF_PROCESSORS / 3);
+
     private final Map<Long, SingleReplicatorController> controllers = new HashMap<>();
     private final Map<Long, GeneralizedReplicator> replicators = new HashMap<>();
 
-    public QuorumOfReplicatorsController(Collection<Long> peerIds, FiberSupplier fiberSupplier) throws Exception {
+    public QuorumOfReplicatorsController(Collection<Long> peerIds,
+                                         Path baseTestPath,
+                                         Fiber testFiber,
+                                         FiberSupplier fiberSupplier,
+                                         Consumer<Throwable> exceptionHandler) throws Exception {
+
       this.peerIds = peerIds;
+      this.baseTestPath = baseTestPath;
+      this.testFiber = testFiber;
       this.fiberSupplier = fiberSupplier;
+      this.exceptionHandler = exceptionHandler;
 
       createControllersForEachPeerId();
     }
@@ -268,6 +288,10 @@ public class C5GeneralizedReplicationServiceTest {
     @Override
     public void close() {
       controllers.values().forEach(SingleReplicatorController::close);
+
+      // Initiate shut down but don't wait for termination, for the sake of test speed.
+      bossGroup.shutdownGracefully();
+      workerGroup.shutdownGracefully();
     }
 
     public GeneralizedReplicator waitUntilAReplicatorIsReady() throws Exception {
@@ -279,7 +303,7 @@ public class C5GeneralizedReplicationServiceTest {
         C5Futures.addCallback(isAvailableFuture,
             (ignore) -> readyReplicatorFuture.set(replicator),
             readyReplicatorFuture::setException,
-            mainTestFiber);
+            testFiber);
       }
 
       return readyReplicatorFuture.get();
@@ -289,7 +313,8 @@ public class C5GeneralizedReplicationServiceTest {
       int port = ReplicatorConstants.REPLICATOR_PORT_MIN;
 
       for (long nodeId : peerIds) {
-        SingleReplicatorController controller = new SingleReplicatorController(nodeId, port, peerIds, fiberSupplier);
+        SingleReplicatorController controller = new SingleReplicatorController(port, nodeId, peerIds,
+            baseTestPath, testFiber, fiberSupplier, exceptionHandler, bossGroup, workerGroup);
         controllers.put(nodeId, controller);
 
         port++;
