@@ -6,4 +6,6 @@ dependencies:
     - mvn clean install -DskipTests
 test:
   override:
-    - mvn test
+    - mvn test:
+        timeout: 1800
+
