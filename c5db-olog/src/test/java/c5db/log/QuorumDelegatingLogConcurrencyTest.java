@@ -21,6 +21,7 @@ import c5db.C5CommonTestUtil;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.file.Path;
@@ -59,6 +60,7 @@ public class QuorumDelegatingLogConcurrencyTest {
     runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::runMultipleQuorumThreadSafetyTest);
   }
 
+  @Ignore
   @Test(timeout = 5000)
   public void isThreadSafeWithRespectToCallingCloseFromMultipleThreads() throws Exception {
     final int numThreads = 100;

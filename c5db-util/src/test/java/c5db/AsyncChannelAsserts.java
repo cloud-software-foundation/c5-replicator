@@ -25,6 +25,8 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
+import org.jetlang.channels.Channel;
+import org.jetlang.channels.RequestChannel;
 import org.jetlang.channels.Subscriber;
 import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.RunnableExecutor;
@@ -65,6 +67,23 @@ public class AsyncChannelAsserts {
     public void dispose() {
       subscribedFiber.dispose();
     }
+  }
+
+  public static <S,R> ChannelListener<S> waitForReply(RequestChannel<S,R> channel) {
+    List<Throwable> throwables = new ArrayList<>();
+    BatchExecutor exceptionHandlingBatchExecutor = new ExceptionHandlingBatchExecutor(throwables::add);
+    RunnableExecutor runnableExecutor = new RunnableExecutorImpl(exceptionHandlingBatchExecutor);
+    Fiber channelSubscriberFiber = new ThreadFiber(runnableExecutor, null, true);
+    ArrayBlockingQueue<S> messages = new ArrayBlockingQueue<>(1);
+    channel.subscribe(channelSubscriberFiber, m -> {
+      try {
+        messages.put(m.getRequest());
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    });
+    channelSubscriberFiber.start();
+    return new ChannelListener<>(channelSubscriberFiber, messages, throwables);
   }
 
   public static <T> ChannelListener<T> listenTo(Subscriber<T> channel) {
