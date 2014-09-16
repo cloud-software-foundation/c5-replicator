@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Consumer;
+
 /**
  * A {@link com.google.common.util.concurrent.Service.Listener} that logs the module lifecycle
  * and performs a single action when the module stops or fails.
@@ -31,11 +33,16 @@ public class SimpleC5ModuleListener implements Service.Listener {
   private final C5Module module;
   private final Runnable onRunningModule;
   private final Runnable onStoppingModule;
+  private final Consumer<Throwable> throwableConsumer;
 
-  public SimpleC5ModuleListener(C5Module module, Runnable onRunningModule, Runnable onStoppingModule) {
+  public SimpleC5ModuleListener(C5Module module,
+                                Runnable onRunningModule,
+                                Runnable onStoppingModule,
+                                Consumer<Throwable> throwableConsumer) {
     this.module = module;
     this.onRunningModule = onRunningModule;
     this.onStoppingModule = onStoppingModule;
+    this.throwableConsumer = throwableConsumer;
   }
 
   @Override
@@ -65,5 +72,6 @@ public class SimpleC5ModuleListener implements Service.Listener {
   public void failed(Service.State from, Throwable failure) {
     logger.error("Failed module {}: {}", module, failure);
     onStoppingModule.run();
+    throwableConsumer.accept(failure);
   }
 }

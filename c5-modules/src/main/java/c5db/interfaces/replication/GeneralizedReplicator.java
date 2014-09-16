@@ -27,22 +27,27 @@ import java.util.List;
 public interface GeneralizedReplicator {
 
   /**
-   * Replicate data durably. Returns a future which will return when the data is known to
-   * have been replicated successfully; or, the future will throw an exception if it is
-   * known that a problem occurred replicating the data.
+   * Replicate data durably. Returns a future which will return when information is
+   * available about the submitted replicate request; or, the future will contain an
+   * exception if a problem occurred submitting the replicate request.
    * <p>
    * Several GeneralizedReplicator instances, possibly hosted on different machines, may
-   * cooperate in replicating data.
+   * cooperate in replicating data, all numbering their requests within the same sequence.
    * <p>
-   * The value of the future, on success, is a sequence number assigned by the replication
-   * algorithm. For any two requests (to any two GeneralizedReplicators cooperating in
-   * replicating the same sequence of data) if both succeed, then they will have different
-   * sequence numbers. Also, if any two requests to the same GeneralizedReplicator instance
-   * both succeed, and if one "happens-before" the other, then the earlier request will
-   * have a lower sequence number than the second.
+   * The value of the future, on success, contains such a sequence number assigned by the
+   * replication algorithm. Sequence numbers satisfy these properties: for any two requests
+   * (to any two GeneralizedReplicators cooperating in replicating the same sequence of
+   * data) if both succeed, then they will have different sequence numbers. Also, if any
+   * two requests to the same GeneralizedReplicator instance both succeed, and if one
+   * "happens-before" the other, then the earlier request will have a lower sequence number
+   * than the second.
+   * <p>
+   * The returned ReplicateSubmissionInfo also contains a separate future (completedFuture)
+   * which will return when the data has been durably replicated; or will contain an
+   * exception if it is known that a problem occurred while replicating the data.
    */
-  ListenableFuture<Long> replicate(List<ByteBuffer> data)
-      throws InterruptedException, InvalidReplicatorStateException;
+  ListenableFuture<ReplicateSubmissionInfo> replicate(List<ByteBuffer> data)
+  throws InterruptedException, InvalidReplicatorStateException;
 
   /**
    * Return a future which will not complete until the GeneralizedReplicator is in a state

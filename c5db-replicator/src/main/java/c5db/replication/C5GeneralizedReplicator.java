@@ -20,10 +20,12 @@ package c5db.replication;
 import c5db.ReplicatorConstants;
 import c5db.interfaces.replication.GeneralizedReplicator;
 import c5db.interfaces.replication.IndexCommitNotice;
+import c5db.interfaces.replication.ReplicateSubmissionInfo;
 import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.interfaces.replication.ReplicatorReceipt;
 import c5db.util.C5Futures;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +72,7 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
   }
 
   @Override
-  public ListenableFuture<Long> replicate(List<ByteBuffer> data) throws InterruptedException,
+  public ListenableFuture<ReplicateSubmissionInfo> replicate(List<ByteBuffer> data) throws InterruptedException,
       InvalidReplicatorStateException {
 
     final ReceiptWithCompletionFuture receiptWithCompletionFuture =
@@ -84,7 +86,9 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
     fiber.execute(
         () -> receiptQueue.add(receiptWithCompletionFuture));
 
-    return receiptWithCompletionFuture.completionFuture;
+    return Futures.transform(receiptWithCompletionFuture.receiptFuture,
+        (ReplicatorReceipt receipt) ->
+            new ReplicateSubmissionInfo(receipt.seqNum, receiptWithCompletionFuture.completionFuture));
   }
 
   @Override
@@ -133,7 +137,7 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
   private void handleCommitNotice(IndexCommitNotice notice) {
     while (!receiptQueue.isEmpty() && receiptQueue.peek().receiptFuture.isDone()) {
       ReceiptWithCompletionFuture receiptWithCompletionFuture = receiptQueue.peek();
-      SettableFuture<Long> completionFuture = receiptWithCompletionFuture.completionFuture;
+      SettableFuture<Void> completionFuture = receiptWithCompletionFuture.completionFuture;
 
       ReplicatorReceipt receipt = getReceiptOrSetException(receiptWithCompletionFuture);
 
@@ -149,8 +153,8 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
           completionFuture.setException(new IOException("commit notice's term differs from that of receipt"));
 
         } else {
-          // receipt.seqNum is within the range of the commit notice, and the terms match.
-          completionFuture.set(receipt.seqNum);
+          // receipt.seqNum is within the range of the commit notice, and the terms match: replication is complete
+          completionFuture.set(null);
         }
       }
 
@@ -217,7 +221,7 @@ public class C5GeneralizedReplicator implements GeneralizedReplicator {
    */
   private static class ReceiptWithCompletionFuture {
     public final ListenableFuture<ReplicatorReceipt> receiptFuture;
-    public final SettableFuture<Long> completionFuture = SettableFuture.create();
+    public final SettableFuture<Void> completionFuture = SettableFuture.create();
 
     private ReceiptWithCompletionFuture(ListenableFuture<ReplicatorReceipt> receiptFuture) {
       this.receiptFuture = receiptFuture;

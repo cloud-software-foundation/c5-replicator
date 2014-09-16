@@ -34,18 +34,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 /**
  * A basic C5Server; coordinates the interaction of the local modules
  */
 public class SimpleC5ModuleServer implements ModuleServer {
   private final Fiber fiber;
+  private final Consumer<Throwable> failureHandler;
   private final Map<ModuleType, C5Module> modules = new HashMap<>();
   private final Map<ModuleType, Integer> modulePorts = new HashMap<>();
   private final Channel<ImmutableMap<ModuleType, Integer>> modulePortsChannel = new MemoryChannel<>();
 
-  public SimpleC5ModuleServer(Fiber fiber) {
+  public SimpleC5ModuleServer(Fiber fiber, Consumer<Throwable> failureHandler) {
     this.fiber = fiber;
+    this.failureHandler = failureHandler;
   }
 
   public ListenableFuture<Service.State> startModule(C5Module module) {
@@ -56,7 +59,8 @@ public class SimpleC5ModuleServer implements ModuleServer {
           addRunningModule(module);
           startedFuture.set(null);
         },
-        () -> removeModule(module));
+        () -> removeModule(module),
+        failureHandler);
 
     module.addListener(stateChangeListener, fiber);
     modules.put(module.getModuleType(), module);
