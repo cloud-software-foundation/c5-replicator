@@ -17,13 +17,10 @@
 
 package c5db.log;
 
-import c5db.C5CommonTestUtil;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +31,7 @@ import static c5db.ConcurrencyTestUtil.runAConcurrencyTestSeveralTimes;
 import static c5db.ConcurrencyTestUtil.runNTimesAndWaitForAllToComplete;
 import static c5db.FutureMatchers.resultsIn;
 import static c5db.log.LogTestUtil.someConsecutiveEntries;
+import static c5db.log.QuorumDelegatingLogUnitTest.ArrayPersistenceService;
 import static java.util.concurrent.Executors.newFixedThreadPool;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -42,14 +40,6 @@ import static org.hamcrest.Matchers.is;
 public class QuorumDelegatingLogConcurrencyTest {
   private static final int LOG_WORKER_THREADS = 8;
   private static final int ENTRIES_PER_QUORUM_PER_TEST = 1;
-
-  private LogFileService logFileService;
-
-  @Before
-  public void openLogFileService() throws Exception {
-    final Path testDir = (new C5CommonTestUtil()).getDataTestDir("benchmark");
-    logFileService = new LogFileService(testDir);
-  }
 
   @Test(timeout = 5000)
   public void isThreadSafeWithRespectToLoggingFromMultipleQuorumsWithEachQuorumItsOwnThread() throws Exception {
@@ -78,8 +68,6 @@ public class QuorumDelegatingLogConcurrencyTest {
       });
 
       assertThatEverythingWasLoggedCorrectly(log);
-    } finally {
-      logFileService.clearAllLogs();
     }
   }
 
@@ -93,8 +81,6 @@ public class QuorumDelegatingLogConcurrencyTest {
       });
 
       runNTimesAndWaitForAllToComplete(numQuorums * 2, executor, log::close);
-    } finally {
-      logFileService.clearAllLogs();
     }
   }
 
@@ -118,7 +104,10 @@ public class QuorumDelegatingLogConcurrencyTest {
 
   private OLog createLog() {
     KeySerializingExecutor executor = new WrappingKeySerializingExecutor(newFixedThreadPool(LOG_WORKER_THREADS));
-    return new QuorumDelegatingLog(logFileService,
+
+    // Run test in memory for speed. The concurrency properties of the code will still be tested.
+    return new QuorumDelegatingLog(
+        new ArrayPersistenceService(),
         executor,
         NavigableMapOLogEntryOracle::new,
         InMemoryPersistenceNavigator::new);

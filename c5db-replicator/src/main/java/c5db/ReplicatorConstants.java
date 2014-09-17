@@ -17,13 +17,17 @@
 
 package c5db;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class ReplicatorConstants {
   public static final int REPLICATOR_PORT_MIN = 1024;
 
-  public static final String REPLICATOR_QUORUM_FILE_ROOT_DIRECTORY_NAME = "repl";
+  public static final Path REPLICATOR_QUORUM_FILE_ROOT_DIRECTORY_RELATIVE_PATH = Paths.get("repl");
   public static final String REPLICATOR_PERSISTER_FILE_NAME = "replication-data";
-  public static final int REPLICATOR_NODE_INFO_REQUEST_TIMEOUT_MILLISECONDS = 3000;
   public static final int REPLICATOR_MAXIMUM_SIMULTANEOUS_LOG_REQUESTS = 10000;
+
+  public static final int REPLICATOR_NODE_INFO_REQUEST_TIMEOUT_MILLISECONDS = 3000;
   public static final int REPLICATOR_DEFAULT_BASE_ELECTION_TIMEOUT_MILLISECONDS = 1000;
   public static final int REPLICATOR_DEFAULT_ELECTION_CHECK_INTERVAL_MILLISECONDS = 100;
   public static final int REPLICATOR_DEFAULT_LEADER_LOG_INTERVAL_MILLISECONDS = 100;

@@ -94,10 +94,9 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     getQuorumStructure(quorumId).ensureEntriesAreConsecutive(entries);
     updateOracleWithNewEntries(entries, quorumId);
 
-    // TODO group commit / sync
-
     return submitQuorumTask(quorumId, () -> {
       currentLog(quorumId).append(entries);
+      maybeSyncLogForQuorum(quorumId);
       return true;
     });
   }
@@ -130,6 +129,7 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       }
 
       currentLog(quorumId).truncate(seqNum);
+      maybeSyncLogForQuorum(quorumId);
       return true;
     });
   }
@@ -343,6 +343,12 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
     }
 
     return Lists.newArrayList(Iterables.concat(entries));
+  }
+
+  private void maybeSyncLogForQuorum(String quorumId) throws IOException {
+    if (LogConstants.LOG_USE_FILE_CHANNEL_FORCE) {
+      currentLog(quorumId).sync();
+    }
   }
 
   private SequentialLog<OLogEntry> currentLog(String quorumId) throws IOException {

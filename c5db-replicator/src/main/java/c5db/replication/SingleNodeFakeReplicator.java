@@ -23,6 +23,7 @@ import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.interfaces.replication.ReplicatorReceipt;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.Channel;
@@ -59,8 +60,10 @@ public class SingleNodeFakeReplicator implements Replicator {
   }
 
   @Override
-  public QuorumConfiguration getQuorumConfiguration() {
-    return QuorumConfiguration.of(Sets.newHashSet(nodeId));
+  public ListenableFuture<QuorumConfiguration> getQuorumConfiguration() {
+    return Futures.immediateFuture(
+        QuorumConfiguration.of(
+            Sets.newHashSet(nodeId)));
   }
 
   @Override
@@ -69,7 +72,7 @@ public class SingleNodeFakeReplicator implements Replicator {
   }
 
   @Override
-  public ListenableFuture<ReplicatorReceipt> logData(List<ByteBuffer> data) {
+  public synchronized ListenableFuture<ReplicatorReceipt> logData(List<ByteBuffer> data) {
     SettableFuture<ReplicatorReceipt> receiptFuture = SettableFuture.create();
     final long thisSeqNum = nextSeqNum;
     nextSeqNum++;
@@ -88,12 +91,6 @@ public class SingleNodeFakeReplicator implements Replicator {
     return nodeId;
   }
 
-  @Override
-  public boolean isLeader() {
-    return state == State.LEADER;
-  }
-
-  @Override
   public void start() {
     state = State.LEADER;
     doLater(() ->

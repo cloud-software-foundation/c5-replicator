@@ -93,11 +93,15 @@ public class ReplicatorInstance implements Replicator {
   private final ReplicatorLog log;
   private final long myElectionTimeout;
 
+  /**
+   * These fields are package-private rather than private for convenience of access by testing code.
+   */
+
   final ReplicatorClock clock;
   final ReplicatorInfoPersistence persister;
 
   /**
-   * state used by leader
+   * These fields are mutable state used by leader. All of these must only be accessed from the fiber.
    */
 
   private final BlockingQueue<InternalReplicationRequest> logRequests =
@@ -110,28 +114,22 @@ public class ReplicatorInstance implements Replicator {
   private final Map<Long, Long> peersLastAckedIndex = new HashMap<>();
 
   private long myFirstIndexAsLeader;
-  private long lastCommittedIndex;
+  private Disposable queueConsumer;
 
   /**
-   * state, in theory persistent
+   * These fields are mutable state used by everyone; volatiles should only be updated from the
+   * fiber, but may be read not-on-the-fiber; for instance, several of these are included in
+   * toString().
    */
 
-  long currentTerm;
-  private long votedFor;
-  private QuorumConfiguration quorumConfig = QuorumConfiguration.EMPTY;
-  private long quorumConfigIndex = 0;
-
-  /**
-   * state, not persistent
-   */
-
-  State myState = State.FOLLOWER;
-
-  // Election timers, etc.
-  private long lastRPC;
+  private volatile long currentTerm;
+  private volatile long votedFor;
+  private volatile QuorumConfiguration quorumConfig = QuorumConfiguration.EMPTY;
+  private volatile long quorumConfigIndex = 0;
+  private volatile long lastCommittedIndex;
+  private volatile State myState = State.FOLLOWER;
+  private volatile long lastRPC;
   private long whosLeader = 0;
-  @SuppressWarnings("UnusedDeclaration")
-  private final Disposable electionChecker;
 
 
   public ReplicatorInstance(final Fiber fiber,
@@ -157,8 +155,6 @@ public class ReplicatorInstance implements Replicator {
     this.myElectionTimeout = clock.electionTimeout();
     this.lastRPC = clock.currentTimeMillis();
 
-    refreshQuorumConfigurationFromLog();
-
     commitNoticeChannel.subscribe(
         new ChannelSubscription<>(fiber, this::onCommit,
             (notice) ->
@@ -166,13 +162,15 @@ public class ReplicatorInstance implements Replicator {
                     && notice.quorumId.equals(quorumId)));
 
     incomingChannel.subscribe(fiber, this::onIncomingMessage);
-    electionChecker = fiber.scheduleWithFixedDelay(this::checkOnElection, clock.electionCheckInterval(),
+    fiber.scheduleWithFixedDelay(this::checkOnElection, clock.electionCheckInterval(),
         clock.electionCheckInterval(), TimeUnit.MILLISECONDS);
 
     this.myState = initialState;
 
     fiber.execute(() -> {
       try {
+        refreshQuorumConfigurationFromLog();
+
         readPersistentData();
         // indicate we are running!
         eventChannel.publish(
@@ -205,8 +203,10 @@ public class ReplicatorInstance implements Replicator {
   }
 
   @Override
-  public QuorumConfiguration getQuorumConfiguration() {
-    return quorumConfig;
+  public ListenableFuture<QuorumConfiguration> getQuorumConfiguration() {
+    SettableFuture<QuorumConfiguration> quorumConfigurationFuture = SettableFuture.create();
+    fiber.execute(() -> quorumConfigurationFuture.set(quorumConfig));
+    return quorumConfigurationFuture;
   }
 
   @Override
@@ -230,24 +230,12 @@ public class ReplicatorInstance implements Replicator {
     InternalReplicationRequest req = InternalReplicationRequest.toLogData(data);
     logRequests.put(req);
 
-    // TODO return the durable notification future?
     return req.logReceiptFuture;
   }
 
   @Override
   public long getId() {
     return myId;
-  }
-
-  @Override
-  public boolean isLeader() {
-    return myState == State.LEADER;
-  }
-
-  @Override
-  public void start() {
-    logger.debug("started {} with election timeout {}", this.quorumId, this.myElectionTimeout);
-    fiber.start();
   }
 
   @Override
@@ -281,6 +269,11 @@ public class ReplicatorInstance implements Replicator {
 
   public RequestChannel<RpcWireRequest, RpcReply> getIncomingChannel() {
     return incomingChannel;
+  }
+
+  public void start() {
+    logger.debug("started {} with election timeout {}", this.quorumId, this.myElectionTimeout);
+    fiber.start();
   }
 
   public void dispose() {
@@ -338,6 +331,12 @@ public class ReplicatorInstance implements Replicator {
     fiber.dispose(); // kill us forever.
   }
 
+
+  private Logger getNewLogger() {
+    return LoggerFactory.getLogger("(" + getClass().getSimpleName() + " - " + quorumId + " - " + myId + ")");
+  }
+
+  @FiberOnly
   private void setState(State state) {
     myState = state;
     stateMemoryChannel.publish(state);
@@ -402,7 +401,7 @@ public class ReplicatorInstance implements Replicator {
         logger.warn("got a message of protobuf type I don't know: {}", req);
       }
     } catch (Exception e) {
-      logger.error("exception while processing message {}: {}", message, e);
+      logger.error("Uncaught exception while processing message {}: {}", message, e);
       throw e;
     }
   }
@@ -440,6 +439,7 @@ public class ReplicatorInstance implements Replicator {
    * @param msgLastLogIndex the index of the last entry in that peer's log
    * @return true if we should reply false to the pre-election poll request on the basis described.
    */
+  @FiberOnly
   private boolean rejectPollFromOldConfiguration(long from, long msgLastLogTerm, long msgLastLogIndex) {
     return quorumConfig.isTransitional
         && msgLastLogTerm == log.getLastTerm()
@@ -496,6 +496,7 @@ public class ReplicatorInstance implements Replicator {
     message.reply(reply);
   }
 
+  @FiberOnly
   private boolean atLeastAsUpToDateAsLocalLog(long msgLastLogTerm, long msgLastLogIndex) {
     final long localLastLogTerm = log.getLastTerm();
     final long localLastLogIndex = log.getLastIndex();
@@ -529,11 +530,11 @@ public class ReplicatorInstance implements Replicator {
 
     long theLeader = appendMessage.getLeaderId();
     if (whosLeader != theLeader) {
-      acknowledgeNewLeader(theLeader);
+      updateFollowersKnowledgeOfCurrentLeader(theLeader);
     }
 
     // 5. return failure if log doesn't contain an entry at
-    // prevLogIndex who's term matches prevLogTerm (sec 5.3)
+    // prevLogIndex whose term matches prevLogTerm (sec 5.3)
     // if msgPrevLogIndex == 0 -> special case of starting the log!
     long msgPrevLogIndex = appendMessage.getPrevLogIndex();
     long msgPrevLogTerm = appendMessage.getPrevLogTerm();
@@ -575,6 +576,7 @@ public class ReplicatorInstance implements Replicator {
         }, fiber);
   }
 
+  @FiberOnly
   private void appendReply(Request<RpcWireRequest, RpcReply> request, boolean success) {
     AppendEntriesReply m = new AppendEntriesReply(currentTerm, success, 0);
     RpcReply reply = new RpcReply(m);
@@ -582,7 +584,12 @@ public class ReplicatorInstance implements Replicator {
   }
 
   @FiberOnly
-  private void acknowledgeNewLeader(long theLeader) {
+  private boolean isLeader() {
+    return myState == State.LEADER;
+  }
+
+  @FiberOnly
+  private void updateFollowersKnowledgeOfCurrentLeader(long theLeader) {
     logger.debug("discovered new leader: {}", theLeader);
     whosLeader = theLeader;
 
@@ -597,6 +604,7 @@ public class ReplicatorInstance implements Replicator {
     );
   }
 
+  @FiberOnly
   private List<ListenableFuture<Boolean>> reconcileAppendMessageWithLocalLog(AppendEntries appendMessage) {
     List<ListenableFuture<Boolean>> logOperationFutures = new ArrayList<>();
 
@@ -619,9 +627,10 @@ public class ReplicatorInstance implements Replicator {
 
       if (entryIndex > nextIndex) {
         // ok this entry is still beyond the LAST entry, so we have a problem:
-        logger.error("log entry missing, I expected {} and the next in the message is {}", nextIndex, entryIndex);
+        logger.warn("Received entry later in sequence than expected: expected {} but the next in the message is {}",
+            nextIndex, entryIndex);
         logOperationFutures.add(Futures.immediateFailedFuture(
-            new Exception("Log entry missing from received entries")));
+            new Exception("Unexpected log entry, or entry sequence gap in received entries")));
         return logOperationFutures;
       }
 
@@ -816,6 +825,7 @@ public class ReplicatorInstance implements Replicator {
     }
 
     @Override
+    @FiberOnly
     public void run() {
       // If we are no longer a candidate, retrying RequestVote is pointless.
       if (myState != State.CANDIDATE) {
@@ -885,13 +895,10 @@ public class ReplicatorInstance implements Replicator {
     }
   }
 
+  @FiberOnly
   private boolean votesConstituteMajority(Set<Long> votes) {
     return quorumConfig.setContainsMajority(votes);
   }
-
-
-  //// Leader timer stuff below
-  private Disposable queueConsumer;
 
   @FiberOnly
   private void becomeFollower() {
@@ -1093,7 +1100,7 @@ public class ReplicatorInstance implements Replicator {
           checkIfMajorityCanCommit(lastIndexInList);
         },
         (Throwable t) -> {
-          logger.error("failed to commit to local log", t);
+          logger.error("As a leader, failed to write new entries to local log", t);
           failReplicatorInstance(t);
         }, fiber);
   }
@@ -1195,9 +1202,10 @@ public class ReplicatorInstance implements Replicator {
     logger.trace("discovered new visible entry {}", lastCommittedIndex);
   }
 
+  @FiberOnly
   private void setLastCommittedIndex(long newLastCommittedIndex) {
     if (newLastCommittedIndex < lastCommittedIndex) {
-      logger.warn("New lastCommittedIndex {} is smaller than previous lastCommittedIndex {}",
+      logger.info("Requested to update to commit index {} but it is smaller than my current commit index {}; ignoring",
           newLastCommittedIndex, lastCommittedIndex);
     } else if (newLastCommittedIndex > lastCommittedIndex) {
       long oldLastCommittedIndex = lastCommittedIndex;
@@ -1206,6 +1214,7 @@ public class ReplicatorInstance implements Replicator {
     }
   }
 
+  @FiberOnly
   private void issueCommitNotifications(long oldLastCommittedIndex) {
     // TODO inefficient, because it calls getLogTerm once for every index. Possible optimization here.
     final long firstCommittedIndex = oldLastCommittedIndex + 1;
@@ -1222,6 +1231,7 @@ public class ReplicatorInstance implements Replicator {
     }
   }
 
+  @FiberOnly
   private void onCommit(IndexCommitNotice notice) {
     if (notice.firstIndex <= quorumConfigIndex
         && quorumConfigIndex <= notice.lastIndex) {
@@ -1237,6 +1247,7 @@ public class ReplicatorInstance implements Replicator {
     }
   }
 
+  @FiberOnly
   private void setVotedFor(long votedFor) {
     try {
       persister.writeCurrentTermAndVotedFor(quorumId, currentTerm, votedFor);
@@ -1247,6 +1258,7 @@ public class ReplicatorInstance implements Replicator {
     this.votedFor = votedFor;
   }
 
+  @FiberOnly
   private void setCurrentTerm(long newTerm) {
     try {
       persister.writeCurrentTermAndVotedFor(quorumId, newTerm, 0);
@@ -1258,10 +1270,7 @@ public class ReplicatorInstance implements Replicator {
     this.votedFor = 0;
   }
 
-  private Logger getNewLogger() {
-    return LoggerFactory.getLogger("(" + getClass().getSimpleName() + " - " + quorumId + " - " + myId + ")");
-  }
-
+  @FiberOnly
   private Set<Long> allPeersExceptMe() {
     return Sets.difference(quorumConfig.allPeers(), Sets.newHashSet(myId));
   }

@@ -35,6 +35,18 @@ import static c5db.log.EntryEncodingUtil.decodeAndCheckCrc;
 import static c5db.log.EntryEncodingUtil.getAndCheckContent;
 import static c5db.log.EntryEncodingUtil.skip;
 
+/**
+ * A description of an OLogEntry for use by reader utilities.
+ * <p>
+ * OLogEntry log entries encoded to some medium, such as a log file on disk, using
+ * {@link c5db.log.OLogEntry.Codec} may be decoded (deserialized) using a different Codec.
+ * This class and its Codec are one such example. Their goal is to look at a serialized
+ * OLogEntry and describe its features. The intended use of this is for readers such
+ * as CatOLog that may wish to analyze and display features of the serialized entry
+ * not normally visible when decoded as an OLogEntry object, such as CRC check validity.
+ * <p>
+ * As such, the provided Codec below can only decode, not encode.
+ */
 public final class OLogEntryDescription extends SequentialEntry {
   private final long electionTerm;
   private final int contentLength;

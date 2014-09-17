@@ -19,6 +19,7 @@ package c5db.replication;
 
 import c5db.interfaces.replication.IndexCommitNotice;
 import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.interfaces.replication.Replicator;
 import c5db.interfaces.replication.ReplicatorInstanceEvent;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.interfaces.replication.ReplicatorReceipt;
@@ -120,9 +121,9 @@ public class InRamTest {
     sim.getRpcChannel().subscribe(fiber, requestLog::publish);
     sim.getCommitNotices().subscribe(fiber, this::updateLastCommit);
     sim.getCommitNotices().subscribe(fiber, System.out::println);
-    sim.getStateChanges().subscribe(fiber, System.out::println);
+    sim.getEventChannel().subscribe(fiber, System.out::println);
     commitMonitor = new ChannelHistoryMonitor<>(sim.getCommitNotices(), fiber);
-    eventMonitor = new ChannelHistoryMonitor<>(sim.getStateChanges(), fiber);
+    eventMonitor = new ChannelHistoryMonitor<>(sim.getEventChannel(), fiber);
     replyMonitor = new ChannelHistoryMonitor<>(sim.getReplyChannel(), fiber);
 
     fiber.start();
@@ -509,8 +510,9 @@ public class InRamTest {
   private int leaderCount() {
     final long currentTerm = currentTerm();
     int leaderCount = 0;
-    for (ReplicatorInstance replicatorInstance : sim.getReplicators().values()) {
-      if (replicatorInstance.isLeader() && replicatorInstance.currentTerm >= currentTerm) {
+
+    for (long id : sim.getOnlinePeers()) {
+      if (peer(id).hasWonAnElection(greaterThanOrEqualTo(currentTerm))) {
         leaderCount++;
       }
     }
@@ -580,12 +582,11 @@ public class InRamTest {
     }
 
     public boolean isCurrentLeader() {
-      return instance.isLeader()
-          && instance.currentTerm >= currentTerm();
+      return id == currentLeader();
     }
 
-    public QuorumConfiguration currentConfiguration() {
-      return instance.getQuorumConfiguration();
+    public QuorumConfiguration currentConfiguration() throws Exception {
+      return instance.getQuorumConfiguration().get();
     }
 
     public ListenableFuture<ReplicatorReceipt> changeQuorum(Collection<Long> newPeerIds) throws Exception {
@@ -698,7 +699,7 @@ public class InRamTest {
   }
 
   private PeerController pickFollower() {
-    PeerController chosenPeer = anyPeerSuchThat((peer) -> peer.instance.myState == FOLLOWER && peer.isOnline());
+    PeerController chosenPeer = anyPeerSuchThat((peer) -> currentState(peer.instance) == FOLLOWER && peer.isOnline());
     assertThat(chosenPeer, not(nullValue()));
     return chosenPeer;
   }
@@ -715,6 +716,18 @@ public class InRamTest {
 
   private long currentLeader() {
     return eventMonitor.getLatest(leaderElectedEvent(anyLeader(), anyTerm())).newLeader;
+  }
+
+  private Replicator.State currentState(Replicator replicator) {
+    long id = replicator.getId();
+    Replicator.State currentState = sim.getStateMonitor(id).getLatest(any(Replicator.State.class));
+
+    if (currentState == null) {
+      // No State has been issued via the replicator's State channel, so assume FOLLOWER (default)
+      return FOLLOWER;
+    } else {
+      return currentState;
+    }
   }
 
   private static long term(long term) {
