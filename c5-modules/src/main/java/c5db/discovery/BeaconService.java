@@ -332,7 +332,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         notifyFailed(e);
       }
 
-      fiber = fiberSupplier.getFiber(this::notifyFailed);
+      fiber = fiberSupplier.getNewFiber(this::notifyFailed);
       fiber.start();
 
       // Schedule fiber tasks and subscriptions.

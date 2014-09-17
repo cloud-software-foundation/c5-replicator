@@ -61,7 +61,7 @@ public class C5GeneralizedReplicationService implements GeneralizedReplicationSe
     this.logModule = logModule;
     this.fiberSupplier = fiberSupplier;
 
-    fiber = fiberSupplier.getFiber(this::notifyFailed);
+    fiber = fiberSupplier.getNewFiber(this::notifyFailed);
     fiber.start();
   }
 
@@ -85,7 +85,7 @@ public class C5GeneralizedReplicationService implements GeneralizedReplicationSe
   }
 
   private Fiber createAndStartFiber(Consumer<Throwable> throwableConsumer) {
-    Fiber newFiber = fiberSupplier.getFiber(throwableConsumer);
+    Fiber newFiber = fiberSupplier.getNewFiber(throwableConsumer);
     fiber.execute(() -> disposables.add(newFiber));
     newFiber.start();
     return newFiber;

@@ -415,7 +415,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
   @Override
   protected void doStart() {
     // must start the fiber up early.
-    fiber = fiberSupplier.getFiber(this::failModule);
+    fiber = fiberSupplier.getNewFiber(this::failModule);
     setupEventChannelSubscription();
     fiber.start();
 
@@ -562,7 +562,7 @@ public class ReplicatorService extends AbstractService implements ReplicationMod
     LOG.info("Creating replicator instance for {} peers {}", quorumId, peers);
 
     MemoryChannel<Throwable> throwableChannel = new MemoryChannel<>();
-    Fiber instanceFiber = fiberSupplier.getFiber(throwableChannel::publish);
+    Fiber instanceFiber = fiberSupplier.getNewFiber(throwableChannel::publish);
     ReplicatorInstance instance =
         new ReplicatorInstance(
             instanceFiber,
