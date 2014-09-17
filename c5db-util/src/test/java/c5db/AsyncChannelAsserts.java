@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.StringDescription;
-import org.jetlang.channels.Channel;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.channels.Subscriber;
 import org.jetlang.core.BatchExecutor;
@@ -69,7 +68,7 @@ public class AsyncChannelAsserts {
     }
   }
 
-  public static <S,R> ChannelListener<S> waitForReply(RequestChannel<S,R> channel) {
+  public static <S, R> ChannelListener<S> waitForReply(RequestChannel<S, R> channel) {
     List<Throwable> throwables = new ArrayList<>();
     BatchExecutor exceptionHandlingBatchExecutor = new ExceptionHandlingBatchExecutor(throwables::add);
     RunnableExecutor runnableExecutor = new RunnableExecutorImpl(exceptionHandlingBatchExecutor);
