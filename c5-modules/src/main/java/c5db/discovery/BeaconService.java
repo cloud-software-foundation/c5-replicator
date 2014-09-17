@@ -187,7 +187,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private Fiber fiber;
 
   // This field is updated when modules' availability changes
-  private ImmutableMap<ModuleType, Integer> modulePorts;
+  private ImmutableMap<ModuleType, Integer> modulePorts = ImmutableMap.of();
 
   private class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
     @Override
@@ -361,6 +361,10 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
   @FiberOnly
   private void updateCurrentModulePorts(ImmutableMap<ModuleType, Integer> modulePorts) {
+    if (modulePorts == null) {
+      notifyFailed(new NullPointerException("received null instead of a map of online modules to their ports"));
+      return;
+    }
     this.modulePorts = modulePorts;
   }
 
