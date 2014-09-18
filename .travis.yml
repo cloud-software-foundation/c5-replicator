@@ -4,3 +4,10 @@ jdk:
 after_failure: ./print_surefire_reports.sh
 notifications:
   slack: ohmdata:Hyf76GxhkJmd9rTGlhTuUOX5
+env:
+  - BUILD="test"
+  - BUILD="failsafe:integration-test"
+script:
+  - set -x; mvn ${BUILD}
+
+

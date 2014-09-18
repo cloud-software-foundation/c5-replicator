@@ -1,95 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (C) 2014  Ohm Data
+  ~
+  ~  This program is free software: you can redistribute it and/or modify
+  ~  it under the terms of the GNU Affero General Public License as
+  ~  published by the Free Software Foundation, either version 3 of the
+  ~  License, or (at your option) any later version.
+  ~
+  ~  This program is distributed in the hope that it will be useful,
+  ~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~  GNU Affero General Public License for more details.
+  ~
+  ~  You should have received a copy of the GNU Affero General Public License
+  ~  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>c5db</groupId>
-        <artifactId>parent</artifactId>
-        <version>0.1-SNAPSHOT</version>
-    </parent>
-
-    <artifactId>c5-modules</artifactId>
+  <parent>
+    <groupId>c5db</groupId>
+    <artifactId>parent</artifactId>
     <version>0.1-SNAPSHOT</version>
+  </parent>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>io.protostuff</groupId>
-                <artifactId>protostuff-maven-plugin</artifactId>
-                <version>${protostuff.version}</version>
-                <configuration>
-                    <protoModules>
-                        <protoModule>
-                            <source>src/main/resources/</source>
-                            <output>java_bean_primitives</output>
-                            <encoding>UTF-8</encoding>
-                            <options>
-                                <property>
-                                    <name>generate_field_map</name>
-                                    <value>true</value>
-                                </property>
-                                <property>
-                                    <name>builder_pattern</name>
-                                    <value>true</value>
-                                </property>
-                                <property>
-                                    <name>ByteBuffer</name>
-                                    <value>true</value>
-                                </property>
-                            </options>
-                        </protoModule>
-                    </protoModules>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+  <artifactId>c5-modules</artifactId>
 
-    <dependencies>
-        <dependency>
-            <groupId>c5db</groupId>
-            <artifactId>c5db-protostuff-codec</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>c5db</groupId>
-            <artifactId>c5db-util</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>c5db</groupId>
-            <artifactId>c5db-util</artifactId>
-            <version>0.1-SNAPSHOT</version>
-            <classifier>tests</classifier>
-        </dependency>
-        <dependency>
-            <groupId>c5db</groupId>
-            <artifactId>c5-proto</artifactId>
-            <version>0.1-SNAPSHOT</version>
-        </dependency>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.protostuff</groupId>
+        <artifactId>protostuff-maven-plugin</artifactId>
+        <version>${protostuff.version}</version>
+        <configuration>
+          <protoModules>
+            <protoModule>
+              <source>src/main/resources/</source>
+              <output>java_bean_primitives</output>
+              <encoding>UTF-8</encoding>
+              <options>
+                <property>
+                  <name>generate_field_map</name>
+                  <value>true</value>
+                </property>
+                <property>
+                  <name>builder_pattern</name>
+                  <value>true</value>
+                </property>
+                <property>
+                  <name>ByteBuffer</name>
+                  <value>true</value>
+                </property>
+              </options>
+            </protoModule>
+          </protoModules>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jmock</groupId>
-            <artifactId>jmock-junit4</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>junit-dep</artifactId>
-                    <groupId>junit</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-        </dependency>
-    </dependencies>
+  <dependencies>
+    <dependency>
+      <groupId>c5db</groupId>
+      <artifactId>c5db-protostuff-codec</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>c5db</groupId>
+      <artifactId>c5db-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>c5db</groupId>
+      <artifactId>c5db-util</artifactId>
+      <version>${project.version}</version>
+      <classifier>tests</classifier>
+    </dependency>
+    <dependency>
+      <groupId>c5db</groupId>
+      <artifactId>c5-proto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jmock</groupId>
+      <artifactId>jmock-junit4</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit-dep</artifactId>
+          <groupId>junit</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
+  </dependencies>
 </project>

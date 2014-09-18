@@ -4,8 +4,8 @@ set -e
 CURRENT_DIR="$(pwd)"
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 C5_PARENT_DIR=${SCRIPT_DIR}/../..
-C5DB_JAR=${C5_PARENT_DIR}/c5db/target/c5db-0.1-SNAPSHOT-jar-with-dependencies.jar
-CAT_OLOG_JAR=${C5_PARENT_DIR}/c5db-cat-olog/target/c5db-cat-olog-0.1-SNAPSHOT.jar
+C5DB_JAR=${C5_PARENT_DIR}/c5db/target/c5db-${project.version}-jar-with-dependencies.jar
+CAT_OLOG_JAR=${C5_PARENT_DIR}/c5db-cat-olog/target/c5db-cat-olog-${project.version}.jar
 
 if [ -f ${C5DB_JAR} ]
 then
