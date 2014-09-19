@@ -22,5 +22,5 @@ import org.jetlang.fibers.Fiber;
 import java.util.function.Consumer;
 
 public interface FiberSupplier {
-  Fiber getFiber(Consumer<Throwable> throwableHandler);
+  Fiber getNewFiber(Consumer<Throwable> throwableHandler);
 }

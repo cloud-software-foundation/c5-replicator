@@ -2,12 +2,11 @@ machine:
   java:
     version: oraclejdk8
 dependencies:
-  override:
-    - mvn clean install -DskipTests
   cache_directories:
     - ~/.m2
+
 test:
   override:
-    - set -x ; pwd;ls;./split_across_ci.sh:
+    - case $CIRCLE_NODE_INDEX in 0) mvn test ;; 1) ./run_integration_tests.sh ;; esac:
         parallel: true
         timeout: 1800

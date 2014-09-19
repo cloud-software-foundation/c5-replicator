@@ -26,40 +26,37 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>c5-general-replication</artifactId>
-
-    <version>0.1-SNAPSHOT</version>
-
     <dependencies>
         <dependency>
             <groupId>c5db</groupId>
             <artifactId>c5-modules</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>c5db</groupId>
             <artifactId>c5db-util</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>c5db</groupId>
             <artifactId>c5db-util</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
             <classifier>tests</classifier>
         </dependency>
         <dependency>
             <groupId>c5db</groupId>
             <artifactId>c5db-replicator</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>c5db</groupId>
             <artifactId>c5db-olog</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>c5db</groupId>
             <artifactId>c5-proto</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>

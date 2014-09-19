@@ -59,7 +59,7 @@ public class LogService extends AbstractService implements LogModule {
   @Override
   protected void doStart() {
     try {
-      this.fiber = fiberSupplier.getFiber(this::failModule);
+      this.fiber = fiberSupplier.getNewFiber(this::failModule);
       this.logFileService = new LogFileService(basePath);
       KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
           Executors.newFixedThreadPool(LogConstants.LOG_THREAD_POOL_SIZE));
