@@ -47,6 +47,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import org.jetbrains.annotations.NotNull;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
@@ -157,6 +158,11 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     }
 
     List<String> peerAddresses = peer.availability.getAddressesList();
+    if (peerAddresses == null || peerAddresses.isEmpty()) {
+      message.reply(NodeInfoReply.NO_REPLY);
+      return;
+    }
+
     // does this module run on that peer?
     message.reply(new NodeInfoReply(true, peerAddresses, servicePort));
   }
@@ -330,6 +336,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       } catch (SocketException e) {
         LOG.error("SocketException:", e);
         notifyFailed(e);
+        return;
       }
 
       fiber = fiberSupplier.getNewFiber(this::notifyFailed);
@@ -340,7 +347,11 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       nodeInfoRequests.subscribe(fiber, this::handleNodeInfoRequest);
       moduleServer.availableModulePortsChannel().subscribe(fiber, this::updateCurrentModulePorts);
 
-      fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
+      if (localIPs.isEmpty()) {
+        LOG.warn("Found no IP addresses to broadcast to other nodes; as a result, not sending out broadcasts");
+      } else {
+        fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
+      }
 
       C5Futures.addCallback(moduleServer.getAvailableModulePorts(),
           (ImmutableMap<ModuleType, Integer> availablePorts) -> {
@@ -368,6 +379,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     this.modulePorts = modulePorts;
   }
 
+  @NotNull
   private List<String> getLocalIPs() throws SocketException {
     List<String> ips = new LinkedList<>();
     for (Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
