@@ -97,6 +97,8 @@ import static c5db.codec.UdpProtostuffEncoder.UdpProtostuffMessage;
 public class BeaconService extends AbstractService implements DiscoveryModule {
   private static final Logger LOG = LoggerFactory.getLogger(BeaconService.class);
   private static final InetAddress BROADCAST_ADDRESS = InetAddresses.forString("255.255.255.255");
+  private static final int BEACON_SERVICE_INITIAL_BROADCAST_DELAY_MILLISECONDS = 2000;
+  private static final int BEACON_SERVICE_BROADCAST_PERIOD_MILLISECONDS = 10000;
 
   @Override
   public ModuleType getModuleType() {
@@ -369,7 +371,10 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
         LOG.warn("Found no IP addresses to broadcast to other nodes; as a result, only sending to loopback");
       }
 
-      fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
+      fiber.scheduleAtFixedRate(this::sendBeacon,
+          BEACON_SERVICE_INITIAL_BROADCAST_DELAY_MILLISECONDS,
+          BEACON_SERVICE_BROADCAST_PERIOD_MILLISECONDS,
+          TimeUnit.MILLISECONDS);
 
       C5Futures.addCallback(moduleServer.getAvailableModulePorts(),
           (ImmutableMap<ModuleType, Integer> availablePorts) -> {
