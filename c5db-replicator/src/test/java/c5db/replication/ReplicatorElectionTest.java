@@ -174,9 +174,9 @@ public class ReplicatorElectionTest {
       throws Exception {
     final QuorumConfiguration configuration = aFiveNodeConfiguration();
     withLogReflectingConfiguration(configuration);
-    whenTheReplicatorIsInState(FOLLOWER);
-
     context.checking(expectTermIncrementAndVote());
+
+    whenTheReplicatorIsInState(FOLLOWER);
 
     havingTimedOutAndInitiatedAPreElectionPoll();
 
@@ -236,9 +236,9 @@ public class ReplicatorElectionTest {
   @Test
   public void ifACandidateTimesOutItWillIncrementItsTermAndBeginAnotherElection() throws Exception {
     withLogReflectingConfiguration(aFiveNodeConfiguration());
-    whenTheReplicatorIsInState(CANDIDATE);
-
     context.checking(expectTermIncrementAndVote());
+
+    whenTheReplicatorIsInState(CANDIDATE);
 
     allowReplicatorToTimeout();
 
