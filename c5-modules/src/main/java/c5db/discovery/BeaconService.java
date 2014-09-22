@@ -32,6 +32,7 @@ import c5db.util.C5Futures;
 import c5db.util.FiberOnly;
 import c5db.util.FiberSupplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -68,6 +69,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static c5db.codec.UdpProtostuffEncoder.UdpProtostuffMessage;
 
 /**
  * Uses broadcast UDP packets to discover 'adjacent' nodes in the cluster. Maintains
@@ -180,6 +183,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private final int discoveryPort;
   private final EventLoopGroup eventLoopGroup;
   private final InetSocketAddress broadcastAddress;
+  private final InetSocketAddress loopbackAddress;
   private final Map<Long, NodeInfo> peerNodeInfoMap = new HashMap<>();
   private final org.jetlang.channels.Channel<Availability> incomingMessages = new MemoryChannel<>();
   private final org.jetlang.channels.Channel<NewNodeVisible> newNodeVisibleChannel = new MemoryChannel<>();
@@ -226,6 +230,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     this.moduleServer = moduleServer;
     this.fiberSupplier = fiberSupplier;
     this.broadcastAddress = new InetSocketAddress(BROADCAST_ADDRESS, discoveryPort);
+    this.loopbackAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), discoveryPort);
   }
 
   @Override
@@ -265,19 +270,32 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       );
     }
 
-    Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
+    if (!localIPs.isEmpty()) {
+      Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
 
-    broadcastChannel.writeAndFlush(new UdpProtostuffEncoder.UdpProtostuffMessage<>(broadcastAddress, beaconMessage))
+      broadcastChannel.writeAndFlush(new UdpProtostuffMessage<>(broadcastAddress, beaconMessage))
+          .addListener(
+              future -> {
+                if (!future.isSuccess()) {
+                  LOG.warn("node {} error sending message {} to broadcast address {}",
+                      nodeId, beaconMessage, broadcastAddress);
+                }
+              });
+    }
+
+    List<String> loopbackIps = Lists.newArrayList(loopbackAddress.getAddress().getHostAddress());
+    Availability localMessage = new Availability(nodeId, 0, loopbackIps, msgModules);
+
+    broadcastChannel.writeAndFlush(new UdpProtostuffMessage<>(loopbackAddress, localMessage))
         .addListener(
             future -> {
               if (!future.isSuccess()) {
-                LOG.warn("node {} error sending message {} to broadcast address {}",
-                    nodeId, beaconMessage, broadcastAddress);
+                LOG.warn("node {} error sending message {} to loopback address", nodeId, localMessage);
               }
             });
 
     // Fix issue #76, feed back the beacon Message to our own database:
-    processWireMessage(beaconMessage);
+    processWireMessage(localMessage);
   }
 
   @FiberOnly
@@ -348,10 +366,10 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
       moduleServer.availableModulePortsChannel().subscribe(fiber, this::updateCurrentModulePorts);
 
       if (localIPs.isEmpty()) {
-        LOG.warn("Found no IP addresses to broadcast to other nodes; as a result, not sending out broadcasts");
-      } else {
-        fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
+        LOG.warn("Found no IP addresses to broadcast to other nodes; as a result, only sending to loopback");
       }
+
+      fiber.scheduleAtFixedRate(this::sendBeacon, 2, 10, TimeUnit.SECONDS);
 
       C5Futures.addCallback(moduleServer.getAvailableModulePorts(),
           (ImmutableMap<ModuleType, Integer> availablePorts) -> {
