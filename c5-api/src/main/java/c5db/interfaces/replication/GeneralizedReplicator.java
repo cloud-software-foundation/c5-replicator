@@ -46,7 +46,7 @@ public interface GeneralizedReplicator {
    * exception if it is known that a problem occurred while replicating the data.
    */
   ListenableFuture<ReplicateSubmissionInfo> replicate(List<ByteBuffer> data)
-  throws InterruptedException, InvalidReplicatorStateException;
+      throws InterruptedException, InvalidReplicatorStateException;
 
   /**
    * Return a future which will not complete until the GeneralizedReplicator is in a state
