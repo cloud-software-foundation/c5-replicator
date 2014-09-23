@@ -22,6 +22,7 @@ import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.States;
 import org.jmock.integration.junit4.JUnitRuleMockery;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -54,6 +55,11 @@ public class WrappingKeySerializingExecutorTest {
 
   @SuppressWarnings("unchecked")
   private final CheckedSupplier<Integer, Exception> task = context.mock(CheckedSupplier.class);
+
+  @After
+  public void shutdownExecutorService() {
+    fixedThreadExecutor.shutdownNow();
+  }
 
   @Test
   public void runsTasksSubmittedToItAndReturnsTheirResult() throws Exception {

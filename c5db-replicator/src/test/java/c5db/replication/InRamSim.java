@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -167,7 +168,8 @@ public class InRamSim {
   private final RequestChannel<RpcRequest, RpcWireReply> rpcChannel = new MemoryRequestChannel<>();
   private final Channel<IndexCommitNotice> commitNotices = new MemoryChannel<>();
   private final Fiber rpcFiber;
-  private final PoolFiberFactory fiberPool;
+  private final ExecutorService executorService = Executors.newCachedThreadPool();
+  private final PoolFiberFactory fiberPool = new PoolFiberFactory(executorService);
   private final BatchExecutor batchExecutor;
   private final Channel<RpcMessage> replyChannel = new MemoryChannel<>();
   private final Channel<ReplicatorInstanceEvent> eventChannel = new MemoryChannel<>();
@@ -185,7 +187,6 @@ public class InRamSim {
    * @param batchExecutor         The jetlang batch executor for the simulation's fibers to use.
    */
   public InRamSim(long electionTimeout, long electionTimeoutOffset, BatchExecutor batchExecutor) {
-    this.fiberPool = new PoolFiberFactory(Executors.newCachedThreadPool());
     this.batchExecutor = batchExecutor;
     this.electionTimeout = electionTimeout;
     this.electionTimeoutOffset = electionTimeoutOffset;
@@ -396,5 +397,6 @@ public class InRamSim {
       repl.dispose();
     }
     fiberPool.dispose();
+    executorService.shutdownNow();
   }
 }
