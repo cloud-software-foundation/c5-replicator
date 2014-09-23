@@ -15,21 +15,19 @@
  */
 
 /**
- * This package contains functionality for replicating write-ahead logs. "Replication" here means functionally
- * duplicating the information in the log, in general on several different durable media hosted by different
- * machines. The purposes of replication are fault tolerance and availability.
+ * This package contains functionality for replicating logs. A log in this context is any sequence of data
+ * items; for instance, a write-ahead log. "Replication" here means functionally duplicating the information
+ * in the log, in general on several different durable media hosted by different machines. The purposes of
+ * replication are fault tolerance and availability.
  * <p>
  * The package contains an implementation of the {@link c5db.interfaces.ReplicationModule} interface:
- * ReplicatorService. A given ReplicatorService instance participates in the replication of one or more
- * different regions' write-ahead logs. Likewise, a given region's logs are replicated across one or more
- * different ReplicatorService instances; the set of participating replicators for that region is known
- * as a quorum.
+ * ReplicatorService. A given ReplicatorService instance participates in the replication of zero to
+ * many logs.
  * <p>
  * ReplicatorService keeps a separate instance of the implementation of the
- * {@link c5db.interfaces.replication.Replicator} interface for each quorum it participates in.
- * <p>
- * Each such implementation (e.g. ReplicatorInstance) is in charge of the logic and state for the replication
- * of that quorum, and that logic and state is separate from that of any other quorum supported by the same
+ * {@link c5db.interfaces.replication.Replicator} interface for each quorum it participates in. Each such
+ * implementation (e.g. ReplicatorInstance) is in charge of the logic and state for the replication of that
+ * quorum, and that logic and state is separate from that of any other quorum supported by the same
  * ReplicatorService.
  */
 

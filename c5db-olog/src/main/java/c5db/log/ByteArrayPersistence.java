@@ -27,9 +27,9 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 
 /**
- * Write-ahead log "persistence" implementation entirely within memory, for testing.
- * This implementation does not write anything to disk. It is not designed with
- * efficiency in mind, either; it freely does full copies of the underlying byte array.
+ * A BytePersistence implementation entirely within memory, for testing. This implementation
+ * does not write anything to disk. It is not designed with efficiency in mind, either;
+ * it freely does full copies of the underlying byte array.
  */
 class ByteArrayPersistence implements LogPersistenceService.BytePersistence {
   private ByteArrayOutputStream stream;

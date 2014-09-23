@@ -24,7 +24,8 @@ import java.util.List;
 import static c5db.log.OLogEntryOracle.QuorumConfigurationWithSeqNum;
 
 /**
- * A write-ahead log for several quorums.
+ * A log for several quorums, each quorum having its own sequence of entries, providing
+ * methods to append, truncate, and retrieve entries.
  */
 public interface OLog extends AutoCloseable {
 
