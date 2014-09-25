@@ -33,7 +33,7 @@ import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
  * A Reader for logs beginning with OLogHeader.
  *
  * @param <E> The type of entry this reader returns; it could be different than OLogEntry because some other
- *           codec could be used to decode entries that were initially written as OLogEntry.
+ *            codec could be used to decode entries that were initially written as OLogEntry.
  */
 public class OLogReader<E extends SequentialEntry> implements Reader<E> {
 
@@ -52,7 +52,7 @@ public class OLogReader<E extends SequentialEntry> implements Reader<E> {
 
   @Override
   public ImmutableList<CheckedSupplier<SequentialEntryIterator<E>, IOException>> getLogList()
-  throws IOException {
+      throws IOException {
 
     ImmutableList.Builder<CheckedSupplier<SequentialEntryIterator<E>, IOException>> logSupplierBuilder =
         ImmutableList.builder();

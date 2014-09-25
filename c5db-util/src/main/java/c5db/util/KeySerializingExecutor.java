@@ -29,7 +29,7 @@ import java.util.concurrent.TimeoutException;
  * <p>
  * The notion of a well-defined "order in which tasks are submitted" requires that tasks with
  * the same key be submitted in a deterministic order, e.g., unaffected by thread scheduling.
- * <p/>
+ * <p>
  * The purpose is so a single thread pool can handle IO requests for, potentially, several
  * different logs: the requests for each individual log need to be serialized with other
  * requests for that same log, and the "key" in that situation is some string that uniquely

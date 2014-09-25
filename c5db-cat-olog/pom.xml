@@ -47,12 +47,12 @@
         <dependency>
             <groupId>c5db</groupId>
             <artifactId>c5-proto</artifactId>
-          <version>${project.version}</version>
+            <version>${project.version}</version>
         </dependency>
-      <dependency>
-        <groupId>c5db</groupId>
-        <artifactId>c5db-olog</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+        <dependency>
+            <groupId>c5db</groupId>
+            <artifactId>c5db-olog</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>

@@ -22,7 +22,7 @@ import io.protostuff.Message;
 /**
  * An outbound request for the transport.  Since the transport knows who 'we' are, the only
  * params required is a 'to' and which quorumId is being involved.  Oh yes and the actual message.
- * <p/>
+ * <p>
  * Actually scratch that, apparently certain types of transports (e.g. in-ram simulations) don't know
  * who 'we' are.  So include that.
  */
