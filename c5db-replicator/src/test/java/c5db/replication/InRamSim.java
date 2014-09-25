@@ -347,14 +347,14 @@ public class InRamSim {
     final ReplicatorInstance repl = replicators.get(destination);
     if (repl == null) {
       // boo
-      LOG.warn("Request to nonexistent peer {}", destination);
+      LOG.info("Request to nonexistent peer {}", destination);
       // Do nothing and allow request to timeout.
       return;
     }
 
-    LOG.info("Request {}", request);
+    LOG.debug("Request {}", request);
     if (shouldDropMessage(request)) {
-      LOG.warn("Request dropped: {}", request);
+      LOG.debug("Request dropped: {}", request);
       return;
     }
 
@@ -362,9 +362,9 @@ public class InRamSim {
     AsyncRequest.withOneReply(rpcFiber, repl.getIncomingChannel(), newRequest, msg -> {
       // Note that 'RpcReply' has an empty from/to/messageId.  We must know from our context (and so we do)
       RpcWireReply newReply = new RpcWireReply(request.from, request.to, request.quorumId, msg.message);
-      LOG.info("Reply {}", newReply);
+      LOG.debug("Reply {}", newReply);
       if (shouldDropMessage(newReply)) {
-        LOG.warn("Reply dropped: {}", newReply);
+        LOG.debug("Reply dropped: {}", newReply);
         return;
       }
       replyChannel.publish(newReply);
@@ -384,7 +384,7 @@ public class InRamSim {
         .collect(Collectors.toList());
 
     for (ListenableFuture<Void> aFuture : futures) {
-      LOG.info("Waiting for bootstrap");
+      LOG.debug("Waiting for bootstrap");
       aFuture.get(4, TimeUnit.SECONDS);
     }
 

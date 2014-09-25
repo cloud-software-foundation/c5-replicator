@@ -1,5 +1,6 @@
 C5
 ====================
+[![Build status](https://travis-ci.org/OhmData/c5.svg)](https://travis-ci.org/OhmData/c5) [![HuBoard badge](http://img.shields.io/badge/Hu-Board-7965cc.svg)](https://huboard.com/OhmData/c5)
 
 C5 is a simple, scalable, open source distributed database that is compatible with the HBase client API. Your code
 that talks to HTable and/or HBaseAdmin can talk to the C5 client too.
