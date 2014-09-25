@@ -25,22 +25,6 @@ option optimize_for = SPEED;
 import "replication_messages.proto";
 
 
-message RegionWalEntry {
-    optional string regionInfo = 1;
-    optional bytes key = 2;
-    optional bytes family = 3;
-    optional bytes column = 4;
-    optional bytes value = 5;
-    optional uint64 ts = 6;
-}
-
-message QuorumMapping {
-    // The ID to use elsewhere in the file.
-    optional int32 quorumTag = 1;
-    // The actual string that was provided to us.
-    optional string quorumId = 2;
-}
-
 message OLogHeader {
     optional int64 baseTerm = 1;
     optional int64 baseSeqNum = 2;
