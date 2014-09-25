@@ -16,7 +16,7 @@
 
 package c5db.log;
 
-option java_package = "c5db.generated";
+option java_package = "c5db.log.generated";
 option java_outer_classname = "Log";
 option java_generic_services = true;
 option java_generate_equals_and_hash = true;

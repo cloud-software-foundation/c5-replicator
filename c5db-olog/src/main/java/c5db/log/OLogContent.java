@@ -16,7 +16,7 @@
 
 package c5db.log;
 
-import c5db.generated.OLogContentType;
+import c5db.log.generated.OLogContentType;
 import c5db.replication.generated.QuorumConfigurationMessage;
 
 import java.nio.ByteBuffer;

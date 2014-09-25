@@ -16,8 +16,8 @@
 
 package c5db.log;
 
-import c5db.generated.OLogContentType;
 import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.log.generated.OLogContentType;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import com.google.common.collect.ImmutableMap;
 import io.protostuff.ByteBufferInput;
@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import static c5db.generated.OLogContentType.QUORUM_CONFIGURATION;
+import static c5db.log.generated.OLogContentType.QUORUM_CONFIGURATION;
 
 /**
  * Content in the form of a protostuff message, which is included in an OLog entry.

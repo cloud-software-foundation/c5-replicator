@@ -16,8 +16,8 @@
 
 package c5db.log;
 
-import c5db.generated.OLogHeader;
 import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.log.generated.OLogHeader;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;

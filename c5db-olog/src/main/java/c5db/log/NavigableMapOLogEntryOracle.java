@@ -16,8 +16,8 @@
 
 package c5db.log;
 
-import c5db.generated.OLogContentType;
 import c5db.interfaces.replication.QuorumConfiguration;
+import c5db.log.generated.OLogContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

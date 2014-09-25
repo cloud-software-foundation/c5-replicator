@@ -16,8 +16,8 @@
 
 package c5db.log;
 
-import c5db.generated.OLogContentType;
-import c5db.generated.OLogEntryHeader;
+import c5db.log.generated.OLogContentType;
+import c5db.log.generated.OLogEntryHeader;
 import io.protostuff.Schema;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;

@@ -16,10 +16,10 @@
 
 package c5db.log;
 
-import c5db.generated.OLogContentType;
-import c5db.generated.OLogEntryHeader;
 import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.ReplicatorEntry;
+import c5db.log.generated.OLogContentType;
+import c5db.log.generated.OLogEntryHeader;
 
 import java.io.IOException;
 import java.io.InputStream;

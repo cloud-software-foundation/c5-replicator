@@ -16,8 +16,8 @@
 
 package c5db.log;
 
-import c5db.generated.OLogHeader;
 import c5db.interfaces.log.SequentialEntryCodec;
+import c5db.log.generated.OLogHeader;
 import com.google.common.collect.Iterables;
 import com.google.common.io.CountingInputStream;
 import io.protostuff.Schema;
