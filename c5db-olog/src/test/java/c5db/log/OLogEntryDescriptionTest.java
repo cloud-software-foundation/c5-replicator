@@ -89,7 +89,7 @@ public class OLogEntryDescriptionTest {
     // Also assume that the existing byte value at that location is different than zero.
     int numberOfBytesFromEndOfPersistence = 5;
     int bytePositionToCorrupt = (int) persistence.size() - numberOfBytesFromEndOfPersistence;
-    persistence.overwrite(bytePositionToCorrupt, 0);
+    persistence.corrupt(bytePositionToCorrupt);
 
     assertThat(descriptionLog.getLastEntry(), is(equalTo(
         new OLogEntryDescription(

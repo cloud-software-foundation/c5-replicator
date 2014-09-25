@@ -38,7 +38,7 @@ public class LogPersistenceErrorTest {
 
     int numberOfBytesFromEndOfPersistence = 5;
     int bytePositionToCorrupt = (int) persistence.size() - numberOfBytesFromEndOfPersistence;
-    persistence.overwrite(bytePositionToCorrupt, 0);
+    persistence.corrupt(bytePositionToCorrupt);
 
     log.subSequence(entry.getSeqNum(), entry.getSeqNum() + 1); // exception
   }

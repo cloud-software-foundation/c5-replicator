@@ -39,9 +39,12 @@ class ByteArrayPersistence implements LogPersistenceService.BytePersistence {
     stream = new ByteArrayOutputStream();
   }
 
-  public void overwrite(int position, int b) throws IOException {
+  /**
+   * Alter the byte at the specified position. The purpose of this method is to test e.g. CRCs.
+   */
+  public void corrupt(int position) throws IOException {
     byte[] bytes = stream.toByteArray();
-    bytes[position] = (byte) b;
+    bytes[position] = (byte) (bytes[position] ^ 0x01);
     stream = new ByteArrayOutputStream(bytes.length);
     stream.write(bytes);
   }
