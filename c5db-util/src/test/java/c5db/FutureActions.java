@@ -44,12 +44,14 @@ public class FutureActions {
   public static Action returnFutureWithValue(Object futureValue) {
     return new ReturnFutureWithValueAction(futureValue);
   }
+
   public static Action returnFutureWithException(Throwable exception) {
     return new ReturnFutureWithException(exception);
   }
 
   public static class ReturnFutureWithValueAction implements Action {
     private Object futureResult;
+
     public ReturnFutureWithValueAction(Object futureResult) {
       this.futureResult = futureResult;
     }
@@ -59,6 +61,7 @@ public class FutureActions {
       future.set(futureResult);
       return future;
     }
+
     public void describeTo(Description description) {
       description.appendText("returns a future with value ");
       description.appendValue(futureResult);
@@ -67,6 +70,7 @@ public class FutureActions {
 
   public static class ReturnFutureWithException implements Action {
     private Throwable exception;
+
     public ReturnFutureWithException(Throwable exception) {
       this.exception = exception;
     }
@@ -76,6 +80,7 @@ public class FutureActions {
       future.setException(exception);
       return future;
     }
+
     public void describeTo(Description description) {
       description.appendText("returns a future with exception ");
       description.appendValue(exception);

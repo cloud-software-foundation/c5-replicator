@@ -198,7 +198,7 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   private Fiber fiber;
 
   // This field is updated when modules' availability changes. It must only be accessed from the fiber.
-  private ImmutableMap<ModuleType, Integer> onlineModuleToPortMap  = ImmutableMap.of();
+  private ImmutableMap<ModuleType, Integer> onlineModuleToPortMap = ImmutableMap.of();
 
   private class BeaconMessageHandler extends SimpleChannelInboundHandler<Availability> {
     @Override

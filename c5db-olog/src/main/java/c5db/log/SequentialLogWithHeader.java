@@ -108,7 +108,7 @@ class SequentialLogWithHeader {
   public static PersistenceNavigator createNavigatorFromPersistence(BytePersistence persistence,
                                                                     PersistenceNavigatorFactory navigatorFactory,
                                                                     SequentialEntryCodec<?> entryCodec)
-  throws IOException {
+      throws IOException {
 
     HeaderWithSize headerWithSize = readHeaderFromPersistence(persistence);
 

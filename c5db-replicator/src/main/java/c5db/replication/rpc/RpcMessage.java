@@ -27,9 +27,9 @@ import io.protostuff.Message;
 
 /**
  * Wrap a rpc message, this could/should get serialized to the wire (eg: ReplicationWireMessage)
- * <p/>
+ * <p>
  * The subclasses exist so we can properly type the Jetlang channels and be clear about our intentions.
- * <p/>
+ * <p>
  * There is 4 subclasses in 2 categories:
  * * Wire   -- for messages off the wire from other folks
  * * Non-wire  -- for messages to be sent to other folks
