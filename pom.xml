@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>c5db</groupId>
-    <artifactId>parent</artifactId>
+    <artifactId>c5-replicator</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <parent>
@@ -32,24 +32,12 @@
 
     <modules>
         <module>c5-api</module>
-        <module>c5-end-to-end-tests</module>
         <module>c5-general-replication</module>
-        <module>c5-hbase-shim</module>
-        <module>c5-proto</module>
         <module>c5-replicator-proto</module>
-        <module>c5db</module>
         <module>c5db-cat-olog</module>
-        <module>c5db-client</module>
         <module>c5db-olog</module>
-        <module>c5db-protostuff-codec</module>
         <module>c5db-replicator</module>
         <module>c5db-util</module>
-        <module>hbase-common</module>
-        <module>hbase-hadoop-compat</module>
-        <module>hbase-protocol</module>
-        <module>hbase-server</module>
-        <module>hbase-client</module>
-        <module>hbase-prefix-tree</module>
     </modules>
 
     <properties>
@@ -61,14 +49,12 @@
         <netty.version>4.0.19.Final</netty.version>
         <protobuf.version>2.5.0</protobuf.version>
         <metrics-core.version>3.0.0</metrics-core.version>
-        <hbase.version>0.96.0</hbase.version>
         <jetlang.version>0.2.10</jetlang.version>
         <clojure.version>1.5.1</clojure.version>
         <yammer-metrics-core.version>2.1.2</yammer-metrics-core.version>
         <netty3.version>3.6.6.Final</netty3.version>
 
         <!-- Dependencies -->
-        <hadoop-one.version>1.1.2</hadoop-one.version>
         <commons-cli.version>1.2</commons-cli.version>
         <commons-codec.version>1.7</commons-codec.version>
         <!-- pretty outdated -->
@@ -248,8 +234,6 @@
                     </executions>
                     <configuration>
                         <excludes>
-                            <exclude>hbase-site.xml</exclude>
-                            <exclude>hdfs-site.xml</exclude>
                             <exclude>log4j.properties</exclude>
                             <exclude>mapred-queues.xml</exclude>
                             <exclude>mapred-site.xml</exclude>
@@ -387,55 +371,6 @@
                 <version>${netty.version}</version>
             </dependency>
             <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>c5db-client</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hbase-server</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hbase-common</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hbase-common</artifactId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hbase-protocol</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hbase-hadoop-compat</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hbase-hadoop-compat</artifactId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hbase-client</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>hbase-prefix-tree</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-api</artifactId>
                 <version>${slf4j-api.version}</version>
@@ -513,25 +448,6 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>${compat.module}</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>${project.groupId}</groupId>
-                <artifactId>${compat.module}</artifactId>
-                <version>${project.version}</version>
-                <type>test-jar</type>
-                <scope>test</scope>
-            </dependency>
-
-            <!-- large dependencies courtsey of hbase-server and hbase-client -->
-            <dependency>
-                <groupId>org.jamon</groupId>
-                <artifactId>jamon-runtime</artifactId>
-                <version>${jamon-runtime.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>commons-httpclient</groupId>
@@ -552,37 +468,6 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-math</artifactId>
                 <version>${commons-math.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>${zookeeper.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>jline</groupId>
-                        <artifactId>jline</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.sun.jmx</groupId>
-                        <artifactId>jmxri</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.sun.jdmk</groupId>
-                        <artifactId>jmxtools</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>javax.jms</groupId>
-                        <artifactId>jms</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.jboss.netty</groupId>
-                        <artifactId>netty</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>slf4j-log4j12</artifactId>
-                        <groupId>org.slf4j</groupId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.mortbay.jetty</groupId>
@@ -766,69 +651,6 @@
             <artifactId>hamcrest-library</artifactId>
         </dependency>
     </dependencies>
-
-    <profiles>
-        <profile>
-            <id>hadoop-1.1</id>
-            <activation>
-                <property>
-                    <!--Below formatting for dev-support/generate-hadoopX-poms.sh-->
-                    <!--h1-->
-                    <name>!hadoop.profile</name>
-                </property>
-            </activation>
-            <modules>
-                <module>hbase-hadoop1-compat</module>
-            </modules>
-            <properties>
-                <hadoop.version>${hadoop-one.version}</hadoop.version>
-                <compat.module>hbase-hadoop1-compat</compat.module>
-                <assembly.file>src/main/assembly/hadoop-one-compat.xml</assembly.file>
-            </properties>
-            <dependencyManagement>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.hadoop</groupId>
-                        <artifactId>hadoop-core</artifactId>
-                        <version>${hadoop.version}</version>
-                        <optional>true</optional>
-                        <exclusions>
-                            <exclusion>
-                                <groupId>hsqldb</groupId>
-                                <artifactId>hsqldb</artifactId>
-                            </exclusion>
-                            <exclusion>
-                                <groupId>net.sf.kosmosfs</groupId>
-                                <artifactId>kfs</artifactId>
-                            </exclusion>
-                            <exclusion>
-                                <groupId>org.eclipse.jdt</groupId>
-                                <artifactId>core</artifactId>
-                            </exclusion>
-                            <exclusion>
-                                <groupId>net.java.dev.jets3t</groupId>
-                                <artifactId>jets3t</artifactId>
-                            </exclusion>
-                            <exclusion>
-                                <groupId>oro</groupId>
-                                <artifactId>oro</artifactId>
-                            </exclusion>
-                        </exclusions>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.hadoop</groupId>
-                        <artifactId>hadoop-test</artifactId>
-                        <version>${hadoop.version}</version>
-                        <optional>true</optional>
-                        <scope>test</scope>
-                    </dependency>
-
-                </dependencies>
-
-
-            </dependencyManagement>
-        </profile>
-    </profiles>
 
     <distributionManagement>
         <site>
