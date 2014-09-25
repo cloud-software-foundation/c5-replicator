@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>c5db</groupId>
-    <artifactId>c5-replicator</artifactId>
+    <artifactId>c5-replicator-parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <parent>
@@ -31,13 +31,13 @@
     </parent>
 
     <modules>
-        <module>c5-api</module>
         <module>c5-general-replication</module>
+        <module>c5-replicator</module>
+        <module>c5-replicator-api</module>
+        <module>c5-replicator-log</module>
         <module>c5-replicator-proto</module>
-        <module>c5db-cat-olog</module>
-        <module>c5db-olog</module>
-        <module>c5db-replicator</module>
-        <module>c5db-util</module>
+        <module>c5-replicator-util</module>
+        <module>cat-olog</module>
     </modules>
 
     <properties>
@@ -658,5 +658,4 @@
             <url>https://github.com/OhmData/c5.git</url>
         </site>
     </distributionManagement>
-
 </project>

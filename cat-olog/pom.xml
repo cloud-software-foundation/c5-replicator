@@ -19,12 +19,12 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>parent</artifactId>
+        <artifactId>c5-replicator-parent</artifactId>
         <groupId>c5db</groupId>
         <version>0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>c5db-cat-olog</artifactId>
+    <artifactId>cat-olog</artifactId>
 
     <build>
         <plugins>
@@ -51,7 +51,7 @@
         </dependency>
         <dependency>
             <groupId>c5db</groupId>
-            <artifactId>c5db-olog</artifactId>
+            <artifactId>c5-replicator-log</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

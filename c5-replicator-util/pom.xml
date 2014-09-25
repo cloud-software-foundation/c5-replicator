@@ -22,11 +22,11 @@
 
     <parent>
         <groupId>c5db</groupId>
-        <artifactId>parent</artifactId>
+        <artifactId>c5-replicator-parent</artifactId>
         <version>0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>c5db-util</artifactId>
+    <artifactId>c5-replicator-util</artifactId>
 
     <dependencies>
         <dependency>
