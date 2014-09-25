@@ -36,6 +36,7 @@
         <module>c5-general-replication</module>
         <module>c5-hbase-shim</module>
         <module>c5-proto</module>
+        <module>c5-replicator-proto</module>
         <module>c5db</module>
         <module>c5db-cat-olog</module>
         <module>c5db-client</module>
