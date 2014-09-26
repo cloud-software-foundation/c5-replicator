@@ -85,6 +85,7 @@
         <maven.assembly.version>2.4</maven.assembly.version>
         <maven.antrun.version>1.6</maven.antrun.version>
         <maven-clean-plugin.version>2.5</maven-clean-plugin.version>
+        <maven-dependency-plugin.version>2.8</maven-dependency-plugin.version>
         <maven-eclipse-plugin.version>2.8</maven-eclipse-plugin.version>
         <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
         <maven-source-plugin.version>2.2.1</maven-source-plugin.version>
