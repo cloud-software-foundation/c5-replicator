@@ -6,3 +6,7 @@ dependencies:
     - mvn clean install -DskipTests
   cache_directories:
     - ~/.m2
+
+general:
+  artifacts:
+    - "c5-general-replication/target/surefire-reports"
