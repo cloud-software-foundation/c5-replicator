@@ -85,7 +85,6 @@ public interface Replicator {
 
   // What state is this instance in?
   public enum State {
-    INIT,
     FOLLOWER,
     CANDIDATE,
     LEADER,
