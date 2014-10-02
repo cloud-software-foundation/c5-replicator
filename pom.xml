@@ -655,7 +655,7 @@
     <distributionManagement>
         <site>
             <id>github</id>
-            <url>https://github.com/c5db/c5-replicator.git</url>
+            <url>https://github.com/cloud-software-foundation/c5-replicator.git</url>
         </site>
     </distributionManagement>
 </project>
