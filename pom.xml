@@ -103,6 +103,12 @@
         <!-- test junk, this seems too complex -->
         <test.output.tofile>true</test.output.tofile>
         <surefire.version>2.17</surefire.version>
+
+        <!-- github server corresponds to entry in ~/.m2/settings.xml -->
+        <github.global.server>github</github.global.server>
+        <github-repository-name>c5-replicator</github-repository-name>
+        <distribution-management-repo-url>${user.dir}/target/mvn-repo</distribution-management-repo-url>
+        <site-maven-plugin.version>0.10</site-maven-plugin.version>
     </properties>
 
     <pluginRepositories>
@@ -129,6 +135,18 @@
             </releases>
         </pluginRepository>
     </pluginRepositories>
+
+    <distributionManagement>
+        <site>
+            <id>github</id>
+            <url>https://github.com/cloud-software-foundation/c5-replicator.git</url>
+        </site>
+        <repository>
+            <id>internal.repo</id>
+            <name>Temporary Staging Repository</name>
+            <url>file://${project.build.directory}/mvn-repo</url>
+        </repository>
+    </distributionManagement>
 
     <build>
         <plugins>
@@ -161,6 +179,39 @@
                     <outputEncoding>UTF-8</outputEncoding>
                     <templateFile>${basedir}/src/main/site/site.vm</templateFile>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.1</version>
+                <configuration>
+                    <altDeploymentRepository>internal.repo::default::file://${distribution-management-repo-url}</altDeploymentRepository>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>site-maven-plugin</artifactId>
+                <version>${site-maven-plugin.version}</version>
+                <configuration>
+                    <message>Maven artifacts for ${project.version}</message>  <!-- git commit message -->
+                    <noJekyll>true</noJekyll>                                  <!-- disable webpage processing -->
+                    <outputDirectory>${distribution-management-repo-url}</outputDirectory> <!-- matches distribution management repository url above -->
+                    <branch>refs/heads/mvn-repo</branch>
+                    <excludes>
+                        <exclude>**/*jar-with-dependencies.*</exclude>
+                        <exclude>**/*cat-olog*.*</exclude>
+                    </excludes>
+                    <repositoryName>${github-repository-name}</repositoryName>
+                    <repositoryOwner>cloud-software-foundation</repositoryOwner>
+                </configuration>
+                <executions>
+                    <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
+                    <execution>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -651,11 +702,4 @@
             <artifactId>hamcrest-library</artifactId>
         </dependency>
     </dependencies>
-
-    <distributionManagement>
-        <site>
-            <id>github</id>
-            <url>https://github.com/cloud-software-foundation/c5-replicator.git</url>
-        </site>
-    </distributionManagement>
 </project>
