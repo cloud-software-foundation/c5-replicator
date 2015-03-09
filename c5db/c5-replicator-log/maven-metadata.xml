@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>c5db</groupId>
+  <artifactId>c5-replicator-log</artifactId>
+  <versioning>
+    <versions>
+      <version>0.1-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20150309234627</lastUpdated>
+  </versioning>
+</metadata>
