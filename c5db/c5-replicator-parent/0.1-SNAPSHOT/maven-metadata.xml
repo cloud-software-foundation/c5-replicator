@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata modelVersion="1.1.0">
+  <groupId>c5db</groupId>
+  <artifactId>c5-replicator-parent</artifactId>
+  <version>0.1-SNAPSHOT</version>
+  <versioning>
+    <snapshot>
+      <timestamp>20150309.234539</timestamp>
+      <buildNumber>1</buildNumber>
+    </snapshot>
+    <lastUpdated>20150309234539</lastUpdated>
+    <snapshotVersions>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>0.1-20150309.234539-1</value>
+        <updated>20150309234539</updated>
+      </snapshotVersion>
+    </snapshotVersions>
+  </versioning>
+</metadata>
