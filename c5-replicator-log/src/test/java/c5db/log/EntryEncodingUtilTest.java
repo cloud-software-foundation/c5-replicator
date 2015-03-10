@@ -58,7 +58,7 @@ public class EntryEncodingUtilTest {
     assertThat(decodedMessage, is(theSameMessageAs(TEST_ENTRY)));
   }
 
-  private static Matcher<OLogEntryHeader> theSameMessageAs(OLogEntryHeader message) {
+  private static Matcher<OLogEntryHeader> theSameMessageAs(final OLogEntryHeader message) {
     return new TypeSafeMatcher<OLogEntryHeader>() {
       @Override
       public boolean matchesSafely(OLogEntryHeader item) {

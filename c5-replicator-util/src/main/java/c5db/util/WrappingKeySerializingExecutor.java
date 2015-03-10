@@ -82,7 +82,12 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
    * Retrieve the queue for the given key, creating it first if it does not exist
    */
   private EmptyCheckingQueue<Runnable> getQueueForKey(String key) {
-    return keyQueues.computeIfAbsent(key, (k) -> new EmptyCheckingQueue<>());
+    synchronized (keyQueues) {
+      if (!keyQueues.containsKey(key)) {
+        keyQueues.put(key, new EmptyCheckingQueue<Runnable>());
+      }
+      return keyQueues.get(key);
+    }
   }
 
   /**
@@ -93,7 +98,12 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
       final CountDownLatch submittedAllQueuedTasks = new CountDownLatch(keyQueues.size());
 
       for (EmptyCheckingQueue<Runnable> queue : keyQueues.values()) {
-        enqueueOrRunTask(submittedAllQueuedTasks::countDown, queue);
+        enqueueOrRunTask(new Runnable() {
+          @Override
+          public void run() {
+            submittedAllQueuedTasks.countDown();
+          }
+        }, queue);
       }
       submittedAllQueuedTasks.await(timeout, unit);
     }
@@ -112,14 +122,17 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
    * Create a Runnable that runs a task which produces a value, then sets the passed-in Future
    * with the produced value.
    */
-  private <T> Runnable createFutureSettingTaskRunner(CheckedSupplier<T, Exception> task,
-                                                     SettableFuture<T> setWhenFinished) {
-    return () -> {
-      try {
-        setWhenFinished.set(task.get());
-      } catch (Throwable t) {
-        LOG.error("Error executing task", t);
-        setWhenFinished.setException(t);
+  private <T> Runnable createFutureSettingTaskRunner(final CheckedSupplier<T, Exception> task,
+                                                     final SettableFuture<T> setWhenFinished) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        try {
+          setWhenFinished.set(task.get());
+        } catch (Throwable t) {
+          LOG.error("Error executing task", t);
+          setWhenFinished.setException(t);
+        }
       }
     };
   }
@@ -139,12 +152,15 @@ public class WrappingKeySerializingExecutor implements KeySerializingExecutor {
    * Run the Runnable on the instance's ExecutorService. After it has run, if the queue
    * has any other tasks remaining, run the next one.
    */
-  private void submitToInternalExecutorService(Runnable runnable, EmptyCheckingQueue<Runnable> queue) {
-    executorService.submit(() -> {
-      runnable.run();
-      Runnable nextTask = queue.discardHeadThenPeek();
-      if (nextTask != null) {
-        submitToInternalExecutorService(nextTask, queue);
+  private void submitToInternalExecutorService(final Runnable runnable, final EmptyCheckingQueue<Runnable> queue) {
+    executorService.submit(new Runnable() {
+      @Override
+      public void run() {
+        runnable.run();
+        Runnable nextTask = queue.discardHeadThenPeek();
+        if (nextTask != null) {
+          WrappingKeySerializingExecutor.this.submitToInternalExecutorService(nextTask, queue);
+        }
       }
     });
   }

@@ -18,8 +18,6 @@ package c5db.util;
 
 import org.jetlang.fibers.Fiber;
 
-import java.util.function.Consumer;
-
 public interface FiberSupplier {
   Fiber getNewFiber(Consumer<Throwable> throwableHandler);
 }

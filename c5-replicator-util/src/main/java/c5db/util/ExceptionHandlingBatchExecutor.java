@@ -19,8 +19,6 @@ package c5db.util;
 import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.EventReader;
 
-import java.util.function.Consumer;
-
 /**
  * BatchExecutor implementation that catches Throwables (including RuntimeExceptions, etc), and calls the
  * provided Consumer<Throwable> function for flexible error handling.  The default implementation does not

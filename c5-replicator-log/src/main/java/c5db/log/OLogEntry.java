@@ -78,7 +78,7 @@ public final class OLogEntry extends SequentialEntry {
       case DATA:
         return new LogEntry(electionTerm, seqNum, ((OLogRawDataContent) content).getRawData(), null);
       case QUORUM_CONFIGURATION:
-        return new LogEntry(electionTerm, seqNum, new ArrayList<>(),
+        return new LogEntry(electionTerm, seqNum, new ArrayList<ByteBuffer>(),
             (QuorumConfigurationMessage) ((OLogProtostuffContent) content).getMessage());
     }
 

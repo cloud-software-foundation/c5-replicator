@@ -78,7 +78,7 @@ public class MooringTest {
 
   @Test(expected = Exception.class)
   public void doesNotAcceptARequestToLogAnEmptyEntryList() {
-    log.logEntries(new ArrayList<>());
+    log.logEntries(new ArrayList<LogEntry>());
   }
 
   @Test
@@ -220,19 +220,19 @@ public class MooringTest {
   }
 
   @SuppressWarnings("unchecked")
-  private void expectLoggingNTimes(int n) {
+  private void expectLoggingNTimes(final int n) {
     context.checking(new Expectations() {{
-      exactly(n).of(oLog).logEntries(with.is(any(List.class)), with(any(String.class)));
+      exactly(n).of(oLog).logEntries(with.<List<OLogEntry>>is(any(List.class)), with(any(String.class)));
     }});
   }
 
-  private void expectTruncationNTimes(int n) {
+  private void expectTruncationNTimes(final int n) {
     context.checking(new Expectations() {{
       exactly(n).of(oLog).truncateLog(with(any(Long.class)), with(any(String.class)));
     }});
   }
 
-  private void oLogGetTermWillReturn(long expectedTerm) {
+  private void oLogGetTermWillReturn(final long expectedTerm) {
     context.checking(new Expectations() {{
       exactly(1).of(oLog).getLogTerm(with(any(Long.class)), with(any(String.class)));
       will(returnValue(expectedTerm));

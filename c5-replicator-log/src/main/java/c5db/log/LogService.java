@@ -22,6 +22,7 @@ import c5db.interfaces.log.SequentialEntry;
 import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.messages.generated.ModuleType;
+import c5db.util.Consumer;
 import c5db.util.FiberSupplier;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
@@ -58,15 +59,30 @@ public class LogService extends AbstractService implements LogModule {
   @Override
   protected void doStart() {
     try {
-      this.fiber = fiberSupplier.getNewFiber(this::failModule);
+      this.fiber = fiberSupplier.getNewFiber(new Consumer<Throwable>() {
+        @Override
+        public void accept(Throwable t) {
+          LogService.this.failModule(t);
+        }
+      });
       this.logFileService = new LogFileService(basePath);
       KeySerializingExecutor executor = new WrappingKeySerializingExecutor(
           Executors.newFixedThreadPool(LogConstants.LOG_THREAD_POOL_SIZE));
       this.oLog = new QuorumDelegatingLog(
           logFileService,
           executor,
-          NavigableMapOLogEntryOracle::new,
-          InMemoryPersistenceNavigator::new);
+          (OLogEntryOracle.OLogEntryOracleFactory) new OLogEntryOracle.OLogEntryOracleFactory() {
+            @Override
+            public OLogEntryOracle create() {
+              return new NavigableMapOLogEntryOracle();
+            }
+          },
+          new LogPersistenceService.PersistenceNavigatorFactory() {
+            @Override
+            public LogPersistenceService.PersistenceNavigator create(LogPersistenceService.BytePersistence persistence, SequentialEntryCodec<?> encoding, long offset) {
+              return new InMemoryPersistenceNavigator<>(persistence, encoding, offset);
+            }
+          });
 
       // TODO start the flush threads as necessary
       // TODO log maintenance threads can go here too.
@@ -88,23 +104,26 @@ public class LogService extends AbstractService implements LogModule {
   }
 
   @Override
-  public ListenableFuture<ReplicatorLog> getReplicatorLog(String quorumId) {
-    SettableFuture<ReplicatorLog> logFuture = SettableFuture.create();
+  public ListenableFuture<ReplicatorLog> getReplicatorLog(final String quorumId) {
+    final SettableFuture<ReplicatorLog> logFuture = SettableFuture.create();
 
-    fiber.execute(() -> {
-      if (moorings.containsKey(quorumId)) {
-        logFuture.set(moorings.get(quorumId));
-        return;
-      }
+    fiber.execute(new Runnable() {
+      @Override
+      public void run() {
+        if (moorings.containsKey(quorumId)) {
+          logFuture.set(moorings.get(quorumId));
+          return;
+        }
 
-      try {
-        // TODO this blocks on a fiber, and should be changed to use a callback.
-        Mooring mooring = new Mooring(oLog, quorumId);
-        moorings.put(quorumId, mooring);
-        logFuture.set(mooring);
+        try {
+          // TODO this blocks on a fiber, and should be changed to use a callback.
+          Mooring mooring = new Mooring(oLog, quorumId);
+          moorings.put(quorumId, mooring);
+          logFuture.set(mooring);
 
-      } catch (IOException e) {
-        logFuture.setException(e);
+        } catch (IOException e) {
+          logFuture.setException(e);
+        }
       }
     });
 

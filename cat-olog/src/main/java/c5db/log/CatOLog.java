@@ -64,13 +64,20 @@ public class CatOLog {
     describeLogFileToOutput(inputLogFile, System.out);
   }
 
-  private static void describeLogFileToOutput(File inputLogFile, PrintStream out) throws IOException {
+  private static void describeLogFileToOutput(File inputLogFile, final PrintStream out) throws IOException {
     openFileAndParseEntries(inputLogFile,
-        (header, validCrc) ->
-            out.println(formatLogHeader(header, validCrc)),
-        (address, entry) -> {
-          out.print(toHex(address) + ": ");
-          out.println(formatEntry(entry));
+        new HeaderWithCrcValidity() {
+          @Override
+          public void accept(OLogHeader header, boolean validCrc) {
+            out.println(formatLogHeader(header, validCrc));
+          }
+        },
+        new EntryWithAddress() {
+          @Override
+          public void accept(long address, OLogEntryDescription entry) {
+            out.print(toHex(address) + ": ");
+            out.println(formatEntry(entry));
+          }
         });
   }
 
@@ -104,7 +111,7 @@ public class CatOLog {
   }
 
   private static String toHex(long address) {
-    return String.join(" ",
+    return Joiner.on(" ").join(
         Splitter
             .fixedLength(4)
             .split(String.format("%0" + HEX_ADDRESS_DIGITS + "x", address)));

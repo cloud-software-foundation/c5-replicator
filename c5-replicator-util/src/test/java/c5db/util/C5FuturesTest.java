@@ -28,7 +28,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 
 /**
  */
@@ -71,7 +70,7 @@ public class C5FuturesTest {
 
   @Test
   public void testC5FutureCallback_Success() throws Exception {
-    Integer futureValue = 12;
+    final Integer futureValue = 12;
 
     context.checking(new Expectations() {{
       oneOf(mockFuture).get();
@@ -85,7 +84,7 @@ public class C5FuturesTest {
 
   @Test
   public void testC5FutureCallback_Failure() throws Exception {
-    Exception error = new ExecutionException(new Exception());
+    final Exception error = new ExecutionException(new Exception());
 
     context.checking(new Expectations() {{
       oneOf(mockFuture).get();

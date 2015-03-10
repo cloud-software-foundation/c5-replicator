@@ -25,7 +25,7 @@ import static c5db.interfaces.log.SequentialEntryIterable.SequentialEntryIterato
 
 public class SequentialEntryIterableMatchers {
   public static <E extends SequentialEntry> TypeSafeMatcher<SequentialEntryIterator<E>>
-  isIteratorContainingInOrder(List<E> entries) {
+  isIteratorContainingInOrder(final List<E> entries) {
 
     return new TypeSafeMatcher<SequentialEntryIterator<E>>() {
       private Exception exception;

@@ -56,21 +56,29 @@ public class ConcurrencyTestUtil {
   }
 
   public static void runNTimesAndWaitForAllToComplete(int nTimes, ExecutorService executor,
-                                                      ExceptionThrowingRunnable runnable) throws Exception {
-    runNTimesAndWaitForAllToComplete(nTimes, executor, (int ignore) -> runnable.run());
+                                                      final ExceptionThrowingRunnable runnable) throws Exception {
+    runNTimesAndWaitForAllToComplete(nTimes, executor, new IndexedExceptionThrowingRunnable() {
+      @Override
+      public void run(int ignore) throws Exception {
+        runnable.run();
+      }
+    });
   }
 
   private static ListenableFuture<Boolean> runAndReturnCompletionFuture(ExecutorService executor,
-                                                                        IndexedExceptionThrowingRunnable runnable,
-                                                                        int invocationIndex) {
+                                                                        final IndexedExceptionThrowingRunnable runnable,
+                                                                        final int invocationIndex) {
     final SettableFuture<Boolean> setWhenFinished = SettableFuture.create();
 
-    executor.execute(() -> {
-      try {
-        runnable.run(invocationIndex);
-        setWhenFinished.set(true);
-      } catch (Throwable t) {
-        setWhenFinished.setException(t);
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          runnable.run(invocationIndex);
+          setWhenFinished.set(true);
+        } catch (Throwable t) {
+          setWhenFinished.setException(t);
+        }
       }
     });
     return setWhenFinished;

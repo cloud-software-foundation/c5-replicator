@@ -34,7 +34,7 @@ public class FutureMatchers {
     return returnsAFutureWithException(exceptionClass);
   }
 
-  public static <T> Matcher<Future<T>> returnsAFutureWhoseResult(Matcher<? super T> resultMatcher) {
+  public static <T> Matcher<Future<T>> returnsAFutureWhoseResult(final Matcher<? super T> resultMatcher) {
     return new TypeSafeMatcher<Future<T>>() {
       public Throwable throwable = null;
 
@@ -68,7 +68,7 @@ public class FutureMatchers {
     };
   }
 
-  public static <T> Matcher<Future<T>> returnsAFutureWithException(Class<? extends Throwable> exceptionClass) {
+  public static <T> Matcher<Future<T>> returnsAFutureWithException(final Class<? extends Throwable> exceptionClass) {
     return new TypeSafeMatcher<Future<T>>() {
       public Throwable actualExceptionThrown = null;
       public T result;

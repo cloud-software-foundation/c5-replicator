@@ -24,6 +24,7 @@ import io.protostuff.LinkBuffer;
 import io.protostuff.LowCopyProtobufOutput;
 import io.protostuff.ProtobufIOUtil;
 import io.protostuff.Schema;
+import sun.misc.SharedSecrets;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -116,7 +117,9 @@ public class EntryEncodingUtil {
     assert content != null;
 
     final Adler32 crc = new Adler32();
-    content.forEach((ByteBuffer buffer) -> crc.update(buffer.duplicate()));
+    for (ByteBuffer buffer : content) {
+      SharedSecrets.getJavaUtilZipAccess().update(crc, buffer.duplicate());
+    }
     final LinkBuffer crcBuf = new LinkBuffer(8);
     putCrc(crcBuf, crc.getValue());
 

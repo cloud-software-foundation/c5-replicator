@@ -16,19 +16,18 @@
 
 package c5db;
 
+import c5db.util.Consumer;
+import c5db.util.Predicate;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /**
  * Matchers that don't belong in any other class, or generators or combinators of matchers.
  */
 public class MiscMatchers {
 
-  public static <T> Matcher<T> simpleMatcherForPredicate(Predicate<T> matches, Consumer<Description> describe) {
+  public static <T> Matcher<T> simpleMatcherForPredicate(final Predicate<T> matches, final Consumer<Description> describe) {
     return new TypeSafeMatcher<T>() {
       @Override
       protected boolean matchesSafely(T item) {

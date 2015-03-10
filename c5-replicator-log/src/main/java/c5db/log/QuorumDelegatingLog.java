@@ -17,11 +17,13 @@
 package c5db.log;
 
 import c5db.LogConstants;
+import c5db.interfaces.log.SequentialEntryIterable;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.log.generated.OLogHeader;
 import c5db.util.C5Iterators;
 import c5db.util.CheckedSupplier;
 import c5db.util.KeySerializingExecutor;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
@@ -78,58 +80,74 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
-  public ListenableFuture<Void> openAsync(String quorumId) {
-    quorumMap.computeIfAbsent(quorumId, q -> new PerQuorum(quorumId));
-    return submitQuorumTask(quorumId, () -> {
-      getQuorumStructure(quorumId).open();
-      return null;
+  public ListenableFuture<Void> openAsync(final String quorumId) {
+    synchronized (quorumMap) {
+      if (!quorumMap.containsKey(quorumId)) {
+        quorumMap.put(quorumId, new PerQuorum(quorumId));
+      }
+    }
+    return submitQuorumTask(quorumId, new CheckedSupplier<Void, Exception>() {
+      @Override
+      public Void get() throws Exception {
+        QuorumDelegatingLog.this.getQuorumStructure(quorumId).open();
+        return null;
+      }
     });
   }
 
   @Override
-  public ListenableFuture<Boolean> logEntries(List<OLogEntry> passedInEntries, String quorumId) {
-    List<OLogEntry> entries = validateAndMakeDefensiveCopy(passedInEntries);
+  public ListenableFuture<Boolean> logEntries(List<OLogEntry> passedInEntries, final String quorumId) {
+    final List<OLogEntry> entries = validateAndMakeDefensiveCopy(passedInEntries);
 
     getQuorumStructure(quorumId).ensureEntriesAreConsecutive(entries);
     updateOracleWithNewEntries(entries, quorumId);
 
-    return submitQuorumTask(quorumId, () -> {
-      currentLog(quorumId).append(entries);
-      maybeSyncLogForQuorum(quorumId);
-      return true;
+    return submitQuorumTask(quorumId, new CheckedSupplier<Boolean, Exception>() {
+      @Override
+      public Boolean get() throws Exception {
+        QuorumDelegatingLog.this.currentLog(quorumId).append(entries);
+        QuorumDelegatingLog.this.maybeSyncLogForQuorum(quorumId);
+        return true;
+      }
     });
   }
 
   @Override
-  public ListenableFuture<List<OLogEntry>> getLogEntries(long start, long end, String quorumId) {
+  public ListenableFuture<List<OLogEntry>> getLogEntries(final long start, final long end, final String quorumId) {
     if (end < start) {
       throw new IllegalArgumentException("getLogEntries: end < start");
     } else if (end == start) {
-      return Futures.immediateFuture(new ArrayList<>());
+      return Futures.immediateFuture((List<OLogEntry>) new ArrayList<OLogEntry>());
     }
 
-    return submitQuorumTask(quorumId, () -> {
-      if (!seqNumPrecedesLog(start, getQuorumStructure(quorumId).currentLogWithHeader())) {
-        return currentLog(quorumId).subSequence(start, end);
-      } else {
-        return multiLogGet(start, end, quorumId);
+    return submitQuorumTask(quorumId, new CheckedSupplier<List<OLogEntry>, Exception>() {
+      @Override
+      public List<OLogEntry> get() throws Exception {
+        if (!QuorumDelegatingLog.this.seqNumPrecedesLog(start, getQuorumStructure(quorumId).currentLogWithHeader())) {
+          return QuorumDelegatingLog.this.currentLog(quorumId).subSequence(start, end);
+        } else {
+          return QuorumDelegatingLog.this.multiLogGet(start, end, quorumId);
+        }
       }
     });
   }
 
   @Override
-  public ListenableFuture<Boolean> truncateLog(long seqNum, String quorumId) {
+  public ListenableFuture<Boolean> truncateLog(final long seqNum, final String quorumId) {
     getQuorumStructure(quorumId).setExpectedNextSequenceNumber(seqNum);
     oLogEntryOracle(quorumId).notifyTruncation(seqNum);
 
-    return submitQuorumTask(quorumId, () -> {
-      while (seqNumPrecedesLog(seqNum, getQuorumStructure(quorumId).currentLogWithHeader())) {
-        getQuorumStructure(quorumId).deleteCurrentLog();
-      }
+    return submitQuorumTask(quorumId, new CheckedSupplier<Boolean, Exception>() {
+      @Override
+      public Boolean get() throws Exception {
+        while (QuorumDelegatingLog.this.seqNumPrecedesLog(seqNum, getQuorumStructure(quorumId).currentLogWithHeader())) {
+          QuorumDelegatingLog.this.getQuorumStructure(quorumId).deleteCurrentLog();
+        }
 
-      currentLog(quorumId).truncate(seqNum);
-      maybeSyncLogForQuorum(quorumId);
-      return true;
+        QuorumDelegatingLog.this.currentLog(quorumId).truncate(seqNum);
+        QuorumDelegatingLog.this.maybeSyncLogForQuorum(quorumId);
+        return true;
+      }
     });
   }
 
@@ -154,12 +172,15 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
   }
 
   @Override
-  public ListenableFuture<Void> roll(String quorumId) throws IOException {
+  public ListenableFuture<Void> roll(final String quorumId) throws IOException {
     final OLogHeader newLogHeader = buildRollHeader(quorumId);
 
-    return submitQuorumTask(quorumId, () -> {
-      getQuorumStructure(quorumId).roll(newLogHeader);
-      return null;
+    return submitQuorumTask(quorumId, new CheckedSupplier<Void, Exception>() {
+      @Override
+      public Void get() throws Exception {
+        QuorumDelegatingLog.this.getQuorumStructure(quorumId).roll(newLogHeader);
+        return null;
+      }
     });
   }
 
@@ -249,15 +270,19 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
       final int dequeSize = logDeque.size();
 
       // First return the log(s) already in memory, then read additional logs from the persistence.
-      return Iterators.concat(
+      return
+          Iterators.concat(
           dequeIterator,
           Iterators.transform(C5Iterators.advanced(persistenceService.getList(quorumId).iterator(), dequeSize),
-              (persistenceSupplier) -> {
-                try {
-                  return SequentialLogWithHeader.readLogFromPersistence(persistenceSupplier.get(),
-                      persistenceNavigatorFactory);
-                } catch (IOException e) {
-                  throw new IteratorIOException(e);
+              new Function<CheckedSupplier<? extends BytePersistence, IOException>, SequentialLogWithHeader>() {
+                @Override
+                public SequentialLogWithHeader apply(CheckedSupplier<? extends BytePersistence, IOException> persistenceSupplier) {
+                  try {
+                    return SequentialLogWithHeader.readLogFromPersistence(persistenceSupplier.get(),
+                        persistenceNavigatorFactory);
+                  } catch (IOException e) {
+                    throw new IteratorIOException(e);
+                  }
                 }
               }));
     }
@@ -293,7 +318,11 @@ public class QuorumDelegatingLog implements OLog, AutoCloseable {
           new OLogProtostuffContent<>(header.getBaseConfiguration())));
       // TODO it isn't necessary to read the content of every entry; only those which refer to configurations.
       // TODO Also should the navigator be updated on the last entry?
-      log.forEach(oLogEntryOracle::notifyLogging);
+      try (SequentialEntryIterable.SequentialEntryIterator<OLogEntry> iterator = log.iterator()) {
+        for (; iterator.hasNext(); ) {
+          oLogEntryOracle.notifyLogging(iterator.next());
+        }
+      }
     }
 
     private void increaseExpectedNextSeqNumTo(long seqNum) {

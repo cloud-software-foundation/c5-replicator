@@ -18,8 +18,6 @@ package c5db.interfaces.log;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Objects;
-import java.util.function.Consumer;
 
 /**
  * An Iterable-like-interface over SequentialEntry. Because the methods of Iterator cannot
@@ -32,13 +30,6 @@ import java.util.function.Consumer;
 public interface SequentialEntryIterable<E extends SequentialEntry> {
 
   SequentialEntryIterator<E> iterator() throws IOException;
-
-  default void forEach(Consumer<? super E> action) throws IOException {
-    Objects.requireNonNull(action);
-    for (SequentialEntryIterator<E> iterator = this.iterator(); iterator.hasNext(); ) {
-      action.accept(iterator.next());
-    }
-  }
 
   interface SequentialEntryIterator<E extends SequentialEntry> extends Closeable {
     boolean hasNext() throws IOException;

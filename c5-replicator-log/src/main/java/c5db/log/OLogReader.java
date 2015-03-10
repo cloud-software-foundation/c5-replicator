@@ -38,7 +38,12 @@ import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
 public class OLogReader<E extends SequentialEntry> implements Reader<E> {
 
   private final SequentialEntryCodec<E> codec;
-  private final PersistenceNavigatorFactory navigatorFactory = InMemoryPersistenceNavigator::new;
+  private final PersistenceNavigatorFactory navigatorFactory = new PersistenceNavigatorFactory() {
+    @Override
+    public PersistenceNavigator create(BytePersistence persistence, SequentialEntryCodec<?> encoding, long offset) {
+      return new InMemoryPersistenceNavigator<>(persistence, encoding, offset);
+    }
+  };
   private final LogPersistenceService<?> logPersistenceService;
   private final String quorumId;
 
@@ -57,15 +62,18 @@ public class OLogReader<E extends SequentialEntry> implements Reader<E> {
     ImmutableList.Builder<CheckedSupplier<SequentialEntryIterator<E>, IOException>> logSupplierBuilder =
         ImmutableList.builder();
 
-    for (CheckedSupplier<? extends BytePersistence, IOException> persistenceSupplier :
+    for (final CheckedSupplier<? extends BytePersistence, IOException> persistenceSupplier :
         logPersistenceService.getList(quorumId)) {
 
       logSupplierBuilder.add(
-          () -> {
-            BytePersistence persistence = persistenceSupplier.get();
-            PersistenceNavigator navigator =
-                SequentialLogWithHeader.createNavigatorFromPersistence(persistence, navigatorFactory, codec);
-            return new EncodedSequentialEntryIterator<>(navigator, codec);
+          new CheckedSupplier<SequentialEntryIterator<E>, IOException>() {
+            @Override
+            public SequentialEntryIterator<E> get() throws IOException {
+              BytePersistence persistence = persistenceSupplier.get();
+              PersistenceNavigator navigator =
+                  SequentialLogWithHeader.createNavigatorFromPersistence(persistence, navigatorFactory, codec);
+              return new EncodedSequentialEntryIterator<>(navigator, codec);
+            }
           });
     }
 

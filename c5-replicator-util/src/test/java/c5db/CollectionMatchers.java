@@ -62,7 +62,7 @@ public class CollectionMatchers {
     };
   }
 
-  public static <T> Matcher<T> isIn(Collection<T> collection) {
+  public static <T> Matcher<T> isIn(final Collection<T> collection) {
     return new TypeSafeMatcher<T>() {
       @Override
       protected boolean matchesSafely(T item) {

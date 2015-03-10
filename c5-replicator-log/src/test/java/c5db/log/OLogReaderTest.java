@@ -24,6 +24,7 @@ import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.interfaces.replication.ReplicatorEntry;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.replication.generated.LogEntry;
+import c5db.util.Consumer;
 import c5db.util.ExceptionHandlingBatchExecutor;
 import c5db.util.FiberSupplier;
 import c5db.util.JUnitRuleFiberExceptions;
@@ -31,6 +32,7 @@ import com.google.common.collect.Sets;
 import org.jetlang.core.BatchExecutor;
 import org.jetlang.core.RunnableExecutor;
 import org.jetlang.core.RunnableExecutorImpl;
+import org.jetlang.fibers.Fiber;
 import org.jetlang.fibers.ThreadFiber;
 import org.junit.After;
 import org.junit.Before;
@@ -38,8 +40,8 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static c5db.interfaces.log.SequentialEntryIterable.SequentialEntryIterator;
 import static c5db.interfaces.log.SequentialEntryIterableMatchers.isIteratorContainingInOrder;
@@ -106,16 +108,21 @@ public class OLogReaderTest {
   }
 
   private List<OLogEntry> oLogEntries(List<LogEntry> entries) {
-    return entries.stream()
-        .map(OLogEntry::fromProtostuff)
-        .collect(Collectors.toList());
+    List<OLogEntry> result = new ArrayList<>();
+    for (LogEntry entry : entries) {
+      result.add(OLogEntry.fromProtostuff(entry));
+    }
+    return result;
   }
 
   private List<ReplicatorEntry> justDataEntries(List<LogEntry> entries) {
-    return entries.stream()
-        .filter((logEntry) -> logEntry.getQuorumConfiguration() == null)
-        .map((logEntry) -> new ReplicatorEntry(logEntry.getIndex(), logEntry.getDataList()))
-        .collect(Collectors.toList());
+    List<ReplicatorEntry> result = new ArrayList<>();
+    for (LogEntry entry : entries) {
+      if (entry.getQuorumConfiguration() == null) {
+        result.add(new ReplicatorEntry(entry.getIndex(), entry.getDataList()));
+      }
+    }
+    return result;
   }
 
   private List<LogEntry> someConsecutiveLogEntries() {
@@ -140,10 +147,13 @@ public class OLogReaderTest {
   }
 
   private FiberSupplier makeFiberSupplier() {
-    return (throwableHandler) -> {
-      BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(throwableHandler);
-      RunnableExecutor runnableExecutor = new RunnableExecutorImpl(batchExecutor);
-      return new ThreadFiber(runnableExecutor, "o-log-reader-test-thread", false);
+    return new FiberSupplier() {
+      @Override
+      public Fiber getNewFiber(Consumer<Throwable> throwableHandler) {
+        BatchExecutor batchExecutor = new ExceptionHandlingBatchExecutor(throwableHandler);
+        RunnableExecutor runnableExecutor = new RunnableExecutorImpl(batchExecutor);
+        return new ThreadFiber(runnableExecutor, "o-log-reader-test-thread", false);
+      }
     };
   }
 }

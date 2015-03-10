@@ -17,6 +17,7 @@
 package c5db.log;
 
 import c5db.log.generated.OLogContentType;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
 import java.nio.ByteBuffer;
@@ -75,6 +76,11 @@ public final class OLogRawDataContent extends OLogContent {
 
 
   private static List<ByteBuffer> sliceAll(List<ByteBuffer> buffers) {
-    return Lists.transform(buffers, ByteBuffer::slice);
+    return Lists.transform(buffers, new Function<ByteBuffer, ByteBuffer>() {
+      @Override
+      public ByteBuffer apply(ByteBuffer byteBuffer) {
+        return byteBuffer.slice();
+      }
+    });
   }
 }

@@ -17,9 +17,11 @@
 package c5db.log;
 
 import c5db.C5CommonTestUtil;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.IOException;
@@ -239,34 +241,44 @@ public class QuorumDelegatingLogPerformanceMeasurement {
   }
 
   private long computeMinMessageSizeInBytes() {
-    return pow(2, logSequence.stream()
-        .mapToInt((m) -> m)
-        .min().getAsInt());
+    return pow(2, Ordering.<Integer>natural().min(logSequence));
   }
 
   private long computeTotalMessageSizeInBytes() {
-    return logSequence.stream()
-        .map((m) -> pow(2, m))
-        .mapToLong((m) -> m)
-        .sum()
-        * numQuorums;
+    long sum = 0;
+    for (int m : logSequence) {
+      sum += pow(2, m);
+    }
+    return sum * numQuorums;
   }
 
   private double computeStdDevMessageSizeInBytes(double averageMessageSizeB) {
-    return Math.sqrt(
-        logSequence.stream()
-            .map((m) -> pow(2, m) - averageMessageSizeB)
-            .map((m) -> m * m / logSequence.size())
-            .mapToDouble((m) -> m)
-            .sum());
+    double sum = 0;
+    int sequenceSize = logSequence.size();
+
+    for (int m : logSequence) {
+      double differenceFromAverage = pow(2, m) - averageMessageSizeB;
+      sum += (differenceFromAverage * differenceFromAverage) / sequenceSize;
+    }
+    return Math.sqrt(sum);
   }
 
   private OLog getLog(LogFileService logFileService) {
     KeySerializingExecutor executor = new WrappingKeySerializingExecutor(newFixedThreadPool(numThreads));
     return new QuorumDelegatingLog(logFileService,
         executor,
-        NavigableMapOLogEntryOracle::new,
-        InMemoryPersistenceNavigator::new);
+        (OLogEntryOracle.OLogEntryOracleFactory) new OLogEntryOracle.OLogEntryOracleFactory() {
+          @Override
+          public OLogEntryOracle create() {
+            return new NavigableMapOLogEntryOracle();
+          }
+        },
+        new LogPersistenceService.PersistenceNavigatorFactory() {
+          @Override
+          public LogPersistenceService.PersistenceNavigator create(LogPersistenceService.BytePersistence persistence, SequentialEntryCodec<?> encoding, long offset) {
+            return new InMemoryPersistenceNavigator<>(persistence, encoding, offset);
+          }
+        });
   }
 
   /**

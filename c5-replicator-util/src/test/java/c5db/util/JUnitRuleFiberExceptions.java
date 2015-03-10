@@ -24,7 +24,6 @@ import org.junit.runners.model.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * JUnit TestRule intended to be used as a callback for an instance of {@link ExceptionHandlingBatchExecutor},
@@ -33,7 +32,7 @@ import java.util.function.Consumer;
  * in which the test runs.
  */
 public class JUnitRuleFiberExceptions implements TestRule, Consumer<Throwable> {
-  private final List<Throwable> throwables = Collections.synchronizedList(new ArrayList<>());
+  private final List<Throwable> throwables = Collections.synchronizedList(new ArrayList<Throwable>());
 
   public JUnitRuleFiberExceptions() {
 

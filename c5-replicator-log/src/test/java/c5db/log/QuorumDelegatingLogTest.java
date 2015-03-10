@@ -17,6 +17,8 @@
 package c5db.log;
 
 import c5db.C5CommonTestUtil;
+import c5db.FutureMatchers;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.util.WrappingKeySerializingExecutor;
 import com.google.common.collect.Lists;
@@ -28,11 +30,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static c5db.FutureMatchers.resultsIn;
-import static c5db.FutureMatchers.resultsInException;
 import static c5db.log.LogMatchers.aListOfEntriesWithConsecutiveSeqNums;
 import static c5db.log.LogTestUtil.emptyEntryList;
 import static c5db.log.LogTestUtil.makeSingleEntryList;
@@ -68,8 +69,18 @@ public class QuorumDelegatingLogTest {
     log = new QuorumDelegatingLog(
         logFileService,
         new WrappingKeySerializingExecutor(MoreExecutors.sameThreadExecutor()),
-        NavigableMapOLogEntryOracle::new,
-        InMemoryPersistenceNavigator::new);
+        new OLogEntryOracle.OLogEntryOracleFactory() {
+          @Override
+          public OLogEntryOracle create() {
+            return new NavigableMapOLogEntryOracle();
+          }
+        },
+        new LogPersistenceService.PersistenceNavigatorFactory() {
+          @Override
+          public LogPersistenceService.PersistenceNavigator create(LogPersistenceService.BytePersistence persistence, SequentialEntryCodec<?> encoding, long offset) {
+            return new InMemoryPersistenceNavigator<>(persistence, encoding, offset);
+          }
+        });
 
     log.openAsync(quorumId).get();
   }
@@ -82,7 +93,7 @@ public class QuorumDelegatingLogTest {
 
   @Test(timeout = 1000)
   public void throwsExceptionFromGetLogEntriesMethodWhenTheLogIsEmpty() throws Exception {
-    assertThat(log.getLogEntries(1, 2, quorumId), resultsInException(LogEntryNotFound.class));
+    assertThat(log.getLogEntries(1, 2, quorumId), FutureMatchers.<List<OLogEntry>>resultsInException(LogEntryNotFound.class));
   }
 
   @Test
@@ -160,7 +171,7 @@ public class QuorumDelegatingLogTest {
     log.logEntries(someConsecutiveEntries(1, 5), quorumId);
     log.truncateLog(3, quorumId);
 
-    assertThat(log.getLogEntries(2, 4, quorumId), resultsInException(LogEntryNotFound.class));
+    assertThat(log.getLogEntries(2, 4, quorumId), FutureMatchers.<List<OLogEntry>>resultsInException(LogEntryNotFound.class));
   }
 
   @Test
@@ -275,8 +286,12 @@ public class QuorumDelegatingLogTest {
   }
 
   private static List<OLogEntry> subListWithSeqNums(List<OLogEntry> entryList, long start, long end) {
-    return entryList.stream()
-        .filter((entry) -> start <= entry.getSeqNum() && entry.getSeqNum() < end)
-        .collect(Collectors.toList());
+    List<OLogEntry> result = new ArrayList<>();
+    for (OLogEntry entry : entryList) {
+      if (start <= entry.getSeqNum() && entry.getSeqNum() < end) {
+        result.add(entry);
+      }
+    }
+    return result;
   }
 }

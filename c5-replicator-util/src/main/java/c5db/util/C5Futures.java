@@ -22,26 +22,28 @@ import org.jetlang.fibers.Fiber;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.function.Consumer;
 
 /**
  * C5 utilities for messing about with guava listenable futures.
  */
 public class C5Futures {
 
-  public static <V> void addCallback(@NotNull ListenableFuture<V> future,
-                                     @NotNull Consumer<? super V> success,
-                                     @NotNull Consumer<Throwable> failure,
+  public static <V> void addCallback(@NotNull final ListenableFuture<V> future,
+                                     @NotNull final Consumer<? super V> success,
+                                     @NotNull final Consumer<Throwable> failure,
                                      @NotNull Fiber fiber) {
-    Runnable callbackListener = () -> {
-      final V value;
-      try {
-        value = getUninterruptibly(future);
-      } catch (ExecutionException | RuntimeException | Error e) {
-        failure.accept(e);
-        return;
+    Runnable callbackListener = new Runnable() {
+      @Override
+      public void run() {
+        final V value;
+        try {
+          value = getUninterruptibly(future);
+        } catch (ExecutionException | RuntimeException | Error e) {
+          failure.accept(e);
+          return;
+        }
+        success.accept(value);
       }
-      success.accept(value);
     };
     future.addListener(callbackListener, fiber);
   }

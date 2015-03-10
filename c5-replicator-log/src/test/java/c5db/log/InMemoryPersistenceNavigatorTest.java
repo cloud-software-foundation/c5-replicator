@@ -64,7 +64,12 @@ public class InMemoryPersistenceNavigatorTest {
   public void placesAnUpperBoundOnTheNumberOfEntriesItSkipsPastWhenComputingEntriesAddresses() throws Exception {
     for (int i = LAST_SEQ_NUM; i >= 1; i--) {
       final long seqNum = (long) i;
-      int numberOfSkipOperations = numberOfSkipOperations(() -> navigator.getAddressOfEntry(seqNum));
+      int numberOfSkipOperations = numberOfSkipOperations(new ExceptionRunnable() {
+        @Override
+        public void run() throws Exception {
+          navigator.getAddressOfEntry(seqNum);
+        }
+      });
       assertThat(numberOfSkipOperations, is(lessThanOrEqualTo(MAX_SEEK)));
     }
   }
@@ -72,14 +77,24 @@ public class InMemoryPersistenceNavigatorTest {
   @Test
   public void cachesAddressOfLastEntry() throws Exception {
     tidyGetStreamAtLastEntry();
-    int numberOfSkipOperationsForASecondCall = numberOfSkipOperations(() -> tidyGetStreamAtSeqNum(LAST_SEQ_NUM));
+    int numberOfSkipOperationsForASecondCall = numberOfSkipOperations(new ExceptionRunnable() {
+      @Override
+      public void run() throws Exception {
+        InMemoryPersistenceNavigatorTest.this.tidyGetStreamAtSeqNum(LAST_SEQ_NUM);
+      }
+    });
     assertThat(numberOfSkipOperationsForASecondCall, is(0));
   }
 
   @Test
   public void cachesAddressOfAPreviousEntryLookup() throws Exception {
     tidyGetStreamAtSeqNum(20);
-    int numberOfSkipOperationsForASecondCall = numberOfSkipOperations(() -> tidyGetStreamAtSeqNum(20));
+    int numberOfSkipOperationsForASecondCall = numberOfSkipOperations(new ExceptionRunnable() {
+      @Override
+      public void run() throws Exception {
+        InMemoryPersistenceNavigatorTest.this.tidyGetStreamAtSeqNum(20);
+      }
+    });
     assertThat(numberOfSkipOperationsForASecondCall, is(0));
   }
 

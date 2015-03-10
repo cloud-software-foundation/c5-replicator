@@ -19,6 +19,7 @@ package c5db.log;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.interfaces.replication.ReplicatorLog;
 import c5db.replication.generated.LogEntry;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -93,7 +94,12 @@ public class Mooring implements ReplicatorLog {
 
   @Override
   public ListenableFuture<List<LogEntry>> getLogEntries(long start, long end) {
-    return Futures.transform(log.getLogEntries(start, end, quorumId), Mooring::toProtostuffMessages);
+    return Futures.transform(log.getLogEntries(start, end, quorumId), new Function<List<OLogEntry>, List<LogEntry>>() {
+      @Override
+      public List<LogEntry> apply(List<OLogEntry> entries) {
+        return Mooring.toProtostuffMessages(entries);
+      }
+    });
   }
 
   @Override
@@ -141,7 +147,12 @@ public class Mooring implements ReplicatorLog {
   }
 
   private static List<LogEntry> toProtostuffMessages(List<OLogEntry> entries) {
-    return Lists.transform(entries, OLogEntry::toProtostuff);
+    return Lists.transform(entries, new Function<OLogEntry, LogEntry>() {
+      @Override
+      public LogEntry apply(OLogEntry oLogEntry) {
+        return oLogEntry.toProtostuff();
+      }
+    });
   }
 
   private void updateCachedTermAndIndex(List<OLogEntry> entriesToLog) {

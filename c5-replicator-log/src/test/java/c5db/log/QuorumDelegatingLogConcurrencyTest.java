@@ -16,6 +16,8 @@
 
 package c5db.log;
 
+import c5db.ConcurrencyTestUtil;
+import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.util.KeySerializingExecutor;
 import c5db.util.WrappingKeySerializingExecutor;
 import org.junit.Test;
@@ -45,7 +47,12 @@ public class QuorumDelegatingLogConcurrencyTest {
     final int numThreads = 150;
     final int numAttempts = 5;
 
-    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::runMultipleQuorumThreadSafetyTest);
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, new ConcurrencyTestUtil.ConcurrencyTest() {
+      @Override
+      public void run(int numQuorums, ExecutorService executor) throws Exception {
+        QuorumDelegatingLogConcurrencyTest.this.runMultipleQuorumThreadSafetyTest(numQuorums, executor);
+      }
+    });
   }
 
   @Test(timeout = 5000)
@@ -53,17 +60,25 @@ public class QuorumDelegatingLogConcurrencyTest {
     final int numThreads = 100;
     final int numAttempts = 10;
 
-    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::runCloseThreadSafetyTest);
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, new ConcurrencyTestUtil.ConcurrencyTest() {
+      @Override
+      public void run(int numQuorums, ExecutorService executor) throws Exception {
+        QuorumDelegatingLogConcurrencyTest.this.runCloseThreadSafetyTest(numQuorums, executor);
+      }
+    });
   }
 
 
   private void runMultipleQuorumThreadSafetyTest(int numQuorums, ExecutorService executor) throws Exception {
     try (OLog log = createLog()) {
-      runForNQuorums(numQuorums, executor, (quorumId) -> {
-        log.openAsync(quorumId)
-            .get();
-        log.logEntries(logEntriesForQuorum(quorumId), quorumId)
-            .get();
+      runForNQuorums(numQuorums, executor, new QuorumRunner() {
+        @Override
+        public void run(String quorumId) throws Exception {
+          log.openAsync(quorumId)
+              .get();
+          log.logEntries(QuorumDelegatingLogConcurrencyTest.this.logEntriesForQuorum(quorumId), quorumId)
+              .get();
+        }
       });
 
       assertThatEverythingWasLoggedCorrectly(log);
@@ -72,22 +87,33 @@ public class QuorumDelegatingLogConcurrencyTest {
 
   private void runCloseThreadSafetyTest(int numQuorums, ExecutorService executor) throws Exception {
     try (OLog log = createLog()) {
-      runForNQuorums(numQuorums, executor, (quorumId) -> {
-        log.openAsync(quorumId)
-            .get();
-        log.logEntries(logEntriesForQuorum(quorumId), quorumId)
-            .get();
+      runForNQuorums(numQuorums, executor, new QuorumRunner() {
+        @Override
+        public void run(String quorumId) throws Exception {
+          log.openAsync(quorumId)
+              .get();
+          log.logEntries(QuorumDelegatingLogConcurrencyTest.this.logEntriesForQuorum(quorumId), quorumId)
+              .get();
+        }
       });
 
-      runNTimesAndWaitForAllToComplete(numQuorums * 2, executor, log::close);
+      runNTimesAndWaitForAllToComplete(numQuorums * 2, executor, new ConcurrencyTestUtil.ExceptionThrowingRunnable() {
+        @Override
+        public void run() throws Exception {
+          log.close();
+        }
+      });
     }
   }
 
-  private void runForNQuorums(int numQuorums, ExecutorService executor, QuorumRunner runner) throws Exception {
+  private void runForNQuorums(int numQuorums, ExecutorService executor, final QuorumRunner runner) throws Exception {
     runNTimesAndWaitForAllToComplete(numQuorums, executor,
-        (int invocationIndex) -> {
-          String quorumId = getQuorumNameForIndex(invocationIndex);
-          runner.run(quorumId);
+        new ConcurrencyTestUtil.IndexedExceptionThrowingRunnable() {
+          @Override
+          public void run(int invocationIndex) throws Exception {
+            String quorumId = QuorumDelegatingLogConcurrencyTest.this.getQuorumNameForIndex(invocationIndex);
+            runner.run(quorumId);
+          }
         });
   }
 
@@ -108,8 +134,18 @@ public class QuorumDelegatingLogConcurrencyTest {
     return new QuorumDelegatingLog(
         new ArrayPersistenceService(),
         executor,
-        NavigableMapOLogEntryOracle::new,
-        InMemoryPersistenceNavigator::new);
+        (OLogEntryOracle.OLogEntryOracleFactory) new OLogEntryOracle.OLogEntryOracleFactory() {
+          @Override
+          public OLogEntryOracle create() {
+            return new NavigableMapOLogEntryOracle();
+          }
+        },
+        new LogPersistenceService.PersistenceNavigatorFactory() {
+          @Override
+          public LogPersistenceService.PersistenceNavigator create(LogPersistenceService.BytePersistence persistence, SequentialEntryCodec<?> encoding, long offset) {
+            return new InMemoryPersistenceNavigator<>(persistence, encoding, offset);
+          }
+        });
   }
 
   private String getQuorumNameForIndex(int index) {
@@ -119,7 +155,11 @@ public class QuorumDelegatingLogConcurrencyTest {
   private final Map<String, List<OLogEntry>> logEntryListsMemoized = new ConcurrentHashMap<>();
 
   private List<OLogEntry> logEntriesForQuorum(String quorumId) {
-    logEntryListsMemoized.putIfAbsent(quorumId, someConsecutiveEntries(1, 1 + ENTRIES_PER_QUORUM_PER_TEST));
+    synchronized (logEntryListsMemoized) {
+      if (!logEntryListsMemoized.containsKey(quorumId)) {
+        logEntryListsMemoized.put(quorumId, someConsecutiveEntries(1, 1 + ENTRIES_PER_QUORUM_PER_TEST));
+      }
+    }
     return logEntryListsMemoized.get(quorumId);
   }
 

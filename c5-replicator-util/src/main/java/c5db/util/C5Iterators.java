@@ -29,7 +29,7 @@ public class C5Iterators {
    * @return A new Iterator object representing the given Iterator advanced a specified
    * number of times, calling the given Iterator's next() method when needed.
    */
-  public static <T> Iterator<T> advanced(Iterator<T> backingIterator, int numberToAdvance) {
+  public static <T> Iterator<T> advanced(final Iterator<T> backingIterator, final int numberToAdvance) {
     return new Iterator<T>() {
       private boolean advanced;
 

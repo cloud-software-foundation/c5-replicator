@@ -18,6 +18,7 @@ package c5db.util;
 
 import com.google.common.util.concurrent.SettableFuture;
 import org.jetlang.channels.MemoryChannel;
+import org.jetlang.core.Callback;
 import org.jetlang.core.RunnableExecutor;
 import org.jetlang.core.RunnableExecutorImpl;
 import org.jetlang.fibers.Fiber;
@@ -27,10 +28,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
+import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -48,9 +49,12 @@ public class ExceptionHandlingBatchExecutorTest {
    * uses the testFuture to notify the test thread that a throwable was actually caught; otherwise
    * the test might end before that happens.
    */
-  private final Consumer<Throwable> throwableHandler = throwable -> {
-    fiberExceptionHandler.accept(throwable);
-    testFuture.set(true);
+  private final Consumer<Throwable> throwableHandler = new Consumer<Throwable>() {
+    @Override
+    public void accept(Throwable throwable) {
+      fiberExceptionHandler.accept(throwable);
+      testFuture.set(true);
+    }
   };
 
   private final RunnableExecutor runnableExecutor = new RunnableExecutorImpl(
@@ -63,15 +67,20 @@ public class ExceptionHandlingBatchExecutorTest {
    * to verify that the first Rule threw a given exception.
    */
   @Rule
-  public TestRule ExpectException = (base, description) -> new Statement() {
+  public TestRule ExpectException = new TestRule() {
     @Override
-    public void evaluate() throws Throwable {
-      try {
-        base.evaluate();
-        fail();
-      } catch (IndexOutOfBoundsException ignored) {
-        // expected exception; test succeeds
-      }
+    public Statement apply(final Statement base, Description description) {
+      return new Statement() {
+        @Override
+        public void evaluate() throws Throwable {
+          try {
+            base.evaluate();
+            fail();
+          } catch (IndexOutOfBoundsException ignored) {
+            // expected exception; test succeeds
+          }
+        }
+      };
     }
   };
 
@@ -94,8 +103,11 @@ public class ExceptionHandlingBatchExecutorTest {
    */
   @Test
   public void testFiberCallbackException() throws Exception {
-    channel.subscribe(fiber, (val) -> {
-      throw new IndexOutOfBoundsException();
+    channel.subscribe(fiber, new Callback<Long>() {
+      @Override
+      public void onMessage(Long val) {
+        throw new IndexOutOfBoundsException();
+      }
     });
     fiber.start();
 

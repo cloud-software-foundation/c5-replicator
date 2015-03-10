@@ -55,7 +55,7 @@ public class EncodedSequentialLogTest {
 
   @Test
   public void writesToTheSuppliedPersistenceObjectUsingTheSuppliedCodec() throws Exception {
-    OLogEntry entry = makeEntry(seqNum(1), term(2), "data");
+    final OLogEntry entry = makeEntry(seqNum(1), term(2), "data");
 
     context.checking(new Expectations() {{
       ignoring(navigator);
@@ -81,7 +81,7 @@ public class EncodedSequentialLogTest {
 
   @Test
   public void notifiesTheNavigatorWhenTruncating() throws Exception {
-    long truncationSeqNum = 33;
+    final long truncationSeqNum = 33;
 
     context.checking(new Expectations() {{
       ignoring(codec);
@@ -96,8 +96,8 @@ public class EncodedSequentialLogTest {
 
   @Test
   public void readsEntriesFromTheSuppliedPersistenceObjectUsingTheSuppliedCodec() throws Exception {
-    long startSeqNum = 77;
-    long endSeqNum = 83;
+    final long startSeqNum = 77;
+    final long endSeqNum = 83;
 
     context.checking(new Expectations() {{
       codecWillReturnEntrySequence(codec, someConsecutiveEntries(startSeqNum, endSeqNum));
@@ -111,7 +111,7 @@ public class EncodedSequentialLogTest {
 
   @Test
   public void processesTruncationRequestsByDelegatingThemToTheSuppliedPersistence() throws Exception {
-    long entryAddress = 100;
+    final long entryAddress = 100;
 
     context.checking(new Expectations() {{
       allowing(navigator).notifyTruncation(with(any(Long.class)));
@@ -162,8 +162,8 @@ public class EncodedSequentialLogTest {
     };
   }
 
-  private void codecWillReturnEntrySequence(SequentialEntryCodec<OLogEntry> codec, List<OLogEntry> entries) throws Exception {
-    Sequence seq = context.sequence("Codec#decode method call sequence");
+  private void codecWillReturnEntrySequence(final SequentialEntryCodec<OLogEntry> codec, final List<OLogEntry> entries) throws Exception {
+    final Sequence seq = context.sequence("Codec#decode method call sequence");
     context.checking(new Expectations() {{
       for (OLogEntry e : entries) {
         oneOf(codec).decode(with(any(InputStream.class)));

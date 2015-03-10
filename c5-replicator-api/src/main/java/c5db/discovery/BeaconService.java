@@ -28,6 +28,7 @@ import c5db.interfaces.discovery.NodeInfoReply;
 import c5db.interfaces.discovery.NodeInfoRequest;
 import c5db.messages.generated.ModuleType;
 import c5db.util.C5Futures;
+import c5db.util.Consumer;
 import c5db.util.FiberOnly;
 import c5db.util.FiberSupplier;
 import com.google.common.collect.ImmutableMap;
@@ -38,6 +39,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
@@ -47,12 +49,15 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetlang.channels.MemoryChannel;
 import org.jetlang.channels.MemoryRequestChannel;
 import org.jetlang.channels.Request;
 import org.jetlang.channels.RequestChannel;
 import org.jetlang.channels.Subscriber;
+import org.jetlang.core.Callback;
 import org.jetlang.fibers.Fiber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,19 +132,22 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   }
 
   @Override
-  public ListenableFuture<NodeInfoReply> getNodeInfo(long nodeId, ModuleType module) {
-    SettableFuture<NodeInfoReply> future = SettableFuture.create();
-    fiber.execute(() -> {
-      NodeInfo peer = peerNodeInfoMap.get(nodeId);
-      if (peer == null) {
-        future.set(NodeInfoReply.NO_REPLY);
-      } else {
-        Integer servicePort = peer.modules.get(module);
-        if (servicePort == null) {
+  public ListenableFuture<NodeInfoReply> getNodeInfo(final long nodeId, final ModuleType module) {
+    final SettableFuture<NodeInfoReply> future = SettableFuture.create();
+    fiber.execute(new Runnable() {
+      @Override
+      public void run() {
+        NodeInfo peer = peerNodeInfoMap.get(nodeId);
+        if (peer == null) {
           future.set(NodeInfoReply.NO_REPLY);
         } else {
-          List<String> peerAddresses = peer.availability.getAddressesList();
-          future.set(new NodeInfoReply(true, peerAddresses, servicePort));
+          Integer servicePort = peer.modules.get(module);
+          if (servicePort == null) {
+            future.set(NodeInfoReply.NO_REPLY);
+          } else {
+            List<String> peerAddresses = peer.availability.getAddressesList();
+            future.set(new NodeInfoReply(true, peerAddresses, servicePort));
+          }
         }
       }
     });
@@ -238,8 +246,11 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   public ListenableFuture<ImmutableMap<Long, NodeInfo>> getState() {
     final SettableFuture<ImmutableMap<Long, NodeInfo>> future = SettableFuture.create();
 
-    fiber.execute(() -> {
-      future.set(getCopyOfState());
+    fiber.execute(new Runnable() {
+      @Override
+      public void run() {
+        future.set(BeaconService.this.getCopyOfState());
+      }
     });
 
     return future;
@@ -272,26 +283,32 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
     }
 
     if (!localIPs.isEmpty()) {
-      Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
+      final Availability beaconMessage = new Availability(nodeId, 0, localIPs, msgModules);
 
       broadcastChannel.writeAndFlush(new UdpProtostuffMessage<>(broadcastAddress, beaconMessage))
           .addListener(
-              future -> {
-                if (!future.isSuccess()) {
-                  LOG.warn("node {} error sending message {} to broadcast address {}",
-                      nodeId, beaconMessage, broadcastAddress);
+              new GenericFutureListener<Future<? super Void>>() {
+                @Override
+                public void operationComplete(Future<? super Void> future) throws Exception {
+                  if (!future.isSuccess()) {
+                    LOG.warn("node {} error sending message {} to broadcast address {}",
+                        nodeId, beaconMessage, broadcastAddress);
+                  }
                 }
               });
     }
 
     List<String> loopbackIps = Lists.newArrayList(loopbackAddress.getAddress().getHostAddress());
-    Availability localMessage = new Availability(nodeId, 0, loopbackIps, msgModules);
+    final Availability localMessage = new Availability(nodeId, 0, loopbackIps, msgModules);
 
     broadcastChannel.writeAndFlush(new UdpProtostuffMessage<>(loopbackAddress, localMessage))
         .addListener(
-            future -> {
-              if (!future.isSuccess()) {
-                LOG.warn("node {} error sending message {} to loopback address", nodeId, localMessage);
+            new GenericFutureListener<Future<? super Void>>() {
+              @Override
+              public void operationComplete(Future<? super Void> future) throws Exception {
+                if (!future.isSuccess()) {
+                  LOG.warn("node {} error sending message {} to loopback address", nodeId, localMessage);
+                }
               }
             });
 
@@ -319,69 +336,108 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
 
   @Override
   protected void doStart() {
-    eventLoopGroup.next().execute(() -> {
-      bootstrap = new Bootstrap();
-      bootstrap.group(eventLoopGroup)
-          .channel(NioDatagramChannel.class)
-          .option(ChannelOption.SO_BROADCAST, true)
-          .option(ChannelOption.SO_REUSEADDR, true)
-          .handler(new ChannelInitializer<DatagramChannel>() {
-            @Override
-            protected void initChannel(DatagramChannel ch) throws Exception {
-              ChannelPipeline p = ch.pipeline();
+    eventLoopGroup.next().execute(new Runnable() {
+      @Override
+      public void run() {
+        bootstrap = new Bootstrap();
+        bootstrap.group(eventLoopGroup)
+            .channel(NioDatagramChannel.class)
+            .option(ChannelOption.SO_BROADCAST, true)
+            .option(ChannelOption.SO_REUSEADDR, true)
+            .handler(new ChannelInitializer<DatagramChannel>() {
+              @Override
+              protected void initChannel(DatagramChannel ch) throws Exception {
+                ChannelPipeline p = ch.pipeline();
 
-              p.addLast("protobufDecoder",
-                  new UdpProtostuffDecoder<>(Availability.getSchema(), false));
+                p.addLast("protobufDecoder",
+                    new UdpProtostuffDecoder<>(Availability.getSchema(), false));
 
-              p.addLast("protobufEncoder",
-                  new UdpProtostuffEncoder<>(Availability.getSchema(), false));
+                p.addLast("protobufEncoder",
+                    new UdpProtostuffEncoder<>(Availability.getSchema(), false));
 
-              p.addLast("beaconMessageHandler", new BeaconMessageHandler());
+                p.addLast("beaconMessageHandler", new BeaconMessageHandler());
+              }
+            });
+        // Wait, this is why we are in a new executor...
+        //noinspection RedundantCast
+        bootstrap.bind(discoveryPort).addListener((ChannelFutureListener) new ChannelFutureListener() {
+          @Override
+          public void operationComplete(ChannelFuture future) throws Exception {
+            if (future.isSuccess()) {
+              broadcastChannel = future.channel();
+            } else {
+              LOG.error("Unable to bind! ", future.cause());
+              BeaconService.this.notifyFailed(future.cause());
             }
-          });
-      // Wait, this is why we are in a new executor...
-      //noinspection RedundantCast
-      bootstrap.bind(discoveryPort).addListener((ChannelFutureListener) future -> {
-        if (future.isSuccess()) {
-          broadcastChannel = future.channel();
-        } else {
-          LOG.error("Unable to bind! ", future.cause());
-          notifyFailed(future.cause());
+          }
+        });
+
+        try {
+          localIPs = BeaconService.this.getLocalIPs();
+        } catch (SocketException e) {
+          LOG.error("SocketException:", e);
+          BeaconService.this.notifyFailed(e);
+          return;
         }
-      });
 
-      try {
-        localIPs = getLocalIPs();
-      } catch (SocketException e) {
-        LOG.error("SocketException:", e);
-        notifyFailed(e);
-        return;
+        fiber = fiberSupplier.getNewFiber(new Consumer<Throwable>() {
+          @Override
+          public void accept(Throwable cause) {
+            BeaconService.this.notifyFailed(cause);
+          }
+        });
+        fiber.start();
+
+        // Schedule fiber tasks and subscriptions.
+        incomingMessages.subscribe(fiber, new Callback<Availability>() {
+          @Override
+          public void onMessage(Availability message) {
+            BeaconService.this.processWireMessage(message);
+          }
+        });
+        nodeInfoRequests.subscribe(fiber, new Callback<Request<NodeInfoRequest, NodeInfoReply>>() {
+          @Override
+          public void onMessage(Request<NodeInfoRequest, NodeInfoReply> message) {
+            BeaconService.this.handleNodeInfoRequest(message);
+          }
+        });
+        moduleInformationProvider.moduleChangeChannel().subscribe(fiber, new Callback<ImmutableMap<ModuleType, Integer>>() {
+          @Override
+          public void onMessage(ImmutableMap<ModuleType, Integer> onlineModuleToPortMap1) {
+            BeaconService.this.updateCurrentModulePorts(onlineModuleToPortMap1);
+          }
+        });
+
+        if (localIPs.isEmpty()) {
+          LOG.warn("Found no IP addresses to broadcast to other nodes; as a result, only sending to loopback");
+        }
+
+        fiber.scheduleAtFixedRate(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                      BeaconService.this.sendBeacon();
+                                    }
+                                  },
+            BEACON_SERVICE_INITIAL_BROADCAST_DELAY_MILLISECONDS,
+            BEACON_SERVICE_BROADCAST_PERIOD_MILLISECONDS,
+            TimeUnit.MILLISECONDS);
+
+        C5Futures.addCallback(moduleInformationProvider.getOnlineModules(),
+            new Consumer<ImmutableMap<ModuleType, Integer>>() {
+              @Override
+              public void accept(ImmutableMap<ModuleType, Integer> onlineModuleToPortMap) {
+                BeaconService.this.updateCurrentModulePorts(onlineModuleToPortMap);
+                BeaconService.this.notifyStarted();
+              }
+            },
+            new Consumer<Throwable>() {
+              @Override
+              public void accept(Throwable cause) {
+                BeaconService.this.notifyFailed(cause);
+              }
+            },
+            fiber);
       }
-
-      fiber = fiberSupplier.getNewFiber(this::notifyFailed);
-      fiber.start();
-
-      // Schedule fiber tasks and subscriptions.
-      incomingMessages.subscribe(fiber, this::processWireMessage);
-      nodeInfoRequests.subscribe(fiber, this::handleNodeInfoRequest);
-      moduleInformationProvider.moduleChangeChannel().subscribe(fiber, this::updateCurrentModulePorts);
-
-      if (localIPs.isEmpty()) {
-        LOG.warn("Found no IP addresses to broadcast to other nodes; as a result, only sending to loopback");
-      }
-
-      fiber.scheduleAtFixedRate(this::sendBeacon,
-          BEACON_SERVICE_INITIAL_BROADCAST_DELAY_MILLISECONDS,
-          BEACON_SERVICE_BROADCAST_PERIOD_MILLISECONDS,
-          TimeUnit.MILLISECONDS);
-
-      C5Futures.addCallback(moduleInformationProvider.getOnlineModules(),
-          (ImmutableMap<ModuleType, Integer> onlineModuleToPortMap) -> {
-            updateCurrentModulePorts(onlineModuleToPortMap);
-            notifyStarted();
-          },
-          this::notifyFailed,
-          fiber);
     });
   }
 
@@ -389,7 +445,12 @@ public class BeaconService extends AbstractService implements DiscoveryModule {
   protected void doStop() {
     fiber.dispose();
     fiber = null;
-    eventLoopGroup.next().execute(this::notifyStopped);
+    eventLoopGroup.next().execute(new Runnable() {
+      @Override
+      public void run() {
+
+      }
+    });
   }
 
   @FiberOnly

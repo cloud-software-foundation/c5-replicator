@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Immutable value type representing a configuration of which peers are members of a quorum.
@@ -44,7 +43,7 @@ public final class QuorumConfiguration {
   private final Set<Long> prevPeers;
   private final Set<Long> nextPeers;
 
-  public static final QuorumConfiguration EMPTY = new QuorumConfiguration(new HashSet<>());
+  public static final QuorumConfiguration EMPTY = new QuorumConfiguration(new HashSet<Long>());
 
   public static QuorumConfiguration of(Collection<Long> peerCollection) {
     return new QuorumConfiguration(peerCollection);
@@ -141,8 +140,9 @@ public final class QuorumConfiguration {
 
   private static long getGreatestIndexCommittedByMajority(Set<Long> peers, Map<Long, Long> peersLastAckedIndex) {
     SortedMultiset<Long> committedIndexes = TreeMultiset.create();
-    committedIndexes.addAll(peers.stream().map(peerId
-        -> peersLastAckedIndex.getOrDefault(peerId, 0L)).collect(Collectors.toList()));
+    for (long peerId : peers) {
+      committedIndexes.add(peersLastAckedIndex.containsKey(peerId) ? peersLastAckedIndex.get(peerId) : 0);
+    }
     return Iterables.get(committedIndexes.descendingMultiset(), calculateNumericalMajority(peers.size()) - 1);
   }
 

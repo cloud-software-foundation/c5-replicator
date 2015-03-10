@@ -38,7 +38,7 @@ public class ReplicatorTestUtil {
   }
 
   public static LogEntry makeConfigurationEntry(long index, long term, QuorumConfiguration configuration) {
-    return new LogEntry(term, index, new ArrayList<>(), configuration.toProtostuff());
+    return new LogEntry(term, index, new ArrayList<ByteBuffer>(), configuration.toProtostuff());
   }
 
   public static LogSequenceBuilder entries() {
@@ -62,7 +62,7 @@ public class ReplicatorTestUtil {
     }
 
     public LogSequenceBuilder configurationAndIndex(QuorumConfiguration configuration, long index) {
-      logSequence.add(new LogEntry(term, index, new ArrayList<>(), configuration.toProtostuff()));
+      logSequence.add(new LogEntry(term, index, new ArrayList<ByteBuffer>(), configuration.toProtostuff()));
       return this;
     }
 

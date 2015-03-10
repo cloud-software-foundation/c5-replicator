@@ -31,7 +31,6 @@
     </parent>
 
     <modules>
-        <module>c5-general-replication</module>
         <module>c5-replicator</module>
         <module>c5-replicator-api</module>
         <module>c5-replicator-log</module>
@@ -69,7 +68,7 @@
         <!-- github server corresponds to entry in ~/.m2/settings.xml -->
         <github.global.server>github</github.global.server>
         <github-repository-name>c5-replicator</github-repository-name>
-        <github-branch-name>mvn-repo</github-branch-name>
+        <github-branch-name>mvn-repo-olog-java7</github-branch-name>
         <distribution-management-repo-url>${user.dir}/target/mvn-repo</distribution-management-repo-url>
         <site-maven-plugin.version>0.10</site-maven-plugin.version>
     </properties>
@@ -107,8 +106,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                     <compilerArgument>-Xlint:-options</compilerArgument>
                 </configuration>
             </plugin>

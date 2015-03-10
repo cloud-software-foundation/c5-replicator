@@ -87,9 +87,14 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
     ImmutableList.Builder<CheckedSupplier<FilePersistence, IOException>> persistenceSupplierBuilder =
         ImmutableList.builder();
 
-    for (Path path : getLinkPathMap(quorumId).descendingMap().values()) {
+    for (final Path path : getLinkPathMap(quorumId).descendingMap().values()) {
       persistenceSupplierBuilder.add(
-          () -> new FilePersistence(Files.readSymbolicLink(path)));
+          new CheckedSupplier<FilePersistence, IOException>() {
+            @Override
+            public FilePersistence get() throws IOException {
+              return new FilePersistence(Files.readSymbolicLink(path));
+            }
+          });
     }
 
     return persistenceSupplierBuilder.build();

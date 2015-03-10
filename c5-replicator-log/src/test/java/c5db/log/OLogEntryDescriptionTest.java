@@ -17,8 +17,10 @@
 package c5db.log;
 
 import c5db.interfaces.log.SequentialEntryCodec;
+import c5db.interfaces.log.SequentialEntryIterable;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.log.generated.OLogContentType;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.junit.Test;
@@ -109,15 +111,23 @@ public class OLogEntryDescriptionTest {
     log.append(entries);
 
     List<OLogEntryDescription> descriptions = new ArrayList<>();
-    descriptionLog.forEach(descriptions::add);
+    try (SequentialEntryIterable.SequentialEntryIterator<OLogEntryDescription> iterator = descriptionLog.iterator()) {
+      for (; iterator.hasNext(); ) {
+        descriptions.add(iterator.next());
+      }
+    }
 
     assertThat(descriptions, is(equalTo(descriptionsCorrespondingTo(entries))));
   }
 
   private List<OLogEntryDescription> descriptionsCorrespondingTo(List<OLogEntry> entries) {
-    return Lists.transform(entries, (entry) ->
-        new OLogEntryDescription(entry.getSeqNum(), entry.getElectionTerm(), entryDataContentLength(entry),
-            entry.getContent().getType(), true, true, null));
+    return Lists.transform(entries, new Function<OLogEntry, OLogEntryDescription>() {
+      @Override
+      public OLogEntryDescription apply(OLogEntry entry) {
+        return new OLogEntryDescription(entry.getSeqNum(), entry.getElectionTerm(), OLogEntryDescriptionTest.this.entryDataContentLength(entry),
+            entry.getContent().getType(), true, true, null);
+      }
+    });
   }
 
   private int entryDataContentLength(OLogEntry entry) {

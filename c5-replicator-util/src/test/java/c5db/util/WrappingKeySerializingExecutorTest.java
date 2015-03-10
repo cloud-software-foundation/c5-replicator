@@ -17,6 +17,8 @@
 package c5db.util;
 
 import c5db.CollectionMatchers;
+import c5db.ConcurrencyTestUtil;
+import c5db.FutureMatchers;
 import org.hamcrest.Matcher;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -39,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 import static c5db.ConcurrencyTestUtil.runAConcurrencyTestSeveralTimes;
 import static c5db.ConcurrencyTestUtil.runNTimesAndWaitForAllToComplete;
 import static c5db.FutureMatchers.resultsIn;
-import static c5db.FutureMatchers.resultsInException;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -82,7 +83,7 @@ public class WrappingKeySerializingExecutorTest {
       will(throwException(new ArithmeticException("Expected as part of test")));
     }});
 
-    assertThat(keySerializingExecutor.submit("key", task), resultsInException(ArithmeticException.class));
+    assertThat(keySerializingExecutor.submit("key", task), FutureMatchers.<Integer>resultsInException(ArithmeticException.class));
   }
 
   @Test
@@ -106,7 +107,7 @@ public class WrappingKeySerializingExecutorTest {
     waitForTasksToFinish(keySerializingExecutor, "key");
 
     assertThat(log, containsRecordOfEveryTask());
-    assertThat(log, isInTheOrderTheTasksWereSubmitted());
+    assertThat(log, (Matcher<? super List<Integer>>) isInTheOrderTheTasksWereSubmitted());
   }
 
   @Test(timeout = 1000)
@@ -122,16 +123,21 @@ public class WrappingKeySerializingExecutorTest {
     waitForTasksToFinish(keySerializingExecutor, "key2");
 
     assertThat(log1, containsRecordOfEveryTask());
-    assertThat(log1, isInTheOrderTheTasksWereSubmitted());
+    assertThat(log1, (Matcher<? super List<Integer>>) isInTheOrderTheTasksWereSubmitted());
     assertThat(log2, containsRecordOfEveryTask());
-    assertThat(log2, isInTheOrderTheTasksWereSubmitted());
+    assertThat(log2, (Matcher<? super List<Integer>>) isInTheOrderTheTasksWereSubmitted());
   }
 
   @Test(expected = RejectedExecutionException.class)
   public void throwsAnExceptionIfATaskIsSubmittedAfterShutdownIsCalled() throws Exception {
     KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(fixedThreadExecutor);
     keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
-    keySerializingExecutor.submit("key", () -> null);
+    keySerializingExecutor.submit("key", new CheckedSupplier<Object, Exception>() {
+      @Override
+      public Object get() throws Exception {
+        return null;
+      }
+    });
   }
 
   @Test
@@ -151,7 +157,12 @@ public class WrappingKeySerializingExecutorTest {
     final int numThreads = 20;
     final int numAttempts = 150;
 
-    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeAMultikeySubmissionConcurrencyStressTest);
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, new ConcurrencyTestUtil.ConcurrencyTest() {
+      @Override
+      public void run(int numberOfSubmissions, ExecutorService taskSubmitter) throws Exception {
+        WrappingKeySerializingExecutorTest.this.executeAMultikeySubmissionConcurrencyStressTest(numberOfSubmissions, taskSubmitter);
+      }
+    });
   }
 
   @Test(timeout = 5000)
@@ -160,7 +171,12 @@ public class WrappingKeySerializingExecutorTest {
     final int numThreads = 50;
     final int numAttempts = 300;
 
-    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeASingleKeyConcurrencyStressTest);
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, new ConcurrencyTestUtil.ConcurrencyTest() {
+      @Override
+      public void run(int numCalls, ExecutorService executor) throws Exception {
+        WrappingKeySerializingExecutorTest.this.executeASingleKeyConcurrencyStressTest(numCalls, executor);
+      }
+    });
   }
 
   @Test(timeout = 5000)
@@ -168,7 +184,12 @@ public class WrappingKeySerializingExecutorTest {
     final int numThreads = 10;
     final int numAttempts = 300;
 
-    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeAShutdownIdempotencyStressTest);
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, new ConcurrencyTestUtil.ConcurrencyTest() {
+      @Override
+      public void run(int numShutdownCalls, ExecutorService shutdownCallingService) throws Exception {
+        WrappingKeySerializingExecutorTest.this.executeAShutdownIdempotencyStressTest(numShutdownCalls, shutdownCallingService);
+      }
+    });
   }
 
   @Test(timeout = 5000)
@@ -176,7 +197,12 @@ public class WrappingKeySerializingExecutorTest {
     final int numThreads = 5;
     final int numAttempts = 100;
 
-    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, this::executeAShutdownAtomicityStressTest);
+    runAConcurrencyTestSeveralTimes(numThreads, numAttempts, new ConcurrencyTestUtil.ConcurrencyTest() {
+      @Override
+      public void run(int numberOfSubmissions, ExecutorService executor) throws Exception {
+        WrappingKeySerializingExecutorTest.this.executeAShutdownAtomicityStressTest(numberOfSubmissions, executor);
+      }
+    });
   }
 
 
@@ -191,22 +217,30 @@ public class WrappingKeySerializingExecutorTest {
   }
 
   private static CheckedSupplier<Integer, Exception> getSupplierWhichLogsItsNumberTwice(
-      int instanceNumber, List<Integer> log) {
+      final int instanceNumber, final List<Integer> log) {
 
-    return () -> {
-      log.add(instanceNumber);
-      Thread.yield();
-      log.add(instanceNumber);
-      return 0;
+    return new CheckedSupplier<Integer, Exception>() {
+      @Override
+      public Integer get() throws Exception {
+        log.add(instanceNumber);
+        Thread.yield();
+        log.add(instanceNumber);
+        return 0;
+      }
     };
   }
 
   private static void waitForTasksToFinish(KeySerializingExecutor keySerializingExecutor, String key)
       throws Exception {
-    keySerializingExecutor.submit(key, () -> 0).get();
+    keySerializingExecutor.submit(key, new CheckedSupplier<Object, Exception>() {
+      @Override
+      public Object get() throws Exception {
+        return 0;
+      }
+    }).get();
   }
 
-  public static void allowSubmitOrExecuteOnce(Mockery context, ExecutorService executorService) {
+  public static void allowSubmitOrExecuteOnce(final Mockery context, final ExecutorService executorService) {
     final States submitted = context.states("submitted").startsAs("no");
 
     context.checking(new Expectations() {{
@@ -217,32 +251,32 @@ public class WrappingKeySerializingExecutorTest {
 
   @SuppressWarnings("unchecked")
   private static void allowSubmitAndThen(Mockery context,
-                                         ExecutorService executorService,
-                                         org.jmock.internal.State state) {
+                                         final ExecutorService executorService,
+                                         final org.jmock.internal.State state) {
     context.checking(new Expectations() {{
       allowing(executorService).submit(with.<Callable>is(any(Callable.class)));
       then(state);
-      allowing(executorService).submit(with.is(any(Runnable.class)), with.is(any(Object.class)));
+      allowing(executorService).submit((Runnable) with.is(any(Runnable.class)), with.is(any(Object.class)));
       then(state);
       allowing(executorService).submit(with.<Runnable>is(any(Runnable.class)));
       then(state);
-      allowing(executorService).execute(with.is(any(Runnable.class)));
+      allowing(executorService).execute((Runnable) with.is(any(Runnable.class)));
       then(state);
     }});
   }
 
   @SuppressWarnings("unchecked")
   private static void doNowAllowSubmitOnce(Mockery context,
-                                           ExecutorService executorService,
-                                           org.jmock.internal.State state) {
+                                           final ExecutorService executorService,
+                                           final org.jmock.internal.State state) {
     context.checking(new Expectations() {{
       never(executorService).submit(with.<Callable>is(any(Callable.class)));
       when(state);
-      never(executorService).submit(with.is(any(Runnable.class)), with.is(any(Object.class)));
+      never(executorService).submit((Runnable) with.is(any(Runnable.class)), with.is(any(Object.class)));
       when(state);
       never(executorService).submit(with.<Runnable>is(any(Runnable.class)));
       when(state);
-      never(executorService).execute(with.is(any(Runnable.class)));
+      never(executorService).execute((Runnable) with.is(any(Runnable.class)));
       when(state);
     }});
   }
@@ -261,10 +295,15 @@ public class WrappingKeySerializingExecutorTest {
   private void runSeveralSimultaneousSeriesOfTasksAndWaitForAllToComplete(
       int numSimultaneous,
       ExecutorService executorThatSubmitsTasks,
-      KeySerializingExecutor executorThatRunsTasks) throws Exception {
+      final KeySerializingExecutor executorThatRunsTasks) throws Exception {
 
     runNTimesAndWaitForAllToComplete(numSimultaneous, executorThatSubmitsTasks,
-        (int invocationIndex) -> runSeriesOfTasksForOneKey(executorThatRunsTasks, keyNumber(invocationIndex))
+        new ConcurrencyTestUtil.IndexedExceptionThrowingRunnable() {
+          @Override
+          public void run(int invocationIndex) throws Exception {
+            WrappingKeySerializingExecutorTest.this.runSeriesOfTasksForOneKey(executorThatRunsTasks, keyNumber(invocationIndex));
+          }
+        }
     );
   }
 
@@ -279,7 +318,7 @@ public class WrappingKeySerializingExecutorTest {
     List<Integer> log = submitSeveralTasksAndBeginLoggingTheirInvocations(keySerializingExecutor, key);
     waitForTasksToFinish(keySerializingExecutor, key);
     assertThat(log, containsRecordOfEveryTask());
-    assertThat(log, isInTheOrderTheTasksWereSubmitted());
+    assertThat(log, (Matcher<? super List<Integer>>) isInTheOrderTheTasksWereSubmitted());
   }
 
   private static void setNumberOfTasks(int n) {
@@ -290,16 +329,22 @@ public class WrappingKeySerializingExecutorTest {
       throws Exception {
     final KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(
         Executors.newSingleThreadExecutor());
-    final List<Integer> taskResults = Collections.synchronizedList(new ArrayList<>(numCalls));
+    final List<Integer> taskResults = Collections.synchronizedList(new ArrayList<Integer>(numCalls));
 
     // The keySerializingExecutor can make no guarantee about the order in which tasks will
     // be completed if added with the same key from multiple threads; only that they will all be completed.
     runNTimesAndWaitForAllToComplete(numCalls, executor,
-        () -> {
-          keySerializingExecutor.submit("key", () -> {
-            taskResults.add(0);
-            return 0;
-          });
+        new ConcurrencyTestUtil.ExceptionThrowingRunnable() {
+          @Override
+          public void run() throws Exception {
+            keySerializingExecutor.submit("key", new CheckedSupplier<Object, Exception>() {
+              @Override
+              public Object get() throws Exception {
+                taskResults.add(0);
+                return 0;
+              }
+            });
+          }
         });
 
     keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
@@ -310,13 +355,23 @@ public class WrappingKeySerializingExecutorTest {
                                                      ExecutorService shutdownCallingService) throws Exception {
     final KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(
         Executors.newSingleThreadExecutor());
-    keySerializingExecutor.submit("key", () -> null).get();
+    keySerializingExecutor.submit("key", new CheckedSupplier<Object, Exception>() {
+      @Override
+      public Object get() throws Exception {
+        return null;
+      }
+    }).get();
 
     runNTimesAndWaitForAllToComplete(numShutdownCalls, shutdownCallingService,
-        () -> keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS));
+        new ConcurrencyTestUtil.ExceptionThrowingRunnable() {
+          @Override
+          public void run() throws Exception {
+            keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
+          }
+        });
   }
 
-  private void executeAShutdownAtomicityStressTest(int numberOfSubmissions,
+  private void executeAShutdownAtomicityStressTest(final int numberOfSubmissions,
                                                    ExecutorService executor) throws Exception {
     final KeySerializingExecutor keySerializingExecutor = new WrappingKeySerializingExecutor(
         Executors.newSingleThreadExecutor());
@@ -324,13 +379,21 @@ public class WrappingKeySerializingExecutorTest {
     // Simply call shutdown interspersed with other submit calls and ensure there are no errors
     // However, it is nondeterministic which, if any, of the submits will go through.
     runNTimesAndWaitForAllToComplete(numberOfSubmissions, executor,
-        (int invocationIndex) -> {
-          if (invocationIndex == numberOfSubmissions / 2) {
-            keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
-          } else {
-            try {
-              keySerializingExecutor.submit(keyNumber(invocationIndex), () -> null);
-            } catch (RejectedExecutionException ignore) {
+        new ConcurrencyTestUtil.IndexedExceptionThrowingRunnable() {
+          @Override
+          public void run(int invocationIndex) throws Exception {
+            if (invocationIndex == numberOfSubmissions / 2) {
+              keySerializingExecutor.shutdownAndAwaitTermination(1, TimeUnit.SECONDS);
+            } else {
+              try {
+                keySerializingExecutor.submit(WrappingKeySerializingExecutorTest.this.keyNumber(invocationIndex), new CheckedSupplier<Object, Exception>() {
+                  @Override
+                  public Object get() throws Exception {
+                    return null;
+                  }
+                });
+              } catch (RejectedExecutionException ignore) {
+              }
             }
           }
         }

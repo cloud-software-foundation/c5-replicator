@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class LogMatchers {
 
-  static Matcher<List<OLogEntry>> aListOfEntriesWithConsecutiveSeqNums(long start, long end) {
+  static Matcher<List<OLogEntry>> aListOfEntriesWithConsecutiveSeqNums(final long start, final long end) {
     return new TypeSafeMatcher<List<OLogEntry>>() {
       @Override
       protected boolean matchesSafely(List<OLogEntry> entries) {
@@ -54,7 +54,7 @@ public class LogMatchers {
     };
   }
 
-  static Matcher<OLogHeader> equalToHeader(OLogHeader header) {
+  static Matcher<OLogHeader> equalToHeader(final OLogHeader header) {
     return new TypeSafeMatcher<OLogHeader>() {
       @Override
       protected boolean matchesSafely(OLogHeader item) {

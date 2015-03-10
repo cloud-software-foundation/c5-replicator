@@ -22,8 +22,11 @@ import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.log.generated.OLogHeader;
 import c5db.replication.generated.QuorumConfigurationMessage;
 import c5db.util.CheckedSupplier;
+import c5db.util.Consumer;
+import c5db.util.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Longs;
+import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.junit.Before;
 import org.junit.Test;
@@ -180,35 +183,51 @@ public class LogFileServiceTest {
   }
 
   private static Matcher<List<? extends CheckedSupplier<? extends BytePersistence, IOException>>> aListOfPersistencesWithSeqNums(
-      long... seqNumsInHeaders) {
-    return MiscMatchers.simpleMatcherForPredicate((list) -> {
-      try {
-        int seqNumIndex = 0;
+      final long... seqNumsInHeaders) {
+    return MiscMatchers.simpleMatcherForPredicate(new Predicate<List<? extends CheckedSupplier<? extends BytePersistence, IOException>>>() {
+      @Override
+      public boolean test(List<? extends CheckedSupplier<? extends BytePersistence, IOException>> list) {
+        try {
+          int seqNumIndex = 0;
 
-        for (CheckedSupplier<? extends BytePersistence, IOException> persistenceSupplier : list) {
-          BytePersistence persistence = persistenceSupplier.get();
-          OLogHeader header = deserializedHeader(persistence);
-          if (header.getBaseSeqNum() != seqNumsInHeaders[seqNumIndex]) {
-            return false;
+          for (CheckedSupplier<? extends BytePersistence, IOException> persistenceSupplier : list) {
+            BytePersistence persistence = persistenceSupplier.get();
+            OLogHeader header = deserializedHeader(persistence);
+            if (header.getBaseSeqNum() != seqNumsInHeaders[seqNumIndex]) {
+              return false;
+            }
+            seqNumIndex++;
           }
-          seqNumIndex++;
-        }
 
-        return seqNumIndex == seqNumsInHeaders.length;
-      } catch (Exception e) {
-        throw new AssertionError(e);
+          return seqNumIndex == seqNumsInHeaders.length;
+        } catch (Exception e) {
+          throw new AssertionError(e);
+        }
       }
-    }, (description) -> description.appendText("a List of BytePersistence Suppliers, where the persistence" +
-        " objects begin with headers with sequence numbers ").appendValue(seqNumsInHeaders).appendText(" in order"));
+    }, new Consumer<Description>() {
+      @Override
+      public void accept(Description description) {
+        description.appendText("a List of BytePersistence Suppliers, where the persistence" +
+            " objects begin with headers with sequence numbers ").appendValue(seqNumsInHeaders).appendText(" in order");
+      }
+    });
   }
 
   private static Matcher<BytePersistence> isEmpty() {
-    return MiscMatchers.simpleMatcherForPredicate((persistence) -> {
-      try {
-        return persistence.isEmpty();
-      } catch (IOException e) {
-        throw new AssertionError(e);
+    return MiscMatchers.simpleMatcherForPredicate(new Predicate<BytePersistence>() {
+      @Override
+      public boolean test(BytePersistence persistence) {
+        try {
+          return persistence.isEmpty();
+        } catch (IOException e) {
+          throw new AssertionError(e);
+        }
       }
-    }, (description) -> description.appendText("is empty"));
+    }, new Consumer<Description>() {
+      @Override
+      public void accept(Description description) {
+        description.appendText("is empty");
+      }
+    });
   }
 }

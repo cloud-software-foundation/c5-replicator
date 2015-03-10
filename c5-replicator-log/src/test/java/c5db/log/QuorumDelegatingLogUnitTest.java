@@ -16,6 +16,7 @@
 
 package c5db.log;
 
+import c5db.FutureMatchers;
 import c5db.interfaces.log.SequentialEntryCodec;
 import c5db.interfaces.replication.QuorumConfiguration;
 import c5db.util.CheckedSupplier;
@@ -44,7 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static c5db.FutureMatchers.resultsInException;
 import static c5db.log.LogPersistenceService.BytePersistence;
 import static c5db.log.LogPersistenceService.PersistenceNavigator;
 import static c5db.log.LogPersistenceService.PersistenceNavigatorFactory;
@@ -196,7 +196,7 @@ public class QuorumDelegatingLogUnitTest {
     oLog.roll(quorumId).get();
 
     deleteFirstLog(quorumId);
-    assertThat(oLog.truncateLog(seqNum(5), quorumId), resultsInException(IOException.class));
+    assertThat(oLog.truncateLog(seqNum(5), quorumId), FutureMatchers.<Boolean>resultsInException(IOException.class));
   }
 
   private static List<OLogEntry> arbitraryEntries() {
@@ -213,7 +213,7 @@ public class QuorumDelegatingLogUnitTest {
   }
 
   private Collection<BytePersistence> logPersistenceObjectsForQuorum(String quorumId) {
-    return new ArrayList<>(persistenceService.quorumMap.get(quorumId));
+    return new ArrayList<BytePersistence>(persistenceService.quorumMap.get(quorumId));
   }
 
   private void deleteFirstLog(String quorumId) throws Exception {
@@ -231,7 +231,11 @@ public class QuorumDelegatingLogUnitTest {
     @Nullable
     @Override
     public ByteArrayPersistence getCurrent(String quorumId) throws IOException {
-      quorumMap.putIfAbsent(quorumId, new LinkedList<>());
+      synchronized (quorumMap) {
+        if (!quorumMap.containsKey(quorumId)) {
+          quorumMap.put(quorumId, new LinkedList<ByteArrayPersistence>());
+        }
+      }
       return quorumMap.get(quorumId).peek();
     }
 
@@ -243,7 +247,11 @@ public class QuorumDelegatingLogUnitTest {
 
     @Override
     public void append(String quorumId, @NotNull ByteArrayPersistence persistence) throws IOException {
-      quorumMap.putIfAbsent(quorumId, new LinkedList<>());
+      synchronized (quorumMap) {
+        if (!quorumMap.containsKey(quorumId)) {
+          quorumMap.put(quorumId, new LinkedList<ByteArrayPersistence>());
+        }
+      }
       quorumMap.get(quorumId).push(persistence);
     }
 
@@ -257,9 +265,14 @@ public class QuorumDelegatingLogUnitTest {
         throws IOException {
       List<CheckedSupplier<ByteArrayPersistence, IOException>> persistenceSupplierList = new ArrayList<>();
 
-      for (ByteArrayPersistence persistence : quorumMap.get(quorumId)) {
+      for (final ByteArrayPersistence persistence : quorumMap.get(quorumId)) {
         persistenceSupplierList.add(
-            () -> persistence);
+            new CheckedSupplier<ByteArrayPersistence, IOException>() {
+              @Override
+              public ByteArrayPersistence get() throws IOException {
+                return persistence;
+              }
+            });
       }
 
       return ImmutableList.copyOf(persistenceSupplierList);

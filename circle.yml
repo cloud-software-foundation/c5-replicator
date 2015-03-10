@@ -1,6 +1,6 @@
 machine:
   java:
-    version: oraclejdk8
+    version: oraclejdk7
   environment:
     MAVEN_OPTS: -Xloggc:./gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps
 
