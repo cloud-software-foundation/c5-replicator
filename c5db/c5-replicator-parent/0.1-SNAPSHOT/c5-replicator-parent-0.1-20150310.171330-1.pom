@@ -31,6 +31,7 @@
     </parent>
 
     <modules>
+        <module>c5-replicator</module>
         <module>c5-replicator-api</module>
         <module>c5-replicator-log</module>
         <module>c5-replicator-proto</module>
