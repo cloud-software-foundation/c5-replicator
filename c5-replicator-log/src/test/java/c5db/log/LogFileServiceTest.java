@@ -138,6 +138,16 @@ public class LogFileServiceTest {
     assertThat(logFileService.getList(QUORUM_ID), is(aListOfPersistencesWithSeqNums(3, 2, 1)));
   }
 
+  @Test
+  public void canArchiveAllButTheMostRecentFile() throws Exception {
+    havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(1));
+    havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(2));
+    havingAppendedAPersistenceContainingHeader(anOLogHeaderWithSeqNum(3));
+
+    logFileService.archiveAllButCurrent(QUORUM_ID);
+
+    assertThat(logFileService.getList(QUORUM_ID), is(aListOfPersistencesWithSeqNums(3)));
+  }
 
   private void havingAppendedAPersistenceContainingHeader(OLogHeader header) throws Exception {
     try (FilePersistence persistenceToReplacePrimary = logFileService.create(QUORUM_ID)) {

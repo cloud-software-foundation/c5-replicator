@@ -1,6 +1,16 @@
 machine:
   java:
     version: oraclejdk8
+  environment:
+    MAVEN_OPTS: -Xloggc:./gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps
+
 dependencies:
+  override:
+    - mvn clean install -DskipTests
   cache_directories:
     - ~/.m2
+
+general:
+  artifacts:
+    - "c5-general-replication/target/surefire-reports"
+    - "gc.log"

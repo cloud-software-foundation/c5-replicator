@@ -2,26 +2,13 @@
 set -e
 
 CURRENT_DIR="$(pwd)"
-SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-C5_PARENT_DIR=${SCRIPT_DIR}/../..
-C5DB_JAR=${C5_PARENT_DIR}/c5db/target/c5db-${project.version}-jar-with-dependencies.jar
-CAT_OLOG_JAR=${C5_PARENT_DIR}/c5db-cat-olog/target/c5db-cat-olog-${project.version}.jar
+BUILD_DIR="$( cd "$( dirname "$0" )" && pwd )"/../target
+CAT_OLOG_CLASSPATH=${BUILD_DIR}/class-path.txt
+CAT_OLOG_CLASSES=${BUILD_DIR}/classes
 
-if [ -f ${C5DB_JAR} ]
+if [ ! -f ${CAT_OLOG_CLASSPATH} ]
 then
-	echo "skipping c5db assembly"
+	echo "The cat-olog classpath file was not found; please run 'mvn clean install' from the parent directory"
 else
-	cd ${C5_PARENT_DIR}
-	mvn -pl c5db assembly:single
+    java -cp `cat ${CAT_OLOG_CLASSPATH}`:${CAT_OLOG_CLASSES} c5db.log.CatOLog $1
 fi
-
-if [ -f ${CAT_OLOG_JAR} ]
-then
-	echo "skipping cat-olog"
-else
-	cd ${C5_PARENT_DIR}
-	mvn -pl c5db-cat-olog install
-fi
-
-cd ${CURRENT_DIR}
-java -cp ${C5DB_JAR}:${CAT_OLOG_JAR} c5db.log.CatOLog $1

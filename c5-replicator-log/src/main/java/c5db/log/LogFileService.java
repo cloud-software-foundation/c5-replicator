@@ -112,6 +112,26 @@ public class LogFileService implements LogPersistenceService<FilePersistence> {
     });
   }
 
+  /**
+   * Delete links to all logs for a given quorum except the current log, effectively
+   * removing the past logs from the record but keeping the data.
+   *
+   * @throws IOException
+   */
+  public void archiveAllButCurrent(String quorumId) throws IOException {
+    NavigableMap<Long, Path> linkPathMap = getLinkPathMap(quorumId);
+    if (linkPathMap.isEmpty()) {
+      return;
+    }
+
+    long lastLinkId = linkPathMap.lastEntry().getKey();
+    for (Map.Entry<Long, Path> linkEntry : linkPathMap.entrySet()) {
+      if (linkEntry.getKey() != lastLinkId) {
+        Files.delete(linkEntry.getValue());
+      }
+    }
+  }
+
   private Path getNewLogFilePath(String quorumId) throws IOException {
     String fileName = String.valueOf(System.nanoTime());
     createQuorumDirectoryIfNeeded(quorumId);

@@ -33,30 +33,6 @@
             <plugin>
                 <groupId>io.protostuff</groupId>
                 <artifactId>protostuff-maven-plugin</artifactId>
-                <version>${protostuff.version}</version>
-                <configuration>
-                    <protoModules>
-                        <protoModule>
-                            <source>src/main/resources/</source>
-                            <output>java_bean_primitives</output>
-                            <encoding>UTF-8</encoding>
-                            <options>
-                                <property>
-                                    <name>generate_field_map</name>
-                                    <value>true</value>
-                                </property>
-                                <property>
-                                    <name>builder_pattern</name>
-                                    <value>true</value>
-                                </property>
-                                <property>
-                                    <name>ByteBuffer</name>
-                                    <value>true</value>
-                                </property>
-                            </options>
-                        </protoModule>
-                    </protoModules>
-                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -89,12 +65,6 @@
             <groupId>org.jmock</groupId>
             <artifactId>jmock-junit4</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <artifactId>junit-dep</artifactId>
-                    <groupId>junit</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
