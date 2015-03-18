@@ -68,6 +68,7 @@
         <!-- github server corresponds to entry in ~/.m2/settings.xml -->
         <github.global.server>github</github.global.server>
         <github-repository-name>c5-replicator</github-repository-name>
+        <github-branch-name>mvn-repo</github-branch-name>
         <distribution-management-repo-url>${user.dir}/target/mvn-repo</distribution-management-repo-url>
         <site-maven-plugin.version>0.10</site-maven-plugin.version>
     </properties>
@@ -94,7 +95,7 @@
         <repository>
             <id>internal.repo</id>
             <name>Temporary Staging Repository</name>
-            <url>file://${project.build.directory}/mvn-repo</url>
+            <url>file://${project.build.directory}/temporary-staging-repo</url>
         </repository>
     </distributionManagement>
 
@@ -145,7 +146,7 @@
                     <message>Maven artifacts for ${project.version}</message>  <!-- git commit message -->
                     <noJekyll>true</noJekyll>                                  <!-- disable webpage processing -->
                     <outputDirectory>${distribution-management-repo-url}</outputDirectory> <!-- matches distribution management repository url above -->
-                    <branch>refs/heads/mvn-repo</branch>
+                    <branch>refs/heads/${github-branch-name}</branch>
                     <excludes>
                         <exclude>**/*jar-with-dependencies.*</exclude>
                         <exclude>**/*cat-olog*.*</exclude>
