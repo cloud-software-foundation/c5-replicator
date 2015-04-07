@@ -22,7 +22,7 @@
 
     <groupId>c5db</groupId>
     <artifactId>c5-replicator-parent</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>1.0-log-only</version>
     <packaging>pom</packaging>
     <parent>
         <groupId>org.sonatype.oss</groupId>
@@ -68,7 +68,7 @@
         <!-- github server corresponds to entry in ~/.m2/settings.xml -->
         <github.global.server>github</github.global.server>
         <github-repository-name>c5-replicator</github-repository-name>
-        <github-branch-name>mvn-repo-olog-java7</github-branch-name>
+        <github-branch-name>mvn-repo</github-branch-name>
         <distribution-management-repo-url>${user.dir}/target/mvn-repo</distribution-management-repo-url>
         <site-maven-plugin.version>0.10</site-maven-plugin.version>
     </properties>

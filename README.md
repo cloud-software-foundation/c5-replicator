@@ -31,7 +31,7 @@ Then you'll be able to add the project's dependencies:
     <dependency>
       <groupId>c5db</groupId>
       <artifactId>c5-replicator-api</artifactId>
-      <version>0.1-SNAPSHOT</version>
+      <version>1.0-log-only</version>
     </dependency>
 
 Module overview

@@ -21,7 +21,7 @@
     <parent>
         <artifactId>c5-replicator-parent</artifactId>
         <groupId>c5db</groupId>
-        <version>0.1-SNAPSHOT</version>
+        <version>1.0-log-only</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cat-olog</artifactId>
